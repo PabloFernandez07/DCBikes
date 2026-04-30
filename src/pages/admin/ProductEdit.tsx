@@ -55,6 +55,7 @@ export function ProductEdit() {
       description: values.description || null,
       cost_price: values.cost_price ? Number(values.cost_price) : null,
       retail_price: Number(values.retail_price),
+      discount_percent: values.discount_percent ? Number(values.discount_percent) : null,
       stock: Number(values.stock),
       featured: values.featured,
       active: values.active,

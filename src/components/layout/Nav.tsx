@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Menu, X } from 'lucide-react'
-import { ThemeToggle } from './ThemeToggle'
+import { Menu, X, Settings } from 'lucide-react'
 import { clsx } from 'clsx'
 
 const links = [
@@ -18,9 +17,10 @@ export function Nav() {
       className="sticky top-0 z-50 w-full"
       style={{ background: 'rgba(26,22,32,0.92)', backdropFilter: 'blur(16px)' }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="DC Bikes Cantabria — inicio">
-          <img src="/DC_Bikes_Sin_Fondo.png" alt="DC Bikes" className="h-12 w-auto" />
+      <div className="w-full px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-3 shrink-0" aria-label="DC Bikes Cantabria — inicio">
+          <img src="/DC_Bikes_Sin_Fondo.png" alt="DC Bikes" className="h-14 w-auto" />
+          <span className="font-[var(--font-display)] text-xl tracking-widest text-[var(--color-cream)]">DC BIKES</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1" aria-label="Navegación principal">
@@ -43,7 +43,14 @@ export function Nav() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <ThemeToggle />
+          <Link
+            to="/admin"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-[var(--font-cond)] text-sm font-medium tracking-wide text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[rgba(196,162,207,0.1)] transition-all duration-200"
+            aria-label="Panel de administración"
+          >
+            <Settings size={15} />
+            <span className="hidden sm:inline">Admin</span>
+          </Link>
           <button
             className="md:hidden p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
             onClick={() => setOpen(o => !o)}

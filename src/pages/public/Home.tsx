@@ -54,10 +54,15 @@ function HeroText({ text, baseDelay }: { text: string; baseDelay: number }) {
   );
 }
 
-function useReveal() {
-  const ref = useRef<HTMLDivElement | null>(null);
+export default function Home() {
+  const navigate = useNavigate();
+  const [featured, setFeatured] = useState<Product[]>([]);
+  const [images, setImages] = useState<ProductImage[]>([]);
+  const [quoteOpen, setQuoteOpen] = useState(false);
+  const sectionRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
-    const el = ref.current;
+    const el = sectionRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(
       (entries) =>
@@ -68,16 +73,7 @@ function useReveal() {
     );
     el.querySelectorAll(".rv").forEach((el) => obs.observe(el));
     return () => obs.disconnect();
-  }, []);
-  return ref;
-}
-
-export default function Home() {
-  const navigate = useNavigate();
-  const [featured, setFeatured] = useState<Product[]>([]);
-  const [images, setImages] = useState<ProductImage[]>([]);
-  const [quoteOpen, setQuoteOpen] = useState(false);
-  const sectionRef = useReveal();
+  }, [featured]);
 
   useEffect(() => {
     supabase
@@ -148,7 +144,7 @@ export default function Home() {
           }}
         />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full grid lg:grid-cols-2 gap-12 items-center py-20">
+        <div className="w-full px-4 sm:px-6 lg:px-8 w-full grid lg:grid-cols-2 gap-12 items-center py-20">
           {/* Text side */}
           <div className="flex flex-col gap-6 z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(196,162,207,0.12)] border border-[rgba(196,162,207,0.25)] w-fit">
@@ -199,20 +195,6 @@ export default function Home() {
           {/* Bike illustration */}
           <div className="relative flex items-center justify-center h-[380px] lg:h-[520px]">
             <BikeSVG />
-
-            {/* Score badge */}
-            <div
-              className="absolute top-6 right-6 lg:top-10 lg:right-0 flex flex-col items-center justify-center w-20 h-20 rounded-full border-2 border-[var(--color-lavender)] bg-[var(--color-card)] shadow-[0_0_24px_rgba(196,162,207,0.3)]"
-              style={{ animation: "spulse 2.4s ease-in-out infinite" }}
-              aria-label="Puntuación 8.5 sobre 10"
-            >
-              <span className="font-[var(--font-display)] text-2xl text-[var(--color-lavender)] leading-none">
-                8.5
-              </span>
-              <span className="font-[var(--font-cond)] text-xs text-[var(--color-mid)] tracking-widest">
-                /10
-              </span>
-            </div>
           </div>
         </div>
 
@@ -227,7 +209,7 @@ export default function Home() {
 
       {/* Features */}
       <section className="py-24 bg-[var(--color-ink-deep)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
@@ -265,7 +247,7 @@ export default function Home() {
 
       {/* Featured products */}
       <section className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-12">
             <div>
               <p className="rv font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-2">
@@ -339,7 +321,7 @@ export default function Home() {
 
       {/* Workshop preview */}
       <section className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="rv rounded-3xl overflow-hidden bg-[var(--color-card)] border border-[var(--color-mid)]/20 grid md:grid-cols-2">
             <div className="p-10 lg:p-16 flex flex-col justify-center gap-6">
               <p className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)]">
@@ -407,59 +389,44 @@ function BikeSVG() {
         className="w-full max-w-[520px] h-auto"
         aria-hidden="true"
       >
-        {/* Rear wheel (logo spinning) */}
+        {/* Rear wheel — rim only, no spokes, logo fills and spins */}
         <g transform="translate(130, 220)">
-          {/* Wheel rim */}
           <circle
             cx="0"
             cy="0"
             r="100"
-            stroke="rgba(196,162,207,0.3)"
+            stroke="rgba(196,162,207,0.35)"
             strokeWidth="6"
           />
           <circle cx="0" cy="0" r="8" fill="rgba(196,162,207,0.5)" />
-          {/* Spokes */}
-          {Array.from({ length: 12 }).map((_, i) => {
-            const angle = (i * 30 * Math.PI) / 180;
-            return (
-              <line
-                key={i}
-                x1={Math.cos(angle) * 8}
-                y1={Math.sin(angle) * 8}
-                x2={Math.cos(angle) * 98}
-                y2={Math.sin(angle) * 98}
-                stroke="rgba(196,162,207,0.15)"
-                strokeWidth="1.5"
-              />
-            );
-          })}
         </g>
-
-        {/* Rear wheel logo overlay */}
-        <foreignObject x="36" y="126" width="188" height="188">
+        {/* Rear wheel: logo fills entire wheel */}
+        <foreignObject x="30" y="120" width="200" height="200">
           <img
-            src="/DC_Bikes_Sin_Fondo.png"
+            src="/DC_Bikes_Giratorio.png"
             alt=""
             style={{
               width: "100%",
               height: "100%",
+              objectFit: "contain",
               transformOrigin: "center",
               animation: "wspin 3.2s linear infinite",
-              opacity: 0.7,
+              opacity: 0.75,
             }}
           />
         </foreignObject>
 
-        {/* Front wheel */}
+        {/* Front wheel — rim + logo spinning */}
         <g transform="translate(390, 220)">
           <circle
             cx="0"
             cy="0"
             r="100"
-            stroke="rgba(196,162,207,0.3)"
+            stroke="rgba(196,162,207,0.35)"
             strokeWidth="6"
           />
           <circle cx="0" cy="0" r="8" fill="rgba(196,162,207,0.5)" />
+          {/* Spokes on front wheel */}
           {Array.from({ length: 12 }).map((_, i) => {
             const angle = (i * 30 * Math.PI) / 180;
             return (

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, Tag } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Field } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
@@ -16,21 +16,46 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
+interface ProductInfo {
+  name: string
+  brand?: string | null
+  retail_price: number
+  discount_percent?: number | null
+}
+
 interface QuoteModalProps {
   productId: string | null
+  product?: ProductInfo
   onClose: () => void
 }
 
 type Status = 'idle' | 'loading' | 'success'
 
-export function QuoteModal({ productId, onClose }: QuoteModalProps) {
+function fmt(n: number) {
+  return n.toLocaleString('es-ES', { minimumFractionDigits: 0 })
+}
+
+export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
   const [status, setStatus] = useState<Status>('idle')
+
+  const pct = product?.discount_percent
+  const hasDiscount = pct != null && pct > 0
+  const finalPrice = hasDiscount && product
+    ? product.retail_price * (1 - pct / 100)
+    : product?.retail_price
+
+  const defaultMessage = product
+    ? `Hola, estoy interesado en el producto "${product.name}"${product.brand ? ` de ${product.brand}` : ''}. Me gustaría recibir más información y un presupuesto personalizado.`
+    : ''
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema) })
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { message: defaultMessage },
+  })
 
   const onSubmit = async (data: FormData) => {
     setStatus('loading')
@@ -63,7 +88,7 @@ export function QuoteModal({ productId, onClose }: QuoteModalProps) {
     <Modal
       open
       onClose={onClose}
-      title={productId ? 'Pedir presupuesto' : 'Consulta general'}
+      title={product ? 'Pedir presupuesto' : 'Consulta general'}
       size="md"
     >
       {status === 'success' ? (
@@ -78,6 +103,38 @@ export function QuoteModal({ productId, onClose }: QuoteModalProps) {
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
+          {/* Product summary card */}
+          {product && (
+            <div className="flex items-center gap-4 bg-[var(--color-ink)] border border-[var(--color-card-hover)] rounded-xl px-4 py-3.5">
+              <div className="flex-1 min-w-0">
+                {product.brand && (
+                  <p className="text-xs font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-0.5">
+                    {product.brand}
+                  </p>
+                )}
+                <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] text-sm leading-tight truncate">
+                  {product.name}
+                </p>
+              </div>
+              <div className="shrink-0 text-right">
+                <p className="font-[var(--font-display)] text-lg text-[var(--color-lavender)] tracking-wide leading-none">
+                  {fmt(finalPrice ?? product.retail_price)} €
+                </p>
+                {hasDiscount && (
+                  <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                    <span className="text-[var(--color-mid)] text-xs line-through font-[var(--font-cond)]">
+                      {fmt(product.retail_price)} €
+                    </span>
+                    <span className="inline-flex items-center gap-0.5 text-[10px] font-[var(--font-cond)] font-bold bg-[var(--color-brand-red)] text-white px-1.5 py-0.5 rounded">
+                      <Tag size={8} />
+                      -{pct}%
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <Field
             label="Email"
             type="email"

@@ -25,6 +25,7 @@ export interface ProductFormValues {
   description: string
   cost_price: string
   retail_price: string
+  discount_percent: string
   stock: string
   featured: boolean
   active: boolean
@@ -57,6 +58,7 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
       description: product?.description ?? '',
       cost_price: product?.cost_price != null ? String(product.cost_price) : '',
       retail_price: product?.retail_price != null ? String(product.retail_price) : '',
+      discount_percent: product?.discount_percent != null ? String(product.discount_percent) : '',
       stock: String(product?.stock ?? 0),
       featured: product?.featured ?? false,
       active: product?.active ?? true,
@@ -182,6 +184,20 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
           min="0"
           error={errors.retail_price?.message}
           {...register('retail_price', { required: 'PVP requerido' })}
+        />
+
+        <Field
+          label="Descuento (%)"
+          type="number"
+          min="0"
+          max="100"
+          step="1"
+          placeholder="Sin descuento"
+          {...register('discount_percent', {
+            min: { value: 0, message: 'Mínimo 0' },
+            max: { value: 100, message: 'Máximo 100' },
+          })}
+          error={errors.discount_percent?.message}
         />
 
         <Field

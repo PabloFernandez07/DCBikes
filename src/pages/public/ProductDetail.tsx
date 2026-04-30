@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { QuoteModal } from '@/components/public/QuoteModal'
 import type { Product, ProductImage, Category } from '@/lib/database.types'
 
-function useReveal() {
+function useReveal(deps: unknown[] = []) {
   const ref = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
     const el = ref.current
@@ -19,7 +19,8 @@ function useReveal() {
     )
     el.querySelectorAll('.rv').forEach(el => obs.observe(el))
     return () => obs.disconnect()
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps)
   return ref
 }
 
@@ -31,7 +32,7 @@ export default function ProductDetail() {
   const [category, setCategory] = useState<Category | null>(null)
   const [loading, setLoading] = useState(true)
   const [quoteOpen, setQuoteOpen] = useState(false)
-  const pageRef = useReveal()
+  const pageRef = useReveal([product])
 
   useEffect(() => {
     if (!slug) return
@@ -66,14 +67,14 @@ export default function ProductDetail() {
       })
   }, [slug, navigate])
 
-  const carouselImages = images.map(img => ({
-    url: img.storage_path,
-    alt: img.alt ?? product?.name ?? 'Producto',
-  }))
+  const carouselImages = images.map(img => {
+    const { data } = supabase.storage.from('product-images').getPublicUrl(img.storage_path)
+    return { url: data.publicUrl, alt: img.alt ?? product?.name ?? 'Producto' }
+  })
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid lg:grid-cols-2 gap-12 animate-pulse">
           <div className="aspect-square bg-[var(--color-card)] rounded-2xl" />
           <div className="flex flex-col gap-4">
@@ -90,7 +91,7 @@ export default function ProductDetail() {
   if (!product) return null
 
   return (
-    <div ref={pageRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div ref={pageRef} className="w-full px-4 sm:px-6 lg:px-8 py-10">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 mb-8 text-sm text-[var(--color-mid)] font-[var(--font-cond)]" aria-label="Navegación de migas">
         <Link to="/" className="hover:text-[var(--color-cream)] transition-colors">Inicio</Link>
@@ -135,12 +136,38 @@ export default function ProductDetail() {
           )}
 
           {/* Price */}
-          <div className="flex items-baseline gap-2">
-            <span className="font-[var(--font-display)] text-4xl text-[var(--color-lavender)] tracking-wide">
-              {product.retail_price.toLocaleString('es-ES', { minimumFractionDigits: 0 })} €
-            </span>
-            <span className="text-[var(--color-mid)] font-[var(--font-cond)] text-sm tracking-wide">PVP</span>
-          </div>
+          {(() => {
+            const pct = product.discount_percent
+            const hasDiscount = pct != null && pct > 0
+            const finalPrice = hasDiscount
+              ? product.retail_price * (1 - pct / 100)
+              : product.retail_price
+            const fmt = (n: number) => n.toLocaleString('es-ES', { minimumFractionDigits: 0 })
+            return (
+              <div className="flex flex-col gap-1">
+                {hasDiscount && (
+                  <div className="flex items-center gap-2">
+                    <span className="bg-[var(--color-brand-red)] text-white text-sm font-[var(--font-cond)] font-bold tracking-wide px-2.5 py-1 rounded-lg">
+                      -{pct}% DESCUENTO
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-baseline gap-3">
+                  <span className="font-[var(--font-display)] text-4xl text-[var(--color-lavender)] tracking-wide">
+                    {fmt(finalPrice)} €
+                  </span>
+                  {hasDiscount && (
+                    <span className="font-[var(--font-cond)] text-xl text-[var(--color-mid)] line-through">
+                      {fmt(product.retail_price)} €
+                    </span>
+                  )}
+                </div>
+                {!hasDiscount && (
+                  <span className="text-[var(--color-mid)] font-[var(--font-cond)] text-sm tracking-wide">PVP</span>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Stock */}
           <div className="flex items-center gap-2">
@@ -181,7 +208,18 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {quoteOpen && <QuoteModal productId={product.id} onClose={() => setQuoteOpen(false)} />}
+      {quoteOpen && (
+        <QuoteModal
+          productId={product.id}
+          product={{
+            name: product.name,
+            brand: product.brand,
+            retail_price: product.retail_price,
+            discount_percent: product.discount_percent,
+          }}
+          onClose={() => setQuoteOpen(false)}
+        />
+      )}
     </div>
   )
 }

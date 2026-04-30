@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { MapPin, Phone, Clock } from 'lucide-react'
+import { MapPin, Phone, Clock, ArrowRight, MessageCircle, Navigation } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { QuoteModal } from '@/components/public/QuoteModal'
+import { Button } from '@/components/ui/Button'
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-      <circle cx="12" cy="12" r="4"/>
-      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
     </svg>
   )
 }
@@ -14,13 +17,10 @@ function InstagramIcon({ size = 20 }: { size?: number }) {
 function FacebookIcon({ size = 20 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
     </svg>
   )
 }
-import { supabase } from '@/lib/supabase'
-import { QuoteModal } from '@/components/public/QuoteModal'
-import { Button } from '@/components/ui/Button'
 
 interface SiteSettings {
   address?: string
@@ -60,38 +60,141 @@ export default function Contact() {
       .then(({ data }) => {
         if (!data) return
         const obj: SiteSettings = {}
-        data.forEach(row => {
-          (obj as Record<string, unknown>)[row.key] = row.value
-        })
+        data.forEach(row => { (obj as Record<string, unknown>)[row.key] = row.value })
         setSettings(obj)
       })
   }, [])
 
   const defaultEmbedSrc =
-    'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2905.8!2d-3.8202!3d43.3961!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd4967c3c2d18b2b%3A0x0!2sEl%20Astillero%2C%20Cantabria!5e0!3m2!1ses!2ses!4v1680000000000!5m2!1ses!2ses'
+    'https://maps.google.com/maps?q=DC+Bikes+Cantabria%2C+C.+la+Cant%C3%A1brica%2C+39610+Astillero%2C+Cantabria&output=embed&z=17'
+
+  const phone = settings.phone ?? null
+  const address = settings.address ?? null
+  const hours = settings.hours ?? null
 
   return (
     <div ref={pageRef}>
-      {/* Header */}
-      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <p className="rv font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-3">
-          Dónde estamos
-        </p>
-        <h1 className="rv font-[var(--font-display)] text-7xl text-[var(--color-cream)] tracking-wide leading-none">
+      {/* Hero */}
+      <section className="relative py-28 overflow-hidden">
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{ background: 'radial-gradient(ellipse 60% 60% at 15% 50%, rgba(196,162,207,0.07) 0%, transparent 70%)' }}
+        />
+        <span className="absolute right-0 top-1/2 -translate-y-1/2 font-[var(--font-display)] text-[20vw] leading-none text-[rgba(196,162,207,0.03)] select-none pointer-events-none" aria-hidden="true">
           CONTACTO
-        </h1>
+        </span>
+        <div className="w-full px-4 sm:px-6 lg:px-8 relative">
+          <p className="rv font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-4">
+            Dónde estamos
+          </p>
+          <h1 className="rv font-[var(--font-display)] text-8xl lg:text-[10rem] text-[var(--color-cream)] tracking-wide leading-none">
+            VISÍTANOS
+          </h1>
+          <p className="rv mt-8 text-[var(--color-mid)] font-[var(--font-body)] text-xl max-w-2xl leading-relaxed" style={{ transitionDelay: '100ms' }}>
+            Estamos en El Astillero, Cantabria. Pásate por la tienda, llámanos o escríbenos — te atendemos con mucho gusto.
+          </p>
+          <div className="rv flex flex-wrap gap-4 mt-10" style={{ transitionDelay: '180ms' }}>
+            <Button variant="primary" size="lg" onClick={() => setQuoteOpen(true)} className="font-[var(--font-display)] tracking-widest text-lg">
+              <MessageCircle size={18} />
+              Enviar consulta
+            </Button>
+            {phone && (
+              <a href={`tel:${phone}`}>
+                <Button variant="secondary" size="lg" className="font-[var(--font-cond)] tracking-wide">
+                  <Phone size={16} />
+                  Llamar ahora
+                </Button>
+              </a>
+            )}
+          </div>
+        </div>
       </section>
 
-      {/* Map + contact info */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="rv grid lg:grid-cols-2 gap-8">
-          {/* Map */}
-          <div className="rounded-2xl overflow-hidden bg-[var(--color-card)] h-[400px] lg:h-auto min-h-[400px]">
+      {/* Info cards strip */}
+      <section className="border-y border-[var(--color-card)] bg-[var(--color-ink-deep)] py-0">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="rv grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[var(--color-card)]">
+
+            {/* Dirección */}
+            <div className="flex items-start gap-4 py-8 sm:pr-8">
+              <div className="w-12 h-12 rounded-xl bg-[rgba(196,162,207,0.1)] flex items-center justify-center shrink-0">
+                <MapPin size={22} className="text-[var(--color-lavender)]" />
+              </div>
+              <div>
+                <p className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-mid)] mb-1">Dirección</p>
+                {address ? (
+                  <p className="font-[var(--font-body)] text-sm text-[var(--color-cream)] leading-relaxed">{address}</p>
+                ) : (
+                  <address className="not-italic font-[var(--font-body)] text-sm leading-relaxed">
+                    <span className="block text-[var(--color-cream)]">C. la Cantábrica, bloque 2 n, 1 BAJO</span>
+                    <span className="block text-[var(--color-cream)]">39610 Astillero, Cantabria</span>
+                  </address>
+                )}
+                <a
+                  href="https://maps.app.goo.gl/E2dajUcN3rA2fvc57"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-2 text-xs font-[var(--font-cond)] text-[var(--color-lavender)] hover:underline tracking-wide"
+                >
+                  <Navigation size={11} />
+                  Cómo llegar
+                </a>
+              </div>
+            </div>
+
+            {/* Teléfono */}
+            <div className="flex items-start gap-4 py-8 sm:px-8">
+              <div className="w-12 h-12 rounded-xl bg-[rgba(196,162,207,0.1)] flex items-center justify-center shrink-0">
+                <Phone size={22} className="text-[var(--color-lavender)]" />
+              </div>
+              <div>
+                <p className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-mid)] mb-1">Teléfono</p>
+                {phone ? (
+                  <a href={`tel:${phone}`} className="font-[var(--font-display)] text-2xl text-[var(--color-cream)] tracking-wide hover:text-[var(--color-lavender)] transition-colors">
+                    {phone}
+                  </a>
+                ) : (
+                  <span className="font-[var(--font-body)] text-sm text-[var(--color-mid)]">Configurable desde admin</span>
+                )}
+                <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)] mt-1">Respondemos en &lt; 24h</p>
+              </div>
+            </div>
+
+            {/* Horario */}
+            <div className="flex items-start gap-4 py-8 sm:pl-8">
+              <div className="w-12 h-12 rounded-xl bg-[rgba(196,162,207,0.1)] flex items-center justify-center shrink-0">
+                <Clock size={22} className="text-[var(--color-lavender)]" />
+              </div>
+              <div>
+                <p className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-mid)] mb-1">Horario</p>
+                {hours ? (
+                  <p className="font-[var(--font-body)] text-sm text-[var(--color-cream)] whitespace-pre-line leading-relaxed">{hours}</p>
+                ) : (
+                  <div className="font-[var(--font-body)] text-sm text-[var(--color-cream)] space-y-0.5">
+                    <p>Lun – Vie: 9:00 – 14:00 · 16:00 – 20:00</p>
+                    <p>Sábado: 10:00 – 14:00</p>
+                    <p className="text-[var(--color-mid)] text-xs mt-1">Domingo: cerrado</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* Map + social */}
+      <section className="py-20 w-full px-4 sm:px-6 lg:px-8">
+        <div className="rv grid lg:grid-cols-3 gap-6">
+
+          {/* Map — ocupa 2/3 */}
+          <div className="lg:col-span-2 rounded-2xl overflow-hidden bg-[var(--color-card)] h-[420px]">
             <iframe
               src={settings.maps_embed ?? defaultEmbedSrc}
               width="100%"
               height="100%"
-              style={{ border: 0, minHeight: '400px' }}
+              style={{ border: 0 }}
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
@@ -99,81 +202,79 @@ export default function Contact() {
             />
           </div>
 
-          {/* Contact details */}
-          <div className="flex flex-col gap-6 p-8 lg:p-10 bg-[var(--color-card)] rounded-2xl border border-[var(--color-mid)]/10">
-            <h2 className="font-[var(--font-cond)] text-2xl font-semibold text-[var(--color-cream)] tracking-wide">
-              Información de contacto
-            </h2>
-
-            <div className="flex flex-col gap-5">
-              <div className="flex items-start gap-3">
-                <MapPin size={18} className="text-[var(--color-lavender)] mt-0.5 shrink-0" />
-                <div>
-                  <p className="font-[var(--font-cond)] text-sm text-[var(--color-mid)] tracking-widest uppercase mb-1">Dirección</p>
-                  <p className="text-[var(--color-cream)] font-[var(--font-body)] text-sm">
-                    {settings.address ?? 'El Astillero, Cantabria'}
-                  </p>
-                </div>
-              </div>
-
-              {settings.phone && (
-                <div className="flex items-start gap-3">
-                  <Phone size={18} className="text-[var(--color-lavender)] mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-[var(--font-cond)] text-sm text-[var(--color-mid)] tracking-widest uppercase mb-1">Teléfono</p>
-                    <a
-                      href={`tel:${settings.phone}`}
-                      className="text-[var(--color-cream)] font-[var(--font-body)] text-sm hover:text-[var(--color-lavender)] transition-colors"
-                    >
-                      {settings.phone}
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {settings.hours && (
-                <div className="flex items-start gap-3">
-                  <Clock size={18} className="text-[var(--color-lavender)] mt-0.5 shrink-0" />
-                  <div>
-                    <p className="font-[var(--font-cond)] text-sm text-[var(--color-mid)] tracking-widest uppercase mb-1">Horario</p>
-                    <p className="text-[var(--color-cream)] font-[var(--font-body)] text-sm whitespace-pre-line">
-                      {settings.hours}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-2">
-                {settings.instagram && (
+          {/* Side panel — 1/3 */}
+          <div className="flex flex-col gap-5">
+            {/* Redes sociales */}
+            <div className="p-6 rounded-2xl bg-[var(--color-card)] border border-[var(--color-card-hover)] flex-1">
+              <p className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-mid)] mb-4">Síguenos</p>
+              <div className="flex flex-col gap-3">
+                {settings.instagram ? (
                   <a
                     href={settings.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-card)] text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:border-[rgba(196,162,207,0.3)] transition-all text-sm font-[var(--font-cond)]"
-                    aria-label="Instagram"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-ink)] hover:bg-[rgba(196,162,207,0.08)] border border-transparent hover:border-[rgba(196,162,207,0.2)] transition-all group"
                   >
-                    <InstagramIcon size={16} />
-                    Instagram
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-[var(--color-lavender)] group-hover:scale-110 transition-transform">
+                      <InstagramIcon size={18} />
+                    </div>
+                    <div>
+                      <p className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)] tracking-wide">Instagram</p>
+                      <p className="text-xs text-[var(--color-mid)]">@dcbikescantabria</p>
+                    </div>
+                    <ArrowRight size={14} className="ml-auto text-[var(--color-mid)] group-hover:text-[var(--color-lavender)] transition-colors" />
                   </a>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-ink)] border border-[var(--color-card-hover)]">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-[var(--color-lavender)]">
+                      <InstagramIcon size={18} />
+                    </div>
+                    <div>
+                      <p className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)] tracking-wide">Instagram</p>
+                      <p className="text-xs text-[var(--color-mid)]">Configurable desde admin</p>
+                    </div>
+                  </div>
                 )}
-                {settings.facebook && (
+                {settings.facebook ? (
                   <a
                     href={settings.facebook}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-card)] text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:border-[rgba(196,162,207,0.3)] transition-all text-sm font-[var(--font-cond)]"
-                    aria-label="Facebook"
+                    className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-ink)] hover:bg-[rgba(196,162,207,0.08)] border border-transparent hover:border-[rgba(196,162,207,0.2)] transition-all group"
                   >
-                    <FacebookIcon size={16} />
-                    Facebook
+                    <div className="w-9 h-9 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                      <FacebookIcon size={18} />
+                    </div>
+                    <div>
+                      <p className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)] tracking-wide">Facebook</p>
+                      <p className="text-xs text-[var(--color-mid)]">DC Bikes Cantabria</p>
+                    </div>
+                    <ArrowRight size={14} className="ml-auto text-[var(--color-mid)] group-hover:text-[var(--color-lavender)] transition-colors" />
                   </a>
+                ) : (
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-ink)] border border-[var(--color-card-hover)]">
+                    <div className="w-9 h-9 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
+                      <FacebookIcon size={18} />
+                    </div>
+                    <div>
+                      <p className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)] tracking-wide">Facebook</p>
+                      <p className="text-xs text-[var(--color-mid)]">Configurable desde admin</p>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
 
-            <div className="pt-4 border-t border-[var(--color-mid)]/20">
-              <p className="text-[var(--color-mid)] text-sm mb-4 font-[var(--font-body)]">
-                ¿Tienes alguna consulta? Envíanos un mensaje y te responderemos lo antes posible.
+            {/* CTA consulta */}
+            <div
+              className="p-6 rounded-2xl relative overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, rgba(196,162,207,0.12) 0%, rgba(196,162,207,0.04) 100%)', border: '1px solid rgba(196,162,207,0.2)' }}
+            >
+              <p className="font-[var(--font-display)] text-2xl text-[var(--color-cream)] tracking-wide mb-2">
+                ¿TIENES DUDAS?
+              </p>
+              <p className="text-[var(--color-mid)] font-[var(--font-body)] text-sm leading-relaxed mb-5">
+                Escríbenos y te respondemos en menos de 24 horas.
               </p>
               <Button
                 variant="primary"
@@ -181,7 +282,8 @@ export default function Contact() {
                 onClick={() => setQuoteOpen(true)}
                 className="w-full font-[var(--font-cond)] tracking-wide"
               >
-                Enviar consulta
+                <MessageCircle size={16} />
+                Enviar mensaje
               </Button>
             </div>
           </div>

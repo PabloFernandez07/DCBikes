@@ -2,11 +2,13 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useTheme } from '@/hooks/useTheme'
 import { Nav } from '@/components/layout/Nav'
 import { Footer } from '@/components/layout/Footer'
+import { CookieBanner } from '@/components/layout/CookieBanner'
 import Home from '@/pages/public/Home'
 import Catalog from '@/pages/public/Catalog'
 import ProductDetail from '@/pages/public/ProductDetail'
 import Workshop from '@/pages/public/Workshop'
 import Contact from '@/pages/public/Contact'
+import CookiePolicy from '@/pages/public/CookiePolicy'
 import { AdminRoutes } from '@/routes/AdminRoutes'
 
 function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -20,7 +22,7 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  useTheme() // applies dark/light class to <html>
+  useTheme()
   return (
     <BrowserRouter>
       <Routes>
@@ -29,8 +31,10 @@ export default function App() {
         <Route path="/producto/:slug" element={<PublicLayout><ProductDetail /></PublicLayout>} />
         <Route path="/taller" element={<PublicLayout><Workshop /></PublicLayout>} />
         <Route path="/contacto" element={<PublicLayout><Contact /></PublicLayout>} />
+        <Route path="/cookies" element={<PublicLayout><CookiePolicy /></PublicLayout>} />
         <Route path="/admin/*" element={<AdminRoutes />} />
       </Routes>
+      <CookieBanner />
     </BrowserRouter>
   )
 }

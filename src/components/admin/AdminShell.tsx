@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
@@ -10,6 +10,7 @@ import {
   X,
   LogOut,
   Bike,
+  ArrowLeft,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useAuth } from '@/hooks/useAuth'
@@ -104,6 +105,13 @@ export function AdminShell() {
             {user?.email ?? 'admin'}
           </p>
         </div>
+        <Link
+          to="/"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-[var(--font-cond)] font-medium tracking-wide text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)] transition-all duration-150 mb-0.5"
+        >
+          <ArrowLeft size={16} className="shrink-0" />
+          Volver a la tienda
+        </Link>
         <button
           onClick={handleSignOut}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-[var(--font-cond)] font-medium tracking-wide text-[var(--color-mid)] hover:text-[var(--color-brand-red)] hover:bg-[var(--color-brand-red)]/10 transition-all duration-150"

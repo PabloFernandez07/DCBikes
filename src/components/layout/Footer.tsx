@@ -52,10 +52,10 @@ export function Footer() {
 
   return (
     <footer className="bg-[var(--color-ink-deep)] border-t border-[var(--color-card)] mt-24">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           <div className="flex flex-col gap-4">
-            <img src="/DC_Bikes_Sin_Fondo.png" alt="DC Bikes" className="h-10 w-auto" />
+            <img src="/DC_Bikes_Sin_Fondo.png" alt="DC Bikes" className="h-20 w-auto max-w-[200px] object-contain block" />
             <p className="text-[var(--color-mid)] font-[var(--font-body)] text-sm leading-relaxed">
               DC Bikes Cantabria · El Astillero
               <br />
@@ -148,11 +148,11 @@ export function Footer() {
             © {year} DC Bikes Cantabria. Todos los derechos reservados.
           </p>
           <div className="flex gap-4">
-            {['Aviso legal', 'Privacidad', 'Cookies'].map(label => (
-              <span key={label} className="text-[var(--color-mid)] text-xs cursor-default hover:text-[var(--color-mid)]/70 transition-colors">
-                {label}
-              </span>
-            ))}
+            <Link to="/cookies" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
+              Política de cookies
+            </Link>
+            <span className="text-[var(--color-mid)] text-xs cursor-default">Aviso legal</span>
+            <span className="text-[var(--color-mid)] text-xs cursor-default">Privacidad</span>
           </div>
         </div>
       </div>
