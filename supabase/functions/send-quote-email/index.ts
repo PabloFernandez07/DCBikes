@@ -2,84 +2,147 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
+const FROM_EMAIL     = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev'
+const FROM_NAME      = 'DC Bikes Cantabria'
+
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' },
-    })
+    return new Response(null, { headers: CORS })
   }
 
+  const ts = () => new Date().toISOString()
+
   try {
-    const { quote_id } = await req.json()
-    if (!quote_id) return new Response(JSON.stringify({ error: 'quote_id required' }), { status: 400 })
+    const body = await req.json()
+    const { quote_id } = body
+    console.log(`[${ts()}] [1/5] Recibido quote_id:`, quote_id)
+
+    if (!quote_id) {
+      console.error(`[${ts()}] ✗ quote_id vacío o ausente`)
+      return new Response(JSON.stringify({ error: 'quote_id required' }), { status: 400, headers: CORS })
+    }
+
+    // Verificar que RESEND_API_KEY está configurada
+    if (!RESEND_API_KEY) {
+      console.error(`[${ts()}] ✗ RESEND_API_KEY no está configurada en los secrets de la función`)
+      throw new Error('RESEND_API_KEY no configurada')
+    }
+    console.log(`[${ts()}] [1/5] RESEND_API_KEY presente: sí (${RESEND_API_KEY.slice(0, 8)}...)`)
+    console.log(`[${ts()}] [1/5] FROM_EMAIL:`, FROM_EMAIL)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    // Leer la consulta
+    // PASO 2 — Leer la consulta
+    console.log(`[${ts()}] [2/5] Buscando quote en BD...`)
     const { data: quote, error: qErr } = await supabase
       .from('quote_requests')
       .select('*, products(name, slug)')
       .eq('id', quote_id)
       .single()
-    if (qErr || !quote) throw new Error('Quote not found')
 
-    // Leer email destino de settings
-    const { data: setting } = await supabase
+    if (qErr || !quote) {
+      console.error(`[${ts()}] ✗ Quote no encontrado:`, qErr?.message ?? 'no data')
+      throw new Error('Quote not found: ' + (qErr?.message ?? 'no data'))
+    }
+    console.log(`[${ts()}] [2/5] Quote encontrado — email cliente:`, quote.email, '· producto:', (quote.products as { name: string } | null)?.name ?? 'ninguno')
+
+    // PASO 3 — Leer email destino
+    console.log(`[${ts()}] [3/5] Leyendo quote_destination_email de settings...`)
+    const { data: setting, error: sErr } = await supabase
       .from('settings')
       .select('value')
       .eq('key', 'quote_destination_email')
       .single()
-    const destination = (setting?.value as string) ?? 'info@dcbikescantabria.es'
 
-    const productName = (quote.products as { name: string } | null)?.name ?? 'sin producto específico'
+    if (sErr) {
+      console.warn(`[${ts()}] ⚠ No se encontró quote_destination_email en settings:`, sErr.message, '— usando fallback')
+    }
+
+    const rawDestination = (setting?.value as string | null) ?? '"info@dcbikescantabria.es"'
+    const destination    = rawDestination.replace(/^"|"$/g, '')
+    console.log(`[${ts()}] [3/5] Email destino:`, destination)
+
+    // PASO 4 — Construir y enviar email
+    const productName = (quote.products as { name: string } | null)?.name ?? 'Consulta general (taller)'
+    const receivedAt  = new Date(quote.created_at).toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })
 
     const html = `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-        <div style="background:#1A1620;padding:24px;text-align:center">
-          <h1 style="color:#C4A2CF;font-size:28px;margin:0">DC Bikes Cantabria</h1>
-          <p style="color:#7E6E8A;margin:4px 0 0">Nueva consulta de presupuesto</p>
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8f8f8">
+        <div style="background:#1A1620;padding:28px 32px;text-align:center">
+          <p style="color:#C4A2CF;font-size:11px;letter-spacing:3px;text-transform:uppercase;margin:0 0 6px">Nueva consulta de presupuesto</p>
+          <h1 style="color:#EEF3F8;font-size:26px;margin:0;letter-spacing:1px">DC Bikes Cantabria</h1>
+          <p style="color:#7E6E8A;font-size:12px;margin:6px 0 0">El Astillero · Cantabria</p>
         </div>
-        <div style="padding:32px;background:#fff;border:1px solid #eee">
-          <table style="width:100%;border-collapse:collapse">
-            <tr><td style="padding:8px 0;color:#666;width:140px">Producto</td>
-                <td style="padding:8px 0;font-weight:600">${productName}</td></tr>
-            <tr><td style="padding:8px 0;color:#666">Email</td>
-                <td style="padding:8px 0">${quote.email}</td></tr>
-            <tr><td style="padding:8px 0;color:#666">Teléfono</td>
-                <td style="padding:8px 0">${quote.phone ?? '—'}</td></tr>
-            <tr><td style="padding:8px 0;color:#666;vertical-align:top">Mensaje</td>
-                <td style="padding:8px 0">${quote.message ?? '—'}</td></tr>
+        <div style="padding:32px;background:#ffffff;border:1px solid #e8e8e8">
+          <table style="width:100%;border-collapse:collapse;font-size:14px">
+            <tr style="border-bottom:1px solid #f0f0f0">
+              <td style="padding:12px 0;color:#999;width:130px;font-size:12px;text-transform:uppercase;letter-spacing:1px">Producto</td>
+              <td style="padding:12px 0;font-weight:600;color:#1A1620">${productName}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0">
+              <td style="padding:12px 0;color:#999;font-size:12px;text-transform:uppercase;letter-spacing:1px">Email</td>
+              <td style="padding:12px 0"><a href="mailto:${quote.email}" style="color:#C4A2CF;text-decoration:none">${quote.email}</a></td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0">
+              <td style="padding:12px 0;color:#999;font-size:12px;text-transform:uppercase;letter-spacing:1px">Teléfono</td>
+              <td style="padding:12px 0;color:#333">${quote.phone ? `<a href="tel:${quote.phone}" style="color:#C4A2CF;text-decoration:none">${quote.phone}</a>` : '—'}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;color:#999;font-size:12px;text-transform:uppercase;letter-spacing:1px;vertical-align:top">Mensaje</td>
+              <td style="padding:12px 0;color:#333;line-height:1.6">${(quote.message ?? '—').replace(/\n/g, '<br>')}</td>
+            </tr>
           </table>
         </div>
-        <div style="background:#f5f5f5;padding:16px;text-align:center;font-size:12px;color:#999">
-          Consulta recibida el ${new Date(quote.created_at).toLocaleString('es-ES')}
+        <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #e8e8e8">
+          Recibido el ${receivedAt} · <a href="https://dcbikescantabria.es/admin/consultas" style="color:#C4A2CF;text-decoration:none">Ver en el panel</a>
         </div>
       </div>`
 
-    const res = await fetch('https://api.resend.com/emails', {
+    console.log(`[${ts()}] [4/5] Llamando a Resend API — from: ${FROM_NAME} <${FROM_EMAIL}> → to: ${destination}`)
+
+    const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${RESEND_API_KEY}` },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+      },
       body: JSON.stringify({
-        from:    'DC Bikes Cantabria <noreply@dcbikescantabria.es>',
-        to:      [destination.replace(/^"|"$/g, '')],
-        subject: `💬 Consulta presupuesto: ${productName}`,
+        from:    `${FROM_NAME} <${FROM_EMAIL}>`,
+        to:      [destination],
+        subject: `💬 Nueva consulta: ${productName}`,
         html,
       }),
     })
 
-    if (!res.ok) throw new Error(await res.text())
+    const resendBody = await resendRes.json()
+    console.log(`[${ts()}] [4/5] Resend HTTP status:`, resendRes.status)
+    console.log(`[${ts()}] [4/5] Resend respuesta:`, JSON.stringify(resendBody))
 
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    if (!resendRes.ok) {
+      console.error(`[${ts()}] ✗ Resend rechazó el email:`, JSON.stringify(resendBody))
+      throw new Error(JSON.stringify(resendBody))
+    }
+
+    // PASO 5 — Éxito
+    console.log(`[${ts()}] [5/5] ✓ Email enviado correctamente. Resend ID:`, resendBody.id)
+    return new Response(JSON.stringify({ ok: true, email_id: resendBody.id }), {
+      headers: { 'Content-Type': 'application/json', ...CORS },
     })
+
   } catch (err) {
+    console.error(`[${ts()}] ✗ Error fatal en send-quote-email:`, String(err))
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Content-Type': 'application/json', ...CORS },
     })
   }
 })

@@ -5,6 +5,7 @@ import { twMerge } from 'tailwind-merge'
 interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
   label: string
   error?: string
+  helpText?: string
   required?: boolean
   as?: 'input' | 'textarea'
   rows?: number
@@ -12,7 +13,7 @@ interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement | HTMLTe
 }
 
 export const Field = forwardRef<HTMLInputElement & HTMLTextAreaElement, FieldProps>(
-  ({ label, error, required, as: Tag = 'input', rows = 4, className, id, ...props }, ref) => {
+  ({ label, error, helpText, required, as: Tag = 'input', rows = 4, className, id, ...props }, ref) => {
     const fieldId = id ?? label.toLowerCase().replace(/\s+/g, '-')
 
     const inputClasses = twMerge(
@@ -58,6 +59,11 @@ export const Field = forwardRef<HTMLInputElement & HTMLTextAreaElement, FieldPro
           />
         )}
 
+        {helpText && !error && (
+          <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)] leading-relaxed">
+            {helpText}
+          </p>
+        )}
         {error && (
           <p id={`${fieldId}-error`} className="text-xs text-[var(--color-brand-red)] font-[var(--font-body)]">
             {error}

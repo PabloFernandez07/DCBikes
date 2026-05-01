@@ -19,6 +19,7 @@ const SETTINGS_KEYS = [
   'store_phone',
   'store_hours',
   'quote_destination_email',
+  'reply_from_email',
   'social_instagram',
   'social_facebook',
 ] as const
@@ -135,23 +136,34 @@ export function Settings() {
               </div>
             </section>
 
-            {/* Section 2: Quote email */}
+            {/* Section 2: Email */}
             <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
               <div>
                 <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
-                  Email de presupuestos
+                  Configuración de email
                 </h2>
                 <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
-                  Las consultas de presupuesto serán enviadas a esta dirección
+                  Controla cómo llegan y se envían los emails de presupuesto
                 </p>
               </div>
 
               <Field
-                label="Email de destino"
+                label="Email donde recibes las solicitudes"
                 type="email"
                 required
+                placeholder="tu@email.com"
+                helpText="Aquí llegan los avisos cuando un cliente envía una solicitud de presupuesto."
                 value={v('quote_destination_email')}
                 onChange={e => set('quote_destination_email', (e.target as HTMLInputElement).value)}
+              />
+
+              <Field
+                label="Email de respuesta al cliente (Reply-To)"
+                type="email"
+                placeholder="info@dcbikescantabria.es"
+                helpText="Cuando respondas a un cliente desde el panel, este email aparece como remitente de respuesta. El cliente podrá responder directamente aquí."
+                value={v('reply_from_email')}
+                onChange={e => set('reply_from_email', (e.target as HTMLInputElement).value)}
               />
             </section>
 
