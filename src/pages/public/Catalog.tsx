@@ -7,6 +7,7 @@ import { trackSearch } from '@/lib/analytics'
 import { ProductCard } from '@/components/public/ProductCard'
 import { SearchBar } from '@/components/public/SearchBar'
 import type { Category, Product, ProductImage } from '@/lib/database.types'
+import { SEO } from '@/components/layout/SEO'
 
 type SortKey = 'name' | 'price_asc' | 'price_desc' | 'discount' | 'newest'
 
@@ -122,6 +123,11 @@ export default function Catalog() {
 
   return (
     <div className="w-full">
+      <SEO
+        title="Catálogo"
+        description="Explora nuestra selección de bicicletas de montaña, carretera, urbanas y eléctricas. Giant, Liv, Stevens y más marcas en El Astillero, Cantabria."
+        url="https://dcbikescantabria.es/catalogo"
+      />
       {/* Header */}
       <section className="relative py-20 overflow-hidden border-b border-[var(--color-card)]">
         <span className="absolute right-0 top-1/2 -translate-y-1/2 font-[var(--font-display)] text-[18vw] leading-none text-[rgba(196,162,207,0.03)] select-none pointer-events-none" aria-hidden="true">

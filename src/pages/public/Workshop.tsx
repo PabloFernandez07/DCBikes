@@ -3,6 +3,7 @@ import { Wrench, Settings, Star, ArrowRight, CheckCircle, Clock, Phone } from 'l
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { QuoteModal } from '@/components/public/QuoteModal'
+import { SEO } from '@/components/layout/SEO'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -58,6 +59,11 @@ export default function Workshop() {
 
   return (
     <div ref={pageRef}>
+      <SEO
+        title="Taller de bicicletas"
+        description="Taller especializado en reparación y mantenimiento de bicicletas en El Astillero. Mecánicos expertos, diagnóstico rápido y garantía en todos los trabajos."
+        url="https://dcbikescantabria.es/taller"
+      />
       {/* Hero */}
       <section className="relative py-28 overflow-hidden">
         <div

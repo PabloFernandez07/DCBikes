@@ -3,6 +3,8 @@ import { MapPin, Phone, Clock, ArrowRight, MessageCircle, Navigation } from 'luc
 import { supabase } from '@/lib/supabase'
 import { QuoteModal } from '@/components/public/QuoteModal'
 import { Button } from '@/components/ui/Button'
+import { SEO } from '@/components/layout/SEO'
+import { SCHEDULE, isOpenNow, todayLabel } from '@/lib/schedule'
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return (
@@ -72,8 +74,16 @@ export default function Contact() {
   const address = settings.address ?? null
   const hours = settings.hours ?? null
 
+  const open = isOpenNow()
+  const today = todayLabel()
+
   return (
     <div ref={pageRef}>
+      <SEO
+        title="Contacto y horarios"
+        description="Visítanos en El Astillero, Cantabria. Horarios, dirección, teléfono y mapa de DC Bikes Cantabria. Distribuidores Giant y Liv."
+        url="https://dcbikescantabria.es/contacto"
+      />
       {/* Hero */}
       <section className="relative py-28 overflow-hidden">
         <div
@@ -92,7 +102,7 @@ export default function Contact() {
             VISÍTANOS
           </h1>
           <p className="rv mt-8 text-[var(--color-mid)] font-[var(--font-body)] text-xl max-w-2xl leading-relaxed" style={{ transitionDelay: '100ms' }}>
-            Estamos en El Astillero, Cantabria. Pásate por la tienda, llámanos o escríbenos — te atendemos con mucho gusto.
+            Estamos en El Astillero, Cantabria. Pásate por la tienda, llámanos o escríbenos Te atendemos con mucho gusto.
           </p>
           <div className="rv flex flex-wrap gap-4 mt-10" style={{ transitionDelay: '180ms' }}>
             <Button variant="primary" size="lg" onClick={() => setQuoteOpen(true)} className="font-[var(--font-display)] tracking-widest text-lg">
@@ -166,15 +176,55 @@ export default function Contact() {
               <div className="w-12 h-12 rounded-xl bg-[rgba(196,162,207,0.1)] flex items-center justify-center shrink-0">
                 <Clock size={22} className="text-[var(--color-lavender)]" />
               </div>
-              <div>
-                <p className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-mid)] mb-1">Horario</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <p className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-mid)]">Horario</p>
+                  <span
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-[var(--font-cond)] tracking-wide"
+                    style={{
+                      background: open ? 'rgba(34,197,94,0.12)' : 'rgba(126,110,138,0.15)',
+                      color: open ? '#22c55e' : 'var(--color-mid)',
+                      border: `1px solid ${open ? 'rgba(34,197,94,0.3)' : 'rgba(126,110,138,0.2)'}`,
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: open ? '#22c55e' : 'var(--color-mid)' }}
+                    />
+                    {open ? 'Abierto ahora' : 'Cerrado ahora'}
+                  </span>
+                </div>
                 {hours ? (
                   <p className="font-[var(--font-body)] text-sm text-[var(--color-cream)] whitespace-pre-line leading-relaxed">{hours}</p>
                 ) : (
-                  <div className="font-[var(--font-body)] text-sm text-[var(--color-cream)] space-y-0.5">
-                    <p>Lun – Vie: 9:00 – 14:00 · 16:00 – 20:00</p>
-                    <p>Sábado: 10:00 – 14:00</p>
-                    <p className="text-[var(--color-mid)] text-xs mt-1">Domingo: cerrado</p>
+                  <div className="space-y-1">
+                    {SCHEDULE.map((day) => {
+                      const isToday = day.label === today
+                      const closed = !day.morning && !day.afternoon
+                      return (
+                        <div
+                          key={day.label}
+                          className="flex items-baseline gap-2 text-xs font-[var(--font-body)]"
+                        >
+                          <span
+                            className="w-20 font-[var(--font-cond)] tracking-wide shrink-0"
+                            style={{ color: isToday ? 'var(--color-lavender)' : 'var(--color-mid)' }}
+                          >
+                            {day.label}
+                          </span>
+                          <span style={{ color: closed ? 'var(--color-mid)' : 'var(--color-cream)' }}>
+                            {closed
+                              ? 'Cerrado'
+                              : [day.morning, day.afternoon].filter(Boolean).join(' · ')}
+                          </span>
+                          {isToday && (
+                            <span className="text-[var(--color-lavender)] text-[10px] font-[var(--font-cond)] tracking-widest uppercase">
+                              hoy
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </div>

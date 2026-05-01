@@ -7,6 +7,7 @@ import { ImageCarousel } from '@/components/ui/ImageCarousel'
 import { Button } from '@/components/ui/Button'
 import { QuoteModal } from '@/components/public/QuoteModal'
 import type { Product, ProductImage, Category } from '@/lib/database.types'
+import { SEO } from '@/components/layout/SEO'
 
 function useReveal(deps: unknown[] = []) {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -92,6 +93,12 @@ export default function ProductDetail() {
 
   return (
     <div ref={pageRef} className="w-full px-4 sm:px-6 lg:px-8 py-10">
+      <SEO
+        title={product.name}
+        description={product.short_description ?? `${product.name} disponible en DC Bikes Cantabria, El Astillero. ${product.brand ? `Marca: ${product.brand}.` : ''} Consulta precio y disponibilidad.`}
+        url={`https://dcbikescantabria.es/producto/${product.slug}`}
+        type="product"
+      />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 mb-8 text-sm text-[var(--color-mid)] font-[var(--font-cond)]" aria-label="Navegación de migas">
         <Link to="/" className="hover:text-[var(--color-cream)] transition-colors">Inicio</Link>
