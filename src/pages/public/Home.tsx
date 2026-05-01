@@ -277,7 +277,7 @@ export default function Home() {
           </svg>
         </div>
 
-        <div className="w-full px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center py-24 relative z-10">
+        <div className="w-full px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1fr_1.6fr] gap-8 items-center py-24 relative z-10">
           {/* Text side */}
           <div className="flex flex-col gap-7">
             {/* Badge */}
@@ -362,19 +362,22 @@ export default function Home() {
 
           {/* Bike illustration */}
           <div
-            className="relative flex items-center justify-center h-[440px] lg:h-[640px]"
+            className="relative flex items-center justify-center h-[420px] lg:h-[680px]"
             style={{ animation: "fadeUp 0.8s ease forwards 0.4s", opacity: 0 }}
           >
-            <div style={{ animation: "float 5s ease-in-out infinite" }}>
-              <BikeSVG />
+            <div
+              style={{ animation: "float 5s ease-in-out infinite" }}
+              className="w-[75%] mx-auto"
+            >
+              <BikePhoto />
             </div>
             {/* Glow under bike */}
             <div
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-96 h-10 rounded-full"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-12 rounded-full"
               style={{
                 background:
-                  "radial-gradient(ellipse, rgba(196,162,207,0.15) 0%, transparent 70%)",
-                filter: "blur(12px)",
+                  "radial-gradient(ellipse, rgba(196,162,207,0.18) 0%, transparent 70%)",
+                filter: "blur(18px)",
                 animation: "spulse 5s ease-in-out infinite",
               }}
             />
@@ -561,15 +564,21 @@ export default function Home() {
               "GIANT",
               "LIV",
               "STEVENS",
+              "SHIMANO",
+              "SRAM",
+              "ETXEONDO",
               "GIANT",
               "LIV",
               "STEVENS",
+              "SHIMANO",
+              "SRAM",
+              "ETXEONDO",
               "GIANT",
               "LIV",
               "STEVENS",
-              "GIANT",
-              "LIV",
-              "STEVENS",
+              "SHIMANO",
+              "SRAM",
+              "ETXEONDO",
             ].map((brand, i) => (
               <span
                 key={i}
@@ -706,142 +715,67 @@ export default function Home() {
   );
 }
 
-function BikeSVG() {
-  const spokes = Array.from({ length: 16 }, (_, i) => (i * Math.PI * 2) / 16);
-  // Rear wheel: (148,405) r=140 | Front wheel: (602,405) r=140
-  // BB: (330,405) | Seat top: (268,175) | Head tube: (545,170)→(562,227)
-  const RX = 148, RY = 405, FX = 602, FY = 405, R = 140;
-  const BBX = 330, BBY = 405;
-  const STX = 268, STY = 175;
-  const HTX1 = 545, HTY1 = 170, HTX2 = 562, HTY2 = 227;
+/**
+ * BikePhoto — muestra la foto real de la bici con fondo eliminado.
+ *
+ * PASOS para el usuario:
+ *  1. Sube la foto a https://remove.bg (gratis) para quitar el fondo blanco.
+ *  2. Descarga el PNG resultante y guárdalo en:
+ *       dc-bikes-web/public/bike-hero.png
+ *  3. Listo — el componente ya apunta a ese archivo.
+ *
+ * Posicionamiento del logo giratorio:
+ *  La rueda trasera en la foto Giant ocupa aprox.
+ *  left 5 %, top 33 %, width/height 38 % de la imagen.
+ *  Ajusta esos valores si usas otra foto.
+ */
+function BikePhoto() {
   return (
-    <div className="relative w-full h-full flex items-center justify-center select-none">
-      <svg
-        viewBox="0 0 800 560"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-full max-w-[780px] h-auto"
+    <div className="relative w-full select-none">
+      {/* Foto de la bici — PNG con fondo transparente */}
+      <img
+        src="/bike-hero.png"
+        alt="Bicicleta de carretera DC Bikes"
+        className="w-full h-auto block"
+        style={{
+          filter:
+            "drop-shadow(0 8px 48px rgba(196,162,207,0.22)) drop-shadow(0 0 24px rgba(196,162,207,0.10))",
+        }}
+        draggable={false}
+      />
+
+      {/*
+        Logo giratorio superpuesto sobre la RUEDA TRASERA.
+        La rueda trasera está en el lado IZQUIERDO de la foto.
+        Ajusta left / top / width si la posición no cuadra exactamente.
+      */}
+      <div
         aria-hidden="true"
+        style={{
+          position: "absolute",
+          left: "5%",
+          top: "33%",
+          width: "38%",
+          aspectRatio: "1",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+        }}
       >
-        {/* ── REAR WHEEL ── */}
-        <g transform={`translate(${RX},${RY})`}>
-          {/* Subtle dark fill so frame tubes don't bleed through */}
-          <circle cx="0" cy="0" r={R} fill="rgba(26,22,32,0.55)" stroke="rgba(196,162,207,0.4)" strokeWidth="5" />
-          {spokes.map((a, i) => (
-            <line key={i}
-              x1={Math.cos(a)*9} y1={Math.sin(a)*9}
-              x2={Math.cos(a)*(R-2)} y2={Math.sin(a)*(R-2)}
-              stroke="rgba(196,162,207,0.10)" strokeWidth="1" />
-          ))}
-          <circle cx="0" cy="0" r="9" fill="rgba(196,162,207,0.55)" />
-        </g>
-        {/* Spinning logo — centered on rear axle */}
-        <foreignObject x={RX - 128} y={RY - 128} width="256" height="256">
-          <img src="/DC_Bikes_Giratorio.png" alt=""
-            style={{ width:"100%", height:"100%", objectFit:"contain",
-              transformOrigin:"center", animation:"wspin 3.2s linear infinite", opacity:0.78 }} />
-        </foreignObject>
-
-        {/* ── FRONT WHEEL ── */}
-        <g transform={`translate(${FX},${FY})`}>
-          <circle cx="0" cy="0" r={R} fill="rgba(26,22,32,0.55)" stroke="rgba(196,162,207,0.4)" strokeWidth="5" />
-          {spokes.map((a, i) => (
-            <line key={i}
-              x1={Math.cos(a)*9} y1={Math.sin(a)*9}
-              x2={Math.cos(a)*(R-2)} y2={Math.sin(a)*(R-2)}
-              stroke="rgba(196,162,207,0.26)" strokeWidth="1.2" />
-          ))}
-          <circle cx="0" cy="0" r="9" fill="rgba(196,162,207,0.55)" />
-        </g>
-
-        {/* ── FRAME — road bike diamond ──
-            Chain stays: BB → rear axle (horizontal)
-            Seat stays:  rear axle → seat top (twin thin tubes)
-            Seat tube:   BB → seat top
-            Top tube:    seat top → head tube top (nearly horizontal)
-            Down tube:   BB → head tube bottom (thickest)
-            Head tube:   head top → head bottom (short, steep)
-        */}
-        {/* Chain stays */}
-        <line x1={RX} y1={RY} x2={BBX} y2={BBY}
-          stroke="#C4A2CF" strokeWidth="5" strokeLinecap="round" />
-        {/* Seat stays — twin tubes */}
-        <line x1={RX} y1={RY} x2={STX-4} y2={STY}
-          stroke="#C4A2CF" strokeWidth="3" strokeLinecap="round" />
-        <line x1={RX+7} y1={RY} x2={STX+5} y2={STY}
-          stroke="#C4A2CF" strokeWidth="3" strokeLinecap="round" />
-        {/* Seat tube */}
-        <line x1={BBX} y1={BBY} x2={STX} y2={STY}
-          stroke="#C4A2CF" strokeWidth="7" strokeLinecap="round" />
-        {/* Top tube */}
-        <line x1={STX} y1={STY} x2={HTX1} y2={HTY1}
-          stroke="#C4A2CF" strokeWidth="6" strokeLinecap="round" />
-        {/* Down tube (thickest — aero) */}
-        <line x1={BBX} y1={BBY} x2={HTX2} y2={HTY2}
-          stroke="#C4A2CF" strokeWidth="10" strokeLinecap="round" />
-        {/* Head tube */}
-        <line x1={HTX1} y1={HTY1} x2={HTX2} y2={HTY2}
-          stroke="#C4A2CF" strokeWidth="13" strokeLinecap="round" />
-
-        {/* ── FORK — two blades with forward rake ── */}
-        <path d={`M${HTX2} ${HTY2} Q${HTX2+28} ${HTY2+70} ${FX} ${FY}`}
-          stroke="#C4A2CF" strokeWidth="6" fill="none" strokeLinecap="round" />
-        <path d={`M${HTX2+5} ${HTY2+3} Q${HTX2+33} ${HTY2+73} ${FX+5} ${FY}`}
-          stroke="#C4A2CF" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.45" />
-
-        {/* ── DRIVETRAIN ── */}
-        <circle cx={BBX} cy={BBY} r="17" stroke="#C4A2CF" strokeWidth="4"
-          fill="rgba(26,22,32,0.95)" />
-        <circle cx={BBX} cy={BBY} r="40" stroke="rgba(196,162,207,0.3)"
-          strokeWidth="2.5" strokeDasharray="8 5" />
-        {/* Crank arm ~5 o'clock */}
-        <line x1={BBX} y1={BBY} x2={BBX+34} y2={BBY+35}
-          stroke="#C4A2CF" strokeWidth="7" strokeLinecap="round" />
-        {/* Pedal */}
-        <line x1={BBX+23} y1={BBY+38} x2={BBX+45} y2={BBY+28}
-          stroke="#C4A2CF" strokeWidth="6.5" strokeLinecap="round" />
-
-        {/* ── SADDLE ── */}
-        {/* Seat post above seat tube */}
-        <line x1={STX} y1={STY} x2={STX-6} y2={STY-42}
-          stroke="#C4A2CF" strokeWidth="6" strokeLinecap="round" />
-        {/* Rails */}
-        <line x1={STX-32} y1={STY-42} x2={STX+24} y2={STY-42}
-          stroke="rgba(196,162,207,0.35)" strokeWidth="2" strokeLinecap="round" />
-        {/* Saddle shell — narrow road shape */}
-        <path d={`M${STX-36} ${STY-47} Q${STX-13} ${STY-58} ${STX+10} ${STY-57}
-                  Q${STX+28} ${STY-54} ${STX+31} ${STY-47}
-                  Q${STX+24} ${STY-39} ${STX-28} ${STY-40} Z`}
-          fill="rgba(196,162,207,0.38)" stroke="#C4A2CF" strokeWidth="2.2"
-          strokeLinejoin="round" />
-
-        {/* ── DROPPED HANDLEBARS ── */}
-        {/* Stem: from head tube top, forward & up */}
-        <line x1={HTX1} y1={HTY1+4} x2={HTX1+52} y2={HTY1-20}
-          stroke="#C4A2CF" strokeWidth="7" strokeLinecap="round" />
-        {/* Clamp */}
-        <circle cx={HTX1+52} cy={HTY1-20} r="8"
-          fill="rgba(196,162,207,0.45)" stroke="#C4A2CF" strokeWidth="2" />
-        {/* Bar top — horizontal */}
-        <line x1={HTX1+30} y1={HTY1-30} x2={HTX1+74} y2={HTY1-30}
-          stroke="#C4A2CF" strokeWidth="7" strokeLinecap="round" />
-        {/* Rear drop */}
-        <path d={`M${HTX1+30} ${HTY1-30} Q${HTX1+22} ${HTY1-9} ${HTX1+25} ${HTY1+20}`}
-          stroke="#C4A2CF" strokeWidth="5.5" fill="none" strokeLinecap="round" />
-        {/* Front drop */}
-        <path d={`M${HTX1+74} ${HTY1-30} Q${HTX1+82} ${HTY1-9} ${HTX1+78} ${HTY1+20}`}
-          stroke="#C4A2CF" strokeWidth="5.5" fill="none" strokeLinecap="round" />
-        {/* Hood bumps */}
-        <path d={`M${HTX1+25} ${HTY1-11} Q${HTX1+32} ${HTY1-20} ${HTX1+39} ${HTY1-12}`}
-          stroke="#C4A2CF" strokeWidth="4" fill="none" strokeLinecap="round" />
-        <path d={`M${HTX1+79} ${HTY1-11} Q${HTX1+72} ${HTY1-20} ${HTX1+65} ${HTY1-12}`}
-          stroke="#C4A2CF" strokeWidth="4" fill="none" strokeLinecap="round" />
-        {/* Brake levers */}
-        <line x1={HTX1+32} y1={HTY1-12} x2={HTX1+28} y2={HTY1+6}
-          stroke="#C4A2CF" strokeWidth="3.5" strokeLinecap="round" />
-        <line x1={HTX1+73} y1={HTY1-12} x2={HTX1+77} y2={HTY1+6}
-          stroke="#C4A2CF" strokeWidth="3.5" strokeLinecap="round" />
-      </svg>
+        <img
+          src="/DC_Bikes_Giratorio.png"
+          alt=""
+          style={{
+            width: "78%",
+            height: "78%",
+            objectFit: "contain",
+            transformOrigin: "center",
+            animation: "wspin 3.2s linear infinite",
+            opacity: 0.88,
+          }}
+        />
+      </div>
     </div>
   );
 }

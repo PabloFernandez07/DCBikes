@@ -290,6 +290,61 @@ export default function Contact() {
         </div>
       </section>
 
+      {/* ─── STORE GALLERY ─── */}
+      <section className="py-20 w-full px-4 sm:px-6 lg:px-8">
+        <div className="rv flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+          <div>
+            <p className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-brand-red)] mb-3">
+              Fotos y vídeos
+            </p>
+            <h2 className="font-[var(--font-display)] text-6xl md:text-7xl text-[var(--color-cream)] leading-none tracking-wide">
+              NUESTRA
+              <br />
+              <span className="text-[var(--color-lavender)]">TIENDA</span>
+            </h2>
+          </div>
+          <p className="text-[var(--color-mid)] font-[var(--font-body)] text-base max-w-xs leading-relaxed">
+            Un espacio diseñado para ciclistas. Ven a conocernos, toca las
+            bicis y habla con nuestro equipo.
+          </p>
+        </div>
+
+        {/* Masonry fotos */}
+        <style>{`
+          .store-masonry { columns: 2; column-gap: 0.75rem; }
+          @media (min-width: 768px) { .store-masonry { columns: 3; } }
+          @media (min-width: 1024px) { .store-masonry { columns: 4; } }
+        `}</style>
+        <div className="rv store-masonry">
+          {Array.from({ length: 25 }, (_, i) => i + 1).map((n) => (
+            <div key={n} className="mb-3 break-inside-avoid overflow-hidden rounded-xl">
+              <img
+                src={`/store/store-${n}.jpg`}
+                alt={`DC Bikes tienda ${n}`}
+                loading="lazy"
+                className="w-full h-auto block hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Grid de vídeos */}
+        <div className="rv mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <video
+              key={n}
+              src={`/store/store-video-${n}.mp4`}
+              className="w-full rounded-xl object-cover"
+              style={{ aspectRatio: '9/16', maxHeight: '520px' }}
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          ))}
+        </div>
+      </section>
+
       {quoteOpen && <QuoteModal productId={null} onClose={() => setQuoteOpen(false)} />}
     </div>
   )
