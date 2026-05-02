@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
+  FolderOpen,
   Upload,
   MessageSquare,
   Settings,
@@ -33,6 +34,7 @@ function usePendingQuotes() {
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/productos', label: 'Productos', icon: Package, end: false },
+  { to: '/admin/categorias', label: 'Categorías', icon: FolderOpen, end: false },
   { to: '/admin/importar', label: 'Importar Excel', icon: Upload, end: false },
   { to: '/admin/consultas', label: 'Consultas', icon: MessageSquare, end: false, badge: true },
   { to: '/admin/configuracion', label: 'Configuración', icon: Settings, end: false },

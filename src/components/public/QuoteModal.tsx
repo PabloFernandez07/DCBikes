@@ -12,6 +12,7 @@ const schema = z.object({
   email: z.string().email('Email inválido'),
   phone: z.string().optional(),
   message: z.string().min(20, 'El mensaje debe tener al menos 20 caracteres'),
+  privacy: z.boolean().refine(v => v === true, 'Debes aceptar la política de privacidad'),
 })
 
 type FormData = z.infer<typeof schema>
@@ -54,7 +55,7 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { message: defaultMessage },
+    defaultValues: { message: defaultMessage, privacy: false },
   })
 
   const onSubmit = async (data: FormData) => {
@@ -203,6 +204,24 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
             error={errors.message?.message}
             {...register('message')}
           />
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="privacy"
+              className="mt-0.5 w-4 h-4 rounded border-[var(--color-card-hover)] bg-[var(--color-ink)] accent-[var(--color-lavender)] cursor-pointer shrink-0"
+              {...register('privacy')}
+            />
+            <label htmlFor="privacy" className="text-xs text-[var(--color-mid)] font-[var(--font-body)] leading-relaxed cursor-pointer">
+              He leído y acepto la{' '}
+              <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-[var(--color-lavender)] hover:underline">
+                política de privacidad
+              </a>
+              {' '}y el tratamiento de mis datos para gestionar mi consulta.
+            </label>
+          </div>
+          {errors.privacy && (
+            <p className="text-xs text-[var(--color-brand-red)] font-[var(--font-body)] -mt-2">{errors.privacy.message}</p>
+          )}
           <div className="flex gap-3 pt-1">
             <Button type="button" variant="ghost" size="md" onClick={onClose} className="flex-1">
               Cancelar

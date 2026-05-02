@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { MapPin, Phone, Clock, ArrowRight, MessageCircle, Navigation } from 'lucide-react'
+import { MapPin, Phone, Clock, ArrowRight, MessageCircle, Navigation, Map } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { QuoteModal } from '@/components/public/QuoteModal'
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
 import { SCHEDULE, isOpenNow, todayLabel } from '@/lib/schedule'
+import { useCookieConsent } from '@/components/layout/CookieBanner'
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return (
@@ -51,18 +52,30 @@ function useReveal() {
 export default function Contact() {
   const [settings, setSettings] = useState<SiteSettings>({})
   const [quoteOpen, setQuoteOpen] = useState(false)
+  const cookieConsent = useCookieConsent()
+  const [mapsEnabled, setMapsEnabled] = useState(cookieConsent?.marketing ?? false)
   const pageRef = useReveal()
 
   useEffect(() => {
-    const keys = ['address', 'phone', 'hours', 'instagram', 'facebook', 'maps_embed']
     supabase
       .from('settings')
       .select('key, value')
-      .in('key', keys)
+      .in('key', ['store_address', 'store_phone', 'store_hours', 'social_instagram', 'social_facebook', 'maps_embed'])
       .then(({ data }) => {
         if (!data) return
         const obj: SiteSettings = {}
-        data.forEach(row => { (obj as Record<string, unknown>)[row.key] = row.value })
+        const map: Record<string, keyof SiteSettings> = {
+          store_address: 'address',
+          store_phone: 'phone',
+          store_hours: 'hours',
+          social_instagram: 'instagram',
+          social_facebook: 'facebook',
+          maps_embed: 'maps_embed',
+        }
+        data.forEach(row => {
+          const key = map[row.key]
+          if (key) (obj as Record<string, unknown>)[key] = row.value
+        })
         setSettings(obj)
       })
   }, [])
@@ -240,16 +253,48 @@ export default function Contact() {
 
           {/* Map — ocupa 2/3 */}
           <div className="lg:col-span-2 rounded-2xl overflow-hidden bg-[var(--color-card)] h-[420px]">
-            <iframe
-              src={settings.maps_embed ?? defaultEmbedSrc}
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Ubicación DC Bikes Cantabria"
-            />
+            {mapsEnabled ? (
+              <iframe
+                src={settings.maps_embed ?? defaultEmbedSrc}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Ubicación DC Bikes Cantabria"
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center gap-5 px-6 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-[rgba(196,162,207,0.1)] flex items-center justify-center">
+                  <Map size={26} className="text-[var(--color-lavender)]" />
+                </div>
+                <div>
+                  <p className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)] tracking-wide mb-1">
+                    Mapa de Google Maps
+                  </p>
+                  <p className="text-[var(--color-mid)] font-[var(--font-body)] text-xs leading-relaxed max-w-xs">
+                    Este mapa usa cookies de terceros (Google). Actívalas para ver la ubicación de la tienda.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setMapsEnabled(true)}
+                  className="px-5 py-2 rounded-xl bg-[var(--color-lavender)]/15 hover:bg-[var(--color-lavender)]/25 border border-[var(--color-lavender)]/30 text-[var(--color-lavender)] font-[var(--font-cond)] text-sm tracking-wide transition-colors"
+                >
+                  Cargar mapa
+                </button>
+                <a
+                  href="https://maps.app.goo.gl/E2dajUcN3rA2fvc57"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-[var(--font-body)] text-[var(--color-mid)] hover:text-[var(--color-lavender)] transition-colors underline underline-offset-2"
+                >
+                  <Navigation size={11} />
+                  Abrir en Google Maps
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Side panel — 1/3 */}

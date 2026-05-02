@@ -10,7 +10,10 @@ import ProductDetail from "@/pages/public/ProductDetail";
 import Workshop from "@/pages/public/Workshop";
 import Contact from "@/pages/public/Contact";
 import CookiePolicy from "@/pages/public/CookiePolicy";
+import PrivacyPolicy from "@/pages/public/PrivacyPolicy";
+import LegalNotice from "@/pages/public/LegalNotice";
 import { AdminRoutes } from "@/routes/AdminRoutes";
+import NotFound from "@/pages/public/NotFound";
 
 function SplashScreen({ onDone }: { onDone: () => void }) {
   const [exiting, setExiting] = useState(false);
@@ -205,7 +208,24 @@ export default function App() {
             </PublicLayout>
           }
         />
+        <Route
+          path="/privacidad"
+          element={
+            <PublicLayout>
+              <PrivacyPolicy />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/aviso-legal"
+          element={
+            <PublicLayout>
+              <LegalNotice />
+            </PublicLayout>
+          }
+        />
         <Route path="/admin/*" element={<AdminRoutes />} />
+        <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
       </Routes>
       <CookieBanner />
     </BrowserRouter>

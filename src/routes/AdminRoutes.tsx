@@ -8,6 +8,7 @@ import { ProductEdit } from '@/pages/admin/ProductEdit'
 import { Import } from '@/pages/admin/Import'
 import { Quotes } from '@/pages/admin/Quotes'
 import { Settings } from '@/pages/admin/Settings'
+import { Categories } from '@/pages/admin/Categories'
 
 export function AdminRoutes() {
   return (
@@ -18,6 +19,7 @@ export function AdminRoutes() {
           <Route index element={<Dashboard />} />
           <Route path="productos" element={<ProductsList />} />
           <Route path="productos/:id" element={<ProductEdit />} />
+          <Route path="categorias" element={<Categories />} />
           <Route path="importar" element={<Import />} />
           <Route path="consultas" element={<Quotes />} />
           <Route path="configuracion" element={<Settings />} />

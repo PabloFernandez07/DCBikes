@@ -9,5 +9,5 @@ export function useTheme() {
     document.body.style.color = '#EEF3F8'
   }, [])
 
-  return { theme: 'dark' as const, toggle: () => {}, isDark: true }
+  return { theme: 'dark' as string, toggle: () => {}, isDark: true }
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Cookie, X, ChevronDown, ChevronUp, Shield } from 'lucide-react'
+import { Cookie, ChevronDown, ChevronUp, Shield } from 'lucide-react'
 import { clsx } from 'clsx'
 import { Button } from '@/components/ui/Button'
 

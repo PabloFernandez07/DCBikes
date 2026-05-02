@@ -33,16 +33,23 @@ export function Footer() {
   const [settings, setSettings] = useState<SiteSettings>({})
 
   useEffect(() => {
-    const keys = ['address', 'phone', 'hours', 'instagram', 'facebook']
     supabase
       .from('settings')
       .select('key, value')
-      .in('key', keys)
+      .in('key', ['store_address', 'store_phone', 'store_hours', 'social_instagram', 'social_facebook'])
       .then(({ data }) => {
         if (!data) return
         const obj: SiteSettings = {}
         data.forEach(row => {
-          (obj as Record<string, unknown>)[row.key] = row.value
+          const map: Record<string, keyof SiteSettings> = {
+            store_address: 'address',
+            store_phone: 'phone',
+            store_hours: 'hours',
+            social_instagram: 'instagram',
+            social_facebook: 'facebook',
+          }
+          const key = map[row.key]
+          if (key) (obj as Record<string, unknown>)[key] = row.value
         })
         setSettings(obj)
       })
@@ -148,11 +155,15 @@ export function Footer() {
             © {year} DC Bikes Cantabria. Todos los derechos reservados.
           </p>
           <div className="flex gap-4">
-            <Link to="/cookies" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
-              Política de cookies
+            <Link to="/aviso-legal" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
+              Aviso legal
             </Link>
-            <span className="text-[var(--color-mid)] text-xs cursor-default">Aviso legal</span>
-            <span className="text-[var(--color-mid)] text-xs cursor-default">Privacidad</span>
+            <Link to="/cookies" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
+              Cookies
+            </Link>
+            <Link to="/privacidad" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
+              Privacidad
+            </Link>
           </div>
         </div>
       </div>
