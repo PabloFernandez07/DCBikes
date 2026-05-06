@@ -1,13 +1,101 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/DC_Bikes_Sin_Fondo.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DC Bikes Cantabria</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/DC_Bikes_Giratorio.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO: Title optimizado con keywords (58 caracteres) -->
+  <title>DC Bikes | Tienda de Bicicletas en El Astillero, Cantabria</title>
+
+  <!-- SEO: Meta description -->
+  <meta name="description" content="Tu tienda de bicicletas en El Astillero, Cantabria. Venta, taller y asesoramiento profesional. Distribuidores oficiales Giant, Liv y Stevens." />
+
+  <!-- SEO: Robots - indexación completa para páginas principales -->
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+
+  <!-- SEO: Canonical para evitar contenido duplicado -->
+  <link rel="canonical" href="https://dcbikescantabria.es/" />
+
+  <!-- Performance: Preload imagen hero (LCP) -->
+  <link rel="preload" as="image" href="/DC_Bikes_Giratorio.png" />
+
+  <!-- Open Graph / Redes Sociales -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="DC Bikes Cantabria" />
+  <meta property="og:title" content="DC Bikes | Tienda de Bicicletas en El Astillero, Cantabria" />
+  <meta property="og:description" content="Tu tienda de bicicletas en El Astillero, Cantabria. Venta, taller y asesoramiento profesional. Distribuidores oficiales Giant, Liv y Stevens." />
+  <meta property="og:image" content="https://dcbikescantabria.es/DC_Bikes_Sin_Fondo.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:url" content="https://dcbikescantabria.es" />
+  <meta property="og:locale" content="es_ES" />
+
+  <!-- Twitter Cards -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@dcbikescantabria" />
+  <meta name="twitter:title" content="DC Bikes | Tienda de Bicicletas en El Astillero, Cantabria" />
+  <meta name="twitter:description" content="Tu tienda de bicicletas en El Astillero, Cantabria. Venta, taller y asesoramiento profesional." />
+  <meta name="twitter:image" content="https://dcbikescantabria.es/DC_Bikes_Sin_Fondo.png" />
+
+  <!-- Schema.org: LocalBusiness (BicycleStore) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BicycleStore",
+    "name": "DC Bikes Cantabria",
+    "description": "Tu tienda de bicicletas en El Astillero, Cantabria. Distribuidores oficiales Giant, Liv y Stevens. Venta, taller y asesoramiento profesional.",
+    "url": "https://dcbikescantabria.es",
+    "logo": "https://dcbikescantabria.es/DC_Bikes_Sin_Fondo.png",
+    "image": "https://dcbikescantabria.es/DC_Bikes_Sin_Fondo.png",
+    "telephone": "+34-XXX-XXX-XXX",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "C/ [Dirección exacta]",
+      "addressLocality": "El Astillero",
+      "addressRegion": "Cantabria",
+      "postalCode": "39610",
+      "addressCountry": "ES"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 43.3985,
+      "longitude": -3.8182
+    },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "09:30",
+        "closes": "13:30"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "16:30",
+        "closes": "20:00"
+      }
+    ],
+    "brand": [
+      { "@type": "Brand", "name": "Giant" },
+      { "@type": "Brand", "name": "Liv" },
+      { "@type": "Brand", "name": "Stevens" }
+    ],
+    "priceRange": "€€",
+    "currenciesAccepted": "EUR",
+    "paymentAccepted": "Cash, Credit Card",
+    "sameAs": [
+      "https://www.instagram.com/dcbikescantabria",
+      "https://www.facebook.com/dcbikescantabria"
+    ]
+  }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

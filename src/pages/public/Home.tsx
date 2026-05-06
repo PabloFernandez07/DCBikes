@@ -326,7 +326,6 @@ export default function Home() {
       ][i],
       description: null,
       short_description: null,
-      cost_price: null,
       retail_price: [899, 1299, 599, 1899][i],
       discount_percent: [0, 15, 0, 10][i] || null,
       stock: 1,

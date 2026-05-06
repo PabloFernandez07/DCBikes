@@ -12,7 +12,6 @@ type ColumnKey =
   | 'sku'
   | 'marca'
   | 'descripcion'
-  | 'precio_coste'
   | 'pvp'
   | 'stock'
   | 'categoria_slug'
@@ -32,7 +31,6 @@ interface MappedRow {
   sku: string
   marca: string
   descripcion: string
-  precio_coste: number | null
   pvp: number | null
   stock: number
   categoria_slug: string
@@ -46,7 +44,6 @@ const COLUMN_LABELS: Record<ColumnKey, string> = {
   sku: 'SKU',
   marca: 'Marca',
   descripcion: 'Descripción',
-  precio_coste: 'Precio coste',
   pvp: 'PVP',
   stock: 'Stock',
   categoria_slug: 'Categoría slug',
@@ -61,7 +58,6 @@ function autoMap(headers: string[]): ColumnMap {
     [/sku|ref/i, 'sku'],
     [/marca|brand/i, 'marca'],
     [/desc/i, 'descripcion'],
-    [/coste|cost/i, 'precio_coste'],
     [/pvp|price|precio/i, 'pvp'],
     [/stock|cantidad|qty/i, 'stock'],
     [/categ|slug/i, 'categoria_slug'],
@@ -90,7 +86,6 @@ function parseRows(rawRows: RawRow[], colMap: ColumnMap): MappedRow[] {
       sku: get('sku'),
       marca: get('marca'),
       descripcion: get('descripcion'),
-      precio_coste: get('precio_coste') ? Number(get('precio_coste')) : null,
       pvp,
       stock: Number(get('stock')) || 0,
       categoria_slug: get('categoria_slug'),
@@ -181,7 +176,6 @@ export function ExcelImporter() {
         brand: row.marca || null,
         description: row.descripcion || null,
         short_description: null as string | null,
-        cost_price: row.precio_coste,
         retail_price: row.pvp!,
         stock: row.stock,
         category_id: categoryId,
@@ -246,7 +240,7 @@ export function ExcelImporter() {
   if (step === 'map') {
     const colOptions: ColumnKey[] = [
       'nombre', 'sku', 'marca', 'descripcion',
-      'precio_coste', 'pvp', 'stock', 'categoria_slug', 'activo', 'ignorar',
+      'pvp', 'stock', 'categoria_slug', 'activo', 'ignorar',
     ]
     return (
       <div className="space-y-6">

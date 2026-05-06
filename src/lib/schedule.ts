@@ -10,8 +10,8 @@ export const SCHEDULE: DaySchedule[] = [
   { label: "Miércoles", morning: "09:30–14:00", afternoon: "16:30–20:00" },
   { label: "Jueves",    morning: "09:30–14:00", afternoon: "16:30–20:00" },
   { label: "Viernes",   morning: "09:30–14:00", afternoon: "16:30–20:00" },
-  { label: "Sábado",    morning: "10:00–14:00", afternoon: null },
-  { label: "Domingo",   morning: null,           afternoon: null },
+  { label: "Sábado",    morning: null,          afternoon: null },
+  { label: "Domingo",   morning: null,          afternoon: null },
 ];
 
 function parseTime(str: string): { h: number; m: number } {

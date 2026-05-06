@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export interface GoogleReview {
   author_name: string;
@@ -20,32 +21,15 @@ export function useGoogleReviews() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    const placeId = import.meta.env.VITE_GOOGLE_PLACE_ID as string;
-    const apiKey = import.meta.env.VITE_GOOGLE_PLACES_API_KEY as string;
+    supabase.functions
+      .invoke("google-reviews")
+      .then(({ data: json, error: fnError }) => {
+        if (fnError || !json) throw fnError ?? new Error("empty response");
 
-    if (!placeId || !apiKey) {
-      setError(true);
-      setLoading(false);
-      return;
-    }
-
-    // Places API (New) — endpoint REST, no requiere Maps JS API
-    fetch(`https://places.googleapis.com/v1/places/${placeId}?languageCode=es`, {
-      headers: {
-        "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask":
-          "rating,userRatingCount,reviews.rating,reviews.text,reviews.originalText,reviews.authorAttribution,reviews.relativePublishTimeDescription",
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((json) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const reviews: GoogleReview[] = Array.isArray(json.reviews)
-          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            json.reviews
+          ? json.reviews
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .filter((r: any) => {
                 const t = r.text?.text ?? r.originalText?.text ?? "";
                 return t.trim().length > 0;
@@ -65,9 +49,7 @@ export function useGoogleReviews() {
         setData({
           rating: typeof json.rating === "number" ? json.rating : 5,
           user_ratings_total:
-            typeof json.userRatingCount === "number"
-              ? json.userRatingCount
-              : 0,
+            typeof json.userRatingCount === "number" ? json.userRatingCount : 0,
           reviews,
         });
       })

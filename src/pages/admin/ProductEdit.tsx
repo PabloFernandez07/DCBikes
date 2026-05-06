@@ -53,7 +53,6 @@ export function ProductEdit() {
       brand: values.brand || null,
       short_description: values.short_description || null,
       description: values.description || null,
-      cost_price: values.cost_price ? Number(values.cost_price) : null,
       retail_price: Number(values.retail_price),
       discount_percent: values.discount_percent ? Number(values.discount_percent) : null,
       stock: Number(values.stock),

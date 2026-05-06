@@ -35,7 +35,6 @@ export interface Database {
           name: string
           description: string | null
           short_description: string | null
-          cost_price: number | null
           retail_price: number
           discount_percent: number | null
           stock: number
@@ -53,7 +52,6 @@ export interface Database {
           name: string
           description?: string | null
           short_description?: string | null
-          cost_price?: number | null
           retail_price: number
           discount_percent?: number | null
           stock?: number
@@ -71,7 +69,6 @@ export interface Database {
           name?: string
           description?: string | null
           short_description?: string | null
-          cost_price?: number | null
           retail_price?: number
           discount_percent?: number | null
           stock?: number

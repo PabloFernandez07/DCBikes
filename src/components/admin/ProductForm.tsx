@@ -23,7 +23,6 @@ export interface ProductFormValues {
   brand: string
   short_description: string
   description: string
-  cost_price: string
   retail_price: string
   discount_percent: string
   stock: string
@@ -56,7 +55,6 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
       brand: product?.brand ?? '',
       short_description: product?.short_description ?? '',
       description: product?.description ?? '',
-      cost_price: product?.cost_price != null ? String(product.cost_price) : '',
       retail_price: product?.retail_price != null ? String(product.retail_price) : '',
       discount_percent: product?.discount_percent != null ? String(product.discount_percent) : '',
       stock: String(product?.stock ?? 0),
@@ -167,14 +165,6 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
             {...register('description')}
           />
         </div>
-
-        <Field
-          label="Precio coste (€)"
-          type="number"
-          step="0.01"
-          min="0"
-          {...register('cost_price')}
-        />
 
         <Field
           label="PVP (€)"

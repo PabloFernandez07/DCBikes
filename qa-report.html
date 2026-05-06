@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QA Report — DC Bikes Cantabria</title>
+  <style>
+    :root {
+      --ink: #1A1620;
+      --ink2: #231F2B;
+      --card: #2B2730;
+      --card2: #332F3A;
+      --lavender: #C4A2CF;
+      --lavender-dim: rgba(196,162,207,0.12);
+      --red: #E5301E;
+      --red-dim: rgba(229,48,30,0.12);
+      --cream: #EEF3F8;
+      --mid: #7E6E8A;
+      --green: #3EC97A;
+      --green-dim: rgba(62,201,122,0.12);
+      --yellow: #F5C542;
+      --yellow-dim: rgba(245,197,66,0.12);
+      --orange: #F5813F;
+      --orange-dim: rgba(245,129,63,0.12);
+      --blue: #5B9BD5;
+      --blue-dim: rgba(91,155,213,0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--ink);
+      color: var(--cream);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #231F2B 0%, #1A1620 60%, #2B2730 100%);
+      border-bottom: 2px solid var(--lavender);
+      padding: 40px 48px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 240px; height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(196,162,207,0.15) 0%, transparent 70%);
+    }
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--red-dim);
+      border: 1px solid var(--red);
+      color: var(--red);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+    .header-badge::before { content: '●'; font-size: 8px; }
+    h1 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--cream);
+      line-height: 1.1;
+    }
+    h1 span { color: var(--lavender); }
+    .header-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-top: 20px;
+    }
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .meta-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+    .meta-value {
+      font-size: 13px;
+      color: var(--cream);
+      font-weight: 500;
+    }
+
+    /* ── LAYOUT ── */
+    main { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
+    section { margin-bottom: 48px; }
+    h2 {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--lavender);
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(196,162,207,0.2);
+    }
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--cream);
+      margin-bottom: 12px;
+    }
+
+    /* ── SUMMARY CARDS ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .summary-card {
+      background: var(--card);
+      border: 1px solid rgba(196,162,207,0.15);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .summary-card .num {
+      font-size: 40px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .summary-card .lbl {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--mid);
+    }
+    .c-red .num { color: var(--red); }
+    .c-orange .num { color: var(--orange); }
+    .c-yellow .num { color: var(--yellow); }
+    .c-green .num { color: var(--green); }
+    .c-blue .num { color: var(--blue); }
+
+    /* ── VERDICT BANNER ── */
+    .verdict {
+      background: var(--red-dim);
+      border: 1px solid var(--red);
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .verdict-icon {
+      font-size: 32px;
+      flex-shrink: 0;
+    }
+    .verdict-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--red);
+      margin-bottom: 4px;
+    }
+    .verdict-sub {
+      font-size: 13px;
+      color: var(--cream);
+      opacity: 0.85;
+    }
+
+    /* ── STATUS TABLE ── */
+    .status-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .status-table thead tr {
+      background: var(--card2);
+    }
+    .status-table th {
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--mid);
+    }
+    .status-table td {
+      padding: 10px 16px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px;
+      vertical-align: top;
+    }
+    .status-table tr:hover td { background: rgba(255,255,255,0.03); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .badge-ok { background: var(--green-dim); color: var(--green); }
+    .badge-fail { background: var(--red-dim); color: var(--red); }
+    .badge-warn { background: var(--yellow-dim); color: var(--yellow); }
+    .badge-info { background: var(--blue-dim); color: var(--blue); }
+
+    /* ── BUGS ── */
+    .bugs-list { display: flex; flex-direction: column; gap: 16px; }
+    .bug-card {
+      background: var(--card);
+      border-radius: 12px;
+      border-left: 4px solid;
+      padding: 18px 20px;
+      position: relative;
+    }
+    .bug-card.critical { border-color: var(--red); }
+    .bug-card.high { border-color: var(--orange); }
+    .bug-card.medium { border-color: var(--yellow); }
+    .bug-card.low { border-color: var(--blue); }
+
+    .bug-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+    .bug-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--mid);
+      margin-bottom: 2px;
+    }
+    .bug-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--cream);
+    }
+    .sev-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+    .sev-critical { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+    .sev-high { background: var(--orange-dim); color: var(--orange); border: 1px solid var(--orange); }
+    .sev-medium { background: var(--yellow-dim); color: var(--yellow); border: 1px solid var(--yellow); }
+    .sev-low { background: var(--blue-dim); color: var(--blue); border: 1px solid var(--blue); }
+
+    .bug-desc { font-size: 13px; color: var(--cream); opacity: 0.85; margin-bottom: 10px; }
+    .bug-evidence {
+      font-size: 12px;
+      background: var(--ink2);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--lavender);
+      font-family: 'Consolas', 'Monaco', monospace;
+    }
+    .bug-fix {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--green);
+      display: flex;
+      gap: 6px;
+    }
+    .bug-fix::before { content: '→ Fix:'; font-weight: 700; flex-shrink: 0; }
+
+    /* ── STEPS ── */
+    .steps { counter-reset: step; display: flex; flex-direction: column; gap: 12px; }
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      background: var(--card);
+      border-radius: 10px;
+      padding: 14px 18px;
+      counter-increment: step;
+    }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--lavender);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .step-body { flex: 1; }
+    .step-title { font-size: 13px; font-weight: 700; color: var(--cream); margin-bottom: 2px; }
+    .step-detail { font-size: 12px; color: var(--mid); }
+
+    /* ── LIMIT NOTE ── */
+    .limit-note {
+      background: var(--blue-dim);
+      border: 1px solid var(--blue);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 13px;
+      color: var(--cream);
+      margin-bottom: 28px;
+    }
+    .limit-note strong { color: var(--blue); }
+
+    /* ── CODE ── */
+    code {
+      background: var(--ink2);
+      color: var(--lavender);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+    }
+    pre {
+      background: var(--ink2);
+      border-radius: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-size: 12px;
+      color: var(--lavender);
+      font-family: 'Consolas', 'Monaco', monospace;
+      margin-top: 8px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px;
+      color: var(--mid);
+      font-size: 12px;
+      border-top: 1px solid rgba(196,162,207,0.1);
+    }
+    @media (max-width: 600px) {
+      header { padding: 24px 20px; }
+      h1 { font-size: 24px; }
+      main { padding: 24px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">QA Evidence Report</div>
+  <h1>DC Bikes <span>Cantabria</span></h1>
+  <div class="header-meta">
+    <div class="meta-item">
+      <span class="meta-label">URL testeada</span>
+      <span class="meta-value">http://34.155.113.218:8100/</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Fecha</span>
+      <span class="meta-value">4 mayo 2026</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Stack</span>
+      <span class="meta-value">React + Vite + TS + Tailwind / Supabase</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Método</span>
+      <span class="meta-value">HTTP probing + análisis bundle JS compilado</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Calificación</span>
+      <span class="meta-value" style="color:var(--yellow);font-weight:800;">B− · NO APTA PARA PRODUCCIÓN</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- VERDICT -->
+  <section>
+    <div class="verdict">
+      <div class="verdict-icon">🚫</div>
+      <div>
+        <div class="verdict-title">Fallo de producción: 3 bloqueantes críticos</div>
+        <div class="verdict-sub">La aplicación no debe publicarse bajo el dominio definitivo hasta resolver: ausencia de HTTPS, campo <code>cost_price</code> accesible públicamente, y aviso legal incompleto (ilegal según LSSI art. 10).</div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card c-red">
+        <div class="num">3</div>
+        <div class="lbl">Críticos</div>
+      </div>
+      <div class="summary-card c-orange">
+        <div class="num">4</div>
+        <div class="lbl">Altos</div>
+      </div>
+      <div class="summary-card c-yellow">
+        <div class="num">4</div>
+        <div class="lbl">Medios</div>
+      </div>
+      <div class="summary-card c-blue">
+        <div class="num">3</div>
+        <div class="lbl">Bajos</div>
+      </div>
+      <div class="summary-card c-green">
+        <div class="num">26</div>
+        <div class="lbl">OK (código)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIMITATION NOTE -->
+  <div class="limit-note">
+    <strong>Nota metodológica:</strong> Esta es una SPA React. WebFetch solo ve el HTML estático inicial (<code>&lt;div id="root"&gt;</code>). Toda la lógica interactiva fue verificada mediante análisis del bundle JS compilado (1,4 MB). Las pruebas de UI visual, animaciones, responsive real y comportamiento de click requieren un navegador con JS activo.
+  </div>
+
+  <!-- FUNCTIONAL STATUS TABLE -->
+  <section>
+    <h2>Estado funcional — checklist completo</h2>
+    <table class="status-table">
+      <thead>
+        <tr>
+          <th>Funcionalidad</th>
+          <th>Estado</th>
+          <th>Evidencia</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="3" style="background:var(--card2);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mid);">Routing y carga de páginas</td></tr>
+        <tr><td>/ (Home) → HTTP 200</td><td><span class="badge badge-ok">✅ OK</span></td><td>HTTP 200 confirmado</td></tr>
+        <tr><td>/catalogo → HTTP 200</td><td><span class="badge badge-ok">✅ OK</span></td><td>SPA fallback correcto</td></tr>
+        <tr><td>/taller → HTTP 200</td><td><span class="badge badge-ok">✅ OK</span></td><td>SPA fallback correcto</td></tr>
+        <tr><td>/contacto → HTTP 200</td><td><span class="badge badge-ok">✅ OK</span></td><td>SPA fallback correcto</td></tr>
+        <tr><td>/aviso-legal → HTTP 200</td><td><span class="badge badge-ok">✅ OK</span></td><td>SPA fallback correcto</td></tr>
+        <tr><td>/privacidad → HTTP 200</td><td><span class="badge badge-ok">✅ OK</span></td><td>SPA fallback correcto</td></tr>
+        <tr><td>/cookies → HTTP 200</td><td><span class="badge badge-ok">✅ OK</span></td><td>SPA fallback correcto</td></tr>
+        <tr><td>404 página no encontrada</td><td><span class="badge badge-warn">⚠️ Parcial</span></td><td>Componente React existe; HTTP devuelve 200 (soft 404)</td></tr>
+        <tr><td colspan="3" style="background:var(--card2);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mid);">Admin y autenticación</td></tr>
+        <tr><td>/admin redirige a login si no auth</td><td><span class="badge badge-ok">✅ OK</span></td><td>Bundle: <code>&lt;Navigate to="/admin/login" replace&gt;</code></td></tr>
+        <tr><td>Spinner durante check de auth</td><td><span class="badge badge-ok">✅ OK</span></td><td>Loading state en ProtectedRoute</td></tr>
+        <tr><td>Login form (email + contraseña)</td><td><span class="badge badge-ok">✅ OK</span></td><td>Campos type=email y type=password confirmados</td></tr>
+        <tr><td>Rutas admin: productos, consultas, categorías, config, importar</td><td><span class="badge badge-ok">✅ OK</span></td><td>Todas definidas en bundle</td></tr>
+        <tr><td colspan="3" style="background:var(--card2);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mid);">Cookie Banner (RGPD)</td></tr>
+        <tr><td>Aparece con delay 800ms (sin consent previo)</td><td><span class="badge badge-ok">✅ OK</span></td><td>setTimeout 800ms en useEffect</td></tr>
+        <tr><td>Key localStorage: dcbikes_cookie_consent</td><td><span class="badge badge-ok">✅ OK</span></td><td>Constante STORAGE_KEY confirmada</td></tr>
+        <tr><td>Botón "Aceptar todas"</td><td><span class="badge badge-ok">✅ OK</span></td><td>Establece analytics:true, marketing:true</td></tr>
+        <tr><td>Botón "Solo esenciales"</td><td><span class="badge badge-ok">✅ OK</span></td><td>Establece analytics:false, marketing:false</td></tr>
+        <tr><td>Toggles analíticas / marketing</td><td><span class="badge badge-ok">✅ OK</span></td><td>Estado gestionado con React state</td></tr>
+        <tr><td>Guardar preferencias personalizadas</td><td><span class="badge badge-ok">✅ OK</span></td><td>Persiste en localStorage con prefs custom</td></tr>
+        <tr><td>Restablecer preferencias (reset)</td><td><span class="badge badge-ok">✅ OK</span></td><td>removeItem + window.location.reload()</td></tr>
+        <tr><td colspan="3" style="background:var(--card2);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mid);">Contacto y Mapas</td></tr>
+        <tr><td>Gate consentimiento Google Maps</td><td><span class="badge badge-ok">✅ OK</span></td><td>Mapa gated por cookieConsent?.marketing</td></tr>
+        <tr><td>URL de Google Maps</td><td><span class="badge badge-ok">✅ OK</span></td><td>maps.google.com/maps?q=DC+Bikes+Cantabria...</td></tr>
+        <tr><td colspan="3" style="background:var(--card2);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mid);">Formulario de presupuesto</td></tr>
+        <tr><td>Campos: nombre, email, teléfono, mensaje</td><td><span class="badge badge-ok">✅ OK</span></td><td>Confirmados en bundle</td></tr>
+        <tr><td>Validación: mensaje mínimo 20 chars</td><td><span class="badge badge-ok">✅ OK</span></td><td>"El mensaje debe tener al menos 20 caracteres"</td></tr>
+        <tr><td>Validación: aceptar política privacidad</td><td><span class="badge badge-ok">✅ OK</span></td><td>"Debes aceptar la política de privacidad"</td></tr>
+        <tr><td>Invocación Edge Function send-quote-email</td><td><span class="badge badge-ok">✅ OK</span></td><td>Paso 2/3 en flujo de envío</td></tr>
+        <tr><td colspan="3" style="background:var(--card2);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mid);">Assets estáticos</td></tr>
+        <tr><td>Favicon carga</td><td><span class="badge badge-ok">✅ OK</span></td><td>HTTP 200, 410 KB (sobredimensionado)</td></tr>
+        <tr><td>Logo PNG carga</td><td><span class="badge badge-ok">✅ OK</span></td><td>HTTP 200, 436 KB (sobredimensionado)</td></tr>
+        <tr><td>Imagen hero carga</td><td><span class="badge badge-ok">✅ OK</span></td><td>HTTP 200, 195 KB</td></tr>
+        <tr><td>robots.txt</td><td><span class="badge badge-ok">✅ OK</span></td><td>Bloquea /admin/, declara sitemap</td></tr>
+        <tr><td>sitemap.xml</td><td><span class="badge badge-ok">✅ OK</span></td><td>7 rutas públicas declaradas</td></tr>
+        <tr><td colspan="3" style="background:var(--card2);font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mid);">SEO y rendimiento</td></tr>
+        <tr><td>Meta tags OG / Twitter Card</td><td><span class="badge badge-warn">⚠️ Parcial</span></td><td>Implementados en JS; invisible a crawlers sin ejecución</td></tr>
+        <tr><td>Canonical URL</td><td><span class="badge badge-warn">⚠️ Parcial</span></td><td>Apunta a dcbikescantabria.es (dominio no activo aún)</td></tr>
+        <tr><td>HTTPS</td><td><span class="badge badge-fail">❌ FALLO</span></td><td>Solo HTTP en puerto 8100, sin TLS</td></tr>
+        <tr><td>Compresión gzip/brotli</td><td><span class="badge badge-fail">❌ FALLO</span></td><td>Bundle de 1,4 MB sin Content-Encoding</td></tr>
+        <tr><td>Cache-Control en assets</td><td><span class="badge badge-fail">❌ FALLO</span></td><td>Solo ETag, sin max-age</td></tr>
+        <tr><td>Headers de seguridad HTTP</td><td><span class="badge badge-fail">❌ FALLO</span></td><td>Ninguno presente (CSP, X-Frame-Options, etc.)</td></tr>
+        <tr><td>Aviso legal completo (LSSI)</td><td><span class="badge badge-fail">❌ FALLO</span></td><td>4 placeholders "pendiente" visibles a usuarios</td></tr>
+        <tr><td>cost_price protegido de anon</td><td><span class="badge badge-fail">❌ FALLO</span></td><td>API devuelve precio coste sin autenticación</td></tr>
+        <tr><td>console.log eliminados en producción</td><td><span class="badge badge-fail">❌ FALLO</span></td><td>Logs internos de arquitectura visibles en DevTools</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- BUGS -->
+  <section>
+    <h2>Bugs encontrados — 14 incidencias</h2>
+    <div class="bugs-list">
+
+      <!-- CRITICAL -->
+      <div class="bug-card critical">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #1</div>
+            <div class="bug-title">precio coste (cost_price) accesible públicamente por cualquier visitante</div>
+          </div>
+          <span class="sev-badge sev-critical">Crítico</span>
+        </div>
+        <div class="bug-desc">El campo <code>cost_price</code> (precio de compra al proveedor) de la tabla <code>products</code> se devuelve en la API REST de Supabase sin autenticación. Usando la anon key pública, cualquier visitante puede consultar el margen exacto de la tienda.</div>
+        <div class="bug-evidence">GET /rest/v1/products?select=id,name,cost_price,retail_price → {"cost_price":3000.00,"retail_price":6000.00}</div>
+        <div class="bug-fix">Añadir política RLS de columna en Supabase: <code>REVOKE SELECT (cost_price) ON products FROM anon;</code> o excluir la columna del select público.</div>
+      </div>
+
+      <div class="bug-card critical">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #2</div>
+            <div class="bug-title">Sin HTTPS — credenciales de admin viajan en texto plano</div>
+          </div>
+          <span class="sev-badge sev-critical">Crítico</span>
+        </div>
+        <div class="bug-desc">La aplicación solo sirve HTTP en el puerto 8100. Las credenciales del panel de administración (email + contraseña) se transmiten sin cifrado. El dominio canónico configurado en el código (<code>https://dcbikescantabria.es</code>) es actualmente inalcanzable.</div>
+        <div class="bug-evidence">curl -I http://34.155.113.218:8100/ → no Strict-Transport-Security, no Location a HTTPS</div>
+        <div class="bug-fix">Configurar TLS con Let's Encrypt en nginx. Apuntar <code>dcbikescantabria.es</code> a la IP del servidor y habilitar HTTPS con redirección automática desde HTTP.</div>
+      </div>
+
+      <div class="bug-card critical">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #3</div>
+            <div class="bug-title">Aviso legal incompleto — incumplimiento LSSI art. 10</div>
+          </div>
+          <span class="sev-badge sev-critical">Crítico</span>
+        </div>
+        <div class="bug-desc">La página <code>/aviso-legal</code> contiene cuatro marcadores de texto literal visibles para cualquier visitante: NIF/CIF pendiente, teléfono pendiente, forma jurídica pendiente, Registro Mercantil pendiente. Publicar una web sin estos datos infringe la Ley 34/2002 LSSI y puede acarrear sanciones.</div>
+        <div class="bug-evidence">"pendiente — añadir NIF o CIF" / "pendiente — añadir teléfono de contacto" / "pendiente — p. ej. Autónomo / S.L. / S.A." (extraído del bundle JS)</div>
+        <div class="bug-fix">El cliente debe aportar: NIF/CIF, teléfono, denominación jurídica y número de inscripción registral. Rellenar antes de publicar el dominio.</div>
+      </div>
+
+      <!-- HIGH -->
+      <div class="bug-card high">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #4</div>
+            <div class="bug-title">Google Maps API Key expuesta y sin restricciones de dominio</div>
+          </div>
+          <span class="sev-badge sev-high">Alto</span>
+        </div>
+        <div class="bug-desc">La API Key de Google Places está hardcodeada en el bundle JS público. Fue probada directamente contra la API y confirmada activa (devuelve valoración 4,9 estrellas, 36 reseñas de DC Bikes). Sin restricciones de referrer, cualquier tercero puede usarla y generar facturación contra la cuenta.</div>
+        <div class="bug-evidence">AIzaSyDOfSC-6_HBplaUv8N1Im_3acun9ESd4vs — validada contra Places API v1, devuelve datos reales del negocio</div>
+        <div class="bug-fix">En Google Cloud Console → Credentials → restringir la key a referrers <code>dcbikescantabria.es/*</code> y <code>34.155.113.218/*</code>. Considerar proxy via Edge Function.</div>
+      </div>
+
+      <div class="bug-card high">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #5</div>
+            <div class="bug-title">Sin compresión gzip/brotli — bundle de 1,4 MB sin comprimir</div>
+          </div>
+          <span class="sev-badge sev-high">Alto</span>
+        </div>
+        <div class="bug-desc">El servidor nginx no devuelve cabecera <code>Content-Encoding</code>. El bundle JS de 1,4 MB se transfiere sin comprimir a cada visitante. Con brotli se reduciría a ~350 KB (75% ahorro), mejorando el Time to Interactive especialmente en móvil.</div>
+        <div class="bug-evidence">curl -H "Accept-Encoding: gzip, deflate, br" → Content-Length: 1467263, sin Content-Encoding</div>
+        <div class="bug-fix">En nginx.conf: <code>gzip on; gzip_types text/javascript application/javascript text/css application/json; gzip_comp_level 6;</code></div>
+      </div>
+
+      <div class="bug-card high">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #6</div>
+            <div class="bug-title">Sin Cache-Control en assets — re-descarga en cada visita</div>
+          </div>
+          <span class="sev-badge sev-high">Alto</span>
+        </div>
+        <div class="bug-desc">Ningún asset (JS, CSS, imágenes) tiene cabecera <code>Cache-Control</code>. Solo se envía <code>ETag</code>. Los assets tienen nombres hasheados (<code>index-BFg6vJvU.js</code>), lo que hace seguro el cacheo permanente, pero nginx no lo configura.</div>
+        <div class="bug-evidence">HTTP response headers: ETag presente, sin Cache-Control en todos los endpoints</div>
+        <div class="bug-fix"><code>location /assets/ { add_header Cache-Control "public, max-age=31536000, immutable"; }</code></div>
+      </div>
+
+      <div class="bug-card high">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #7</div>
+            <div class="bug-title">Sin headers de seguridad HTTP</div>
+          </div>
+          <span class="sev-badge sev-high">Alto</span>
+        </div>
+        <div class="bug-desc">El servidor no envía ninguno de los headers de seguridad estándar: <code>X-Frame-Options</code> (riesgo clickjacking), <code>X-Content-Type-Options</code>, <code>Content-Security-Policy</code>, <code>Referrer-Policy</code>, <code>Permissions-Policy</code>.</div>
+        <div class="bug-evidence">curl -I → cero security headers presentes</div>
+        <div class="bug-fix">Añadir en nginx: <code>add_header X-Frame-Options "SAMEORIGIN"; add_header X-Content-Type-Options "nosniff"; add_header Referrer-Policy "strict-origin-when-cross-origin";</code></div>
+      </div>
+
+      <!-- MEDIUM -->
+      <div class="bug-card medium">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #8</div>
+            <div class="bug-title">console.log internos de arquitectura en producción</div>
+          </div>
+          <span class="sev-badge sev-medium">Medio</span>
+        </div>
+        <div class="bug-desc">El bundle de producción contiene llamadas a <code>console.log</code> que revelan la arquitectura interna en DevTools del navegador: pasos de Supabase, IDs de quotes, invocación de Edge Functions.</div>
+        <div class="bug-evidence">"[1/3] Insertando en Supabase..." / "[2/3] Invocando Edge Function send-quote-email..." / "[1/3] ✓ Insert OK — quote_id: ..."</div>
+        <div class="bug-fix">Eliminar todos los <code>console.log</code> del flujo de envío de presupuesto en el componente QuoteModal. Usar el flag de Vite para strip automático en producción si se prefiere.</div>
+      </div>
+
+      <div class="bug-card medium">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #9</div>
+            <div class="bug-title">Meta tags SEO no visibles a crawlers (SPA sin SSR)</div>
+          </div>
+          <span class="sev-badge sev-medium">Medio</span>
+        </div>
+        <div class="bug-desc">El HTML estático solo tiene <code>&lt;title&gt;DC Bikes Cantabria&lt;/title&gt;</code>. Todas las meta OG, Twitter Card y canonical se inyectan por React en runtime. Bots de redes sociales (WhatsApp, Facebook) y crawlers sin JS no verán descripción ni imagen de preview.</div>
+        <div class="bug-evidence">curl http://34.155.113.218:8100/ → HTML sin meta description, sin og:image, sin canonical</div>
+        <div class="bug-fix">Añadir meta description y og:image básicos en el <code>index.html</code> estático como fallback. Para SEO completo a largo plazo, considerar pre-rendering con vite-plugin-ssr o migración a Next.js.</div>
+      </div>
+
+      <div class="bug-card medium">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #10</div>
+            <div class="bug-title">Favicon de 410 KB — sobredimensionado</div>
+          </div>
+          <span class="sev-badge sev-medium">Medio</span>
+        </div>
+        <div class="bug-desc">El favicon (<code>DC_Bikes_Giratorio.png</code>) pesa 410 KB. Se descarga en cada carga inicial de página. Los favicons deberían estar bajo 10 KB.</div>
+        <div class="bug-evidence">Content-Length: 410543 en /DC_Bikes_Giratorio.png</div>
+        <div class="bug-fix">Escalar el PNG a 32×32 px y convertir a <code>.ico</code> o WebP. Peso objetivo: &lt;5 KB.</div>
+      </div>
+
+      <div class="bug-card medium">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #11</div>
+            <div class="bug-title">Rutas 404 devuelven HTTP 200 (soft 404)</div>
+          </div>
+          <span class="sev-badge sev-medium">Medio</span>
+        </div>
+        <div class="bug-desc">Cualquier ruta inexistente (ej. <code>/ruta-inexistente</code>) devuelve HTTP 200 con el HTML shell. React renderiza el componente 404, pero Google lo indexa como página válida (soft 404), diluyendo el crawl budget.</div>
+        <div class="bug-evidence">curl -o /dev/null -w "%{http_code}" http://34.155.113.218:8100/ruta-inexistente → 200</td></tr>
+        <div class="bug-fix">Difícil de resolver con SPA pura sin SSR. Alternativa: añadir canonical a la home en el 404 component + <code>noindex</code> meta tag para que Google no indexe 404s.</div>
+      </div>
+
+      <!-- LOW -->
+      <div class="bug-card low">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #12</div>
+            <div class="bug-title">Supabase anon JWT expuesta (esperado, pero requiere RLS auditada)</div>
+          </div>
+          <span class="sev-badge sev-low">Bajo</span>
+        </div>
+        <div class="bug-desc">La anon key de Supabase es pública por diseño, pero su seguridad depende íntegramente de que RLS esté correctamente configurada en todas las tablas. Dado que cost_price ya es accesible (Bug #1), se recomienda auditoría completa de políticas RLS.</div>
+        <div class="bug-evidence">JWT anon extraído del bundle — confirma acceso a REST API</div>
+        <div class="bug-fix">Auditar todas las tablas: products, categories, quotes, settings, analytics — verificar que anon solo puede leer lo que debe leer.</div>
+      </div>
+
+      <div class="bug-card low">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #13</div>
+            <div class="bug-title">Logo PNG sin optimizar — 436 KB</div>
+          </div>
+          <span class="sev-badge sev-low">Bajo</span>
+        </div>
+        <div class="bug-desc">El logo del header (<code>DC_Bikes_Sin_Fondo.png</code>) pesa 436 KB. Convertido a WebP con tamaño apropiado quedaría por debajo de 50 KB.</div>
+        <div class="bug-evidence">Content-Length: 446859 en /DC_Bikes_Sin_Fondo.png</div>
+        <div class="bug-fix">Exportar a WebP con calidad 80%, escalar al tamaño de visualización máximo. Usar <code>&lt;picture&gt;</code> con fallback PNG para IE11 si necesario.</div>
+      </div>
+
+      <div class="bug-card low">
+        <div class="bug-header">
+          <div>
+            <div class="bug-num">BUG #14</div>
+            <div class="bug-title">/manifest.json y /sw.js devuelven HTML (falso positivo)</div>
+          </div>
+          <span class="sev-badge sev-low">Bajo</span>
+        </div>
+        <div class="bug-desc">Peticiones a <code>/manifest.json</code> y <code>/sw.js</code> devuelven el HTML shell con Content-Type text/html en lugar de 404. No hay PWA configurada, pero el comportamiento puede confundir herramientas de auditoría como Lighthouse.</div>
+        <div class="bug-evidence">curl /manifest.json → &lt;!doctype html&gt; con Content-Type: text/html</div>
+        <div class="bug-fix">Sin acción requerida a menos que se quiera PWA. Documentar como comportamiento esperado de SPA con catch-all.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PRIORITY STEPS -->
+  <section>
+    <h2>Plan de acción — orden de prioridad</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Proteger cost_price con RLS (Supabase Dashboard)</div>
+          <div class="step-detail">SQL Editor: <code>REVOKE SELECT (cost_price) ON products FROM anon;</code> — Inmediato, sin downtime.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Completar datos del Aviso Legal</div>
+          <div class="step-detail">El cliente debe aportar NIF/CIF, teléfono, denominación jurídica y Registro Mercantil. Actualizar <code>LegalNotice.tsx</code> y redesplegar.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Configurar HTTPS con Let's Encrypt</div>
+          <div class="step-detail">Apuntar el DNS de dcbikescantabria.es al servidor, instalar certbot, emitir certificado, configurar nginx para HTTPS + redirect HTTP→HTTPS.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Restringir Google Maps API Key en Google Cloud Console</div>
+          <div class="step-detail">Credentials → API Key → HTTP referrers → añadir <code>dcbikescantabria.es/*</code>. Evita facturas inesperadas.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">Habilitar gzip en nginx</div>
+          <div class="step-detail">Añadir <code>gzip on; gzip_types text/javascript application/javascript text/css;</code> en nginx.conf. Reduce el bundle de 1,4 MB a ~350 KB.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="step-title">Añadir Cache-Control y security headers en nginx</div>
+          <div class="step-detail">Cache larga para <code>/assets/*</code> (inmutable por hashes). X-Frame-Options, X-Content-Type-Options, Referrer-Policy para seguridad básica.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <div class="step-title">Eliminar console.log del flujo de presupuesto</div>
+          <div class="step-detail">QuoteModal.tsx — eliminar los 5 console.log de los pasos [1/3], [2/3], [3/3]. Redesplegar.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">8</div>
+        <div class="step-body">
+          <div class="step-title">Optimizar imágenes (favicon y logo)</div>
+          <div class="step-detail">Favicon: PNG 32×32 &lt;5 KB. Logo: WebP &lt;50 KB. Reducción de ~850 KB de descarga inicial.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">9</div>
+        <div class="step-body">
+          <div class="step-title">Añadir meta description estática en index.html</div>
+          <div class="step-detail">Fallback para crawlers: <code>&lt;meta name="description" content="Tienda y taller de bicicletas en El Astillero, Cantabria"&gt;</code> + og:title + og:image básicos.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">10</div>
+        <div class="step-body">
+          <div class="step-title">Verificar dominio en Resend y configurar RESEND_FROM_EMAIL</div>
+          <div class="step-detail">Una vez el cliente tenga dcbikescantabria.es, verificar en Resend y establecer el secret en Supabase Edge Functions para que el envío de emails funcione.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NON-VERIFIABLE -->
+  <section>
+    <h2>No verificable sin navegador real con JS</h2>
+    <table class="status-table">
+      <thead><tr><th>Funcionalidad</th><th>Razón</th></tr></thead>
+      <tbody>
+        <tr><td>Animaciones del hero (wspin, float, charIn, marq)</td><td>Requieren CSS + JS ejecutándose en browser</td></tr>
+        <tr><td>Carrusel de imágenes en ficha de producto</td><td>Requiere click y estado React</td></tr>
+        <tr><td>Apertura y cierre del modal de presupuesto</td><td>Requiere click en botón</td></tr>
+        <tr><td>Menú hamburguesa en móvil</td><td>Requiere viewport <768px + click</td></tr>
+        <tr><td>Layout responsive real (375px / 768px / 1280px)</td><td>Requiere browser con viewport real</td></tr>
+        <tr><td>Filtros de categoría en catálogo</td><td>Requiere datos en Supabase + JS</td></tr>
+        <tr><td>Búsqueda de productos</td><td>Requiere input + estado React</td></tr>
+        <tr><td>Banner cookie: timing visual de 800ms</td><td>Requiere browser + setTimeout real</td></tr>
+        <tr><td>Envío real de formulario de presupuesto</td><td>Requiere Resend configurado con dominio verificado</td></tr>
+        <tr><td>Panel de admin completo</td><td>Requiere credenciales de usuario admin creadas en Supabase Auth</td></tr>
+        <tr><td>Importación Excel</td><td>Requiere archivo XLSX real + credenciales admin</td></tr>
+        <tr><td>Dashboard analytics (gráficas)</td><td>Requiere datos de visitas + credenciales admin</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+
+<footer>
+  Informe generado por agente QA Evidence Collector &mdash; DC Bikes Cantabria &mdash; 4 mayo 2026<br>
+  Método: análisis estático HTTP + descompilación de bundle JS compilado (1,4 MB) + peticiones directas a API Supabase
+</footer>
+
+</body>
+</html>

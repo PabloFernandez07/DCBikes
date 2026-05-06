@@ -10,7 +10,6 @@ export interface ColumnMapping {
   brand:           string | null
   short_description: string | null
   description:     string | null
-  cost_price:      string | null
   retail_price:    string | null
   stock:           string | null
   category_slug:   string | null
@@ -24,7 +23,6 @@ export interface ProductDraft {
   brand:            string | null
   short_description:string | null
   description:      string | null
-  cost_price:       number | null
   retail_price:     number
   stock:            number
   category_slug:    string | null
@@ -98,7 +96,6 @@ export function mapRows(rows: RawRow[], mapping: ColumnMapping): ProductDraft[] 
       brand:             get(mapping.brand) ? String(get(mapping.brand)).trim() : null,
       short_description: get(mapping.short_description) ? String(get(mapping.short_description)).trim() : null,
       description:       get(mapping.description)       ? String(get(mapping.description)).trim()       : null,
-      cost_price:        toNum(get(mapping.cost_price)),
       retail_price:      retailRaw ?? 0,
       stock:             stockVal ?? 0,
       category_slug:     get(mapping.category_slug) ? String(get(mapping.category_slug)).trim() : null,

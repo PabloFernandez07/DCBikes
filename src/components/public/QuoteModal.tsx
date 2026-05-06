@@ -61,15 +61,8 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
   const onSubmit = async (data: FormData) => {
     setStatus('loading')
     const quoteId = crypto.randomUUID()
-    console.group(`%c[QUOTE] Nueva solicitud ${quoteId.slice(0, 8)}`, 'color:#C4A2CF;font-weight:bold')
-    console.log('Producto:', productId ?? 'sin producto (taller)')
-    console.log('Email:', data.email)
-    console.log('Teléfono:', data.phone || '—')
-    console.log('Mensaje:', data.message)
 
     try {
-      // PASO 1 — Insertar en Supabase
-      console.log('%c[1/3] Insertando en Supabase...', 'color:#7E6E8A')
       const { error: insertError } = await supabase
         .from('quote_requests')
         .insert({
@@ -80,32 +73,17 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
           message: data.message,
         })
 
-      if (insertError) {
-        console.error('%c[1/3] ✗ Error al insertar:', 'color:#E5301E', insertError)
-        throw insertError
-      }
-      console.log('%c[1/3] ✓ Insert OK — quote_id:', 'color:#22c55e', quoteId)
+      if (insertError) throw insertError
 
-      // PASO 2 — Invocar Edge Function
-      console.log('%c[2/3] Invocando Edge Function send-quote-email...', 'color:#7E6E8A')
-      const { data: fnData, error: fnError } = await supabase.functions.invoke('send-quote-email', {
+      const { error: fnError } = await supabase.functions.invoke('send-quote-email', {
         body: { quote_id: quoteId },
       })
 
-      if (fnError) {
-        console.error('%c[2/3] ✗ Error en Edge Function:', 'color:#E5301E', fnError)
-        throw fnError
-      }
-      console.log('%c[2/3] ✓ Edge Function respondió:', 'color:#22c55e', fnData)
+      if (fnError) throw fnError
 
-      // PASO 3 — Éxito
-      console.log('%c[3/3] ✓ Solicitud completada', 'color:#22c55e;font-weight:bold')
-      console.groupEnd()
       setStatus('success')
       setTimeout(() => onClose(), 3000)
-    } catch (err) {
-      console.error('%c[QUOTE] ✗ Solicitud fallida:', 'color:#E5301E;font-weight:bold', err)
-      console.groupEnd()
+    } catch {
       setStatus('error')
     }
   }

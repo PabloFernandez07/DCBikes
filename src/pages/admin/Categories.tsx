@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Trash2, Pencil, Check, X, Plus } from 'lucide-react'
+import { Trash2, Pencil, Check, X, Plus, ChevronUp, ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Field } from '@/components/ui/Field'
@@ -36,6 +36,7 @@ export function Categories() {
 
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [movingId, setMovingId] = useState<string | null>(null)
 
   // Edit inline state
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -90,13 +91,32 @@ export function Categories() {
     if (isNaN(sort)) { setNewError('El orden debe ser un número'); return }
 
     setAdding(true)
+
+    // Auto-shift: incrementar todas las categorías en posición >= sort
+    const toShift = categories.filter(c => c.sort_order >= sort)
+    if (toShift.length > 0) {
+      const shiftErrors = await Promise.all(
+        toShift.map(c =>
+          (supabase.from('categories') as any)
+            .update({ sort_order: c.sort_order + 1 })
+            .eq('id', c.id)
+        )
+      )
+      const firstErr = shiftErrors.find(r => r.error)
+      if (firstErr?.error) {
+        setNewError('Error al reordenar: ' + firstErr.error.message)
+        setAdding(false)
+        return
+      }
+    }
+
     const { error } = await (supabase.from('categories') as any)
       .insert({ name, slug, sort_order: sort })
 
     if (error) {
       setNewError(error.message)
     } else {
-      toast.success(`Categoría "${name}" creada`)
+      toast.success(`Categoría "${name}" creada en posición ${sort}`)
       setNewName('')
       setNewSlug('')
       setNewSort('')
@@ -136,6 +156,21 @@ export function Categories() {
     if (isNaN(sort)) { setEditError('El orden debe ser un número'); return }
 
     setSavingId(cat.id)
+
+    // Auto-shift si cambia la posición y hay colisión
+    if (sort !== cat.sort_order) {
+      const toShift = categories.filter(c => c.id !== cat.id && c.sort_order >= sort)
+      if (toShift.length > 0) {
+        await Promise.all(
+          toShift.map(c =>
+            (supabase.from('categories') as any)
+              .update({ sort_order: c.sort_order + 1 })
+              .eq('id', c.id)
+          )
+        )
+      }
+    }
+
     const { error } = await (supabase.from('categories') as any)
       .update({ name, slug, sort_order: sort })
       .eq('id', cat.id)
@@ -148,6 +183,31 @@ export function Categories() {
       await fetchCategories()
     }
     setSavingId(null)
+  }
+
+  // ── MOVE UP / DOWN ───────────────────────────────────────────────────────────
+
+  async function handleMove(cat: Category, idx: number, direction: 'up' | 'down') {
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    const swapCat = categories[swapIdx]
+    if (!swapCat) return
+
+    setMovingId(cat.id)
+    const [r1, r2] = await Promise.all([
+      (supabase.from('categories') as any)
+        .update({ sort_order: swapCat.sort_order })
+        .eq('id', cat.id),
+      (supabase.from('categories') as any)
+        .update({ sort_order: cat.sort_order })
+        .eq('id', swapCat.id),
+    ])
+
+    if (r1.error || r2.error) {
+      toast.error('Error al mover la categoría')
+    } else {
+      await fetchCategories()
+    }
+    setMovingId(null)
   }
 
   // ── DELETE ───────────────────────────────────────────────────────────────────
@@ -200,7 +260,7 @@ export function Categories() {
                 <thead>
                   <tr className="border-b border-[var(--color-card-hover)]">
                     <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide w-20">
-                      Sort
+                      Pos.
                     </th>
                     <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">
                       Nombre
@@ -211,7 +271,7 @@ export function Categories() {
                     <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide w-24 text-right">
                       Productos
                     </th>
-                    <th className="px-4 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide w-28">
+                    <th className="px-4 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide w-36">
                       Acciones
                     </th>
                   </tr>
@@ -225,7 +285,7 @@ export function Categories() {
                     </tr>
                   )}
 
-                  {categories.map(cat => (
+                  {categories.map((cat, idx) => (
                     <tr
                       key={cat.id}
                       className="border-b border-[var(--color-card-hover)]/40 last:border-0 transition-colors hover:bg-[var(--color-card-hover)]/20"
@@ -317,7 +377,34 @@ export function Categories() {
                             </span>
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-end gap-0.5">
+                              {/* ↑↓ reorder */}
+                              <button
+                                type="button"
+                                onClick={() => handleMove(cat, idx, 'up')}
+                                disabled={idx === 0 || movingId === cat.id}
+                                className="p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[var(--color-lavender)]/10 transition-colors disabled:opacity-20 disabled:pointer-events-none"
+                                aria-label="Subir"
+                              >
+                                {movingId === cat.id
+                                  ? <div className="w-3.5 h-3.5 rounded-full border-2 border-[var(--color-lavender)] border-t-transparent animate-spin" />
+                                  : <ChevronUp size={14} />
+                                }
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleMove(cat, idx, 'down')}
+                                disabled={idx === categories.length - 1 || movingId === cat.id}
+                                className="p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[var(--color-lavender)]/10 transition-colors disabled:opacity-20 disabled:pointer-events-none"
+                                aria-label="Bajar"
+                              >
+                                <ChevronDown size={14} />
+                              </button>
+
+                              {/* divider */}
+                              <span className="w-px h-4 bg-[var(--color-card-hover)] mx-0.5" />
+
+                              {/* edit / delete */}
                               <button
                                 type="button"
                                 onClick={() => startEdit(cat)}
@@ -348,9 +435,12 @@ export function Categories() {
 
         {/* Add new category form */}
         <div className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-5">
-          <h2 className="text-sm font-[var(--font-cond)] font-semibold text-[var(--color-lavender)] tracking-widest uppercase mb-4">
+          <h2 className="text-sm font-[var(--font-cond)] font-semibold text-[var(--color-lavender)] tracking-widest uppercase mb-1">
             Añadir categoría
           </h2>
+          <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)] mb-4">
+            Si introduces una posición ocupada, las categorías existentes se desplazarán hacia abajo automáticamente.
+          </p>
 
           <div className="flex flex-wrap gap-3 items-start">
             <div className="flex-1 min-w-[180px]">
@@ -374,10 +464,10 @@ export function Categories() {
 
             <div className="w-28">
               <Field
-                label="Sort order"
+                label="Posición"
                 value={newSort}
                 onChange={e => setNewSort((e.target as HTMLInputElement).value)}
-                placeholder="10"
+                placeholder="1"
               />
             </div>
 
