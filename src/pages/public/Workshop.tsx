@@ -63,6 +63,11 @@ export default function Workshop() {
         title="Taller de bicicletas"
         description="Taller especializado en reparación y mantenimiento de bicicletas en El Astillero. Mecánicos expertos, diagnóstico rápido y garantía en todos los trabajos."
         url="https://dcbikescantabria.es/taller"
+        keywords="taller bicicletas cantabria, reparación bicicletas el astillero, mecánico bicicletas cantabria, mantenimiento bicicletas, puesta a punto bicicleta"
+        breadcrumbs={[
+          { name: "Inicio", url: "https://dcbikescantabria.es" },
+          { name: "Taller", url: "https://dcbikescantabria.es/taller" },
+        ]}
       />
       {/* Hero */}
       <section className="relative py-28 overflow-hidden">

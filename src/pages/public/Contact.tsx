@@ -96,6 +96,11 @@ export default function Contact() {
         title="Contacto y horarios"
         description="Visítanos en El Astillero, Cantabria. Horarios, dirección, teléfono y mapa de DC Bikes Cantabria. Distribuidores Giant y Liv."
         url="https://dcbikescantabria.es/contacto"
+        keywords="contacto dc bikes cantabria, horarios tienda bicicletas el astillero, dirección dc bikes, dónde comprar bicicleta cantabria"
+        breadcrumbs={[
+          { name: "Inicio", url: "https://dcbikescantabria.es" },
+          { name: "Contacto", url: "https://dcbikescantabria.es/contacto" },
+        ]}
       />
       {/* Hero */}
       <section className="relative py-28 overflow-hidden">

@@ -1,19 +1,22 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { CookieBanner } from "@/components/layout/CookieBanner";
-import Home from "@/pages/public/Home";
-import Catalog from "@/pages/public/Catalog";
-import ProductDetail from "@/pages/public/ProductDetail";
-import Workshop from "@/pages/public/Workshop";
-import Contact from "@/pages/public/Contact";
-import CookiePolicy from "@/pages/public/CookiePolicy";
-import PrivacyPolicy from "@/pages/public/PrivacyPolicy";
-import LegalNotice from "@/pages/public/LegalNotice";
-import { AdminRoutes } from "@/routes/AdminRoutes";
-import NotFound from "@/pages/public/NotFound";
+
+const Home         = lazy(() => import("@/pages/public/Home"));
+const Catalog      = lazy(() => import("@/pages/public/Catalog"));
+const ProductDetail = lazy(() => import("@/pages/public/ProductDetail"));
+const Workshop     = lazy(() => import("@/pages/public/Workshop"));
+const Contact      = lazy(() => import("@/pages/public/Contact"));
+const CookiePolicy = lazy(() => import("@/pages/public/CookiePolicy"));
+const PrivacyPolicy = lazy(() => import("@/pages/public/PrivacyPolicy"));
+const LegalNotice  = lazy(() => import("@/pages/public/LegalNotice"));
+const NotFound     = lazy(() => import("@/pages/public/NotFound"));
+const AdminRoutes  = lazy(() =>
+  import("@/routes/AdminRoutes").then((m) => ({ default: m.AdminRoutes }))
+);
 
 function SplashScreen({ onDone }: { onDone: () => void }) {
   const [exiting, setExiting] = useState(false);
@@ -159,6 +162,7 @@ export default function App() {
     <BrowserRouter>
       <ScrollToTop />
       {!splashDone && <SplashScreen onDone={handleSplashDone} />}
+      <Suspense fallback={null}>
       <Routes>
         <Route
           path="/"
@@ -227,6 +231,7 @@ export default function App() {
         <Route path="/admin/*" element={<AdminRoutes />} />
         <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
       </Routes>
+      </Suspense>
       <CookieBanner />
     </BrowserRouter>
   );

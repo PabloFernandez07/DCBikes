@@ -98,6 +98,13 @@ export default function ProductDetail() {
         description={product.short_description ?? `${product.name} disponible en DC Bikes Cantabria, El Astillero. ${product.brand ? `Marca: ${product.brand}.` : ''} Consulta precio y disponibilidad.`}
         url={`https://dcbikescantabria.es/producto/${product.slug}`}
         type="product"
+        keywords={`${product.name.toLowerCase()}, ${product.brand ? product.brand.toLowerCase() + ' cantabria, ' : ''}bicicletas el astillero, dc bikes cantabria`}
+        breadcrumbs={[
+          { name: "Inicio", url: "https://dcbikescantabria.es" },
+          { name: "Catálogo", url: "https://dcbikescantabria.es/catalogo" },
+          ...(category ? [{ name: category.name, url: "https://dcbikescantabria.es/catalogo" }] : []),
+          { name: product.name, url: `https://dcbikescantabria.es/producto/${product.slug}` },
+        ]}
       />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 mb-8 text-sm text-[var(--color-mid)] font-[var(--font-cond)]" aria-label="Navegación de migas">
