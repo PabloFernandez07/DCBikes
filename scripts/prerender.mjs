@@ -35,11 +35,11 @@ const SCHEMA_LOCAL_BUSINESS = `
     "url": "${SITE}",
     "logo": "${IMG}",
     "image": "${IMG}",
-    "telephone": "+34-XXX-XXX-XXX",
+    "telephone": "+34942054501",
     "hasMap": "https://maps.google.com/?q=DC+Bikes+Cantabria+El+Astillero",
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "C/ [Dirección exacta]",
+      "streetAddress": "C. la Cantábrica, bloque 2 n, 1 BAJO",
       "addressLocality": "El Astillero",
       "addressRegion": "Cantabria",
       "postalCode": "39610",
