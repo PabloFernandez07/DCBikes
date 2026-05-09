@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { QuoteModal } from '@/components/public/QuoteModal'
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
-import { SCHEDULE, isOpenNow, todayLabel } from '@/lib/schedule'
+import { useSchedule } from '@/hooks/useSchedule'
 import { useCookieConsent } from '@/components/layout/CookieBanner'
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
@@ -32,6 +32,7 @@ interface SiteSettings {
   instagram?: string
   facebook?: string
   maps_embed?: string
+  maps_link?: string
 }
 
 function useReveal() {
@@ -50,6 +51,7 @@ function useReveal() {
 }
 
 export default function Contact() {
+  const { schedule, isOpen: open, today } = useSchedule()
   const [settings, setSettings] = useState<SiteSettings>({})
   const [quoteOpen, setQuoteOpen] = useState(false)
   const cookieConsent = useCookieConsent()
@@ -60,7 +62,7 @@ export default function Contact() {
     supabase
       .from('settings')
       .select('key, value')
-      .in('key', ['store_address', 'store_phone', 'store_hours', 'social_instagram', 'social_facebook', 'maps_embed'])
+      .in('key', ['store_address', 'store_phone', 'store_hours', 'social_instagram', 'social_facebook', 'maps_embed', 'maps_link'])
       .then(({ data }) => {
         if (!data) return
         const obj: SiteSettings = {}
@@ -71,6 +73,7 @@ export default function Contact() {
           social_instagram: 'instagram',
           social_facebook: 'facebook',
           maps_embed: 'maps_embed',
+          maps_link: 'maps_link',
         }
         data.forEach(row => {
           const key = map[row.key]
@@ -87,8 +90,6 @@ export default function Contact() {
   const address = settings.address ?? null
   const hours = settings.hours ?? null
 
-  const open = isOpenNow()
-  const today = todayLabel()
 
   return (
     <div ref={pageRef}>
@@ -160,7 +161,7 @@ export default function Contact() {
                   </address>
                 )}
                 <a
-                  href="https://maps.app.goo.gl/E2dajUcN3rA2fvc57"
+                  href={settings.maps_link ?? 'https://maps.app.goo.gl/E2dajUcN3rA2fvc57'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 mt-2 text-xs font-[var(--font-cond)] text-[var(--color-lavender)] hover:underline tracking-wide"
@@ -216,7 +217,7 @@ export default function Contact() {
                   <p className="font-[var(--font-body)] text-sm text-[var(--color-cream)] whitespace-pre-line leading-relaxed">{hours}</p>
                 ) : (
                   <div className="space-y-1">
-                    {SCHEDULE.map((day) => {
+                    {schedule.map((day) => {
                       const isToday = day.label === today
                       const closed = !day.morning && !day.afternoon
                       return (
@@ -290,7 +291,7 @@ export default function Contact() {
                   Cargar mapa
                 </button>
                 <a
-                  href="https://maps.app.goo.gl/E2dajUcN3rA2fvc57"
+                  href={settings.maps_link ?? 'https://maps.app.goo.gl/E2dajUcN3rA2fvc57'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs font-[var(--font-body)] text-[var(--color-mid)] hover:text-[var(--color-lavender)] transition-colors underline underline-offset-2"

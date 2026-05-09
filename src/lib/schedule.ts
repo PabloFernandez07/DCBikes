@@ -23,27 +23,35 @@ function toMinutes(h: number, m: number) {
   return h * 60 + m;
 }
 
-export function isOpenNow(): boolean {
-  const now = new Date();
-  const dow = now.getDay(); // 0=domingo … 6=sábado
-  const idx = dow === 0 ? 6 : dow - 1; // convertir a nuestro array (0=lunes … 6=domingo)
-  const day = SCHEDULE[idx];
+function dowIndex(): number {
+  const dow = new Date().getDay();
+  return dow === 0 ? 6 : dow - 1;
+}
 
-  const currentMin = toMinutes(now.getHours(), now.getMinutes());
+export function computeIsOpen(schedule: DaySchedule[]): boolean {
+  const day = schedule[dowIndex()];
+  if (!day) return false;
+  const currentMin = toMinutes(new Date().getHours(), new Date().getMinutes());
 
   function inRange(slot: string | null): boolean {
     if (!slot) return false;
     const [start, end] = slot.split("–");
-    const s = parseTime(start);
-    const e = parseTime(end);
+    const s = parseTime(start.trim());
+    const e = parseTime(end.trim());
     return currentMin >= toMinutes(s.h, s.m) && currentMin < toMinutes(e.h, e.m);
   }
 
   return inRange(day.morning) || inRange(day.afternoon);
 }
 
+export function computeTodayLabel(schedule: DaySchedule[]): string {
+  return schedule[dowIndex()]?.label ?? "";
+}
+
+export function isOpenNow(): boolean {
+  return computeIsOpen(SCHEDULE);
+}
+
 export function todayLabel(): string {
-  const dow = new Date().getDay();
-  const idx = dow === 0 ? 6 : dow - 1;
-  return SCHEDULE[idx].label;
+  return computeTodayLabel(SCHEDULE);
 }

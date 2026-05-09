@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/Button'
 import { Field } from '@/components/ui/Field'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
+import { SCHEDULE } from '@/lib/schedule'
+import type { DaySchedule } from '@/lib/schedule'
 
 type SettingsMap = Record<string, string>
 
@@ -18,6 +20,7 @@ const SETTINGS_KEYS = [
   'store_address',
   'store_phone',
   'store_hours',
+  'maps_link',
   'quote_destination_email',
   'reply_from_email',
   'social_instagram',
@@ -30,6 +33,8 @@ export function Settings() {
   const { toasts, toast, dismiss } = useToast()
   const [values, setValues] = useState<SettingsMap>({})
   const [original, setOriginal] = useState<SettingsMap>({})
+  const [scheduleRows, setScheduleRows] = useState<DaySchedule[]>(SCHEDULE)
+  const [originalSchedule, setOriginalSchedule] = useState<DaySchedule[]>(SCHEDULE)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -41,9 +46,16 @@ export function Settings() {
         const map: SettingsMap = {}
         const rows = (data as SettingRow[] | null) ?? []
         for (const row of rows) {
-          // value is stored as JSON stringified string, parse it
           try {
-            map[row.key] = typeof row.value === 'string' ? JSON.parse(row.value) : String(row.value ?? '')
+            if (row.key === 'store_schedule') {
+              const parsed = typeof row.value === 'string' ? JSON.parse(row.value) : row.value
+              if (Array.isArray(parsed) && parsed.length === 7) {
+                setScheduleRows(parsed as DaySchedule[])
+                setOriginalSchedule(parsed as DaySchedule[])
+              }
+            } else {
+              map[row.key] = typeof row.value === 'string' ? JSON.parse(row.value) : String(row.value ?? '')
+            }
           } catch {
             map[row.key] = String(row.value ?? '')
           }
@@ -58,6 +70,12 @@ export function Settings() {
     setValues(prev => ({ ...prev, [key]: value }))
   }
 
+  const setSlot = (dayIdx: number, slot: 'morning' | 'afternoon', value: string) => {
+    setScheduleRows(prev =>
+      prev.map((d, i) => i === dayIdx ? { ...d, [slot]: value.trim() || null } : d)
+    )
+  }
+
   const handleSave = async () => {
     setSaving(true)
     const changed = SETTINGS_KEYS.filter(k => values[k] !== original[k])
@@ -67,12 +85,16 @@ export function Settings() {
       upsert: (row: { key: string; value: string }) => Promise<UpsertResult>
     }
     const settingsBuilder = supabase.from('settings') as unknown as SettingsBuilder
-    const results = await Promise.all(
-      changed.map(key => {
+
+    const results = await Promise.all([
+      ...changed.map(key => {
         const val: string = JSON.stringify(values[key] ?? '')
         return settingsBuilder.upsert({ key, value: val })
       }),
-    )
+      JSON.stringify(scheduleRows) !== JSON.stringify(originalSchedule)
+        ? settingsBuilder.upsert({ key: 'store_schedule', value: JSON.stringify(scheduleRows) })
+        : Promise.resolve({ error: null }),
+    ])
 
     setSaving(false)
     const anyError = results.find(r => r.error)
@@ -80,6 +102,7 @@ export function Settings() {
       toast.error('Error al guardar: ' + anyError.error.message)
     } else {
       setOriginal({ ...values })
+      setOriginalSchedule([...scheduleRows])
       toast.success('Configuración guardada')
     }
   }
@@ -129,10 +152,59 @@ export function Settings() {
                   onChange={e => set('store_phone', (e.target as HTMLInputElement).value)}
                 />
                 <Field
-                  label="Horarios"
+                  label="Horario (texto libre, opcional)"
+                  helpText="Si lo rellenas, se muestra en Contacto en lugar de la tabla de horarios."
                   value={v('store_hours')}
                   onChange={e => set('store_hours', (e.target as HTMLInputElement).value)}
                 />
+              </div>
+              <Field
+                label="Enlace Google Maps (Cómo llegar)"
+                type="url"
+                placeholder="https://maps.app.goo.gl/..."
+                helpText="URL del pin de Google Maps. Aparece en el botón 'Cómo llegar' y en el panel del mapa."
+                value={v('maps_link')}
+                onChange={e => set('maps_link', (e.target as HTMLInputElement).value)}
+              />
+            </section>
+
+            {/* Section: Horarios semanales */}
+            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+              <div>
+                <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
+                  Horarios semanales
+                </h2>
+                <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
+                  Controla el indicador ABIERTO/CERRADO y la tabla de horarios en Home y Contacto. Formato: <code className="text-[var(--color-lavender)]">09:30–14:00</code>. Deja vacío para marcar ese tramo como cerrado.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <div className="grid grid-cols-[100px_1fr_1fr] gap-3 mb-1">
+                  <span className="text-xs font-[var(--font-cond)] text-[var(--color-mid)] tracking-widest uppercase">Día</span>
+                  <span className="text-xs font-[var(--font-cond)] text-[var(--color-mid)] tracking-widest uppercase">Mañana</span>
+                  <span className="text-xs font-[var(--font-cond)] text-[var(--color-mid)] tracking-widest uppercase">Tarde</span>
+                </div>
+                {scheduleRows.map((day, i) => (
+                  <div key={day.label} className="grid grid-cols-[100px_1fr_1fr] gap-3 items-center">
+                    <span className="text-sm font-[var(--font-cond)] text-[var(--color-cream)] tracking-wide">
+                      {day.label}
+                    </span>
+                    <input
+                      type="text"
+                      value={day.morning ?? ''}
+                      placeholder="Cerrado"
+                      onChange={e => setSlot(i, 'morning', e.target.value)}
+                      className="h-9 px-3 rounded-lg bg-[var(--color-ink)] border border-[var(--color-card-hover)] text-sm font-[var(--font-body)] text-[var(--color-cream)] placeholder:text-[var(--color-mid)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+                    />
+                    <input
+                      type="text"
+                      value={day.afternoon ?? ''}
+                      placeholder="Cerrado"
+                      onChange={e => setSlot(i, 'afternoon', e.target.value)}
+                      className="h-9 px-3 rounded-lg bg-[var(--color-ink)] border border-[var(--color-card-hover)] text-sm font-[var(--font-body)] text-[var(--color-cream)] placeholder:text-[var(--color-mid)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+                    />
+                  </div>
+                ))}
               </div>
             </section>
 

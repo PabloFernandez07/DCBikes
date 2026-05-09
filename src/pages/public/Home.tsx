@@ -11,14 +11,13 @@ import {
 } from "lucide-react";
 import { useGoogleReviews } from "@/hooks/useGoogleReviews";
 import { SEO } from "@/components/layout/SEO";
-import { SCHEDULE, isOpenNow, todayLabel } from "@/lib/schedule";
+import { useSchedule } from "@/hooks/useSchedule";
 import { supabase } from "@/lib/supabase";
 import { ProductCard } from "@/components/public/ProductCard";
 import { QuoteModal } from "@/components/public/QuoteModal";
+import { ScrollVideoHero } from "@/components/public/ScrollVideoHero";
 import { Button } from "@/components/ui/Button";
 import type { Product, ProductImage } from "@/lib/database.types";
-
-const HERO_LINE1 = "MUÉVETE";
 
 const TICKER_WORDS = [
   { text: "BICICLETAS", accent: false },
@@ -34,36 +33,6 @@ const TICKER_WORDS = [
   { text: "REPARACIÓN", accent: false },
   { text: "·", accent: true },
 ];
-
-function AnimatedChar({ char, delay }: { char: string; delay: number }) {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), delay);
-    return () => clearTimeout(t);
-  }, [delay]);
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0)" : "translateY(0.35em)",
-        transition: "opacity 0.45s ease, transform 0.45s ease",
-      }}
-    >
-      {char === " " ? " " : char}
-    </span>
-  );
-}
-
-function HeroText({ text, baseDelay }: { text: string; baseDelay: number }) {
-  return (
-    <span>
-      {text.split("").map((char, i) => (
-        <AnimatedChar key={i} char={char} delay={baseDelay + i * 55} />
-      ))}
-    </span>
-  );
-}
 
 function useCountUp(target: number, duration = 1800) {
   const [count, setCount] = useState(0);
@@ -340,206 +309,13 @@ export default function Home() {
 
   const displayProducts = featured.length > 0 ? featured : placeholderProducts;
 
-  const open = isOpenNow();
-  const today = todayLabel();
+  const { schedule, isOpen: open, today } = useSchedule();
 
   return (
     <div ref={sectionRef}>
       <SEO />
-      {/* ─── HERO ─── */}
-      <section className="relative min-h-[95dvh] flex items-center overflow-hidden">
-        {/* Animated background orbs */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          aria-hidden="true"
-        >
-          <div
-            style={{
-              position: "absolute",
-              width: "600px",
-              height: "600px",
-              borderRadius: "50%",
-              top: "-10%",
-              left: "-5%",
-              background:
-                "radial-gradient(circle, rgba(196,162,207,0.07) 0%, transparent 70%)",
-              animation: "float 8s ease-in-out infinite",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              width: "400px",
-              height: "400px",
-              borderRadius: "50%",
-              bottom: "0%",
-              right: "10%",
-              background:
-                "radial-gradient(circle, rgba(229,48,30,0.06) 0%, transparent 70%)",
-              animation: "float 6s ease-in-out infinite 2s",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              width: "300px",
-              height: "300px",
-              borderRadius: "50%",
-              top: "40%",
-              left: "40%",
-              background:
-                "radial-gradient(circle, rgba(196,162,207,0.05) 0%, transparent 70%)",
-              animation: "float 10s ease-in-out infinite 1s",
-            }}
-          />
-          {/* Grid lines decoration */}
-          <svg
-            className="absolute inset-0 w-full h-full opacity-[0.03]"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <defs>
-              <pattern
-                id="grid"
-                width="60"
-                height="60"
-                patternUnits="userSpaceOnUse"
-              >
-                <path
-                  d="M 60 0 L 0 0 0 60"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="0.5"
-                />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-        </div>
-
-        <div className="w-full px-4 sm:px-6 lg:px-8 grid lg:grid-cols-[1fr_1.6fr] gap-8 items-center py-24 relative z-10">
-          {/* Text side */}
-          <div className="flex flex-col gap-7">
-            {/* Badge */}
-            <div
-              style={{
-                animation: "fadeUp 0.6s ease forwards 0.1s",
-                opacity: 0,
-              }}
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(196,162,207,0.12)] border border-[rgba(196,162,207,0.25)] w-fit">
-                <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-lavender)] animate-[spulse_2s_ease-in-out_infinite]" />
-                <span className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-lavender)]">
-                  El Astillero · Cantabria
-                </span>
-              </div>
-            </div>
-
-            {/* Title */}
-            <h1
-              className="font-[var(--font-display)] leading-none tracking-wide text-[var(--color-cream)]"
-              style={{ fontSize: "clamp(2.4rem, 9vw, 8rem)" }}
-            >
-              {/* Cada palabra en su propio nowrap para que CSS rompa solo en espacios */}
-              <span className="block">
-                <span style={{ whiteSpace: "nowrap" }}>
-                  <HeroText text={HERO_LINE1} baseDelay={200} />
-                </span>
-              </span>
-              <span className="block text-[var(--color-lavender)]">
-                <span style={{ whiteSpace: "nowrap" }}>
-                  <HeroText text="SIN" baseDelay={700} />
-                </span>
-                {" "}
-                <span style={{ whiteSpace: "nowrap" }}>
-                  <HeroText text="LÍMITES" baseDelay={920} />
-                </span>
-              </span>
-            </h1>
-
-            {/* Divider line */}
-            <div
-              style={{
-                animation: "fadeUp 0.6s ease forwards 1.2s",
-                opacity: 0,
-              }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="h-px flex-1 bg-gradient-to-r from-[var(--color-brand-red)] via-[var(--color-lavender)] to-transparent" />
-                <Star
-                  size={12}
-                  className="text-[var(--color-lavender)]"
-                  fill="currentColor"
-                />
-              </div>
-            </div>
-
-            <p
-              className="text-[var(--color-mid)] font-[var(--font-body)] text-lg max-w-md leading-relaxed"
-              style={{ animation: "fadeUp 0.6s ease forwards 1s", opacity: 0 }}
-            >
-              Tu tienda de bicicletas de confianza. Venta, taller y
-              asesoramiento profesional en el corazón de Cantabria.
-            </p>
-
-            <div
-              className="flex flex-wrap gap-3"
-              style={{
-                animation: "fadeUp 0.6s ease forwards 1.3s",
-                opacity: 0,
-              }}
-            >
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={() => navigate("/catalogo")}
-                className="font-[var(--font-display)] tracking-widest text-xl"
-              >
-                Ver catálogo
-                <ArrowRight size={20} />
-              </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={() => setQuoteOpen(true)}
-                className="font-[var(--font-display)] tracking-widest text-xl"
-              >
-                Pedir presupuesto
-              </Button>
-            </div>
-          </div>
-
-          {/* Bike illustration */}
-          <div
-            className="relative flex items-center justify-center h-[420px] lg:h-[680px]"
-            style={{ animation: "fadeUp 0.8s ease forwards 0.4s", opacity: 0 }}
-          >
-            <div
-              style={{ animation: "float 5s ease-in-out infinite" }}
-              className="w-[75%] mx-auto"
-            >
-              <BikePhoto />
-            </div>
-            {/* Glow under bike */}
-            <div
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-12 rounded-full"
-              style={{
-                background:
-                  "radial-gradient(ellipse, rgba(196,162,207,0.18) 0%, transparent 70%)",
-                filter: "blur(18px)",
-                animation: "spulse 5s ease-in-out infinite",
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-[var(--color-mid)] animate-[float_3s_ease-in-out_infinite]">
-          <span className="font-[var(--font-cond)] text-xs tracking-widest uppercase">
-            Scroll
-          </span>
-          <div className="w-px h-8 bg-gradient-to-b from-[var(--color-mid)] to-transparent" />
-        </div>
-      </section>
+      {/* ─── HERO scroll-video estilo Apple ─── */}
+      <ScrollVideoHero onQuoteOpen={() => setQuoteOpen(true)} />
 
       {/* ─── TICKER ─── */}
       <section className="py-5 bg-[var(--color-brand-red)] overflow-hidden">
@@ -807,7 +583,7 @@ export default function Home() {
 
             {/* Tabla de horarios */}
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 flex-1">
-              {SCHEDULE.map((day) => {
+              {schedule.map((day) => {
                 const isToday = day.label === today;
                 const closed = !day.morning && !day.afternoon;
                 return (
@@ -1107,67 +883,3 @@ export default function Home() {
   );
 }
 
-/**
- * BikePhoto — muestra la foto real de la bici con fondo eliminado.
- *
- * PASOS para el usuario:
- *  1. Sube la foto a https://remove.bg (gratis) para quitar el fondo blanco.
- *  2. Descarga el PNG resultante y guárdalo en:
- *       dc-bikes-web/public/bike-hero.png
- *  3. Listo — el componente ya apunta a ese archivo.
- *
- * Posicionamiento del logo giratorio:
- *  La rueda trasera en la foto Giant ocupa aprox.
- *  left 5 %, top 33 %, width/height 38 % de la imagen.
- *  Ajusta esos valores si usas otra foto.
- */
-function BikePhoto() {
-  return (
-    <div className="relative w-full select-none">
-      {/* Foto de la bici — PNG con fondo transparente */}
-      <img
-        src="/bike-hero.png"
-        alt="Bicicleta de carretera DC Bikes"
-        className="w-full h-auto block"
-        style={{
-          filter:
-            "drop-shadow(0 8px 48px rgba(196,162,207,0.22)) drop-shadow(0 0 24px rgba(196,162,207,0.10))",
-        }}
-        draggable={false}
-      />
-
-      {/*
-        Logo giratorio superpuesto sobre la RUEDA TRASERA.
-        La rueda trasera está en el lado IZQUIERDO de la foto.
-        Ajusta left / top / width si la posición no cuadra exactamente.
-      */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          left: "5%",
-          top: "33%",
-          width: "38%",
-          aspectRatio: "1",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "none",
-        }}
-      >
-        {/* <img
-          src="/DC_Bikes_Giratorio.png"
-          alt=""
-          style={{
-            width: "78%",
-            height: "78%",
-            objectFit: "contain",
-            transformOrigin: "center",
-            animation: "wspin 3.2s linear infinite",
-            opacity: 0.88,
-          }}
-        /> */}
-      </div>
-    </div>
-  );
-}
