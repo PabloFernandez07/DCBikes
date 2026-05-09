@@ -116,7 +116,8 @@ function useReveal(deps: unknown[] = []) {
 function ReviewCarousel({ reviews }: { reviews: import("@/hooks/useGoogleReviews").GoogleReview[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(0);
-  const PAGE_SIZE = 3;
+  const [isMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
+  const PAGE_SIZE = isMobile ? 1 : 3;
   const totalPages = Math.ceil(reviews.length / PAGE_SIZE);
 
   function goToPage(p: number) {
@@ -150,9 +151,9 @@ function ReviewCarousel({ reviews }: { reviews: import("@/hooks/useGoogleReviews
             key={i}
             className="group relative p-8 rounded-2xl bg-[var(--color-card)] border border-[var(--color-card-hover)] hover:border-[rgba(196,162,207,0.2)] transition-all duration-500 overflow-hidden flex flex-col flex-shrink-0"
             style={{
-              width: "calc(33.333% - 14px)",
+              width: isMobile ? "82%" : "calc(33.333% - 14px)",
               scrollSnapAlign: "start",
-              minWidth: "280px",
+              minWidth: isMobile ? "260px" : "280px",
             }}
           >
             <div
@@ -341,7 +342,7 @@ export default function Home() {
       {/* ─── STATS ─── */}
       <section className="py-20 bg-[var(--color-ink-deep)] border-b border-[var(--color-card)]">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-4 divide-y-2 lg:divide-y-0 lg:divide-x divide-[var(--color-card)]">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-4 lg:divide-x divide-[var(--color-card)]">
             <StatCounter value={500} suffix="+" label="Bicis reparadas" />
             <StatCounter value={10} suffix="+" label="Años de experiencia" />
             <StatCounter value={3} label="Marcas premium" />
@@ -351,7 +352,7 @@ export default function Home() {
       </section>
 
       {/* ─── FEATURES ─── */}
-      <section className="py-28 relative overflow-hidden">
+      <section className="py-16 sm:py-28 relative overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
           aria-hidden="true"
@@ -365,7 +366,7 @@ export default function Home() {
             <p className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-2">
               Por qué elegirnos
             </p>
-            <h2 className="font-[var(--font-display)] text-6xl text-[var(--color-cream)] tracking-wide">
+            <h2 className="font-[var(--font-display)] text-4xl sm:text-5xl lg:text-6xl text-[var(--color-cream)] tracking-wide">
               LO QUE NOS MUEVE
             </h2>
           </div>
@@ -432,7 +433,7 @@ export default function Home() {
               <p className="rv font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-2">
                 Selección
               </p>
-              <h2 className="rv font-[var(--font-display)] text-6xl text-[var(--color-cream)] tracking-wide">
+              <h2 className="rv font-[var(--font-display)] text-4xl sm:text-5xl lg:text-6xl text-[var(--color-cream)] tracking-wide">
                 DESTACADOS
               </h2>
             </div>
@@ -481,7 +482,7 @@ export default function Home() {
             <p className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-mid)] mb-3">
               Distribuidores oficiales
             </p>
-            <h2 className="font-[var(--font-display)] text-5xl text-[var(--color-cream)] tracking-wide">
+            <h2 className="font-[var(--font-display)] text-4xl sm:text-5xl text-[var(--color-cream)] tracking-wide">
               MARCAS OFICIALES
             </h2>
           </div>
@@ -647,11 +648,11 @@ export default function Home() {
                   "radial-gradient(ellipse 60% 80% at 0% 50%, rgba(229,48,30,0.05) 0%, transparent 60%)",
               }}
             />
-            <div className="p-10 lg:p-16 flex flex-col justify-center gap-6 relative">
+            <div className="p-6 sm:p-10 lg:p-16 flex flex-col justify-center gap-6 relative">
               <p className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-brand-red)]">
                 Nuestro taller
               </p>
-              <h2 className="font-[var(--font-display)] text-6xl text-[var(--color-cream)] leading-none tracking-wide">
+              <h2 className="font-[var(--font-display)] text-4xl sm:text-6xl text-[var(--color-cream)] leading-none tracking-wide">
                 SERVICIO
                 <br />
                 <span className="text-[var(--color-lavender)]">
@@ -672,7 +673,7 @@ export default function Home() {
                 </Button>
               </div>
             </div>
-            <div className="relative bg-[var(--color-ink)] min-h-[380px] flex items-center justify-center p-8">
+            <div className="relative bg-[var(--color-ink)] min-h-[260px] sm:min-h-[380px] flex items-center justify-center p-5 sm:p-8">
               <div className="grid grid-cols-2 gap-5 w-full">
                 {[
                   { label: "Reparación", icon: "🔧" },
@@ -682,7 +683,7 @@ export default function Home() {
                 ].map(({ label, icon }) => (
                   <div
                     key={label}
-                    className="group flex flex-col items-center justify-center gap-3 py-10 px-6 rounded-2xl bg-[var(--color-card)] border border-[var(--color-mid)]/20 hover:border-[rgba(196,162,207,0.3)] hover:bg-[rgba(196,162,207,0.05)] transition-all duration-300 text-center cursor-default"
+                    className="group flex flex-col items-center justify-center gap-3 py-6 px-3 sm:py-10 sm:px-6 rounded-2xl bg-[var(--color-card)] border border-[var(--color-mid)]/20 hover:border-[rgba(196,162,207,0.3)] hover:bg-[rgba(196,162,207,0.05)] transition-all duration-300 text-center cursor-default"
                   >
                     <span className="text-4xl group-hover:scale-125 transition-transform duration-300">
                       {icon}
@@ -706,7 +707,7 @@ export default function Home() {
               <p className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-3">
                 Lo que dicen nuestros clientes
               </p>
-              <h2 className="font-[var(--font-display)] text-6xl text-[var(--color-cream)] tracking-wide">
+              <h2 className="font-[var(--font-display)] text-4xl sm:text-5xl lg:text-6xl text-[var(--color-cream)] tracking-wide">
                 OPINIONES
               </h2>
             </div>
@@ -727,17 +728,26 @@ export default function Home() {
               </svg>
               <div>
                 <div className="flex items-center gap-0.5 mb-1">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star key={s} size={16} fill="#FBBC05" stroke="none" />
-                  ))}
+                  {[1, 2, 3, 4, 5].map((s) => {
+                    const filled = reviewData ? s <= Math.round(reviewData.rating) : false;
+                    return (
+                      <Star
+                        key={s}
+                        size={16}
+                        fill={filled ? "#FBBC05" : "transparent"}
+                        stroke={filled ? "none" : "#FBBC05"}
+                        strokeWidth={1.5}
+                      />
+                    );
+                  })}
                 </div>
                 <p className="font-[var(--font-display)] text-3xl text-[var(--color-cream)] tracking-wide leading-none">
-                  {reviewData ? reviewData.rating.toFixed(1).replace(".", ",") : "5,0"}
+                  {reviewData ? reviewData.rating.toFixed(1).replace(".", ",") : "–"}
                 </p>
                 <p className="font-[var(--font-cond)] text-xs text-[var(--color-mid)] tracking-wide mt-1">
                   {reviewData
                     ? `${reviewData.user_ratings_total} reseñas en Google`
-                    : "Reseñas en Google"}
+                    : reviewLoading ? "Cargando…" : "Reseñas en Google"}
                 </p>
               </div>
               <ChevronRight size={18} className="ml-2 text-[var(--color-mid)] group-hover:text-[var(--color-lavender)] transition-colors" />
@@ -826,7 +836,7 @@ export default function Home() {
       <section className="py-8 pb-28">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div
-            className="rv relative rounded-3xl overflow-hidden p-12 md:p-20 flex flex-col items-center text-center gap-6"
+            className="rv relative rounded-3xl overflow-hidden p-8 sm:p-12 md:p-20 flex flex-col items-center text-center gap-6"
             style={{
               background:
                 "linear-gradient(135deg, rgba(229,48,30,0.12) 0%, rgba(196,162,207,0.1) 50%, rgba(26,22,32,0) 100%)",
@@ -843,7 +853,7 @@ export default function Home() {
             <p className="relative font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)]">
               ¿Listo para empezar?
             </p>
-            <h2 className="relative font-[var(--font-display)] text-6xl md:text-8xl text-[var(--color-cream)] tracking-wide leading-none">
+            <h2 className="relative font-[var(--font-display)] text-4xl sm:text-6xl md:text-8xl text-[var(--color-cream)] tracking-wide leading-none">
               TU PRÓXIMA
               <br />
               AVENTURA

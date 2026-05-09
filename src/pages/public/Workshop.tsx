@@ -62,11 +62,10 @@ export default function Workshop() {
       <SEO
         title="Taller de bicicletas"
         description="Taller especializado en reparación y mantenimiento de bicicletas en El Astillero. Mecánicos expertos, diagnóstico rápido y garantía en todos los trabajos."
-        url="https://dcbikescantabria.es/taller"
-        keywords="taller bicicletas cantabria, reparación bicicletas el astillero, mecánico bicicletas cantabria, mantenimiento bicicletas, puesta a punto bicicleta"
+        url="https://dc-bikes-cantabria.vercel.app/taller"
         breadcrumbs={[
-          { name: "Inicio", url: "https://dcbikescantabria.es" },
-          { name: "Taller", url: "https://dcbikescantabria.es/taller" },
+          { name: "Inicio", url: "https://dc-bikes-cantabria.vercel.app" },
+          { name: "Taller", url: "https://dc-bikes-cantabria.vercel.app/taller" },
         ]}
       />
       {/* Hero */}

@@ -103,7 +103,7 @@ serve(async (req) => {
           </table>
         </div>
         <div style="background:#f5f5f5;padding:16px 32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #e8e8e8">
-          Recibido el ${receivedAt} · <a href="https://dcbikescantabria.es/admin/consultas" style="color:#C4A2CF;text-decoration:none">Ver en el panel</a>
+          Recibido el ${receivedAt} · <a href="https://dc-bikes-cantabria.vercel.app/admin/consultas" style="color:#C4A2CF;text-decoration:none">Ver en el panel</a>
         </div>
       </div>`
 

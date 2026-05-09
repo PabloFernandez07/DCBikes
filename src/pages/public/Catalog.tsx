@@ -126,11 +126,10 @@ export default function Catalog() {
       <SEO
         title="Catálogo"
         description="Explora nuestra selección de bicicletas de montaña, carretera, urbanas y eléctricas. Giant, Liv, Stevens y más marcas en El Astillero, Cantabria."
-        url="https://dcbikescantabria.es/catalogo"
-        keywords="catálogo bicicletas cantabria, comprar bicicleta el astillero, giant liv stevens cantabria, bicicletas montaña carretera eléctrica, tienda bicicletas online cantabria"
+        url="https://dc-bikes-cantabria.vercel.app/catalogo"
         breadcrumbs={[
-          { name: "Inicio", url: "https://dcbikescantabria.es" },
-          { name: "Catálogo", url: "https://dcbikescantabria.es/catalogo" },
+          { name: "Inicio", url: "https://dc-bikes-cantabria.vercel.app" },
+          { name: "Catálogo", url: "https://dc-bikes-cantabria.vercel.app/catalogo" },
         ]}
       />
       {/* Header */}

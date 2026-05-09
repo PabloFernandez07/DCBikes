@@ -2,4 +2,4 @@ User-agent: *
 Disallow: /admin/
 Allow: /
 
-Sitemap: https://dcbikescantabria.es/sitemap.xml
+Sitemap: https://dc-bikes-cantabria.vercel.app/sitemap.xml

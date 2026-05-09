@@ -15,7 +15,7 @@ import { fileURLToPath } from 'url'
 const __dir = dirname(fileURLToPath(import.meta.url))
 const dist  = join(__dir, '..', 'dist')
 
-const SITE = 'https://dcbikescantabria.es'
+const SITE = 'https://dc-bikes-cantabria.vercel.app'
 const NAME = 'DC Bikes Cantabria'
 const IMG  = `${SITE}/DC_Bikes_Sin_Fondo.png`
 const IMG_ALT = 'DC Bikes Cantabria — Tienda de bicicletas en El Astillero'
@@ -136,7 +136,6 @@ const routes = [
     dir: 'catalogo',
     title: `Catálogo de Bicicletas Giant, Liv y Stevens | ${NAME}`,
     desc: 'Explora nuestro catálogo de bicicletas en El Astillero, Cantabria. Montaña, carretera, urbana y eléctrica. Distribuidores oficiales Giant, Liv y Stevens.',
-    keywords: 'catálogo bicicletas cantabria, comprar bicicleta el astillero, giant liv stevens cantabria, bicicletas montaña carretera eléctrica, tienda bicicletas online cantabria',
     canonical: `${SITE}/catalogo`,
     noIndex: false,
     schema: schemaBreadcrumb([
@@ -148,7 +147,6 @@ const routes = [
     dir: 'taller',
     title: `Taller & Servicio de Bicicletas en Cantabria | ${NAME}`,
     desc: 'Servicio técnico profesional de bicicletas en El Astillero, Cantabria. Reparación, mantenimiento y puesta a punto por mecánicos especializados.',
-    keywords: 'taller bicicletas cantabria, reparación bicicletas el astillero, mecánico bicicletas cantabria, mantenimiento bicicletas, puesta a punto bicicleta',
     canonical: `${SITE}/taller`,
     noIndex: false,
     schema: schemaBreadcrumb([
@@ -160,7 +158,6 @@ const routes = [
     dir: 'contacto',
     title: `Contacto y Horarios | ${NAME}`,
     desc: 'Contacta con DC Bikes en El Astillero, Cantabria. Consultas, reservas de taller y presupuestos para bicicletas Giant, Liv y Stevens.',
-    keywords: 'contacto dc bikes cantabria, horarios tienda bicicletas el astillero, dirección dc bikes, dónde comprar bicicleta cantabria',
     canonical: `${SITE}/contacto`,
     noIndex: false,
     schema: schemaBreadcrumb([
@@ -171,8 +168,7 @@ const routes = [
   {
     dir: 'cookies',
     title: `Política de Cookies | ${NAME}`,
-    desc: DESC,
-    keywords: '',
+    desc: 'Política de cookies de DC Bikes Cantabria: tipos de cookies utilizadas, finalidad y cómo gestionarlas o desactivarlas en tu navegador.',
     canonical: `${SITE}/cookies`,
     noIndex: true,
     schema: null,
@@ -180,8 +176,7 @@ const routes = [
   {
     dir: 'privacidad',
     title: `Política de Privacidad | ${NAME}`,
-    desc: DESC,
-    keywords: '',
+    desc: 'Política de privacidad de DC Bikes Cantabria: qué datos personales tratamos, con qué finalidad, base legal y tus derechos según el RGPD.',
     canonical: `${SITE}/privacidad`,
     noIndex: true,
     schema: null,
@@ -189,8 +184,7 @@ const routes = [
   {
     dir: 'aviso-legal',
     title: `Aviso Legal | ${NAME}`,
-    desc: DESC,
-    keywords: '',
+    desc: 'Aviso legal de DC Bikes Cantabria: titularidad del sitio, condiciones de uso, propiedad intelectual y limitación de responsabilidad conforme a la LSSI-CE.',
     canonical: `${SITE}/aviso-legal`,
     noIndex: true,
     schema: null,
@@ -203,7 +197,7 @@ const routes = [
  * Inyecta un bloque completo de SEO justo después del viewport meta.
  * Elimina primero las etiquetas duplicadas que ya existan en el HTML base.
  */
-function patch(html, { title, desc, keywords, canonical, noIndex, schema }) {
+function patch(html, { title, desc, canonical, noIndex, schema }) {
   const robots = noIndex
     ? 'noindex, nofollow'
     : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
@@ -235,13 +229,9 @@ function patch(html, { title, desc, keywords, canonical, noIndex, schema }) {
     .replace(/<meta name="twitter:image:alt"[^>]*>/g, '')
     .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g, '')
 
-  const keywordsMeta = keywords
-    ? `\n  <meta name="keywords" content="${keywords}" />`
-    : ''
-
   const seoBlock = `
   <title>${title}</title>
-  <meta name="description" content="${desc}" />${keywordsMeta}
+  <meta name="description" content="${desc}" />
   <meta name="robots" content="${robots}" />
   <link rel="canonical" href="${canonical}" />
   <link rel="preload" as="image" href="/DC_Bikes_Giratorio.png" fetchpriority="high" />
@@ -284,7 +274,6 @@ const homeSchema = SCHEMA_LOCAL_BUSINESS + SCHEMA_FAQ
 const homePatched = patch(base, {
   title: `DC Bikes | Tienda de Bicicletas en El Astillero, Cantabria`,
   desc: DESC,
-  keywords: 'tienda bicicletas cantabria, bicicletas el astillero, giant cantabria, liv bicicletas, stevens bikes, taller bicicletas cantabria, dc bikes',
   canonical: `${SITE}/`,
   noIndex: false,
   schema: homeSchema,

@@ -110,29 +110,50 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
             : "relative h-[100dvh] w-full overflow-hidden"
         }
       >
-        {/* Vídeo de fondo */}
-        <video
-          ref={videoRef}
-          src="/hero/hero-scrub.mp4"
-          muted
-          playsInline
-          preload="auto"
-          autoPlay={!lock}
-          loop={!lock}
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        {/* Fondo: vídeo en desktop, gradiente estático en móvil */}
+        {!isMobile ? (
+          <video
+            ref={videoRef}
+            src="/hero/hero-scrub.mp4"
+            muted
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        ) : (
+          <>
+            <div
+              className="absolute inset-0"
+              aria-hidden="true"
+              style={{
+                background:
+                  "linear-gradient(155deg, var(--color-ink-deep) 0%, var(--color-ink) 55%, rgba(196,162,207,0.04) 100%)",
+              }}
+            />
+            <div
+              className="absolute inset-0 pointer-events-none"
+              aria-hidden="true"
+              style={{
+                background:
+                  "radial-gradient(ellipse 90% 70% at 80% 40%, rgba(196,162,207,0.07), transparent 65%)",
+              }}
+            />
+          </>
+        )}
 
-        {/* Velo lateral izquierdo: contraste para el texto */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          aria-hidden="true"
-          style={{
-            background:
-              "linear-gradient(90deg, var(--color-ink) 0%, rgba(26,22,32,0.65) 35%, rgba(26,22,32,0.25) 60%, transparent 80%)",
-          }}
-        />
-        {/* Velo inferior: integración con el ticker rojo siguiente */}
+        {/* Velo lateral izquierdo: contraste para el texto (solo desktop) */}
+        {!isMobile && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
+            style={{
+              background:
+                "linear-gradient(90deg, var(--color-ink) 0%, rgba(26,22,32,0.65) 35%, rgba(26,22,32,0.25) 60%, transparent 80%)",
+            }}
+          />
+        )}
+        {/* Velo inferior */}
         <div
           className="absolute inset-x-0 bottom-0 h-40 pointer-events-none"
           aria-hidden="true"

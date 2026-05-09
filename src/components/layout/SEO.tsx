@@ -1,13 +1,11 @@
 import { Helmet } from "react-helmet-async";
 
 const SITE_NAME = "DC Bikes Cantabria";
-const BASE_URL = "https://dcbikescantabria.es";
+const BASE_URL = "https://dc-bikes-cantabria.vercel.app";
 const DEFAULT_IMAGE = `${BASE_URL}/DC_Bikes_Sin_Fondo.png`;
 const DEFAULT_IMAGE_ALT = "DC Bikes Cantabria — Tienda de bicicletas en El Astillero";
 const DEFAULT_DESCRIPTION =
   "Tu tienda de bicicletas en El Astillero, Cantabria. Venta, taller y asesoramiento profesional. Distribuidores oficiales Giant, Liv y Stevens.";
-const DEFAULT_KEYWORDS =
-  "tienda bicicletas cantabria, bicicletas el astillero, giant cantabria, liv bicicletas, stevens bikes, taller bicicletas cantabria, dc bikes";
 
 interface BreadcrumbItem {
   name: string;
@@ -17,7 +15,6 @@ interface BreadcrumbItem {
 interface SEOProps {
   title?: string;
   description?: string;
-  keywords?: string;
   image?: string;
   imageAlt?: string;
   url?: string;
@@ -30,7 +27,6 @@ interface SEOProps {
 export function SEO({
   title,
   description = DEFAULT_DESCRIPTION,
-  keywords = DEFAULT_KEYWORDS,
   image = DEFAULT_IMAGE,
   imageAlt = DEFAULT_IMAGE_ALT,
   url = BASE_URL,
@@ -61,7 +57,6 @@ export function SEO({
       <html lang="es" />
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
-      <meta name="keywords" content={keywords} />
       <link rel="canonical" href={url} />
       {noIndex && <meta name="robots" content="noindex, nofollow" />}
 
