@@ -17,7 +17,20 @@ import http from 'node:http'
 import { readFileSync, writeFileSync, statSync, existsSync } from 'node:fs'
 import { join, dirname, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import puppeteer from 'puppeteer'
+
+// Permite saltar snap explícitamente (útil en Vercel/CI donde Chromium puede no estar disponible)
+if (process.env.SKIP_SNAP === '1' || process.env.VERCEL === '1') {
+  console.log('\n📸 Snap saltado (entorno CI/Vercel). dist/ contiene HTMLs con meta tags pero sin DOM real.\n')
+  process.exit(0)
+}
+
+let puppeteer
+try {
+  puppeteer = (await import('puppeteer')).default
+} catch (err) {
+  console.warn('\n⚠️  Puppeteer no disponible (¿olvidaste "pnpm install"?). Snap saltado, build continúa.\n')
+  process.exit(0)
+}
 
 const __dir = dirname(fileURLToPath(import.meta.url))
 const dist  = join(__dir, '..', 'dist')
@@ -121,10 +134,18 @@ await new Promise(resolve => server.listen(PORT, resolve))
 console.log(`\n📸 Capturando DOM renderizado…`)
 console.log(`   Servidor estático: http://localhost:${PORT}\n`)
 
-const browser = await puppeteer.launch({
-  headless: true,
-  args: ['--no-sandbox', '--disable-setuid-sandbox'],
-})
+let browser
+try {
+  browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  })
+} catch (err) {
+  console.warn(`\n⚠️  No se pudo lanzar Chromium: ${err.message.split('\n')[0]}`)
+  console.warn(`   Snap saltado. dist/ contiene HTMLs con meta tags pero sin DOM real.\n`)
+  server.close()
+  process.exit(0)
+}
 
 try {
   const page = await browser.newPage()
