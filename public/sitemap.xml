@@ -1,45 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://dc-bikes-cantabria.vercel.app/</loc>
-    <lastmod>2026-05-06</lastmod>
+    <lastmod>2026-05-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/"/>
   </url>
   <url>
     <loc>https://dc-bikes-cantabria.vercel.app/catalogo</loc>
-    <lastmod>2026-05-06</lastmod>
-    <changefreq>daily</changefreq>
+    <lastmod>2026-05-24</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/catalogo"/>
   </url>
   <url>
     <loc>https://dc-bikes-cantabria.vercel.app/taller</loc>
-    <lastmod>2026-05-06</lastmod>
+    <lastmod>2026-05-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/taller"/>
   </url>
   <url>
     <loc>https://dc-bikes-cantabria.vercel.app/contacto</loc>
-    <lastmod>2026-05-06</lastmod>
+    <lastmod>2026-05-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/contacto"/>
   </url>
   <url>
     <loc>https://dc-bikes-cantabria.vercel.app/aviso-legal</loc>
-    <lastmod>2026-05-06</lastmod>
+    <lastmod>2026-05-24</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/aviso-legal"/>
   </url>
   <url>
     <loc>https://dc-bikes-cantabria.vercel.app/privacidad</loc>
-    <lastmod>2026-05-06</lastmod>
+    <lastmod>2026-05-24</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/privacidad"/>
   </url>
   <url>
     <loc>https://dc-bikes-cantabria.vercel.app/cookies</loc>
-    <lastmod>2026-05-06</lastmod>
+    <lastmod>2026-05-24</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/cookies"/>
   </url>
 </urlset>

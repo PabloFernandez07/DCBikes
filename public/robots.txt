@@ -1,5 +1,7 @@
 User-agent: *
 Disallow: /admin/
+Disallow: /api/
 Allow: /
+Allow: /assets/
 
 Sitemap: https://dc-bikes-cantabria.vercel.app/sitemap.xml
