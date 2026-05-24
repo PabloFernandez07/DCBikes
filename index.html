@@ -28,11 +28,11 @@
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
 
   <!-- SEO: Canonical para evitar contenido duplicado -->
-  <link rel="canonical" href="https://dc-bikes-cantabria.vercel.app/" />
+  <link rel="canonical" href="%SITE_URL%/" />
 
   <!-- SEO: i18n hreflang -->
-  <link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/" />
-  <link rel="alternate" hreflang="x-default" href="https://dc-bikes-cantabria.vercel.app/" />
+  <link rel="alternate" hreflang="es-ES" href="%SITE_URL%/" />
+  <link rel="alternate" hreflang="x-default" href="%SITE_URL%/" />
 
   <!-- SEO: Geolocalización -->
   <meta name="geo.region" content="ES-CB" />
@@ -45,12 +45,12 @@
   <meta property="og:site_name" content="DC Bikes Cantabria" />
   <meta property="og:title" content="DC Bikes | Tienda de Bicicletas en El Astillero, Cantabria" />
   <meta property="og:description" content="Tu tienda de bicicletas en El Astillero, Cantabria. Venta, taller y asesoramiento profesional. Distribuidores oficiales Giant, Liv y Stevens." />
-  <meta property="og:image" content="https://dc-bikes-cantabria.vercel.app/og-image.webp" />
+  <meta property="og:image" content="%SITE_URL%/og-image.webp" />
   <meta property="og:image:type" content="image/webp" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="DC Bikes Cantabria — Tienda de bicicletas en El Astillero" />
-  <meta property="og:url" content="https://dc-bikes-cantabria.vercel.app" />
+  <meta property="og:url" content="%SITE_URL%" />
   <meta property="og:locale" content="es_ES" />
 
   <!-- Twitter Cards -->
@@ -58,7 +58,7 @@
   <meta name="twitter:site" content="@dcbikescantabria" />
   <meta name="twitter:title" content="DC Bikes | Tienda de Bicicletas en El Astillero, Cantabria" />
   <meta name="twitter:description" content="Tu tienda de bicicletas en El Astillero, Cantabria. Venta, taller y asesoramiento profesional." />
-  <meta name="twitter:image" content="https://dc-bikes-cantabria.vercel.app/og-image.webp" />
+  <meta name="twitter:image" content="%SITE_URL%/og-image.webp" />
   <meta name="twitter:image:alt" content="DC Bikes Cantabria — Tienda de bicicletas en El Astillero" />
 
   <!-- Schema.org: @graph con BicycleStore + Organization + WebSite + SearchAction -->
@@ -68,13 +68,13 @@
     "@graph": [
       {
         "@type": "BicycleStore",
-        "@id": "https://dc-bikes-cantabria.vercel.app/#bicyclestore",
+        "@id": "%SITE_URL%/#bicyclestore",
         "name": "DC Bikes Cantabria",
         "alternateName": "DC Bikes El Astillero",
         "description": "Tienda de bicicletas en El Astillero, Cantabria. Distribuidores oficiales Giant, Liv y Stevens. Venta, taller, asesoramiento.",
-        "url": "https://dc-bikes-cantabria.vercel.app",
-        "logo": "https://dc-bikes-cantabria.vercel.app/og-image.webp",
-        "image": "https://dc-bikes-cantabria.vercel.app/og-image.webp",
+        "url": "%SITE_URL%",
+        "logo": "%SITE_URL%/og-image.webp",
+        "image": "%SITE_URL%/og-image.webp",
         "telephone": "+34942054501",
         "hasMap": "https://maps.google.com/?q=DC+Bikes+Cantabria+El+Astillero",
         "address": {
@@ -117,12 +117,12 @@
       },
       {
         "@type": "Organization",
-        "@id": "https://dc-bikes-cantabria.vercel.app/#organization",
+        "@id": "%SITE_URL%/#organization",
         "name": "DC Bikes Cantabria",
-        "url": "https://dc-bikes-cantabria.vercel.app",
+        "url": "%SITE_URL%",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://dc-bikes-cantabria.vercel.app/og-image.webp",
+          "url": "%SITE_URL%/og-image.webp",
           "width": 1200,
           "height": 630
         },
@@ -140,14 +140,14 @@
       },
       {
         "@type": "WebSite",
-        "@id": "https://dc-bikes-cantabria.vercel.app/#website",
-        "url": "https://dc-bikes-cantabria.vercel.app/",
+        "@id": "%SITE_URL%/#website",
+        "url": "%SITE_URL%/",
         "name": "DC Bikes Cantabria",
         "inLanguage": "es-ES",
-        "publisher": { "@id": "https://dc-bikes-cantabria.vercel.app/#organization" },
+        "publisher": { "@id": "%SITE_URL%/#organization" },
         "potentialAction": {
           "@type": "SearchAction",
-          "target": "https://dc-bikes-cantabria.vercel.app/catalogo?q={search_term_string}",
+          "target": "%SITE_URL%/catalogo?q={search_term_string}",
           "query-input": "required name=search_term_string"
         }
       }

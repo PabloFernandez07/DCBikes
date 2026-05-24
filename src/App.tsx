@@ -85,7 +85,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
         {/* Anillo giratorio */}
         <div style={{ position: "relative", width: 148, height: 148 }}>
           <img
-            src="/DC_Bikes_Giratorio.png"
+            src="/favicon-192.png"
             alt=""
             aria-hidden="true"
             style={{

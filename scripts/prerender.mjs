@@ -15,7 +15,7 @@ import { fileURLToPath } from 'url'
 const __dir = dirname(fileURLToPath(import.meta.url))
 const dist  = join(__dir, '..', 'dist')
 
-const SITE = 'https://dc-bikes-cantabria.vercel.app'
+const SITE = process.env.SITE_URL || 'https://dc-bikes-cantabria.vercel.app'
 const NAME = 'DC Bikes Cantabria'
 const IMG  = `${SITE}/og-image.webp`
 const IMG_ALT = 'DC Bikes Cantabria — Tienda de bicicletas en El Astillero'
