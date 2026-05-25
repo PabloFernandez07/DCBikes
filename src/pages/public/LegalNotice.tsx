@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SEO } from '@/components/layout/SEO'
+import { supabase } from '@/lib/supabase'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -38,8 +39,58 @@ function Pending({ label }: { label: string }) {
   )
 }
 
+/**
+ * Lee los settings legales desde Supabase. Si una key no tiene valor o no
+ * existe todavía, la entrada queda como `null` y la UI muestra `<Pending>`.
+ */
+function useLegalSettings() {
+  const [legal, setLegal] = useState<Record<string, string | null>>({})
+
+  useEffect(() => {
+    supabase
+      .from('settings')
+      .select('key, value')
+      .in('key', [
+        'legal_nif',
+        'legal_forma_juridica',
+        'legal_inscripcion',
+        'store_address',
+        'store_phone',
+      ])
+      .then(({ data }) => {
+        const obj: Record<string, string | null> = {}
+        for (const row of data ?? []) {
+          try {
+            const v = typeof row.value === 'string' ? JSON.parse(row.value) : row.value
+            obj[row.key] = v && String(v).trim() ? String(v) : null
+          } catch {
+            const v = row.value as unknown
+            obj[row.key] = v && String(v).trim() ? String(v) : null
+          }
+        }
+        setLegal(obj)
+      })
+  }, [])
+
+  return legal
+}
+
+function Value({
+  value,
+  pendingLabel,
+}: {
+  value: string | null | undefined
+  pendingLabel: string
+}) {
+  if (value && value.trim()) {
+    return <span className="text-[var(--color-cream)]">{value}</span>
+  }
+  return <Pending label={pendingLabel} />
+}
+
 export default function LegalNotice() {
   const pageRef = useReveal()
+  const legal = useLegalSettings()
 
   return (
     <>
@@ -79,15 +130,17 @@ export default function LegalNotice() {
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">NIF / CIF:</strong>{' '}
-                <Pending label="pendiente — añadir NIF o CIF" />
+                <Value value={legal.legal_nif} pendingLabel="pendiente — rellena en Admin → Configuración" />
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Forma jurídica:</strong>{' '}
-                <Pending label="pendiente — p. ej. Autónomo / S.L. / S.A." />
+                <Value value={legal.legal_forma_juridica} pendingLabel="pendiente — p. ej. Autónomo / S.L. / S.A." />
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Domicilio:</strong>{' '}
-                C. la Cantábrica, bloque 2 n, 1 BAJO, 39610 El Astillero, Cantabria
+                <span className="text-[var(--color-cream)]">
+                  {legal.store_address || 'C. la Cantábrica, bloque 2 n, 1 BAJO, 39610 El Astillero, Cantabria'}
+                </span>
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Correo electrónico:</strong>{' '}
@@ -97,11 +150,17 @@ export default function LegalNotice() {
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Teléfono:</strong>{' '}
-                <Pending label="pendiente — añadir teléfono de contacto" />
+                {legal.store_phone ? (
+                  <a href={`tel:${legal.store_phone.replace(/\s/g, '')}`} className="text-[var(--color-lavender)] underline underline-offset-2">
+                    {legal.store_phone}
+                  </a>
+                ) : (
+                  <Pending label="pendiente — rellena 'Teléfono' en Admin → Configuración" />
+                )}
               </p>
               <p className="flex flex-wrap items-center gap-2">
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Inscripción registral:</strong>{' '}
-                <Pending label="pendiente — Registro Mercantil si aplica, o 'No aplica' si autónomo'" />
+                <Value value={legal.legal_inscripcion} pendingLabel="pendiente — Registro Mercantil si aplica, o 'No aplica' si autónomo" />
               </p>
             </div>
           </Section>

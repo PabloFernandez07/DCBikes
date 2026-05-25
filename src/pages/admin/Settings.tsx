@@ -25,6 +25,9 @@ const SETTINGS_KEYS = [
   'reply_from_email',
   'social_instagram',
   'social_facebook',
+  'legal_nif',
+  'legal_forma_juridica',
+  'legal_inscripcion',
 ] as const
 
 type SettingKey = typeof SETTINGS_KEYS[number]
@@ -261,6 +264,44 @@ export function Settings() {
                   onChange={e => set('social_facebook', (e.target as HTMLInputElement).value)}
                 />
               </div>
+            </section>
+
+            {/* Section 4: Datos legales (aparecen en /aviso-legal) */}
+            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+              <div>
+                <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
+                  Datos legales
+                </h2>
+                <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
+                  Estos datos aparecen en la página de Aviso Legal. Mientras estén vacíos se muestra "pendiente".
+                  El teléfono y la dirección se cogen automáticamente de la sección "Contacto y ubicación".
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field
+                  label="NIF / CIF"
+                  placeholder="Ej: 12345678X o B12345678"
+                  helpText="Documento de identidad fiscal. Obligatorio en el aviso legal (LSSI-CE art. 10)."
+                  value={v('legal_nif')}
+                  onChange={e => set('legal_nif', (e.target as HTMLInputElement).value)}
+                />
+                <Field
+                  label="Forma jurídica"
+                  placeholder="Ej: Autónomo / S.L. / S.A."
+                  helpText="Tipo de actividad económica. Para autónomos, escribe 'Empresario individual (autónomo)'."
+                  value={v('legal_forma_juridica')}
+                  onChange={e => set('legal_forma_juridica', (e.target as HTMLInputElement).value)}
+                />
+              </div>
+
+              <Field
+                label="Inscripción registral"
+                placeholder="Ej: Registro Mercantil de Cantabria, Tomo X, Folio Y, Hoja S-Z"
+                helpText="Solo si eres sociedad mercantil (S.L./S.A.). Si eres autónomo, escribe 'No aplica'."
+                value={v('legal_inscripcion')}
+                onChange={e => set('legal_inscripcion', (e.target as HTMLInputElement).value)}
+              />
             </section>
 
             {/* Save button */}
