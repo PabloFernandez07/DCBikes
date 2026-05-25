@@ -53,6 +53,18 @@ export function Categories() {
   const [newError, setNewError] = useState('')
   const [adding, setAdding] = useState(false)
 
+  // Auto-rellena "Posición" con max(sort_order)+1 cuando se cargan/recargan
+  // las categorías. Si el usuario está editando el campo manualmente, no le
+  // sobrescribimos (solo lo seteamos cuando newSort está vacío o coincide con
+  // el último max-1, lo que indica que es valor por defecto y no manual).
+  useEffect(() => {
+    const max = categories.length > 0
+      ? Math.max(...categories.map(c => c.sort_order))
+      : 0
+    const next = String(max + 1)
+    setNewSort(prev => (prev === '' || prev === String(max) ? next : prev))
+  }, [categories])
+
   const fetchCategories = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
@@ -119,6 +131,7 @@ export function Categories() {
       toast.success(`Categoría "${name}" creada en posición ${sort}`)
       setNewName('')
       setNewSlug('')
+      // newSort: el useEffect lo recalcula al refetch de categories
       setNewSort('')
       await fetchCategories()
     }

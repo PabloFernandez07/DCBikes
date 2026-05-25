@@ -71,6 +71,16 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
       .then(({ data }) => setCategories(data ?? []))
   }, [])
 
+  // Sincroniza el <select> con la categoría del producto cuando ambas se
+  // hayan cargado. Sin esto, react-hook-form tiene el valor correcto en su
+  // state pero el DOM <select> muestra "Selecciona categoría..." porque al
+  // primer render aún no existían las <option>.
+  useEffect(() => {
+    if (product?.category_id && categories.length > 0) {
+      setValue('category_id', product.category_id)
+    }
+  }, [categories, product, setValue])
+
   const nameValue = watch('name')
   useEffect(() => {
     if (!product) {
