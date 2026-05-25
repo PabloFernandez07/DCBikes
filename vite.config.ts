@@ -38,6 +38,8 @@ export default defineConfig(({ mode }) => {
             if (id.includes('@supabase')) return 'supabase'
             if (id.includes('recharts') || id.includes('d3-')) return 'charts'
             if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) return 'forms'
+            if (id.includes('xlsx')) return 'xlsx'
+            if (id.includes('lucide-react')) return 'icons'
             return 'vendor'
           },
         },

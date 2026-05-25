@@ -266,8 +266,10 @@ function patch(html, { title, desc, canonical, noIndex, schema }) {
     .replace(/<meta name="ICBM"[^>]*>/g, '')
     .replace(/<link rel="canonical"[^>]*>/g, '')
     .replace(/<link rel="alternate" hreflang="[^"]*"[^>]*>/g, '')
-    // Solo eliminar preloads de IMÁGENES — los modulepreload de Vite (JS) deben sobrevivir.
-    .replace(/<link rel="preload"[^>]*as="image"[^>]*>/g, '')
+    // NOTA: ya no eliminamos preloads de imagen (antes habia un preload de
+    // 401KB del DC_Bikes_Giratorio que se reemplazaba). Ahora el preload
+    // del index.html (favicon-192 para LCP del splash) debe sobrevivir en
+    // TODAS las rutas, porque el splash se muestra en cualquier first paint.
     .replace(/<meta property="og:title"[^>]*>/g, '')
     .replace(/<meta property="og:description"[^>]*>/g, '')
     .replace(/<meta property="og:url"[^>]*>/g, '')

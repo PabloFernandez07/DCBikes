@@ -22,10 +22,10 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
-    // t1: el contenido se desvanece
-    const t1 = setTimeout(() => setExiting(true), 2200);
+    // t1: el contenido se desvanece (1s en lugar de 2.2s para mejorar SI)
+    const t1 = setTimeout(() => setExiting(true), 1000);
     // t2: la cortina ya subió, desmontamos
-    const t2 = setTimeout(onDone, 3700);
+    const t2 = setTimeout(onDone, 2500);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -88,6 +88,10 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
             src="/favicon-192.png"
             alt=""
             aria-hidden="true"
+            fetchPriority="high"
+            decoding="async"
+            width={192}
+            height={192}
             style={{
               position: "absolute",
               inset: 0,
