@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-ink:           #1A1620;
+  --color-ink-deep:      #100D14;
+  --color-cream:         #EEF3F8;
+  --color-cream-dim:     #D8DDE5;
+  --color-lavender:      #C4A2CF;
+  --color-lavender-dim:  rgba(196,162,207,0.18);
+  --color-brand-red:     #E5301E;
+  --color-mid:           #7E6E8A;
+  --color-card:          #2B2730;
+  --color-card-hover:    #332B3A;
+
+  --font-display: "Bebas Neue", sans-serif;
+  --font-cond:    "Barlow Condensed", sans-serif;
+  --font-body:    "Barlow", sans-serif;
+
+  --animate-wspin:     wspin 3.2s linear infinite;
+  --animate-float:     float 4s ease-in-out infinite;
+  --animate-spulse:    spulse 2s ease-in-out infinite;
+  --animate-marq:      marq 22s linear infinite;
+  --animate-fadeup:    fadeUp 0.6s ease forwards;
+  --animate-charin:    charIn 0.5s ease forwards;
+  --animate-spin-slow: spin 8s linear infinite;
+}
+
+@keyframes wspin       { to { transform: rotate(360deg); } }
+@keyframes spinReverse { to { transform: rotate(-360deg); } }
+@keyframes float       { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+@keyframes spulse      { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+@keyframes marq        { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+@keyframes fadeUp      { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+@keyframes charIn      { from{opacity:0;transform:translateY(0.3em)} to{opacity:1;transform:translateY(0)} }
+@keyframes speedLine   { 0%{transform:translateX(110%);opacity:0} 5%{opacity:1} 95%{opacity:1} 100%{transform:translateX(-110%);opacity:0} }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background-color: var(--color-ink);
+  color: var(--color-cream);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root { min-height: 100dvh; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-ink-deep); }
+::-webkit-scrollbar-thumb { background: var(--color-card); border-radius: 3px; }
+
+.rv {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.rv.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
