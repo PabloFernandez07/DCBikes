@@ -41,7 +41,7 @@ interface MappedRow {
 
 const COLUMN_LABELS: Record<ColumnKey, string> = {
   nombre: 'Nombre',
-  sku: 'SKU',
+  sku: 'Referencia',
   marca: 'Marca',
   descripcion: 'Descripción',
   pvp: 'PVP',
@@ -342,7 +342,7 @@ export function ExcelImporter() {
               <tr className="border-b border-[var(--color-card-hover)]">
                 <th className="px-4 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">#</th>
                 <th className="px-4 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">Nombre</th>
-                <th className="px-4 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">SKU</th>
+                <th className="px-4 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">Referencia</th>
                 <th className="px-4 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">PVP</th>
                 <th className="px-4 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">Estado</th>
               </tr>

@@ -142,7 +142,7 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
           )}
         </div>
 
-        <Field label="SKU" {...register('sku')} />
+        <Field label="Referencia" helpText="Código interno único del producto (ej. GIA-TCR-23-M). Opcional, pero necesario para importar desde Excel." {...register('sku')} />
         <Field label="Marca" {...register('brand')} />
 
         <div className="sm:col-span-2">
