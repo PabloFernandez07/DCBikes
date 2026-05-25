@@ -19,7 +19,6 @@ const SETTINGS_KEYS = [
   'store_name',
   'store_address',
   'store_phone',
-  'store_hours',
   'maps_link',
   'quote_destination_email',
   'reply_from_email',
@@ -147,20 +146,15 @@ export function Settings() {
                 value={v('store_address')}
                 onChange={e => set('store_address', (e.target as HTMLInputElement).value)}
               />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field
-                  label="Teléfono"
-                  type="tel"
-                  value={v('store_phone')}
-                  onChange={e => set('store_phone', (e.target as HTMLInputElement).value)}
-                />
-                <Field
-                  label="Horario (texto libre, opcional)"
-                  helpText="Si lo rellenas, se muestra en Contacto en lugar de la tabla de horarios."
-                  value={v('store_hours')}
-                  onChange={e => set('store_hours', (e.target as HTMLInputElement).value)}
-                />
-              </div>
+              <Field
+                label="Teléfono"
+                type="tel"
+                value={v('store_phone')}
+                onChange={e => set('store_phone', (e.target as HTMLInputElement).value)}
+              />
+              <p className="text-xs text-[var(--color-mid)] -mt-2">
+                Los horarios se gestionan en la sección <span className="text-[var(--color-cream)]">"Horarios semanales"</span> más abajo.
+              </p>
               <Field
                 label="Enlace Google Maps (Cómo llegar)"
                 type="url"

@@ -28,7 +28,6 @@ function FacebookIcon({ size = 20 }: { size?: number }) {
 interface SiteSettings {
   address?: string
   phone?: string
-  hours?: string
   instagram?: string
   facebook?: string
   maps_embed?: string
@@ -62,14 +61,13 @@ export default function Contact() {
     supabase
       .from('settings')
       .select('key, value')
-      .in('key', ['store_address', 'store_phone', 'store_hours', 'social_instagram', 'social_facebook', 'maps_embed', 'maps_link'])
+      .in('key', ['store_address', 'store_phone', 'social_instagram', 'social_facebook', 'maps_embed', 'maps_link'])
       .then(({ data }) => {
         if (!data) return
         const obj: SiteSettings = {}
         const map: Record<string, keyof SiteSettings> = {
           store_address: 'address',
           store_phone: 'phone',
-          store_hours: 'hours',
           social_instagram: 'instagram',
           social_facebook: 'facebook',
           maps_embed: 'maps_embed',
@@ -88,7 +86,6 @@ export default function Contact() {
 
   const phone = settings.phone ?? null
   const address = settings.address ?? null
-  const hours = settings.hours ?? null
 
 
   return (
@@ -212,39 +209,35 @@ export default function Contact() {
                     {open ? 'Abierto ahora' : 'Cerrado ahora'}
                   </span>
                 </div>
-                {hours ? (
-                  <p className="font-[var(--font-body)] text-sm text-[var(--color-cream)] whitespace-pre-line leading-relaxed">{hours}</p>
-                ) : (
-                  <div className="space-y-1">
-                    {schedule.map((day) => {
-                      const isToday = day.label === today
-                      const closed = !day.morning && !day.afternoon
-                      return (
-                        <div
-                          key={day.label}
-                          className="flex items-baseline gap-2 text-xs font-[var(--font-body)]"
+                <div className="space-y-1">
+                  {schedule.map((day) => {
+                    const isToday = day.label === today
+                    const closed = !day.morning && !day.afternoon
+                    return (
+                      <div
+                        key={day.label}
+                        className="flex items-baseline gap-2 text-xs font-[var(--font-body)]"
+                      >
+                        <span
+                          className="w-20 font-[var(--font-cond)] tracking-wide shrink-0"
+                          style={{ color: isToday ? 'var(--color-lavender)' : 'var(--color-mid)' }}
                         >
-                          <span
-                            className="w-20 font-[var(--font-cond)] tracking-wide shrink-0"
-                            style={{ color: isToday ? 'var(--color-lavender)' : 'var(--color-mid)' }}
-                          >
-                            {day.label}
+                          {day.label}
+                        </span>
+                        <span style={{ color: closed ? 'var(--color-mid)' : 'var(--color-cream)' }}>
+                          {closed
+                            ? 'Cerrado'
+                            : [day.morning, day.afternoon].filter(Boolean).join(' · ')}
+                        </span>
+                        {isToday && (
+                          <span className="text-[var(--color-lavender)] text-[10px] font-[var(--font-cond)] tracking-widest uppercase">
+                            hoy
                           </span>
-                          <span style={{ color: closed ? 'var(--color-mid)' : 'var(--color-cream)' }}>
-                            {closed
-                              ? 'Cerrado'
-                              : [day.morning, day.afternoon].filter(Boolean).join(' · ')}
-                          </span>
-                          {isToday && (
-                            <span className="text-[var(--color-lavender)] text-[10px] font-[var(--font-cond)] tracking-widest uppercase">
-                              hoy
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
 

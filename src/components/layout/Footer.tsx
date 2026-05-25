@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MapPin, Phone, Clock } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { useSchedule } from '@/hooks/useSchedule'
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return (
@@ -19,24 +21,23 @@ function FacebookIcon({ size = 20 }: { size?: number }) {
     </svg>
   )
 }
-import { supabase } from '@/lib/supabase'
 
 interface SiteSettings {
   address?: string
   phone?: string
-  hours?: string
   instagram?: string
   facebook?: string
 }
 
 export function Footer() {
   const [settings, setSettings] = useState<SiteSettings>({})
+  const { schedule, isOpen, today } = useSchedule()
 
   useEffect(() => {
     supabase
       .from('settings')
       .select('key, value')
-      .in('key', ['store_address', 'store_phone', 'store_hours', 'social_instagram', 'social_facebook'])
+      .in('key', ['store_address', 'store_phone', 'social_instagram', 'social_facebook'])
       .then(({ data }) => {
         if (!data) return
         const obj: SiteSettings = {}
@@ -44,7 +45,6 @@ export function Footer() {
           const map: Record<string, keyof SiteSettings> = {
             store_address: 'address',
             store_phone: 'phone',
-            store_hours: 'hours',
             social_instagram: 'instagram',
             social_facebook: 'facebook',
           }
@@ -54,6 +54,15 @@ export function Footer() {
         setSettings(obj)
       })
   }, [])
+
+  // Horario de HOY (compacto) calculado desde el horario semanal de admin.
+  // Ej: "09:30–13:00 · 17:00–20:00" o "Cerrado" si el día está vacío.
+  const todayDay = schedule.find(d => d.label === today)
+  const todayHours = todayDay
+    ? (!todayDay.morning && !todayDay.afternoon)
+      ? 'Cerrado'
+      : [todayDay.morning, todayDay.afternoon].filter(Boolean).join(' · ')
+    : null
 
   const year = new Date().getFullYear()
 
@@ -112,13 +121,27 @@ export function Footer() {
                 </a>
               </div>
             )}
-            {settings.hours && (
+            {todayHours && (
               <div className="flex items-start gap-2 text-[var(--color-mid)] text-sm">
                 <Clock size={15} className="mt-0.5 shrink-0 text-[var(--color-lavender)]" />
-                <span className="whitespace-pre-line">{settings.hours}</span>
+                <div>
+                  <p>
+                    <span className="font-[var(--font-cond)] tracking-wide text-[var(--color-cream-dim)]">{today}:</span>{' '}
+                    <span className={todayHours === 'Cerrado' ? '' : 'text-[var(--color-cream)]'}>{todayHours}</span>
+                  </p>
+                  <p className="text-xs mt-0.5 flex items-center gap-1.5">
+                    <span
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: isOpen ? '#22c55e' : 'var(--color-mid)' }}
+                    />
+                    <span style={{ color: isOpen ? '#22c55e' : 'var(--color-mid)' }}>
+                      {isOpen ? 'Abierto ahora' : 'Cerrado ahora'}
+                    </span>
+                  </p>
+                </div>
               </div>
             )}
-            {!settings.address && !settings.phone && !settings.hours && (
+            {!settings.address && !settings.phone && !todayHours && (
               <div className="flex flex-col gap-2 text-[var(--color-mid)] text-sm">
                 <div className="flex items-center gap-2">
                   <MapPin size={15} className="text-[var(--color-lavender)]" />
