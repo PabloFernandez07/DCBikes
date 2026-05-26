@@ -84,7 +84,7 @@ serve(async (req) => {
           'accepted_at, ready_pickup_at, shipped_at, ' +
           'tracking_number, tracking_carrier, created_at, ' +
           'deleted_at, ' +
-          'order_items(product_name, product_sku, product_size_label, ' +
+          'order_items(product_id, product_name, product_sku, product_size_label, ' +
           'quantity, unit_price_cents, line_total_cents)',
       )
       .eq('id', orderId)
@@ -130,11 +130,39 @@ serve(async (req) => {
       }
     }
 
-    // Stripping deleted_at del payload de respuesta (no aporta al cliente).
-    const { deleted_at: _ignored, ...orderPublic } = order as Record<string, unknown>
+    // Enriquece items con image_url: 1 query batch a product_images + getPublicUrl.
+    // Mantiene el snapshot si el producto fue eliminado (product_id puede ser null).
+    const rawItems = (order as { order_items?: Array<Record<string, unknown>> }).order_items ?? []
+    const productIds = rawItems
+      .map((i) => i.product_id as string | null)
+      .filter((id): id is string => !!id)
+    const imageMap = new Map<string, string>()
+    if (productIds.length > 0) {
+      const { data: imgs } = await supabase
+        .from('product_images')
+        .select('product_id, storage_path')
+        .in('product_id', productIds)
+        .order('sort_order', { ascending: true })
+      for (const img of imgs ?? []) {
+        const pid = (img as { product_id: string }).product_id
+        if (imageMap.has(pid)) continue // primera imagen por producto
+        const { data: urlData } = supabase.storage
+          .from('product-images')
+          .getPublicUrl((img as { storage_path: string }).storage_path)
+        imageMap.set(pid, urlData.publicUrl)
+      }
+    }
+    const items = rawItems.map((i) => ({
+      ...i,
+      image_url: i.product_id ? imageMap.get(i.product_id as string) ?? null : null,
+    }))
+
+    // Stripping deleted_at + order_items del payload (renombramos a items).
+    const { deleted_at: _ignored, order_items: _oi, ...orderRest } = order as Record<string, unknown>
+    const orderPublic = { ...orderRest, items }
 
     console.log(
-      `[${ts()}] ✓ order-detail · email=${session.email} · order=${order.order_number}`,
+      `[${ts()}] ✓ order-detail · email=${session.email} · order=${order.order_number} · items=${items.length}`,
     )
     return jsonOk({ order: orderPublic, invoice })
   } catch (err) {

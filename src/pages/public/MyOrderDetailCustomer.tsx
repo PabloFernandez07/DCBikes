@@ -322,10 +322,10 @@ export default function MyOrderDetailCustomer() {
         <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6">
           <h2 className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)] tracking-wide mb-4 inline-flex items-center gap-2">
             <Package size={15} className="text-[var(--color-lavender)]" />
-            Artículos ({order.items.length})
+            Artículos ({(order.items ?? []).length})
           </h2>
           <ul className="space-y-2">
-            {order.items.map((item, idx) => (
+            {(order.items ?? []).map((item, idx) => (
               <li
                 key={`${item.product_name}-${idx}`}
                 className="flex items-center gap-3 py-2 border-b border-[var(--color-card-hover)] last:border-0"
