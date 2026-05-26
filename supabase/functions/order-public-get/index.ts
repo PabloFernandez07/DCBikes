@@ -49,8 +49,10 @@ serve(async (req) => {
       id = url.searchParams.get('id')
       token = url.searchParams.get('token')
     } else if (req.method === 'POST') {
-      const body = (await req.json().catch(() => ({}))) as { id?: string; token?: string }
-      id = body.id ?? null
+      // Aceptamos `id` o `order_id` (alias) por compatibilidad con frontend
+      // que usa `order_id` para consistencia con order-place.
+      const body = (await req.json().catch(() => ({}))) as { id?: string; order_id?: string; token?: string }
+      id = body.id ?? body.order_id ?? null
       token = body.token ?? null
     } else {
       return jsonError('method not allowed', 405)

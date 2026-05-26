@@ -102,15 +102,25 @@ export default function MockRedsysPayment() {
       if (!order_id || !token) return
       setSubmitting(outcome === 'authorized' ? 'authorize' : 'reject')
       try {
+        // Backend Architect implementó la simulación dentro de redsys-notification
+        // detectando el flag __mock. No hay endpoint separado mock-redsys-confirm.
+        // El backend valida la transición y dispara emails.
         const { data, error: fnError } = await supabase.functions.invoke(
-          'mock-redsys-confirm',
+          'redsys-notification',
           {
-            body: { order_id, token, outcome },
+            body: {
+              __mock: true,
+              order_id,
+              authorized: outcome === 'authorized',
+            },
           },
         )
         if (fnError) throw fnError
-        if (!data?.ok) {
-          throw new Error(data?.error || 'No se pudo procesar la simulación')
+        // redsys-notification siempre devuelve 200 OK (Redsys lo exige), así que
+        // un error real vendría como fnError. Si data?.ok=false viene del cuerpo,
+        // lo respetamos para mostrar mensaje claro.
+        if (data && data.ok === false) {
+          throw new Error(data.error || 'No se pudo procesar la simulación')
         }
         if (outcome === 'authorized') {
           navigate(`/pedido/confirmacion/${order_id}?token=${token}`, {
