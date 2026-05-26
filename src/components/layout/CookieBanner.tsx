@@ -1,22 +1,62 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Cookie, ChevronDown, ChevronUp, Shield } from 'lucide-react'
+import { Cookie, ChevronDown, ChevronUp, Shield, Map } from 'lucide-react'
 import { clsx } from 'clsx'
 import { Button } from '@/components/ui/Button'
 
-type ConsentLevel = 'all' | 'essential' | null
+type ConsentLevel = 'all' | 'reject' | null
 
 interface CookiePreferences {
   essential: boolean
   analytics: boolean
   marketing: boolean
+  thirdParty: boolean
+}
+
+interface StoredConsent extends CookiePreferences {
+  savedAt: string
 }
 
 const STORAGE_KEY = 'dcbikes_cookie_consent'
+// TTL de 12 meses (365 días) por RGPD: el consentimiento expira y debe volver a solicitarse.
+const TTL_MS = 365 * 24 * 60 * 60 * 1000
 
-export function useCookieConsent() {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  return stored ? (JSON.parse(stored) as CookiePreferences) : null
+function readStored(): StoredConsent | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<StoredConsent>
+    if (!parsed || typeof parsed !== 'object') return null
+    // Si no tiene savedAt asumimos formato antiguo → tratamos como caducado.
+    if (!parsed.savedAt) return null
+    const age = Date.now() - new Date(parsed.savedAt).getTime()
+    if (Number.isNaN(age) || age > TTL_MS) return null
+    return {
+      essential: true,
+      analytics: !!parsed.analytics,
+      marketing: !!parsed.marketing,
+      thirdParty: !!parsed.thirdParty,
+      savedAt: parsed.savedAt,
+    }
+  } catch {
+    return null
+  }
+}
+
+export function useCookieConsent(): CookiePreferences | null {
+  return readStored()
+}
+
+export function hasAnalyticsConsent(): boolean {
+  return readStored()?.analytics === true
+}
+
+export function hasMarketingConsent(): boolean {
+  return readStored()?.marketing === true
+}
+
+export function hasThirdPartyConsent(): boolean {
+  return readStored()?.thirdParty === true
 }
 
 export function CookieBanner() {
@@ -24,12 +64,13 @@ export function CookieBanner() {
   const [expanded, setExpanded] = useState(false)
   const [prefs, setPrefs] = useState<CookiePreferences>({
     essential: true,
-    analytics: true,
+    analytics: false,
     marketing: false,
+    thirdParty: false,
   })
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = readStored()
     if (!stored) {
       const timer = setTimeout(() => setVisible(true), 800)
       return () => clearTimeout(timer)
@@ -39,12 +80,16 @@ export function CookieBanner() {
   const save = (level: ConsentLevel, custom?: CookiePreferences) => {
     const consent: CookiePreferences =
       level === 'all'
-        ? { essential: true, analytics: true, marketing: true }
-        : level === 'essential'
-          ? { essential: true, analytics: false, marketing: false }
+        ? { essential: true, analytics: true, marketing: true, thirdParty: true }
+        : level === 'reject'
+          ? { essential: true, analytics: false, marketing: false, thirdParty: false }
           : (custom ?? prefs)
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(consent))
+    const stored: StoredConsent = {
+      ...consent,
+      savedAt: new Date().toISOString(),
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
     setVisible(false)
   }
 
@@ -75,13 +120,13 @@ export function CookieBanner() {
             </p>
             <p className="text-[var(--color-mid)] font-[var(--font-body)] text-xs leading-relaxed">
               Utilizamos cookies propias y de terceros para analizar el uso de la web y mejorar tu experiencia.
-              Puedes aceptarlas, rechazar las no esenciales o{' '}
+              Puedes aceptarlas, rechazarlas o{' '}
               <button
                 type="button"
                 onClick={() => setExpanded(v => !v)}
                 className="text-[var(--color-lavender)] underline underline-offset-2 hover:no-underline transition-all"
               >
-                personalizar tu elección
+                configurar tu elección
               </button>
               . Más info en nuestra{' '}
               <Link
@@ -95,13 +140,14 @@ export function CookieBanner() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+            {/* Botones principales con MISMA prominencia visual (variant primary, mismo size, mismo peso). */}
             <Button
-              variant="ghost"
+              variant="primary"
               size="sm"
-              onClick={() => save('essential')}
-              className="flex-1 sm:flex-none text-xs"
+              onClick={() => save('reject')}
+              className="flex-1 sm:flex-none text-xs font-[var(--font-cond)] tracking-wide"
             >
-              Solo esenciales
+              Rechazar todas
             </Button>
             <Button
               variant="primary"
@@ -111,14 +157,20 @@ export function CookieBanner() {
             >
               Aceptar todas
             </Button>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setExpanded(v => !v)}
-              className="p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-ink)] transition-colors"
-              aria-label={expanded ? 'Cerrar opciones' : 'Personalizar'}
+              className="text-xs font-[var(--font-cond)] tracking-wide"
+              aria-expanded={expanded}
             >
-              {expanded ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
-            </button>
+              Configurar
+              {expanded ? (
+                <ChevronDown size={14} className="ml-1" />
+              ) : (
+                <ChevronUp size={14} className="ml-1" />
+              )}
+            </Button>
           </div>
         </div>
 
@@ -150,6 +202,13 @@ export function CookieBanner() {
               description="Permiten mostrarte contenido personalizado en redes sociales y plataformas externas."
               checked={prefs.marketing}
               onChange={v => setPrefs(p => ({ ...p, marketing: v }))}
+            />
+            <CookieToggle
+              icon={<Map size={14} />}
+              title="Cookies de terceros funcionales (mapa de Google)"
+              description="Permite cargar el mapa de Google que muestra la ubicación de la tienda en la página de contacto. Si rechazas, verás un enlace alternativo a Google Maps."
+              checked={prefs.thirdParty}
+              onChange={v => setPrefs(p => ({ ...p, thirdParty: v }))}
             />
 
             <div className="flex justify-end gap-2 pt-2">

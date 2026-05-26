@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Auditoría legal — DC Bikes Cantabria (26 mayo 2026)</title>
+<style>
+  :root {
+    --ink: #0f1620;
+    --ink-soft: #1a2230;
+    --paper: #fafaf7;
+    --paper-soft: #f1efe9;
+    --text: #1c1c1c;
+    --text-soft: #555;
+    --text-mute: #888;
+    --accent: #6b4faa;
+    --accent-soft: #ede6f6;
+    --critical: #b32424;
+    --critical-bg: #fdecec;
+    --high: #c97011;
+    --high-bg: #fef3e2;
+    --medium: #d4a017;
+    --medium-bg: #fdf6dc;
+    --low: #4f7d3a;
+    --low-bg: #e9f4e1;
+    --ok: #2f7a3d;
+    --ok-bg: #e3f3e6;
+    --border: #d8d3c8;
+    --border-soft: #ece8df;
+    --code-bg: #1e1e2a;
+    --code-text: #eef3f8;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Georgia', 'Cambria', 'Times New Roman', serif;
+    background: var(--paper);
+    color: var(--text);
+    line-height: 1.65;
+    font-size: 16px;
+  }
+
+  /* ───── Cabecera oficial ───── */
+  .doc-header {
+    background: linear-gradient(180deg, var(--ink) 0%, var(--ink-soft) 100%);
+    color: #eef3f8;
+    padding: 56px 48px 40px;
+    border-bottom: 4px solid var(--accent);
+  }
+  .doc-header .stamp {
+    display: inline-block;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #b8a8d2;
+    padding: 6px 14px;
+    border: 1px solid #6b4faa55;
+    border-radius: 3px;
+    margin-bottom: 24px;
+  }
+  .doc-header h1 {
+    font-family: 'Georgia', serif;
+    font-size: 38px;
+    line-height: 1.2;
+    margin: 0 0 8px 0;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .doc-header .subtitle {
+    color: #cfc6e3;
+    font-style: italic;
+    font-size: 18px;
+    margin: 0 0 32px 0;
+  }
+  .doc-header .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 13px;
+    color: #d6cce6;
+    padding-top: 24px;
+    border-top: 1px solid #ffffff20;
+  }
+  .doc-header .meta strong {
+    display: block;
+    color: #b8a8d2;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  /* ───── Contenedor de contenido ───── */
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 48px;
+    background: var(--paper);
+  }
+
+  /* ───── TOC ───── */
+  .toc {
+    background: var(--paper-soft);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 28px 36px;
+    margin-bottom: 48px;
+  }
+  .toc h2 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--accent);
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-weight: 700;
+  }
+  .toc ol {
+    columns: 2;
+    column-gap: 32px;
+    margin: 0;
+    padding-left: 20px;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 14px;
+    line-height: 1.9;
+  }
+  .toc ol li a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px dotted #c8c2b3;
+    transition: color 0.15s;
+  }
+  .toc ol li a:hover {
+    color: var(--accent);
+  }
+
+  /* ───── Secciones ───── */
+  h2.section {
+    font-family: 'Georgia', serif;
+    font-size: 30px;
+    color: var(--ink);
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 10px;
+    margin: 64px 0 24px 0;
+    page-break-before: always;
+  }
+  h2.section:first-of-type { page-break-before: avoid; }
+
+  h2.section .num {
+    color: var(--accent);
+    font-weight: 400;
+    margin-right: 12px;
+  }
+
+  h3 {
+    font-family: 'Georgia', serif;
+    font-size: 22px;
+    color: var(--ink);
+    margin: 32px 0 16px 0;
+    padding-left: 14px;
+    border-left: 4px solid var(--accent);
+  }
+
+  h4 {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 14px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 24px 0 10px 0;
+    font-weight: 700;
+  }
+
+  p { margin: 12px 0; }
+
+  ul, ol { padding-left: 22px; }
+  ul li, ol li { margin: 4px 0; }
+
+  strong { color: var(--ink); font-weight: 700; }
+  em { font-style: italic; color: var(--text-soft); }
+
+  a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: #c4a2cf80;
+    text-underline-offset: 3px;
+  }
+  a:hover {
+    text-decoration-color: var(--accent);
+  }
+
+  /* ───── Veredicto principal ───── */
+  .verdict {
+    background: var(--critical-bg);
+    border-left: 6px solid var(--critical);
+    padding: 24px 28px;
+    margin: 24px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .verdict h3 {
+    margin: 0 0 8px 0;
+    color: var(--critical);
+    border: none;
+    padding: 0;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .verdict .label {
+    font-size: 28px;
+    font-weight: 700;
+    font-family: 'Georgia', serif;
+    color: var(--critical);
+    display: block;
+    margin: 4px 0 12px 0;
+  }
+  .verdict p { margin: 0; color: #5a2222; }
+
+  /* ───── Tablas ───── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 13.5px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  thead {
+    background: var(--ink-soft);
+    color: #eef3f8;
+  }
+  th {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    border-right: 1px solid #ffffff10;
+  }
+  th:last-child { border-right: none; }
+  td {
+    padding: 12px 14px;
+    border-top: 1px solid var(--border-soft);
+    vertical-align: top;
+    line-height: 1.55;
+  }
+  tbody tr:hover { background: var(--paper-soft); }
+  td code { font-size: 12.5px; }
+
+  /* ───── Severidad chips ───── */
+  .sev {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .sev-critical { background: var(--critical-bg); color: var(--critical); }
+  .sev-high { background: var(--high-bg); color: var(--high); }
+  .sev-medium { background: var(--medium-bg); color: var(--medium); }
+  .sev-low { background: var(--low-bg); color: var(--low); }
+  .sev-ok { background: var(--ok-bg); color: var(--ok); }
+
+  /* ───── Estados inline ───── */
+  .status-ok { color: var(--ok); font-weight: 700; }
+  .status-warn { color: var(--high); font-weight: 700; }
+  .status-fail { color: var(--critical); font-weight: 700; }
+
+  /* ───── Cajas resaltadas ───── */
+  .callout {
+    padding: 18px 22px;
+    margin: 18px 0;
+    border-radius: 0 4px 4px 0;
+    border-left: 4px solid var(--accent);
+    background: var(--accent-soft);
+    color: #3a2858;
+  }
+  .callout-critical {
+    border-left-color: var(--critical);
+    background: var(--critical-bg);
+    color: #5a2222;
+  }
+  .callout-high {
+    border-left-color: var(--high);
+    background: var(--high-bg);
+    color: #5a3a10;
+  }
+  .callout-ok {
+    border-left-color: var(--ok);
+    background: var(--ok-bg);
+    color: #1f5026;
+  }
+  .callout h4 {
+    margin-top: 0;
+    color: inherit;
+  }
+  .callout p { margin: 6px 0; }
+
+  /* ───── Blockquote ───── */
+  blockquote {
+    margin: 18px 0;
+    padding: 16px 24px;
+    border-left: 4px solid var(--border);
+    background: var(--paper-soft);
+    color: var(--text-soft);
+    font-style: italic;
+  }
+
+  /* ───── Código ───── */
+  code {
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    background: var(--paper-soft);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: #5a3a96;
+    border: 1px solid var(--border-soft);
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 18px 22px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 16px 0;
+    border-left: 3px solid var(--accent);
+  }
+  pre code {
+    background: none;
+    color: inherit;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  /* ───── Resumen ejecutivo top-5 ───── */
+  .top5 {
+    background: linear-gradient(180deg, #fff 0%, var(--paper-soft) 100%);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 0 0 0;
+    margin: 24px 0;
+    overflow: hidden;
+  }
+  .top5 .item {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 16px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-soft);
+    align-items: start;
+  }
+  .top5 .item:last-child { border-bottom: none; }
+  .top5 .item .num {
+    font-family: 'Georgia', serif;
+    font-size: 38px;
+    color: var(--critical);
+    line-height: 1;
+    font-weight: 700;
+  }
+  .top5 .item h4 {
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 16px;
+    margin: 0 0 4px 0;
+    font-family: 'Georgia', serif;
+  }
+  .top5 .item .norm {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 12px;
+    color: var(--text-soft);
+    margin: 4px 0;
+  }
+  .top5 .item .penalty {
+    background: var(--critical-bg);
+    color: var(--critical);
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    display: inline-block;
+    margin-top: 6px;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    text-transform: uppercase;
+  }
+
+  /* ───── Footer ───── */
+  .doc-footer {
+    margin-top: 80px;
+    padding: 32px 48px;
+    background: var(--ink);
+    color: #b8a8d2;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 12px;
+    text-align: center;
+    border-top: 4px solid var(--accent);
+  }
+  .doc-footer .signature {
+    font-style: italic;
+    color: #cfc6e3;
+    margin-bottom: 16px;
+  }
+
+  /* ───── Print ───── */
+  @media print {
+    body { background: white; font-size: 11pt; }
+    .doc-header { padding: 24px 0; }
+    .container { padding: 16px 0; }
+    h2.section { page-break-before: always; }
+    .toc { page-break-after: always; }
+    a { color: var(--text); text-decoration: none; }
+    pre { font-size: 9pt; }
+    table { font-size: 9.5pt; }
+  }
+
+  /* ───── Responsive ───── */
+  @media (max-width: 768px) {
+    .doc-header { padding: 36px 24px 28px; }
+    .doc-header h1 { font-size: 26px; }
+    .container { padding: 24px 18px; }
+    .toc ol { columns: 1; }
+    h2.section { font-size: 22px; }
+    table { font-size: 12px; }
+    th, td { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="doc-header">
+  <div class="stamp">Documento jurídico · Confidencial</div>
+  <h1>Auditoría legal exhaustiva</h1>
+  <p class="subtitle">DC Bikes Cantabria — dc-bikes-cantabria.vercel.app</p>
+  <div class="meta">
+    <div><strong>Auditor</strong>Letrado especialista en Derecho Digital y Consumo</div>
+    <div><strong>Fecha</strong>26 de mayo de 2026</div>
+    <div><strong>Versión auditada</strong>Rama producción · migraciones 0001–0008</div>
+    <div><strong>Marco normativo</strong>RGPD · LOPDGDD · LSSI-CE · RDL 1/2007 · Reg. (UE) 524/2013 · RDL 7/2021 · RDL 5/2023 (Omnibus) · RD 1619/2012 · Guía AEPD Cookies 2023</div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- ───── Índice ───── -->
+  <nav class="toc">
+    <h2>Índice</h2>
+    <ol>
+      <li><a href="#sec-0">Resumen ejecutivo</a></li>
+      <li><a href="#sec-1">Identificación del responsable</a></li>
+      <li><a href="#sec-2">Cookies y tecnologías similares</a></li>
+      <li><a href="#sec-3">Política de privacidad — art. 13 RGPD</a></li>
+      <li><a href="#sec-4">Encargados del tratamiento — art. 28</a></li>
+      <li><a href="#sec-5">Consentimiento en el checkout</a></li>
+      <li><a href="#sec-6">Contratación electrónica</a></li>
+      <li><a href="#sec-7">Derecho de desistimiento</a></li>
+      <li><a href="#sec-8">Resolución extrajudicial (ODR)</a></li>
+      <li><a href="#sec-9">Facturación y conservación</a></li>
+      <li><a href="#sec-10">Seguridad del tratamiento — art. 32</a></li>
+      <li><a href="#sec-11">Brechas de seguridad — arts. 33-34</a></li>
+      <li><a href="#sec-12">Registro de actividades — art. 30</a></li>
+      <li><a href="#sec-13">Datos de menores</a></li>
+      <li><a href="#sec-14">Marketing y comerciales — art. 21 LSSI</a></li>
+      <li><a href="#sec-15">Magic link "Mis pedidos"</a></li>
+      <li><a href="#sec-16">Pasarela de pago — PCI-DSS</a></li>
+      <li><a href="#sec-17">Accesibilidad (Ley 11/2023 EAA)</a></li>
+      <li><a href="#sec-18">SEO y exposición datos personales</a></li>
+      <li><a href="#sec-19">Plan de acción priorizado</a></li>
+      <li><a href="#sec-20">Anexos</a></li>
+      <li><a href="#sec-conclusion">Conclusión final</a></li>
+    </ol>
+  </nav>
+
+  <!-- ───── 0. Resumen ejecutivo ───── -->
+  <h2 class="section" id="sec-0"><span class="num">0.</span>Resumen ejecutivo</h2>
+
+  <div class="verdict">
+    <h3>Veredicto</h3>
+    <span class="label">NO APTO para producción comercial</span>
+    <p>La aplicación demuestra una arquitectura técnica seria y madura (RLS, tokens hasheados, anti-fraude, pasarela TPV con pre-autorización, rate-limiting, anti-enumeración, logs auditables). Sin embargo, contiene <strong>cinco incumplimientos legales graves</strong> que la AEPD u OMIC detectarían en inspección rutinaria. Tres de ellos podrían acarrear sanciones individuales <strong>iguales o superiores a 30.000 €</strong>.</p>
+  </div>
+
+  <h3>Top 5 riesgos legales más graves</h3>
+
+  <div class="top5">
+    <div class="item">
+      <div class="num">1</div>
+      <div>
+        <h4>Aviso legal incompleto (NIF, forma jurídica, inscripción registral en blanco)</h4>
+        <p class="norm">Art. 10 LSSI-CE</p>
+        <span class="penalty">30.000 € – 150.000 € · infracción grave</span>
+      </div>
+    </div>
+    <div class="item">
+      <div class="num">2</div>
+      <div>
+        <h4>Banner de cookies sin botón "Rechazar todas" al mismo nivel visual que "Aceptar todas"</h4>
+        <p class="norm">Guía AEPD Cookies 2023 + STJUE Planet49 (C-673/17)</p>
+        <span class="penalty">30.000 € – 150.000 € · art. 22.2 LSSI-CE</span>
+      </div>
+    </div>
+    <div class="item">
+      <div class="num">3</div>
+      <div>
+        <h4>Google Fonts cargado sin consentimiento previo (envía IP al servidor de Google)</h4>
+        <p class="norm">Art. 22.2 LSSI-CE + art. 6 RGPD + STC LG München I 3 O 17493/20</p>
+        <span class="penalty">30.000 € – 60.000 €</span>
+      </div>
+    </div>
+    <div class="item">
+      <div class="num">4</div>
+      <div>
+        <h4>Botón de pago no rotulado con la fórmula obligatoria "Pedido con obligación de pago"</h4>
+        <p class="norm">Art. 98.2 RDL 1/2007 (redacción RDL 7/2021)</p>
+        <span class="penalty">El contrato NO obliga al consumidor · efecto demoledor</span>
+      </div>
+    </div>
+    <div class="item">
+      <div class="num">5</div>
+      <div>
+        <h4>Aviso legal afirma "no realiza venta online directa" mientras existe checkout funcional</h4>
+        <p class="norm">Art. 10 LSSI-CE + art. 60 RDL 1/2007 (info precontractual desleal)</p>
+        <span class="penalty">Práctica engañosa · art. 5 LCD</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-critical">
+    <h4>Sanción potencial acumulada estimada</h4>
+    <p>Si la AEPD inspeccionase hoy y aplicase el art. 83.5 RGPD con criterio orientativo (no agravado): <strong>70.000 € – 200.000 €</strong>. Estimación conservadora, sin tener en cuenta atenuantes propios de microempresa (que rebajan típicamente al 50-60 % de la horquilla).</p>
+  </div>
+
+  <!-- ───── 1. Identificación del responsable ───── -->
+  <h2 class="section" id="sec-1"><span class="num">1.</span>Identificación del responsable del tratamiento</h2>
+
+  <p><strong>Norma de referencia:</strong> art. 13.1.a RGPD · art. 10 LSSI-CE · art. 97 RDL 1/2007.</p>
+
+  <h3>Hallazgos</h3>
+
+  <table>
+    <thead>
+      <tr><th style="width:30%">Verificación</th><th style="width:15%">Resultado</th><th>Evidencia</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Identificación titular en Aviso Legal</td>
+        <td><span class="status-warn">⚠ PARCIAL</span></td>
+        <td><code>LegalNotice.tsx:127-165</code> muestra <code>&lt;Pending&gt;</code> en NIF, forma jurídica e inscripción si los settings no están seteados. <strong>Si no se ha rellenado el panel admin, esos datos NO aparecen en producción.</strong></td>
+      </tr>
+      <tr>
+        <td>NIF/CIF visible</td>
+        <td><span class="status-fail">✗ CRÍTICO</span></td>
+        <td>Depende de configuración admin. Sin rellenar, infringe art. 10.1.a LSSI-CE.</td>
+      </tr>
+      <tr>
+        <td>Domicilio</td>
+        <td><span class="status-ok">✓ Sí</span></td>
+        <td>Fallback: "C. la Cantábrica, bloque 2 n, 1 BAJO, 39610 El Astillero, Cantabria".</td>
+      </tr>
+      <tr>
+        <td>Email de contacto</td>
+        <td><span class="status-ok">✓ Sí</span></td>
+        <td><code>info@dcbikescantabria.es</code> — <code>PrivacyPolicy.tsx:70</code></td>
+      </tr>
+      <tr>
+        <td>Teléfono</td>
+        <td><span class="status-warn">⚠ Pendiente</span></td>
+        <td>Solo si está seteado en settings; mismo <code>&lt;Pending&gt;</code>.</td>
+      </tr>
+      <tr>
+        <td>Inscripción registral</td>
+        <td><span class="status-warn">⚠ Pendiente</span></td>
+        <td><code>LegalNotice.tsx:163</code> exige rellenarlo. Si autónomo, debe ponerse "No aplica" expresamente.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Acción correctiva inmediata</h3>
+
+  <ol>
+    <li>Rellenar <strong>obligatoriamente</strong> en <code>/admin/settings</code> los campos <code>legal_nif</code>, <code>legal_forma_juridica</code>, <code>legal_inscripcion</code>, <code>store_phone</code>, <code>legal_company_name</code>, <code>legal_company_cif</code>, <code>legal_company_address</code>.</li>
+    <li>Si es <strong>autónomo</strong>, no procede inscripción registral, pero debe figurar literalmente: <em>"Empresario individual no inscrito en Registro Mercantil (art. 19 Código de Comercio)"</em>.</li>
+    <li>Añadir un check de validación en <code>Settings.tsx</code> que bloquee el botón "Activar tienda online" hasta cumplimentar todos los campos legales.</li>
+  </ol>
+
+  <h3>¿DPO obligatorio? — Art. 37 RGPD</h3>
+
+  <div class="callout">
+    <p><strong>No es obligatorio.</strong> La obligación se aplica a autoridades públicas; actividades principales que requieran observación habitual y sistemática a gran escala; o tratamientos a gran escala de categorías especiales (art. 9) o datos penales (art. 10). DC Bikes Cantabria, con 1-5 pedidos/día, no entra en ninguno de estos supuestos. <strong>No se requiere designar DPO</strong>. Recomendación: añadir mención expresa en la política de privacidad.</p>
+  </div>
+
+  <!-- ───── 2. Cookies ───── -->
+  <h2 class="section" id="sec-2"><span class="num">2.</span>Cookies y tecnologías similares</h2>
+
+  <p><strong>Norma de referencia:</strong> art. 22.2 LSSI-CE · Guía AEPD Cookies (julio 2023) · STJUE C-673/17 Planet49.</p>
+
+  <h3>2.1 Banner — Análisis funcional (<code>CookieBanner.tsx</code>)</h3>
+
+  <table>
+    <thead>
+      <tr><th style="width:30%">Requisito Guía AEPD 2023</th><th>Implementación actual</th><th style="width:15%">Veredicto</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Banner aparece ANTES de instalar cookies no esenciales</td>
+        <td>Aparece tras 800 ms (<code>useEffect</code> línea 34), pero <strong>Google Fonts ya se ha cargado</strong> porque el <code>@import</code> en <code>src/index.css:1</code> y los <code>&lt;link rel="preconnect"&gt;</code> en <code>index.html</code> se ejecutan inmediatamente.</td>
+        <td><span class="status-fail">✗ INCUMPLE</span></td>
+      </tr>
+      <tr>
+        <td>"Aceptar" y "Rechazar" al <strong>mismo nivel visual</strong></td>
+        <td>"Aceptar todas" es <code>variant="primary"</code> (botón sólido lavanda); "Solo esenciales" es <code>variant="ghost"</code> (transparente, menos contraste). Visualmente, "Aceptar" es claramente más prominente.</td>
+        <td><span class="status-fail">✗ INCUMPLE</span></td>
+      </tr>
+      <tr>
+        <td>El botón debe rotularse <strong>"Rechazar todas"</strong></td>
+        <td>Texto actual: "Solo esenciales".</td>
+        <td><span class="status-warn">⚠ Aceptable</span></td>
+      </tr>
+      <tr>
+        <td>Configuración granular accesible desde el banner</td>
+        <td>Sí, expandible con flecha.</td>
+        <td><span class="status-ok">✓</span></td>
+      </tr>
+      <tr>
+        <td>Toggles NO pre-marcados</td>
+        <td>El state inicial es <code>{ essential: true, analytics: true, marketing: false }</code> (línea 28). <strong><code>analytics</code> está pre-marcado en true.</strong> Si el usuario abre el panel y pulsa "Guardar preferencias" sin tocar nada, está consintiendo analítica sin acción afirmativa.</td>
+        <td><span class="status-fail">✗ INCUMPLE art. 4.11 RGPD</span></td>
+      </tr>
+      <tr>
+        <td>Posibilidad de retirar consentimiento tan fácil como darlo</td>
+        <td>Sí, en <code>/cookies</code> hay botón "Restablecer preferencias" (<code>CookiePolicy.tsx:262-270</code>).</td>
+        <td><span class="status-ok">✓</span></td>
+      </tr>
+      <tr>
+        <td>Banner persiste hasta acción afirmativa</td>
+        <td>Sí, no se cierra automáticamente.</td>
+        <td><span class="status-ok">✓</span></td>
+      </tr>
+      <tr>
+        <td>Renovación máxima 24 meses (Guía AEPD ap. 6.2)</td>
+        <td><code>localStorage</code> no caduca automáticamente.</td>
+        <td><span class="status-warn">⚠ Falta TTL</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>2.2 Política de cookies — Inventario real vs. declarado</h3>
+
+  <table>
+    <thead>
+      <tr><th>Cookie / tecnología</th><th>En la web</th><th>En política</th><th>Veredicto</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>dcbikes_cookie_consent</code> (localStorage)</td><td>✓</td><td>✓</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td><code>sb-*</code> (Supabase auth)</td><td>Solo /admin</td><td>✓</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td><code>dcb_session</code> (sessionStorage analytics)</td><td>✓</td><td>✓ (como <code>dcbikes_session</code>)</td><td><span class="status-warn">⚠ Nombre incorrecto</span></td></tr>
+      <tr><td><code>dcbikes_last_order</code> (localStorage)</td><td>✓ <code>Checkout.tsx:158</code></td><td>✗</td><td><span class="status-fail">✗ Falta</span></td></tr>
+      <tr><td><code>dcbikes_customer_session</code> (magic link)</td><td>✓</td><td>✗</td><td><span class="status-fail">✗ Falta</span></td></tr>
+      <tr><td><code>dcbikes_pending_order</code> (localStorage)</td><td>✓ <code>OrderConfirmation.tsx:76</code></td><td>✗</td><td><span class="status-fail">✗ Falta</span></td></tr>
+      <tr><td>Carrito Zustand persistido</td><td>✓ <code>cartStore.ts:111</code></td><td>✗</td><td><span class="status-fail">✗ Falta</span></td></tr>
+      <tr><td><strong>Google Fonts</strong> (fonts.googleapis.com + fonts.gstatic.com)</td><td>✓ preconnect + @import</td><td>✗</td><td><span class="status-fail">✗ CRÍTICO</span></td></tr>
+      <tr><td><strong>Google Maps</strong> embed iframe</td><td>✓ <code>Contact.tsx:255</code> (con consentimiento)</td><td>✓</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td><strong>Redsys</strong> (sis.redsys.es)</td><td>✓</td><td>✓ (bien — exenta art. 22.2)</td><td><span class="status-ok">✓</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>2.3 Hallazgo crítico — Google Fonts</h3>
+
+  <p>Evidencia:</p>
+
+<pre><code>&lt;!-- index.html líneas 9-10 --&gt;
+&lt;link rel="preconnect" href="https://fonts.googleapis.com" /&gt;
+&lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /&gt;
+
+/* src/index.css línea 1 */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&...');</code></pre>
+
+  <div class="callout callout-critical">
+    <h4>Análisis jurídico</h4>
+    <p>Cuando el navegador del visitante hace la solicitud HTTP a <code>fonts.googleapis.com</code>, <strong>envía a Google la dirección IP, el User-Agent y la URL de referencia</strong>. Esto constituye una comunicación de datos personales (la IP es dato personal según STJUE C-582/14 <em>Breyer</em>) a un tercer responsable en EE. UU. sin base legal alguna, <strong>antes</strong> de cualquier banner.</p>
+    <p>La <strong>sentencia del Landgericht München I de 20 de enero de 2022</strong> (asunto 3 O 17493/20) condenó al titular de un sitio web por exactamente este hecho a indemnizar 100 € + costas al demandante particular. La AEPD ha mantenido criterio análogo en resoluciones recientes (ej. PS/00069/2023).</p>
+  </div>
+
+  <p><strong>Solución técnica:</strong> autohospedar las fuentes con <code>@fontsource/bebas-neue</code>, <code>@fontsource/barlow-condensed</code>, <code>@fontsource/barlow</code> — paquetes npm que sirven los <code>.woff2</code> desde tu propio dominio. Cambio de 5 líneas, sin impacto visual.</p>
+
+  <h3>2.4 Categorización incorrecta de Google Maps</h3>
+
+  <p><code>Contact.tsx:57</code>:</p>
+<pre><code>const [mapsEnabled, setMapsEnabled] = useState(cookieConsent?.marketing ?? false)</code></pre>
+
+  <p>Google Maps embed se condiciona al consentimiento de <strong>marketing</strong>, pero según AEPD una funcionalidad como un mapa es <strong>cookie funcional / de terceros</strong>, no de marketing. Recomendación: categoría propia "terceros" o "funcionales-terceros".</p>
+
+  <h3>2.5 Acción correctiva consolidada</h3>
+
+  <ol>
+    <li><strong>Cambiar <code>analytics: true</code> → <code>analytics: false</code></strong> en el state inicial de <code>CookieBanner.tsx:27</code>.</li>
+    <li><strong>Sustituir botón "Solo esenciales"</strong> por <strong>"Rechazar todas"</strong>, con la <strong>MISMA variante visual</strong> que "Aceptar todas".</li>
+    <li><strong>Autohospedar Google Fonts</strong> mediante <code>@fontsource/*</code>.</li>
+    <li>Añadir TTL de 12 meses al <code>dcbikes_cookie_consent</code>.</li>
+    <li>Listar <strong>todas</strong> las cookies/localStorage en <code>CookiePolicy.tsx</code>.</li>
+    <li>Categorizar Google Maps como "terceros" o "funcionales".</li>
+  </ol>
+
+  <!-- ───── 3. Política de privacidad ───── -->
+  <h2 class="section" id="sec-3"><span class="num">3.</span>Política de privacidad — Checklist art. 13 RGPD</h2>
+
+  <table>
+    <thead>
+      <tr><th style="width:35%">Mención obligatoria art. 13 RGPD</th><th style="width:15%">Estado</th><th>Comentario</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Identidad del responsable (13.1.a)</td><td><span class="status-warn">⚠</span></td><td>Falta CIF/NIF (no se renderiza en <code>PrivacyPolicy.tsx</code>, solo en LegalNotice). Añadir bloque con razón social, CIF y dirección.</td></tr>
+      <tr><td>Datos contacto DPO (13.1.b)</td><td><span class="status-fail">✗</span></td><td>No mencionado. Añadir: "No se ha designado DPO al no ser obligatorio (art. 37 RGPD)".</td></tr>
+      <tr><td>Fines del tratamiento (13.1.c)</td><td><span class="status-ok">✓</span></td><td>Sección 3.</td></tr>
+      <tr><td>Base jurídica (13.1.c)</td><td><span class="status-ok">✓</span></td><td>Sección 4. Correcto: 6.1.a, 6.1.b, 6.1.c.</td></tr>
+      <tr><td>Interés legítimo si aplica (13.1.d)</td><td>N/A</td><td>No se invoca 6.1.f.</td></tr>
+      <tr><td>Destinatarios (13.1.e)</td><td><span class="status-warn">⚠ Parcial</span></td><td>Sección 7 menciona Supabase, Resend, Redsys, <strong>pero NO Vercel</strong> (hosting) ni Google (Fonts).</td></tr>
+      <tr><td>Transferencias internacionales (13.1.f)</td><td><span class="status-warn">⚠</span></td><td>Mención genérica a CCT 2021/914. Impreciso: dice "Supabase, Inc. — UE (región eu-west)", siendo Supabase entidad Delaware EE. UU.</td></tr>
+      <tr><td>Plazo de conservación (13.2.a)</td><td><span class="status-ok">✓</span></td><td>Tabla sección 5 — 6 años ajustado a Cód. Comercio + LGT.</td></tr>
+      <tr><td>Derechos del interesado (13.2.b)</td><td><span class="status-warn">⚠</span></td><td>Falta el derecho a la <strong>limitación del tratamiento</strong> (art. 18) y a <strong>no ser objeto de decisiones automatizadas</strong> (art. 22).</td></tr>
+      <tr><td>Derecho retirar consentimiento (13.2.c)</td><td><span class="status-ok">✓</span></td><td></td></tr>
+      <tr><td>Derecho reclamar ante AEPD (13.2.d)</td><td><span class="status-ok">✓</span></td><td>Con enlace aepd.es.</td></tr>
+      <tr><td>¿Obligatorio aportar datos? Consecuencias? (13.2.e)</td><td><span class="status-warn">⚠</span></td><td>Implícito en sección 4, no se dedica sección expresa.</td></tr>
+      <tr><td>¿Decisiones automatizadas / perfilado? (13.2.f)</td><td><span class="status-fail">✗</span></td><td>No mencionado. Añadir: "No se realizan decisiones automatizadas ni elaboración de perfiles".</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-high">
+    <h4>Veredicto sección 3</h4>
+    <p><strong>APTO CON RESERVAS</strong>. Política redactada con bastante rigor, pero le faltan 3 menciones obligatorias del art. 13 (Vercel/Google entre encargados, derecho de limitación y de no decisiones automatizadas, y mención DPO/no DPO).</p>
+  </div>
+
+  <!-- ───── 4. Encargados del tratamiento ───── -->
+  <h2 class="section" id="sec-4"><span class="num">4.</span>Encargados del tratamiento — Art. 28 RGPD</h2>
+
+  <table>
+    <thead>
+      <tr><th>Proveedor</th><th>DPA disponible</th><th>Mecanismo transferencia</th><th>En política</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Vercel</strong> (hosting frontend)</td>
+        <td>✓ <a href="https://vercel.com/legal/dpa">vercel.com/legal/dpa</a></td>
+        <td>CCT 2021/914 (módulo 2)</td>
+        <td><span class="status-fail">✗ NO MENCIONADO</span></td>
+      </tr>
+      <tr>
+        <td><strong>Supabase Inc.</strong> (BD + auth + storage + edge)</td>
+        <td>✓ <a href="https://supabase.com/dpa">supabase.com/dpa</a></td>
+        <td>CCT 2021/914 (módulo 2+3 — subproc. AWS)</td>
+        <td><span class="status-warn">⚠ Descripción imprecisa</span></td>
+      </tr>
+      <tr>
+        <td><strong>Resend, Inc.</strong> (email transaccional)</td>
+        <td>✓ <a href="https://resend.com/legal/dpa">resend.com/legal/dpa</a></td>
+        <td>CCT 2021/914</td>
+        <td><span class="status-ok">✓ Correcto</span></td>
+      </tr>
+      <tr>
+        <td><strong>Redsys</strong> (CIF B85955367, ESP)</td>
+        <td>✓ Encargado nacional</td>
+        <td>Sin transferencia internacional</td>
+        <td><span class="status-ok">✓ Correcto</span></td>
+      </tr>
+      <tr>
+        <td><strong>Google LLC</strong> (Fonts + Maps)</td>
+        <td>✓ <a href="https://privacy.google.com/businesses/processorterms/">processor terms</a></td>
+        <td>CCT 2021/914</td>
+        <td><span class="status-fail">✗ NO MENCIONADO</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Acción correctiva</h3>
+
+  <ol>
+    <li><strong>Antes de la primera venta</strong>, firmar electrónicamente los DPA de Vercel, Supabase, Resend y Google.</li>
+    <li><strong>Añadir Vercel y Google</strong> a la tabla de encargados en <code>PrivacyPolicy.tsx:236-267</code>.</li>
+    <li><strong>Sustituir descripción Supabase</strong> por el texto correcto:
+      <blockquote>"Supabase, Inc. (Delaware, EE. UU.) — Almacenamiento de base de datos, autenticación y storage en región europea (eu-west-1, Irlanda). Transferencia internacional amparada por Cláusulas Contractuales Tipo (Decisión (UE) 2021/914) y compromisos contractuales de procesamiento en territorio EEE."</blockquote>
+    </li>
+    <li>Mantener internamente un <strong>registro fechado</strong> de los DPA aceptados (PDF o captura del email de confirmación).</li>
+  </ol>
+
+  <!-- ───── 5. Consentimiento en el checkout ───── -->
+  <h2 class="section" id="sec-5"><span class="num">5.</span>Consentimiento y bases jurídicas en el checkout</h2>
+
+  <p>Análisis sobre <code>Checkout.tsx</code> + <code>order-place/index.ts</code> + <code>0003_orders_schema.sql</code>.</p>
+
+  <table>
+    <thead>
+      <tr><th style="width:35%">Aspecto</th><th>Implementación</th><th style="width:15%">Veredicto</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Checkboxes terms/privacy NO pre-marcados</td>
+        <td><code>Checkout.tsx:577-625</code> — todos los <code>&lt;input type="checkbox"&gt;</code> sin <code>defaultChecked</code>; schema Zod default <code>false</code>.</td>
+        <td><span class="status-ok">✓ Bien</span></td>
+      </tr>
+      <tr>
+        <td>Separación entre ejecución contrato (6.1.b) y marketing (6.1.a)</td>
+        <td><code>accepted_terms</code>, <code>accepted_privacy</code> y <code>accepted_approval_flow</code> obligatorios; <code>marketing_opt_in</code> separado y opcional.</td>
+        <td><span class="status-ok">✓ Excelente</span></td>
+      </tr>
+      <tr>
+        <td>Marketing opt-in claramente opcional</td>
+        <td><code>Checkout.tsx:647-656</code> — visualmente separado, sin "*", etiquetado "(opcional)".</td>
+        <td><span class="status-ok">✓</span></td>
+      </tr>
+      <tr>
+        <td>Captura de prueba del consentimiento</td>
+        <td>Se guarda <code>accepted_terms_at</code> y <code>accepted_privacy_at</code> (timestamp UTC), pero <strong>NO se guarda IP del cliente</strong>, <strong>NI User-Agent</strong>, <strong>NI versión de los textos legales aceptados</strong>.</td>
+        <td><span class="status-warn">⚠ Insuficiente</span></td>
+      </tr>
+      <tr>
+        <td>Minimización (art. 5.1.c)</td>
+        <td>Solo datos imprescindibles para envío y facturación.</td>
+        <td><span class="status-ok">✓</span></td>
+      </tr>
+      <tr>
+        <td>Validación CIF en B2B</td>
+        <td><code>Checkout.tsx:510</code> solo placeholder; no hay validación algorítmica del CIF (módulo 11).</td>
+        <td><span class="status-warn">⚠ Recomendado</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-high">
+    <h4>Hallazgo medio — Insuficiencia probatoria del consentimiento</h4>
+    <p>El art. 7.1 RGPD exige que el responsable <strong>pueda demostrar que el interesado consintió</strong>. Un simple <code>accepted_terms_at: timestamp</code> no acredita quién consintió ni qué texto exacto se aceptó. Si en 2027 el cliente impugna el contrato, el responsable debe poder demostrar: IP, User-Agent y versión exacta de los términos vigentes en ese momento (hash del texto o número de versión).</p>
+  </div>
+
+  <h3>Acción correctiva</h3>
+
+<pre><code>ALTER TABLE orders ADD COLUMN consent_ip text;
+ALTER TABLE orders ADD COLUMN consent_user_agent text;
+ALTER TABLE orders ADD COLUMN consent_terms_version text;
+ALTER TABLE orders ADD COLUMN consent_privacy_version text;</code></pre>
+
+  <p>Y en <code>order-place/index.ts</code> extraer <code>x-forwarded-for</code> / <code>user-agent</code> (como ya se hace en <code>customer-magic-link-request/index.ts:90-93</code>) y guardarlos junto con un identificador de versión de los textos legales.</p>
+
+  <!-- ───── 6. Contratación electrónica ───── -->
+  <h2 class="section" id="sec-6"><span class="num">6.</span>Contratación electrónica — RDL 1/2007 + LSSI-CE</h2>
+
+  <h3>6.1 Información precontractual (art. 60 RDL 1/2007)</h3>
+
+  <table>
+    <thead>
+      <tr><th style="width:40%">Información obligatoria</th><th style="width:25%">Visible antes del botón</th><th>Comentario</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Identidad del empresario</td><td><span class="status-warn">⚠ Solo en footer</span></td><td>Recomendación: bloque resumen vendedor en aside.</td></tr>
+      <tr><td>Dirección postal</td><td><span class="status-warn">⚠ En footer</span></td><td>Aceptable.</td></tr>
+      <tr><td>Características principales del bien</td><td><span class="status-ok">✓</span></td><td>Items del carrito visibles.</td></tr>
+      <tr><td>Precio total con impuestos</td><td><span class="status-ok">✓</span></td><td><code>Checkout.tsx:712-720</code>.</td></tr>
+      <tr><td>Gastos adicionales (envío)</td><td><span class="status-ok">✓</span></td><td>Antes del botón.</td></tr>
+      <tr><td>Procedimiento de pago</td><td><span class="status-warn">⚠</span></td><td>"Se reservará el importe en tu tarjeta" — mejorable.</td></tr>
+      <tr><td>Plazo de entrega</td><td><span class="status-fail">✗</span></td><td>NO consta en el checkout. Incumple art. 60.2.g.</td></tr>
+      <tr><td>Derecho de desistimiento + formulario tipo</td><td><span class="status-warn">⚠</span></td><td>Solo por link a Términos.</td></tr>
+      <tr><td>Garantía 3 años</td><td><span class="status-fail">✗</span></td><td>NO visible en checkout.</td></tr>
+      <tr><td>Servicios postventa y garantías comerciales</td><td><span class="status-fail">✗</span></td><td>NO visible.</td></tr>
+      <tr><td>Mecanismos extrajudiciales (ODR)</td><td><span class="status-fail">✗</span></td><td>NO visible en checkout.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.2 Botón de pedido — Art. 98.2 RDL 1/2007 <span style="font-size:14px;color:var(--critical)">(clave)</span></h3>
+
+  <blockquote>
+    "Si la realización de un pedido se hace activando un botón […], el botón […] se etiquetará de manera fácilmente legible <strong>únicamente con la expresión 'pedido con obligación de pago' o una formulación análoga no ambigua</strong>."
+  </blockquote>
+
+  <div class="callout callout-critical">
+    <h4>Sanción si se incumple</h4>
+    <p>Según el último párrafo del art. 98.2: <em>"si el empresario no cumple con este apartado, el consumidor y usuario no quedará obligado por el contrato o pedido"</em>. Esto significa que <strong>el contrato es inválido para el consumidor</strong>, que puede revocarlo sin ser tratado como desistimiento. Es el incumplimiento con peor consecuencia jurídica del informe.</p>
+  </div>
+
+  <p>Evidencia actual:</p>
+
+<pre><code>// Checkout.tsx:669 y 730
+&lt;Button type="submit" variant="primary" size="lg" ...&gt;
+  Tramitar pedido
+&lt;/Button&gt;</code></pre>
+
+  <p><strong>"Tramitar pedido" NO es fórmula inequívoca.</strong> La AEPC y la Audiencia Provincial de Madrid (Sentencia 256/2019) consideran insuficientes formulaciones como "Continuar", "Finalizar", "Comprar" sin más, o "Tramitar pedido".</p>
+
+  <h3>Acción correctiva — CRÍTICA</h3>
+
+  <p>Cambiar texto botones en <code>Checkout.tsx:669</code> y <code>Checkout.tsx:730</code> a:</p>
+
+  <blockquote><strong>"Realizar pedido con obligación de pago"</strong></blockquote>
+
+  <p>O como alternativa aceptada por doctrina: <strong>"Comprar ahora — pedido con obligación de pago"</strong>.</p>
+
+  <p>NO usar nunca: "Tramitar", "Continuar", "Confirmar", "Finalizar", "Procesar pago".</p>
+
+  <h3>6.3 Confirmación del pedido (art. 98.4 LSSI-CE + art. 98 RDL 1/2007)</h3>
+
+  <p>Auditado <code>send-order-confirmation-customer/index.ts</code>. Defectos en el email:</p>
+
+  <table>
+    <thead>
+      <tr><th style="width:55%">Mención obligatoria</th><th>Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Confirmación recepción pedido</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td>Número de pedido</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td>Resumen items, totales, IVA</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td>Identidad completa vendedor (razón social + CIF + domicilio)</td><td><span class="status-fail">✗ Solo dirección</span></td></tr>
+      <tr><td>Derecho de desistimiento + formulario</td><td><span class="status-fail">✗ No se menciona</span></td></tr>
+      <tr><td>Enlace ODR (art. 14 Reg. 524/2013)</td><td><span class="status-fail">✗ NO está</span></td></tr>
+      <tr><td>Garantía legal 3 años</td><td><span class="status-fail">✗ No se menciona</span></td></tr>
+      <tr><td>Soporte duradero</td><td><span class="status-ok">✓ Email (STJUE C-49/11)</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- ───── 7. Desistimiento ───── -->
+  <h2 class="section" id="sec-7"><span class="num">7.</span>Derecho de desistimiento — art. 102-108 RDL 1/2007</h2>
+
+  <table>
+    <thead>
+      <tr><th>Verificación</th><th>Estado</th><th>Comentario</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Plazo 14 días naturales informado</td><td><span class="status-ok">✓</span></td><td>Sección 1</td></tr>
+      <tr><td>Inicio del plazo (posesión material)</td><td><span class="status-ok">✓</span></td><td>Sección 1</td></tr>
+      <tr><td>Formulario tipo Anexo B descargable</td><td><span class="status-ok">✓</span></td><td><code>/devoluciones-formulario.pdf</code></td></tr>
+      <tr><td>Procedimiento declaración inequívoca</td><td><span class="status-ok">✓</span></td><td>Sección 2</td></tr>
+      <tr><td>Excepciones art. 103 listadas</td><td><span class="status-ok">✓</span></td><td>Sección 5</td></tr>
+      <tr><td>Quién paga porte devolución</td><td><span class="status-ok">✓</span></td><td>Sección 6</td></tr>
+      <tr><td>Plazo reembolso 14 días</td><td><span class="status-ok">✓</span></td><td>Sección 3</td></tr>
+      <tr><td>Mismo medio de pago</td><td><span class="status-ok">✓</span></td><td>Sección 3</td></tr>
+      <tr><td>Derecho retención hasta recepción (art. 76)</td><td><span class="status-ok">✓</span></td><td>Sección 3</td></tr>
+      <tr><td>Garantía 3 años (RDL 7/2021)</td><td><span class="status-ok">✓</span></td><td>Sección 7</td></tr>
+      <tr><td>Disminución valor producto (art. 108)</td><td><span class="status-ok">✓</span></td><td>Sección 4</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-ok">
+    <h4>Veredicto sección 7</h4>
+    <p><strong>APTA</strong>. La política de devoluciones es la pieza mejor redactada del proyecto. Ningún hallazgo crítico. Sugerencia menor: añadir el "modelo de formulario de desistimiento" como bloque de texto directo (además del PDF) — STJUE C-922/19 ha valorado positivamente la facilidad de ejercicio.</p>
+  </div>
+
+  <!-- ───── 8. ODR ───── -->
+  <h2 class="section" id="sec-8"><span class="num">8.</span>Resolución extrajudicial de conflictos</h2>
+
+  <table>
+    <thead>
+      <tr><th>Verificación</th><th>Estado</th><th>Evidencia</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Enlace VISIBLE a ec.europa.eu/odr en la web</td><td><span class="status-ok">✓</span></td><td><code>TermsOfSale.tsx:367</code> y <code>Returns.tsx:295</code></td></tr>
+      <tr><td>Enlace en email de confirmación</td><td><span class="status-fail">✗</span></td><td><code>email-template.ts</code> no lo incluye</td></tr>
+      <tr><td>Mención Junta Arbitral / DG Consumo Cantabria</td><td><span class="status-ok">✓</span></td><td><code>TermsOfSale.tsx:378</code> y <code>Returns.tsx:305</code></td></tr>
+      <tr><td>Mención adhesión a sistema arbitral</td><td><span class="status-warn">⚠</span></td><td>Si la empresa NO está adherida a Consumo, debe indicarse expresamente</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ───── 9. Facturación ───── -->
+  <h2 class="section" id="sec-9"><span class="num">9.</span>Facturación electrónica y conservación</h2>
+
+  <h3>Cumplimiento RD 1619/2012</h3>
+
+  <table>
+    <thead>
+      <tr><th>Mención obligatoria</th><th>Implementado en PDF</th><th>Línea</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Número correlativo</td><td><span class="status-ok">✓</span></td><td><code>next_invoice_number()</code> atómica · <code>0003_orders_schema.sql:187-202</code></td></tr>
+      <tr><td>Fecha de emisión</td><td><span class="status-ok">✓</span></td><td>Línea 298</td></tr>
+      <tr><td>Fecha de operación (si distinta)</td><td><span class="status-warn">⚠</span></td><td>"Fecha pedido" — debería decir "Fecha operación"</td></tr>
+      <tr><td>NIF del emisor</td><td><span class="status-ok">✓</span></td><td>Línea 293</td></tr>
+      <tr><td>Razón social emisor</td><td><span class="status-ok">✓</span></td><td>Línea 284</td></tr>
+      <tr><td>Domicilio emisor</td><td><span class="status-ok">✓</span></td><td>Línea 307</td></tr>
+      <tr><td>NIF receptor (B2B)</td><td><span class="status-ok">✓</span></td><td>Línea 357</td></tr>
+      <tr><td>Razón social receptor (B2B)</td><td><span class="status-ok">✓</span></td><td>Línea 350</td></tr>
+      <tr><td>Domicilio receptor</td><td><span class="status-ok">✓</span></td><td>B2B / envío B2C · Línea 365</td></tr>
+      <tr><td>Descripción de la operación</td><td><span class="status-ok">✓</span></td><td>Línea 502</td></tr>
+      <tr><td>Base imponible</td><td><span class="status-ok">✓</span></td><td>Línea 606</td></tr>
+      <tr><td>Tipo IVA</td><td><span class="status-ok">✓</span></td><td>Línea 619</td></tr>
+      <tr><td>Cuota IVA</td><td><span class="status-ok">✓</span></td><td>Línea 624</td></tr>
+      <tr><td>Total</td><td><span class="status-ok">✓</span></td><td>Línea 641</td></tr>
+      <tr><td>Serie diferenciada B2C / B2B</td><td><span class="status-fail">✗</span></td><td>Número correlativo único. Mezclar B2C/B2B no es ilegal pero dificulta auditoría AEAT.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>TicketBAI / SII / Verifactu</h3>
+
+  <ul>
+    <li><strong>TicketBAI:</strong> solo País Vasco. <span class="status-ok">No aplica</span> en Cantabria.</li>
+    <li><strong>SII:</strong> solo grandes empresas (&gt;6 M€) o IVA mensual. <span class="status-ok">No aplica</span>.</li>
+    <li><strong>Verifactu (RD 1007/2023):</strong> obligatorio desde <strong>1 enero 2026</strong> para sujetos del IS, y <strong>1 julio 2026</strong> para autónomos estimación directa. <span class="status-warn">⚠ APLICA potencialmente</span> a DC Bikes desde julio 2026.</li>
+  </ul>
+
+  <div class="callout callout-high">
+    <h4>Acción correctiva</h4>
+    <ol>
+      <li><strong>Verificar urgentemente la forma jurídica del titular</strong> (autónomo, S.L., S.A., comunidad de bienes).</li>
+      <li>Si aplica Verifactu: el PDF actual <strong>NO incluye huella/hash + QR + leyenda VERI*FACTU obligatorios</strong>. Esfuerzo estimado: 20-30 h dev + 5 h consultoría fiscal.</li>
+      <li>Separar series facturación B2B vs B2C (dos funciones RPC <code>next_b2b_invoice_number(year)</code> y <code>next_b2c_invoice_number(year)</code>).</li>
+    </ol>
+  </div>
+
+  <!-- ───── 10. Seguridad ───── -->
+  <h2 class="section" id="sec-10"><span class="num">10.</span>Seguridad del tratamiento — Art. 32 RGPD</h2>
+
+  <table>
+    <thead>
+      <tr><th>Medida art. 32</th><th>Implementación</th><th>Veredicto</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Cifrado en tránsito</td><td>HTTPS (Vercel automático)</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td>Cifrado en reposo</td><td>Supabase AES-256 por defecto</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td>Pseudonimización datos sensibles</td><td>Email cliente en <code>orders.customer_email</code> en plano</td><td><span class="status-warn">⚠</span></td></tr>
+      <tr><td>Magic link tokens hasheados</td><td>SHA-256, 256 bits entropía, TTL 24h</td><td><span class="status-ok">✓ Excelente</span></td></tr>
+      <tr><td>Política contraseñas admin</td><td>Supabase Auth por defecto — permite débiles</td><td><span class="status-fail">✗</span></td></tr>
+      <tr><td>2FA admin</td><td>No habilitado</td><td><span class="status-fail">✗</span></td></tr>
+      <tr><td>Backups</td><td>Supabase Free: 1 día; Pro: 7 días</td><td><span class="status-warn">⚠ Verificar plan</span></td></tr>
+      <tr><td>Rotación logs</td><td><code>payments_log.raw_payload</code> indefinido</td><td><span class="status-warn">⚠</span></td></tr>
+      <tr><td>Tests de seguridad (art. 32.1.d)</td><td>No detectados</td><td><span class="status-warn">⚠ Pentest anual</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Acción correctiva</h3>
+
+  <ol>
+    <li><strong>Habilitar 2FA obligatorio</strong> para los usuarios admin en Supabase Auth.</li>
+    <li>Configurar <strong>política de contraseñas fuerte</strong>: min. 12 chars, complejidad, no reutilización.</li>
+    <li>Si plan Supabase es Free, <strong>migrar a Pro</strong> (25 $/mes) para PITR 7 días.</li>
+    <li>Cron mensual de anonimización de <code>payments_log.raw_payload</code> para registros &gt; 6 años.</li>
+  </ol>
+
+  <!-- ───── 11. Brechas ───── -->
+  <h2 class="section" id="sec-11"><span class="num">11.</span>Brechas de seguridad — Art. 33-34 RGPD</h2>
+
+  <div class="callout callout-critical">
+    <h4>Estado actual: NULO</h4>
+    <ul style="margin-bottom:0">
+      <li>No hay procedimiento documentado de notificación a AEPD en 72h.</li>
+      <li>No hay procedimiento de comunicación a afectados.</li>
+      <li>No hay registro interno de brechas (obligatorio aunque no se notifiquen — art. 33.5).</li>
+    </ul>
+  </div>
+
+  <h3>Acción correctiva</h3>
+
+  <p>Crear <code>docs/legal/procedimiento-brechas.md</code> con cadena de decisión, plantillas comunicación AEPD (form. 040) y a afectados, tabla evaluación riesgo (CNIL-style).</p>
+
+  <p>Crear tabla SQL para el registro interno:</p>
+
+<pre><code>CREATE TABLE data_breaches (
+  id uuid primary key default gen_random_uuid(),
+  detected_at timestamptz not null,
+  description text not null,
+  affected_data_categories text[] not null,
+  estimated_affected_users int,
+  risk_level text check (risk_level in ('bajo','medio','alto')),
+  notified_aepd boolean default false,
+  notified_aepd_at timestamptz,
+  notified_users boolean default false,
+  containment_measures text,
+  created_at timestamptz default now()
+);</code></pre>
+
+  <!-- ───── 12. RAT ───── -->
+  <h2 class="section" id="sec-12"><span class="num">12.</span>Registro de actividades — Art. 30 RGPD</h2>
+
+  <p>DC Bikes Cantabria <strong>está obligada</strong> a llevar registro, pese a ser microempresa, porque el tratamiento de pedidos online <strong>no es ocasional</strong> (es la actividad principal) y trata datos a escala empresarial.</p>
+
+  <p><strong>Estado actual:</strong> No detectado en el repositorio.</p>
+
+  <h3>Acción correctiva</h3>
+
+  <p>Cumplimentar plantilla AEPD (<a href="https://www.aepd.es/guias/plantilla-rat.pdf">aepd.es/guias/plantilla-rat.pdf</a>) con tratamientos:</p>
+
+  <ol>
+    <li>Gestión de pedidos online (6.1.b)</li>
+    <li>Facturación y obligaciones fiscales (6.1.c)</li>
+    <li>Atención al cliente (formulario contacto) (6.1.a)</li>
+    <li>Marketing — newsletter (6.1.a)</li>
+    <li>Cookies analíticas (6.1.a)</li>
+  </ol>
+
+  <p>Almacenar el RAT en <code>docs/legal/rat-2026.pdf</code>. Actualizar anualmente.</p>
+
+  <!-- ───── 13. Menores ───── -->
+  <h2 class="section" id="sec-13"><span class="num">13.</span>Datos de menores</h2>
+
+  <p><strong>Estado actual:</strong> Nada detectado en <code>PrivacyPolicy.tsx</code>, ni en <code>Checkout.tsx</code>.</p>
+
+  <p>El art. 7 LOPDGDD establece como <strong>edad mínima 14 años</strong> para consentir el tratamiento de datos. El RDL 1/2007 art. 28 considera <em>consumidores</em> sólo a personas físicas con capacidad para contratar — los menores de 18 años requieren tutela legal para contratos onerosos no domésticos (art. 1263 Cc).</p>
+
+  <h3>Acción correctiva</h3>
+
+  <p>Añadir cláusula en <code>TermsOfSale.tsx</code> sección 2:</p>
+
+  <blockquote>"Para realizar pedidos a través de esta tienda online es necesario tener cumplidos 18 años o, en su defecto, contar con la autorización expresa de los progenitores o representantes legales. Al marcar la casilla de aceptación de los términos, el cliente declara cumplir este requisito."</blockquote>
+
+  <p>Añadir en <code>PrivacyPolicy.tsx</code> sección nueva:</p>
+
+  <blockquote>"Tratamiento de datos de menores: el sitio no se dirige a menores de 14 años. En caso de detectar un tratamiento de datos de menores sin la autorización requerida, procederemos a su supresión inmediata. Si es titular de la patria potestad y detecta tal situación, contáctenos en info@dcbikescantabria.es."</blockquote>
+
+  <!-- ───── 14. Marketing ───── -->
+  <h2 class="section" id="sec-14"><span class="num">14.</span>Marketing y comunicaciones comerciales — Art. 21 LSSI-CE</h2>
+
+  <table>
+    <thead>
+      <tr><th>Requisito</th><th>Implementación</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Opt-in expreso para newsletter</td><td><span class="status-ok">✓</span> Checkbox <code>marketing_opt_in</code> separado y no obligatorio</td></tr>
+      <tr><td>Doble opt-in</td><td><span class="status-warn">⚠ No implementado</span></td></tr>
+      <tr><td>Unsubscribe funcional</td><td><span class="status-ok">N/A — solo emails transaccionales</span></td></tr>
+      <tr><td>Identificación "publicidad" en asunto</td><td>N/A</td></tr>
+      <tr><td>Emails transaccionales sin contenido comercial</td><td><span class="status-ok">✓ Revisados</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Recomendación</h3>
+
+  <p>Cuando se quiera empezar a enviar newsletters/comerciales:</p>
+
+  <ol>
+    <li>Implementar doble opt-in con email de confirmación tras checkout.</li>
+    <li>Token único por suscripción para link unsubscribe.</li>
+    <li>Tabla <code>newsletter_subscribers(email, confirmed_at, unsubscribed_at, unsubscribe_token)</code>.</li>
+  </ol>
+
+  <!-- ───── 15. Magic link ───── -->
+  <h2 class="section" id="sec-15"><span class="num">15.</span>Magic link "Mis pedidos" — Análisis específico</h2>
+
+  <table>
+    <thead>
+      <tr><th style="width:30%">Aspecto</th><th>Implementación</th><th style="width:15%">Veredicto</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Entropía token</td><td>32 bytes random (256 bits) → 64 chars hex</td><td><span class="status-ok">✓ Excelente</span></td></tr>
+      <tr><td>Almacenamiento</td><td>SHA-256 hash, <strong>nunca token plano en BD</strong></td><td><span class="status-ok">✓ Excelente</span></td></tr>
+      <tr><td>TTL</td><td>24h</td><td><span class="status-ok">✓ Adecuado</span></td></tr>
+      <tr><td>Single-use vs reusable</td><td>Reusable durante TTL (decisión documentada)</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td>Revocabilidad</td><td>Manual vía DELETE FROM customer_sessions</td><td><span class="status-warn">⚠ Sin UI admin</span></td></tr>
+      <tr><td>Rate-limit</td><td>5/hora/email</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td>Anti-enumeración</td><td>Respuesta idéntica si email existe o no</td><td><span class="status-ok">✓ Excelente</span></td></tr>
+      <tr><td>IP / UA logueados</td><td><code>customer_sessions.ip_address</code>, <code>user_agent</code></td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td>Email magic link incluye política</td><td>Footer con links</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td>Token NO contiene info sensible</td><td>Aleatorio puro</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td>Acceso solo edge function con service_role</td><td>RLS sin policies para anon</td><td><span class="status-ok">✓</span></td></tr>
+      <tr><td>Cookie sesión cliente listada en política</td><td><code>dcbikes_customer_session</code> NO listada</td><td><span class="status-fail">✗ Listar</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- ───── 16. Pasarela ───── -->
+  <h2 class="section" id="sec-16"><span class="num">16.</span>Pasarela de pago — Alcance PCI-DSS</h2>
+
+  <table>
+    <thead>
+      <tr><th>Verificación</th><th>Resultado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>¿Se almacena PAN/CVV en sistemas propios?</td><td><span class="status-ok">✓ NO.</span> Solo <code>payment_pre_auth_id</code> (Ds_Merchant_Order)</td></tr>
+      <tr><td>¿Handover completo a Redsys?</td><td><span class="status-ok">✓ Sí.</span> Navegación a sis.redsys.es + webhook</td></tr>
+      <tr><td>SAQ aplicable</td><td><strong>SAQ A</strong> (e-commerce con pasarela tercerizada)</td></tr>
+      <tr><td>Tokenización propia</td><td>N/A</td></tr>
+      <tr><td>Política privacidad menciona Redsys</td><td><span class="status-ok">✓</span> <code>PrivacyPolicy.tsx:259-289</code> — descripción completa con CIF</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-ok">
+    <p><strong>Veredicto:</strong> SAQ A aplicable. Cumplimiento PCI-DSS satisfactorio.</p>
+    <p>Acción menor: el comerciante debe <strong>autocertificarse anualmente</strong> en SAQ A (cuestionario simplificado, ~30 preguntas, gratuito) y enviar el certificado a su entidad adquirente.</p>
+  </div>
+
+  <!-- ───── 17. Accesibilidad ───── -->
+  <h2 class="section" id="sec-17"><span class="num">17.</span>Accesibilidad — Ley 11/2023 (EAA)</h2>
+
+  <p>El RD 1112/2018 <span class="status-ok">no aplica</span> (microempresa privada).</p>
+
+  <p>La <strong>Ley 11/2023</strong> (transposición Directiva EAA 2019/882), vigente desde <strong>28 junio 2025</strong>, obliga a empresas privadas que prestan comercio electrónico al consumidor a cumplir WCAG 2.1 AA.</p>
+
+  <div class="callout callout-high">
+    <h4>Excepción microempresas</h4>
+    <p>La Ley 11/2023 art. 4 excluye empresas con <strong>&lt; 10 trabajadores Y facturación anual &lt; 2 M €</strong>. Si DC Bikes Cantabria cumple ambos criterios, queda <strong>EXENTA</strong>.</p>
+  </div>
+
+  <h3>Acción correctiva</h3>
+
+  <ol>
+    <li><strong>Verificar plantilla</strong> y facturación de DC Bikes Cantabria.</li>
+    <li>Si es microempresa: añadir sección en <code>LegalNotice.tsx</code>:
+      <blockquote>"Accesibilidad: Esta tienda online es operada por una microempresa que queda fuera del ámbito de aplicación de la Ley 11/2023 (art. 4.1). No obstante, aplicamos prácticas básicas de accesibilidad y agradecemos cualquier sugerencia de mejora."</blockquote>
+    </li>
+    <li>Si NO es microempresa: obligatorio <strong>auditoría WCAG 2.1 AA</strong> (40-80 h remediación).</li>
+  </ol>
+
+  <!-- ───── 18. SEO ───── -->
+  <h2 class="section" id="sec-18"><span class="num">18.</span>SEO, prerender y exposición de datos personales</h2>
+
+  <h3>18.1 robots.txt</h3>
+
+<pre><code>Disallow: /admin/
+Disallow: /api/
+Disallow: /carrito
+Disallow: /checkout
+Disallow: /pedido/
+Disallow: /mock-redsys-pago/
+Disallow: /mis-pedidos
+Disallow: /mis-pedidos/</code></pre>
+
+  <p><span class="status-ok">✓</span> Correctamente bloquea rutas con datos personales.</p>
+
+  <h3>18.2 sitemap.xml</h3>
+
+  <p><span class="status-ok">✓</span> Solo incluye rutas públicas. No expone rutas privadas.</p>
+
+  <h3>18.3 noindex en páginas internas</h3>
+
+  <p><span class="status-ok">✓</span> <code>MyOrdersRequestAccess.tsx:70</code>, <code>MyOrdersSession.tsx:129,154</code>, <code>MyOrderDetailCustomer.tsx:425</code> usan <code>noIndex</code>.</p>
+
+  <p><span class="status-warn">⚠</span> <code>Checkout.tsx:204-208</code> <strong>NO usa noIndex</strong>. Aunque está en robots.txt, doctrina AEPD recomienda doble protección. Añadir <code>noIndex</code> a Checkout, Cart, OrderConfirmation, PaymentError, RedsysRedirecting, MockRedsysPayment.</p>
+
+  <!-- ───── 19. Plan de acción ───── -->
+  <h2 class="section" id="sec-19"><span class="num">19.</span>Plan de acción priorizado</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:30px">#</th>
+        <th>Hallazgo</th>
+        <th>Severidad</th>
+        <th>Norma incumplida</th>
+        <th>Esfuerzo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Aviso legal con NIF/CIF vacíos</td><td><span class="sev sev-critical">Crítico</span></td><td>Art. 10 LSSI-CE</td><td>1 h</td></tr>
+      <tr><td>2</td><td>Aviso legal afirma "no realiza venta online"</td><td><span class="sev sev-critical">Crítico</span></td><td>Art. 10 LSSI-CE + art. 5 LCD</td><td>2 h</td></tr>
+      <tr><td>3</td><td>Botón sin fórmula "con obligación de pago"</td><td><span class="sev sev-critical">Crítico</span></td><td>Art. 98.2 RDL 1/2007</td><td>30 min</td></tr>
+      <tr><td>4</td><td>Banner cookies: "Aceptar" más prominente</td><td><span class="sev sev-critical">Crítico</span></td><td>Guía AEPD + CJUE Planet49</td><td>1 h</td></tr>
+      <tr><td>5</td><td>Google Fonts sin consentimiento</td><td><span class="sev sev-critical">Crítico</span></td><td>Art. 22.2 LSSI-CE + art. 6 RGPD</td><td>1 h</td></tr>
+      <tr><td>6</td><td>Toggle "Analíticas" pre-marcado true</td><td><span class="sev sev-critical">Crítico</span></td><td>Art. 4.11 RGPD</td><td>5 min</td></tr>
+      <tr><td>7</td><td>Política sin Vercel ni Google como encargados</td><td><span class="sev sev-high">Alto</span></td><td>Art. 13.1.e + 28 RGPD</td><td>30 min</td></tr>
+      <tr><td>8</td><td>Descripción Supabase imprecisa</td><td><span class="sev sev-high">Alto</span></td><td>Art. 13.1.f RGPD</td><td>15 min</td></tr>
+      <tr><td>9</td><td>No captura IP/UA/versión textos al consentir</td><td><span class="sev sev-high">Alto</span></td><td>Art. 7.1 RGPD</td><td>2 h</td></tr>
+      <tr><td>10</td><td>Email confirmación sin ODR ni CIF</td><td><span class="sev sev-high">Alto</span></td><td>Art. 14 R. 524/2013 + art. 10 LSSI</td><td>1 h</td></tr>
+      <tr><td>11</td><td>Email sin info desistimiento</td><td><span class="sev sev-high">Alto</span></td><td>Art. 98 RDL 1/2007</td><td>1 h</td></tr>
+      <tr><td>12</td><td>Política cookies con inventario incompleto</td><td><span class="sev sev-high">Alto</span></td><td>Guía AEPD apartado 4</td><td>1 h</td></tr>
+      <tr><td>13</td><td>Sin registro de actividades (RAT)</td><td><span class="sev sev-high">Alto</span></td><td>Art. 30 RGPD</td><td>4 h</td></tr>
+      <tr><td>14</td><td>Sin procedimiento brechas</td><td><span class="sev sev-high">Alto</span></td><td>Art. 33-34 RGPD</td><td>4 h</td></tr>
+      <tr><td>15</td><td>Admin sin 2FA</td><td><span class="sev sev-medium">Medio</span></td><td>Art. 32.1.b RGPD</td><td>30 min</td></tr>
+      <tr><td>16</td><td>Política sin mención DPO ni decisiones automatizadas</td><td><span class="sev sev-medium">Medio</span></td><td>Art. 13.1.b + 13.2.f</td><td>30 min</td></tr>
+      <tr><td>17</td><td>Política sin derecho limitación</td><td><span class="sev sev-medium">Medio</span></td><td>Art. 18 RGPD</td><td>15 min</td></tr>
+      <tr><td>18</td><td>Política sin mención menores</td><td><span class="sev sev-medium">Medio</span></td><td>Art. 7 LOPDGDD</td><td>15 min</td></tr>
+      <tr><td>19</td><td>Sin cláusula 18 años en Términos venta</td><td><span class="sev sev-medium">Medio</span></td><td>Art. 1263 Cc + art. 28 RDL 1/2007</td><td>15 min</td></tr>
+      <tr><td>20</td><td>Google Maps categorizado como "marketing"</td><td><span class="sev sev-medium">Medio</span></td><td>Buena práctica AEPD</td><td>1 h</td></tr>
+      <tr><td>21</td><td>Verifactu — verificar y, si aplica, adaptar PDF</td><td><span class="sev sev-medium">Medio</span></td><td>RD 1007/2023</td><td>20-30 h</td></tr>
+      <tr><td>22</td><td>Series correlativas B2C/B2B unificadas</td><td><span class="sev sev-low">Bajo</span></td><td>Recomendación AEAT</td><td>2 h</td></tr>
+      <tr><td>23</td><td>localStorage cookie consent sin TTL 12 m</td><td><span class="sev sev-low">Bajo</span></td><td>Guía AEPD ap. 6.2</td><td>1 h</td></tr>
+      <tr><td>24</td><td>Pages Checkout/Cart sin noIndex meta</td><td><span class="sev sev-low">Bajo</span></td><td>Doble protección recomendada</td><td>30 min</td></tr>
+      <tr><td>25</td><td>Validación algorítmica CIF</td><td><span class="sev sev-low">Mejora</span></td><td>Calidad de datos</td><td>1 h</td></tr>
+      <tr><td>26</td><td>Anonimización logs &gt; 6 años</td><td><span class="sev sev-low">Mejora</span></td><td>Art. 5.1.e RGPD</td><td>4 h</td></tr>
+      <tr><td>27</td><td>Auditoría WCAG 2.1 AA si NO es microempresa</td><td><span class="sev sev-critical">Potencialmente crítico</span></td><td>Ley 11/2023 EAA</td><td>40-80 h</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <h4>Esfuerzo total estimado para alcanzar APTO</h4>
+    <p>(excluyendo Verifactu y accesibilidad): <strong>27-35 horas de desarrollo</strong>.</p>
+  </div>
+
+  <!-- ───── 20. Anexos ───── -->
+  <h2 class="section" id="sec-20"><span class="num">20.</span>Anexos</h2>
+
+  <h3>Anexo A — Textos legales que requieren reescritura</h3>
+
+  <table>
+    <thead>
+      <tr><th>Archivo</th><th>Sección</th><th>Motivo</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>LegalNotice.tsx</code></td><td>Sección 1</td><td>Falta rellenar settings legales</td></tr>
+      <tr><td><code>LegalNotice.tsx</code></td><td>Sección 3 ("Actividad")</td><td>Contradice tienda online — reescribir</td></tr>
+      <tr><td><code>PrivacyPolicy.tsx</code></td><td>Sección 7</td><td>Añadir Vercel + Google; reescribir descripción Supabase</td></tr>
+      <tr><td><code>PrivacyPolicy.tsx</code></td><td>Sección 6</td><td>Añadir derecho limitación + decisiones automatizadas</td></tr>
+      <tr><td><code>PrivacyPolicy.tsx</code></td><td>Sección nueva</td><td>Añadir mención DPO y menores</td></tr>
+      <tr><td><code>CookiePolicy.tsx</code></td><td>Tabla "Esenciales"</td><td>Añadir todas las localStorage detectadas</td></tr>
+      <tr><td><code>CookiePolicy.tsx</code></td><td>Tabla nueva</td><td>Añadir Google Fonts (o eliminar dependencia)</td></tr>
+      <tr><td><code>TermsOfSale.tsx</code></td><td>Sección 2</td><td>Añadir cláusula 18 años</td></tr>
+      <tr><td><code>TermsOfSale.tsx</code></td><td>Sección 10</td><td>Indicar adhesión/no adhesión arbitral consumo</td></tr>
+      <tr><td><code>CookieBanner.tsx</code></td><td>Estado + estructura visual</td><td>Reescritura: "Rechazar todas" y default false</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Anexo B — Banner de cookies corregido</h3>
+
+<pre><code>// CookieBanner.tsx — bloque de botones reescrito
+&lt;div className="flex items-center gap-2 shrink-0 w-full sm:w-auto"&gt;
+  &lt;Button
+    variant="primary"
+    size="sm"
+    onClick={() =&gt; save('essential')}
+    className="flex-1 sm:flex-none text-xs font-[var(--font-cond)] tracking-wide"
+  &gt;
+    Rechazar todas
+  &lt;/Button&gt;
+  &lt;Button
+    variant="primary"
+    size="sm"
+    onClick={() =&gt; save('all')}
+    className="flex-1 sm:flex-none text-xs font-[var(--font-cond)] tracking-wide"
+  &gt;
+    Aceptar todas
+  &lt;/Button&gt;
+  &lt;button
+    type="button"
+    onClick={() =&gt; setExpanded(v =&gt; !v)}
+    className="px-3 py-2 rounded-lg text-sm text-[var(--color-mid)]
+               hover:text-[var(--color-cream)] hover:bg-[var(--color-ink)]
+               transition-colors"
+  &gt;
+    Configurar
+  &lt;/button&gt;
+&lt;/div&gt;</code></pre>
+
+  <p>Estado inicial corregido:</p>
+
+<pre><code>const [prefs, setPrefs] = useState&lt;CookiePreferences&gt;({
+  essential: true,
+  analytics: false,   // ⬅ FALSE por defecto (art. 4.11 RGPD)
+  marketing: false,
+})</code></pre>
+
+  <h3>Anexo C — Información precontractual al pie del Checkout</h3>
+
+<pre><code>&lt;div className="text-[11px] text-[var(--color-mid)] space-y-1.5 leading-relaxed"&gt;
+  &lt;p&gt;&lt;strong&gt;Vendedor:&lt;/strong&gt; {companyName} · CIF {cif} · {address}&lt;/p&gt;
+  &lt;p&gt;&lt;strong&gt;Plazo de entrega:&lt;/strong&gt; 2-5 días laborables tras la aceptación del pedido.&lt;/p&gt;
+  &lt;p&gt;&lt;strong&gt;Total con impuestos:&lt;/strong&gt; {fmtEuros(totalCents)} € (IVA {taxRate}% incluido).&lt;/p&gt;
+  &lt;p&gt;&lt;strong&gt;Derecho de desistimiento:&lt;/strong&gt; 14 días naturales desde la recepción.&lt;/p&gt;
+  &lt;p&gt;&lt;strong&gt;Garantía legal:&lt;/strong&gt; 3 años por falta de conformidad (RDL 1/2007).&lt;/p&gt;
+  &lt;p&gt;&lt;strong&gt;Reclamaciones:&lt;/strong&gt; {storeEmail} · Plataforma ODR:
+    &lt;a href="https://ec.europa.eu/consumers/odr"&gt;ec.europa.eu/odr&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;Button type="submit" variant="primary" size="lg" loading={isSubmitting}&gt;
+  Realizar pedido con obligación de pago
+&lt;/Button&gt;</code></pre>
+
+  <h3>Anexo D — Footer email confirmación pedido</h3>
+
+<pre><code>&lt;hr style="border:none;border-top:1px solid #eee;margin:24px 0" /&gt;
+
+&lt;h3 style="margin:0 0 10px 0;font-size:14px;color:#0F0F12"&gt;
+  Información legal del pedido
+&lt;/h3&gt;
+
+&lt;table style="width:100%;font-size:12px;color:#555;line-height:1.65"&gt;
+  &lt;tr&gt;&lt;td&gt;&lt;strong&gt;Vendedor:&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;${legalCompanyName}&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;&lt;strong&gt;CIF:&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;${legalCompanyCif}&lt;/td&gt;&lt;/tr&gt;
+  &lt;tr&gt;&lt;td&gt;&lt;strong&gt;Dirección:&lt;/strong&gt;&lt;/td&gt;&lt;td&gt;${legalCompanyAddress}&lt;/td&gt;&lt;/tr&gt;
+&lt;/table&gt;
+
+&lt;p&gt;&lt;strong&gt;Derecho de desistimiento:&lt;/strong&gt; 14 días naturales desde la recepción
+   (art. 102 RDL 1/2007). Descargue el formulario.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Garantía legal:&lt;/strong&gt; 3 años por falta de conformidad
+   (art. 120 RDL 1/2007, RDL 7/2021).&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Resolución de conflictos:&lt;/strong&gt;
+   &lt;a href="https://ec.europa.eu/consumers/odr/"&gt;ec.europa.eu/consumers/odr&lt;/a&gt;
+   · Dirección General de Consumo del Gobierno de Cantabria.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Protección de datos:&lt;/strong&gt; sus datos se tratan para gestionar el pedido
+   (art. 6.1.b RGPD) y se conservan 6 años. Más info en
+   &lt;a href="${siteUrl}/privacidad"&gt;política de privacidad&lt;/a&gt;.&lt;/p&gt;</code></pre>
+
+  <!-- ───── Conclusión ───── -->
+  <h2 class="section" id="sec-conclusion">Conclusión final</h2>
+
+  <p>DC Bikes Cantabria parte de una <strong>base técnica muy sólida</strong> — RLS bien configurado, tokens criptográficamente fuertes, pre-autorización Redsys, anti-fraude, anti-enumeración. La arquitectura no es el problema.</p>
+
+  <p>El problema es que <strong>el cumplimiento legal aún no está terminado</strong>. De los 27 hallazgos:</p>
+
+  <ul>
+    <li><span class="sev sev-critical">6 críticos</span> bloquean la puesta en producción comercial.</li>
+    <li><span class="sev sev-high">11 altos</span> generan riesgo regulatorio inmediato si entra en producción.</li>
+    <li><span class="sev sev-medium">10 medios/bajos</span> son refinamientos profesionales.</li>
+  </ul>
+
+  <p>Con <strong>27-35 horas de trabajo de desarrollo + 2-3 horas de revisión del titular</strong> (rellenar settings, firmar DPAs, decidir adhesión arbitral), la web pasaría de <strong>NO APTO</strong> a <strong>APTO</strong> para producción comercial. La única excepción es Verifactu, que requiere su propio proyecto de adaptación si la forma jurídica del titular lo exige a partir de julio 2026.</p>
+
+  <div class="callout">
+    <h4>Próximo paso recomendado</h4>
+    <p>Ejecutar los hallazgos 1-6 (críticos) y 7-14 (altos) en un único sprint legal. Esto produce el cumplimiento mínimo "publicable". El resto se aborda en un segundo sprint o se va asumiendo gradualmente.</p>
+  </div>
+
+</main>
+
+<footer class="doc-footer">
+  <p class="signature">Letrado especialista en Derecho Digital y Consumo</p>
+  <p>Informe emitido el 26 de mayo de 2026 · Auditoría sustantiva basada en revisión directa del repositorio.</p>
+  <p>Las referencias normativas citadas están vigentes a la fecha de emisión. La normativa puede sufrir modificaciones posteriores — particularmente en materia de Verifactu y EAA, donde hay calendarios de aplicación en curso.</p>
+  <p style="margin-top:18px;font-size:11px;color:#7e6e8a">Documento confidencial — para uso exclusivo del titular del sitio web auditado.</p>
+</footer>
+
+</body>
+</html>

@@ -196,11 +196,13 @@ export default function PrivacyPolicy() {
               De acuerdo con el RGPD y la LOPDGDD, puedes ejercer en cualquier momento los siguientes derechos:
             </p>
             <ul className="list-disc list-inside space-y-1 pl-2">
-              <li><strong className="text-[var(--color-cream)]">Acceso</strong> — conocer qué datos tuyos tratamos.</li>
-              <li><strong className="text-[var(--color-cream)]">Rectificación</strong> — corregir datos inexactos o incompletos.</li>
-              <li><strong className="text-[var(--color-cream)]">Supresión</strong> — solicitar que eliminemos tus datos.</li>
-              <li><strong className="text-[var(--color-cream)]">Oposición</strong> — oponerte al tratamiento de tus datos.</li>
-              <li><strong className="text-[var(--color-cream)]">Portabilidad</strong> — recibir tus datos en un formato estructurado y de uso común.</li>
+              <li><strong className="text-[var(--color-cream)]">Acceso</strong> (art. 15 RGPD) — conocer qué datos tuyos tratamos.</li>
+              <li><strong className="text-[var(--color-cream)]">Rectificación</strong> (art. 16 RGPD) — corregir datos inexactos o incompletos.</li>
+              <li><strong className="text-[var(--color-cream)]">Supresión</strong> (art. 17 RGPD) — solicitar que eliminemos tus datos.</li>
+              <li><strong className="text-[var(--color-cream)]">Limitación del tratamiento</strong> (art. 18 RGPD) — solicitar que restrinjamos temporalmente el tratamiento de tus datos.</li>
+              <li><strong className="text-[var(--color-cream)]">Oposición</strong> (art. 21 RGPD) — oponerte al tratamiento de tus datos.</li>
+              <li><strong className="text-[var(--color-cream)]">Portabilidad</strong> (art. 20 RGPD) — recibir tus datos en un formato estructurado, de uso común y lectura mecánica.</li>
+              <li><strong className="text-[var(--color-cream)]">No ser objeto de decisiones automatizadas</strong> (art. 22 RGPD) — derecho a que ninguna decisión que produzca efectos jurídicos sobre tu persona sea tomada exclusivamente por medios automatizados (ver sección 9).</li>
             </ul>
             <p>
               Para ejercer cualquiera de estos derechos, escríbenos a{' '}
@@ -247,14 +249,26 @@ export default function PrivacyPolicy() {
                   <tr className="bg-[var(--color-ink)]">
                     <td className="px-4 py-3 text-[var(--color-cream)]">Supabase, Inc.</td>
                     <td className="px-4 py-3 text-[var(--color-mid)]">Almacenamiento de base de datos y autenticación</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">UE (región eu-west)</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">Cláusulas contractuales tipo (CCT)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU. (sede social) · Datos en eu-west-1 (Irlanda)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">CCT 2021/914 · DPA · TIA</td>
+                  </tr>
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Vercel Inc.</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Alojamiento del frontend (sitio web) y CDN</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU. (Delaware)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">CCT 2021/914 · DPA estándar Vercel</td>
+                  </tr>
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Google LLC</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Mapa de localización (Google Maps) en la página de contacto</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU. (Mountain View)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">CCT 2021/914 · Solo si el usuario consiente cookies de terceros</td>
                   </tr>
                   <tr className="bg-[var(--color-ink)]">
                     <td className="px-4 py-3 text-[var(--color-cream)]">Resend, Inc.</td>
                     <td className="px-4 py-3 text-[var(--color-mid)]">Envío de correos electrónicos transaccionales</td>
                     <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU.</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">Cláusulas contractuales tipo (CCT)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">CCT 2021/914</td>
                   </tr>
                   <tr className="bg-[var(--color-ink)]">
                     <td className="px-4 py-3 text-[var(--color-cream)]">Redsys Servicios de Procesamiento, S.L.</td>
@@ -283,9 +297,70 @@ export default function PrivacyPolicy() {
               </a>.
             </p>
             <p>
-              Las transferencias internacionales a EE.&nbsp;UU. están amparadas por las Cláusulas Contractuales Tipo
-              aprobadas por la Comisión Europea (Decisión 2021/914), que garantizan un nivel de protección equivalente
-              al exigido en el Espacio Económico Europeo.
+              <strong className="text-[var(--color-cream)]">Supabase, Inc.</strong> (Delaware, EE.&nbsp;UU.) actúa
+              como proveedor de la infraestructura de base de datos y autenticación. El{' '}
+              <strong className="text-[var(--color-cream)]">almacenamiento físico de los datos se realiza en la
+              región europea eu-west-1 (Irlanda)</strong>. La transferencia internacional al responsable del
+              tratamiento (acceso por personal de soporte de Supabase con sede en EE.&nbsp;UU.) está amparada
+              por las{' '}
+              <strong className="text-[var(--color-cream)]">Cláusulas Contractuales Tipo 2021/914</strong> de
+              la Comisión Europea, complementadas con DPA (Data Processing Agreement) firmado y evaluación{' '}
+              <strong className="text-[var(--color-cream)]">TIA</strong> (Transfer Impact Assessment) que
+              verifica la equivalencia del nivel de protección.
+            </p>
+            <p>
+              Las transferencias internacionales a EE.&nbsp;UU. de los restantes encargados están amparadas,
+              en todos los casos, por las Cláusulas Contractuales Tipo aprobadas por la Comisión Europea
+              (Decisión 2021/914), que garantizan un nivel de protección equivalente al exigido en el
+              Espacio Económico Europeo.
+            </p>
+          </Section>
+
+          {/* 8. Decisiones automatizadas */}
+          <Section title="8. Decisiones automatizadas y elaboración de perfiles">
+            <p>
+              No se realizan decisiones automatizadas ni elaboración de perfiles en el sentido del{' '}
+              <strong className="text-[var(--color-cream)]">artículo 22 del RGPD</strong>. Toda decisión
+              que afecte al cliente (aceptación o rechazo de pedido, gestión de incidencias, devoluciones,
+              etc.) es <strong className="text-[var(--color-cream)]">tomada manualmente por el personal de
+              DC Bikes Cantabria</strong>.
+            </p>
+          </Section>
+
+          {/* 9. DPO */}
+          <Section title="9. Delegado de Protección de Datos (DPO)">
+            <p>
+              No se ha designado Delegado de Protección de Datos al no concurrir ninguno de los supuestos
+              previstos en el <strong className="text-[var(--color-cream)]">artículo 37 del RGPD</strong>:
+              no somos autoridad pública, ni nuestras actividades principales requieren observación
+              habitual y sistemática a gran escala de interesados, ni tratamos a gran escala categorías
+              especiales de datos (art. 9 RGPD) o datos relativos a condenas e infracciones penales
+              (art. 10 RGPD).
+            </p>
+            <p>
+              Para cualquier cuestión relacionada con tus datos personales, puedes contactar directamente
+              con el responsable del tratamiento a través del email{' '}
+              <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
+                info@dcbikescantabria.es
+              </a>
+              .
+            </p>
+          </Section>
+
+          {/* 10. Menores */}
+          <Section title="10. Menores de edad">
+            <p>
+              Este sitio web <strong className="text-[var(--color-cream)]">no está dirigido a menores de
+              catorce (14) años</strong>, edad mínima legal para prestar consentimiento al tratamiento de
+              datos personales según el artículo 7 de la LOPDGDD.
+            </p>
+            <p>
+              Si eres padre, madre o tutor legal y has detectado que un menor a tu cargo ha proporcionado
+              sus datos personales sin tu autorización, contacta inmediatamente con{' '}
+              <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
+                info@dcbikescantabria.es
+              </a>{' '}
+              para proceder a su supresión.
             </p>
           </Section>
 

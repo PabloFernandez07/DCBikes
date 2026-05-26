@@ -54,7 +54,7 @@ export default function Contact() {
   const [settings, setSettings] = useState<SiteSettings>({})
   const [quoteOpen, setQuoteOpen] = useState(false)
   const cookieConsent = useCookieConsent()
-  const [mapsEnabled, setMapsEnabled] = useState(cookieConsent?.marketing ?? false)
+  const [mapsEnabled, setMapsEnabled] = useState(cookieConsent?.thirdParty ?? false)
   const pageRef = useReveal()
 
   useEffect(() => {
@@ -272,7 +272,7 @@ export default function Contact() {
                     Mapa de Google Maps
                   </p>
                   <p className="text-[var(--color-mid)] font-[var(--font-body)] text-xs leading-relaxed max-w-xs">
-                    Este mapa usa cookies de terceros (Google). Actívalas para ver la ubicación de la tienda.
+                    Para ver el mapa, acepta las cookies de terceros en la configuración del banner de cookies. Mientras tanto, puedes abrir la ubicación directamente en Google Maps.
                   </p>
                 </div>
                 <button

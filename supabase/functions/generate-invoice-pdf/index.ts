@@ -148,17 +148,22 @@ serve(async (req) => {
       )
     }
 
-    /* ─── 4. Obtener correlativo atómico ─── */
+    /* ─── 4. Obtener correlativo atómico (serie B2C o B2B) ─── */
+    // Sprint 4.1 — Series correlativas separadas (recomendación AEAT):
+    //   B2C (factura simplificada): FAC-{year}-N
+    //   B2B (factura completa):     FAC-B-{year}-N
+    const isB2B = order.needs_invoice === true && !!order.invoice_cif
     const year = new Date().getUTCFullYear()
-    const { data: counterData, error: counterErr } = await supabase.rpc(
-      'next_invoice_number',
-      { p_year: year },
-    )
+    const rpcName = isB2B ? 'next_b2b_invoice_number' : 'next_b2c_invoice_number'
+    const { data: counterData, error: counterErr } = await supabase.rpc(rpcName, {
+      p_year: year,
+    })
     if (counterErr || typeof counterData !== 'number') {
-      console.error(`[${ts()}] next_invoice_number failed`, counterErr)
+      console.error(`[${ts()}] ${rpcName} failed`, counterErr)
       return jsonError(`fallo al obtener número de factura: ${counterErr?.message ?? 'unknown'}`)
     }
-    const invoiceNumber = buildInvoiceNumber(invoicePrefix, year, counterData)
+    const effectivePrefix = isB2B ? `${invoicePrefix}-B` : invoicePrefix
+    const invoiceNumber = buildInvoiceNumber(effectivePrefix, year, counterData)
     const storagePath = `${year}/${invoiceNumber}.pdf`
 
     /* ─── 5. Calcular desglose IVA ─── */
@@ -203,7 +208,7 @@ serve(async (req) => {
     }
 
     /* ─── 8. INSERT en tabla invoices (rollback storage si falla) ─── */
-    const invoiceType: 'b2b' | 'b2c' = order.needs_invoice ? 'b2b' : 'b2c'
+    const invoiceType: 'b2b' | 'b2c' = isB2B ? 'b2b' : 'b2c'
     const { error: insErr } = await supabase.from('invoices').insert({
       order_id: order.id,
       invoice_number: invoiceNumber,

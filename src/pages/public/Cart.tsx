@@ -62,6 +62,7 @@ export default function Cart() {
           title="Tu carrito"
           description="Tu carrito de compra en DC Bikes Cantabria."
           url="https://dc-bikes-cantabria.vercel.app/carrito"
+          noIndex={true}
         />
         <div className="max-w-md mx-auto text-center flex flex-col items-center gap-6">
           <div className="w-24 h-24 rounded-full bg-[var(--color-card)] flex items-center justify-center text-[var(--color-mid)]">
@@ -94,6 +95,7 @@ export default function Cart() {
         title="Tu carrito"
         description="Revisa los productos de tu carrito antes de tramitar el pedido."
         url="https://dc-bikes-cantabria.vercel.app/carrito"
+        noIndex={true}
       />
 
       {/* Breadcrumb */}

@@ -178,6 +178,7 @@ export default function MockRedsysPayment() {
       <SEO
         title="TPV Virtual Simulado"
         description="Entorno de pruebas de la pasarela de pago. No se procesa pago real."
+        noIndex={true}
       />
 
       <div className="max-w-xl mx-auto space-y-6">
@@ -251,7 +252,7 @@ export default function MockRedsysPayment() {
             className="w-full font-[var(--font-display)] tracking-widest justify-center"
           >
             <CheckCircle2 size={18} aria-hidden="true" />
-            Autorizar pago
+            Pagar — pedido con obligación de pago
           </Button>
           <Button
             type="button"

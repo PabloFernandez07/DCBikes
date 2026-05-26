@@ -51,6 +51,49 @@ function isOkResponseCode(code: string | null): boolean {
   return Number.isFinite(n) && n >= 0 && n <= 99
 }
 
+// Sanitiza el payload de Redsys antes de persistirlo en payments_log: descarta
+// campos sensibles (datos de tarjeta, identificadores de tarjeta-habiente, etc.)
+// y conserva solo claves necesarias para auditoría/conciliación.
+// Cumple minimización RGPD (art. 5.1.c) y reduce superficie ante una brecha.
+function sanitizeRedsysPayload(payload: unknown): Record<string, unknown> {
+  if (!payload || typeof payload !== 'object') return { sanitized: true }
+  const out: Record<string, unknown> = {}
+  const allowedKeys = new Set([
+    'Ds_Response',
+    'Ds_Order',
+    'Ds_Amount',
+    'Ds_Date',
+    'Ds_Hour',
+    'Ds_Currency',
+    'Ds_MerchantCode',
+    'Ds_Terminal',
+    'Ds_TransactionType',
+    'Ds_SecurePayment',
+    'Ds_Card_Country',
+    'Ds_Card_Brand',
+    'Ds_PaymentMethod',
+    'simulated',
+    '__mock',
+    'order_id',
+    'authorized',
+    'note',
+    'warning',
+  ])
+  for (const [k, v] of Object.entries(payload as Record<string, unknown>)) {
+    if (allowedKeys.has(k)) {
+      out[k] = v
+    } else if (k === 'Ds_AuthorisationCode' && typeof v === 'string') {
+      // Conserva los últimos 4 caracteres para auditoría, anonimiza el resto.
+      out[k] = v.length > 4 ? '****' + v.slice(-4) : '****'
+    } else if (k === 'decoded' && v && typeof v === 'object') {
+      // Aplicar la misma sanitización recursivamente al objeto decoded
+      out[k] = sanitizeRedsysPayload(v)
+    }
+    // Cualquier otra key se descarta (PAN, CVV, expiry, holder, IPs, etc.).
+  }
+  return out
+}
+
 function inferPayMethod(params: Record<string, unknown>): 'card' | 'bizum' | null {
   // Redsys devuelve Ds_PaymentMethod (ej. 'C' tarjeta, 'z' bizum) y/o Ds_Card_Brand.
   const pm = String(params['Ds_PaymentMethod'] ?? params['DS_PAYMENTMETHOD'] ?? '').toUpperCase()
@@ -187,7 +230,7 @@ serve(async (req) => {
         redsys_response_code: outcome.responseCode,
         redsys_authorization_code: outcome.authCode,
         redsys_transaction_type: String(outcome.rawPayload['Ds_TransactionType'] ?? ''),
-        raw_payload: outcome.rawPayload as Record<string, unknown>,
+        raw_payload: sanitizeRedsysPayload(outcome.rawPayload),
         signature_valid: false,
       })
       console.warn(`[${ts()}] ✗ redsys-notification firma inválida → 403`)
@@ -223,7 +266,7 @@ serve(async (req) => {
         redsys_response_code: outcome.responseCode,
         redsys_authorization_code: outcome.authCode,
         redsys_transaction_type: String(outcome.rawPayload['Ds_TransactionType'] ?? ''),
-        raw_payload: { ...outcome.rawPayload, warning: 'order not found' },
+        raw_payload: sanitizeRedsysPayload({ ...outcome.rawPayload, warning: 'order not found' }),
         signature_valid: outcome.signatureValid,
       })
       return jsonOk({ ignored: true })
@@ -240,7 +283,7 @@ serve(async (req) => {
         redsys_response_code: outcome.responseCode,
         redsys_authorization_code: outcome.authCode,
         redsys_transaction_type: String(outcome.rawPayload['Ds_TransactionType'] ?? ''),
-        raw_payload: { ...outcome.rawPayload, note: 'duplicate notification ignored' },
+        raw_payload: sanitizeRedsysPayload({ ...outcome.rawPayload, note: 'duplicate notification ignored' }),
         signature_valid: outcome.signatureValid,
       })
       return jsonOk({ ok: true, status: order.status })
@@ -273,7 +316,7 @@ serve(async (req) => {
       redsys_response_code: outcome.responseCode,
       redsys_authorization_code: outcome.authCode,
       redsys_transaction_type: String(outcome.rawPayload['Ds_TransactionType'] ?? '1'),
-      raw_payload: outcome.rawPayload as Record<string, unknown>,
+      raw_payload: sanitizeRedsysPayload(outcome.rawPayload),
       signature_valid: outcome.signatureValid,
     })
 

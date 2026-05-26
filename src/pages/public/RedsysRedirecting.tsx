@@ -42,6 +42,7 @@ export default function RedsysRedirecting() {
         title="Redirigiendo a la pasarela de pago"
         description="Te estamos redirigiendo a Redsys para completar tu pago de forma segura."
         url="https://dc-bikes-cantabria.vercel.app/pedido/redirigiendo"
+        noIndex={true}
       />
 
       <div className="max-w-md mx-auto flex flex-col items-center gap-8 text-center">

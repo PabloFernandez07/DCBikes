@@ -12,6 +12,7 @@ import { Field } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
 import { supabase } from '@/lib/supabase'
+import { TERMS_VERSION, PRIVACY_VERSION } from '@/lib/legal-versions'
 import type { RedsysFormData } from '@/components/public/RedsysAutoSubmitForm'
 import {
   checkoutSchema,
@@ -138,6 +139,8 @@ export default function Checkout() {
         accepted_privacy: data.accepted_privacy,
         marketing_opt_in: data.marketing_opt_in,
       },
+      terms_version: TERMS_VERSION,
+      privacy_version: PRIVACY_VERSION,
     }
 
     try {
@@ -205,6 +208,7 @@ export default function Checkout() {
         title="Checkout"
         description="Finaliza tu pedido — datos de envío, facturación y pago."
         url="https://dc-bikes-cantabria.vercel.app/checkout"
+        noIndex={true}
       />
 
       {/* Breadcrumb */}
@@ -666,7 +670,7 @@ export default function Checkout() {
               loading={isSubmitting}
               className="w-full font-[var(--font-display)] tracking-widest"
             >
-              Tramitar pedido
+              Realizar pedido con obligación de pago
             </Button>
           </div>
 
@@ -727,11 +731,11 @@ export default function Checkout() {
             loading={isSubmitting}
             className="hidden lg:flex w-full font-[var(--font-display)] tracking-widest"
           >
-            Tramitar pedido
+            Realizar pedido con obligación de pago
           </Button>
 
           <p className="text-[10px] text-[var(--color-mid)] font-[var(--font-cond)] leading-relaxed">
-            Al tramitar el pedido se reservará el importe en tu tarjeta. No se
+            Al realizar el pedido se reservará el importe en tu tarjeta. No se
             cobrará hasta que la tienda confirme la disponibilidad (máx.{' '}
             {autoCancelHours} h).
           </p>

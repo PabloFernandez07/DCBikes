@@ -24,6 +24,7 @@ export default function PaymentError() {
       <SEO
         title="Pago no completado"
         description="Tu pago no se ha procesado correctamente."
+        noIndex={true}
       />
 
       <div className="max-w-md mx-auto text-center space-y-6">

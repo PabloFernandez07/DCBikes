@@ -154,6 +154,7 @@ export default function OrderConfirmation() {
       <SEO
         title={`Pedido ${order.order_number} recibido`}
         description="Hemos recibido tu pedido y lo estamos revisando."
+        noIndex={true}
       />
 
       <div className="max-w-2xl mx-auto space-y-8">

@@ -31,17 +31,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-function Pending({ label }: { label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-[var(--font-cond)] tracking-wide">
-      ✎ {label}
-    </span>
-  )
-}
-
 /**
  * Lee los settings legales desde Supabase. Si una key no tiene valor o no
- * existe todavía, la entrada queda como `null` y la UI muestra `<Pending>`.
+ * existe todavía, la entrada queda como `null`.
  */
 function useLegalSettings() {
   const [legal, setLegal] = useState<Record<string, string | null>>({})
@@ -52,6 +44,7 @@ function useLegalSettings() {
       .select('key, value')
       .in('key', [
         'legal_nif',
+        'legal_company_cif',
         'legal_forma_juridica',
         'legal_inscripcion',
         'store_address',
@@ -73,19 +66,6 @@ function useLegalSettings() {
   }, [])
 
   return legal
-}
-
-function Value({
-  value,
-  pendingLabel,
-}: {
-  value: string | null | undefined
-  pendingLabel: string
-}) {
-  if (value && value.trim()) {
-    return <span className="text-[var(--color-cream)]">{value}</span>
-  }
-  return <Pending label={pendingLabel} />
 }
 
 export default function LegalNotice() {
@@ -125,21 +105,33 @@ export default function LegalNotice() {
             </p>
             <div className="p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)] space-y-2">
               <p>
-                <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Denominación / Nombre:</strong>{' '}
+                <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Denominación / Nombre comercial:</strong>{' '}
                 DC Bikes Cantabria
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">NIF / CIF:</strong>{' '}
-                <Value value={legal.legal_nif} pendingLabel="pendiente — rellena en Admin → Configuración" />
+                {legal.legal_company_cif || legal.legal_nif ? (
+                  <span className="text-[var(--color-cream)]">{legal.legal_company_cif || legal.legal_nif}</span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-[var(--font-cond)] tracking-wide">
+                    ⚠ Pendiente de configuración — rellena en Admin → Configuración → Facturación
+                  </span>
+                )}
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Forma jurídica:</strong>{' '}
-                <Value value={legal.legal_forma_juridica} pendingLabel="pendiente — p. ej. Autónomo / S.L. / S.A." />
+                {legal.legal_forma_juridica ? (
+                  <span className="text-[var(--color-cream)]">{legal.legal_forma_juridica}</span>
+                ) : (
+                  <span className="text-[var(--color-cream)]">
+                    Empresario individual no sujeto a inscripción en el Registro Mercantil conforme al artículo 19 del Código de Comercio
+                  </span>
+                )}
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Domicilio:</strong>{' '}
                 <span className="text-[var(--color-cream)]">
-                  {legal.store_address || 'C. la Cantábrica, bloque 2 n, 1 BAJO, 39610 El Astillero, Cantabria'}
+                  {legal.store_address || 'Calle La Cantábrica, Bloque 2N, 1º BAJO, 39610 El Astillero, Cantabria'}
                 </span>
               </p>
               <p>
@@ -155,12 +147,20 @@ export default function LegalNotice() {
                     {legal.store_phone}
                   </a>
                 ) : (
-                  <Pending label="pendiente — rellena 'Teléfono' en Admin → Configuración" />
+                  <a href="tel:+34942054501" className="text-[var(--color-lavender)] underline underline-offset-2">
+                    +34 942 054 501
+                  </a>
                 )}
               </p>
               <p className="flex flex-wrap items-center gap-2">
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Inscripción registral:</strong>{' '}
-                <Value value={legal.legal_inscripcion} pendingLabel="pendiente — Registro Mercantil si aplica, o 'No aplica' si autónomo" />
+                {legal.legal_inscripcion ? (
+                  <span className="text-[var(--color-cream)]">{legal.legal_inscripcion}</span>
+                ) : (
+                  <span className="text-[var(--color-cream)]">
+                    No aplica (empresario individual, art. 19 del Código de Comercio)
+                  </span>
+                )}
               </p>
             </div>
           </Section>
@@ -170,25 +170,52 @@ export default function LegalNotice() {
             <p>
               El presente Aviso Legal regula el acceso y uso del sitio web{' '}
               <strong className="text-[var(--color-cream)]">dcbikescantabria.es</strong> (en adelante, «el sitio web»),
-              del que es titular DC Bikes Cantabria.
+              del que es titular DC Bikes Cantabria. El sitio web ofrece información sobre los servicios de
+              taller y, además, permite la <strong className="text-[var(--color-cream)]">contratación y venta
+              online</strong> de los productos descritos en la sección 3.
             </p>
             <p>
               El acceso al sitio web y el uso de sus contenidos implican la aceptación plena y sin reservas
-              de las presentes condiciones. DC Bikes Cantabria se reserva el derecho a modificar este aviso
-              legal en cualquier momento.
+              de las presentes condiciones. La realización de una compra en la tienda online implica,
+              adicionalmente, la aceptación de los{' '}
+              <Link to="/terminos-venta" className="text-[var(--color-lavender)] underline underline-offset-2">
+                Términos y condiciones de venta
+              </Link>
+              . DC Bikes Cantabria se reserva el derecho a modificar este aviso legal en cualquier momento.
             </p>
           </Section>
 
           {/* 3. Actividad */}
           <Section title="3. Actividad">
             <p>
-              DC Bikes Cantabria es una tienda especializada en bicicletas, ropa y accesorios, así como en
-              servicios de taller y mantenimiento, con sede en El Astillero, Cantabria.
+              DC Bikes Cantabria es una tienda especializada en bicicletas, accesorios y servicios de taller
+              con sede en El Astillero, Cantabria. La actividad principal del titular se desarrolla a través
+              de los siguientes canales:
             </p>
+            <ul className="list-disc list-inside space-y-1 pl-2">
+              <li>
+                <strong className="text-[var(--color-cream)]">Tienda física</strong> — venta de bicicletas,
+                asesoramiento personalizado y servicios de taller y mantenimiento (los cuales se contratan
+                exclusivamente de forma presencial).
+              </li>
+              <li>
+                <strong className="text-[var(--color-cream)]">Tienda online</strong> — venta directa a través
+                de este sitio web de <strong className="text-[var(--color-cream)]">accesorios, ropa
+                ciclista, cascos, calzado, productos de nutrición deportiva y herramientas</strong>. Las
+                bicicletas completas no se venden online y deben adquirirse en la tienda física.
+              </li>
+            </ul>
             <p>
-              El sitio web tiene carácter informativo y de captación de consultas. No realiza venta online
-              directa; los presupuestos se gestionan de forma personalizada a través del formulario de
-              contacto y por los canales habituales de la tienda.
+              Las condiciones de la venta online (precios, envíos, plazos, garantía, devoluciones y
+              desistimiento) se detallan en los{' '}
+              <Link to="/terminos-venta" className="text-[var(--color-lavender)] underline underline-offset-2">
+                Términos y condiciones de venta
+              </Link>{' '}
+              y en la{' '}
+              <Link to="/devoluciones" className="text-[var(--color-lavender)] underline underline-offset-2">
+                Política de devoluciones
+              </Link>
+              .
             </p>
           </Section>
 
@@ -241,6 +268,26 @@ export default function LegalNotice() {
               <Link to="/cookies" className="text-[var(--color-lavender)] underline underline-offset-2">
                 Política de cookies
               </Link>
+              .
+            </p>
+          </Section>
+
+          {/* 8. Declaración de accesibilidad */}
+          <Section title="8. Declaración de accesibilidad">
+            <p>
+              DC Bikes Cantabria se acoge a la exención prevista en el artículo 4.1 de la Ley 11/2023, de
+              8 de mayo, de transposición de la Directiva (UE) 2019/882 (Acta Europea de Accesibilidad),
+              por tratarse de una <strong className="text-[var(--color-cream)]">microempresa</strong>{' '}
+              (empresario individual sin trabajadores asalariados). La obligación de cumplir con los
+              requisitos de accesibilidad WCAG 2.1 AA establecidos por dicha ley no resulta de aplicación
+              al presente sitio web.
+            </p>
+            <p>
+              No obstante, el titular se compromete a atender de forma diligente cualquier solicitud
+              razonable de adaptación que reciba a través del email de contacto{' '}
+              <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
+                info@dcbikescantabria.es
+              </a>
               .
             </p>
           </Section>

@@ -33,14 +33,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function CookieTable({
   rows,
 }: {
-  rows: { nombre: string; tipo: string; finalidad: string; duracion: string }[]
+  rows: { nombre: string; tipo: string; titular?: string; finalidad: string; duracion: string }[]
 }) {
+  const hasTitular = rows.some(r => r.titular)
+  const headers = hasTitular
+    ? ['Identificador', 'Tipo', 'Titular', 'Duración', 'Finalidad']
+    : ['Identificador', 'Tipo', 'Finalidad', 'Duración']
   return (
     <div className="overflow-x-auto rounded-xl border border-[var(--color-card-hover)] mt-3">
       <table className="w-full text-xs font-[var(--font-body)]">
         <thead>
           <tr className="bg-[var(--color-card)] border-b border-[var(--color-card-hover)]">
-            {['Nombre', 'Tipo', 'Finalidad', 'Duración'].map(h => (
+            {headers.map(h => (
               <th key={h} className="px-4 py-2.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">
                 {h}
               </th>
@@ -52,8 +56,20 @@ function CookieTable({
             <tr key={i} className="border-b border-[var(--color-card-hover)]/40 last:border-0 hover:bg-[var(--color-card)]/30">
               <td className="px-4 py-2.5 text-[var(--color-cream)] font-mono">{r.nombre}</td>
               <td className="px-4 py-2.5 text-[var(--color-cream-dim)]">{r.tipo}</td>
-              <td className="px-4 py-2.5 text-[var(--color-mid)]">{r.finalidad}</td>
-              <td className="px-4 py-2.5 text-[var(--color-mid)] whitespace-nowrap">{r.duracion}</td>
+              {hasTitular && (
+                <td className="px-4 py-2.5 text-[var(--color-mid)]">{r.titular ?? '—'}</td>
+              )}
+              {hasTitular ? (
+                <>
+                  <td className="px-4 py-2.5 text-[var(--color-mid)] whitespace-nowrap">{r.duracion}</td>
+                  <td className="px-4 py-2.5 text-[var(--color-mid)]">{r.finalidad}</td>
+                </>
+              ) : (
+                <>
+                  <td className="px-4 py-2.5 text-[var(--color-mid)]">{r.finalidad}</td>
+                  <td className="px-4 py-2.5 text-[var(--color-mid)] whitespace-nowrap">{r.duracion}</td>
+                </>
+              )}
             </tr>
           ))}
         </tbody>
@@ -100,98 +116,121 @@ export default function CookiePolicy() {
         </Section>
 
         {/* Tipos */}
-        <Section title="Tipos de cookies que usamos">
+        <Section title="Tipos de cookies y almacenamiento que usamos">
+          <p>
+            A continuación detallamos el inventario completo de cookies, <code className="text-[var(--color-lavender)]">localStorage</code>{' '}
+            y <code className="text-[var(--color-lavender)]">sessionStorage</code> empleados por este sitio web,
+            agrupados en cuatro categorías según su finalidad y régimen jurídico.
+          </p>
+
           <div className="space-y-4 mt-2">
-            {/* Esenciales */}
+            {/* A. Técnicas estrictamente necesarias */}
             <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
               <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
                 <Shield size={18} className="text-green-400" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1">
-                  Cookies esenciales — siempre activas
+                  A. Cookies y almacenamiento técnicos estrictamente necesarios
                 </p>
                 <p>
-                  Imprescindibles para que la web funcione correctamente. Guardan tu sesión de administrador y tus
-                  preferencias de cookies. No requieren tu consentimiento y no pueden desactivarse.
+                  Imprescindibles para el funcionamiento del sitio. <strong className="text-[var(--color-cream)]">No
+                  requieren consentimiento</strong> al estar amparados por el artículo 22.2 de la Ley 34/2002
+                  (LSSI-CE).
                 </p>
                 <CookieTable rows={[
-                  { nombre: 'dcbikes_cookie_consent', tipo: 'Propia · Persistente', finalidad: 'Almacena tu elección de cookies', duracion: '12 meses' },
-                  { nombre: 'sb-*', tipo: 'Propia · Sesión', finalidad: 'Sesión autenticada del panel de administración', duracion: 'Sesión' },
+                  { nombre: 'dcbikes_cookie_consent', tipo: 'localStorage', titular: 'Propia', duracion: '12 meses', finalidad: 'Almacena tu elección sobre cookies' },
+                  { nombre: 'dcbikes_pending_order', tipo: 'localStorage', titular: 'Propia', duracion: 'Sesión', finalidad: 'Persiste el pedido durante el proceso de checkout' },
+                  { nombre: 'dcbikes_last_order', tipo: 'localStorage', titular: 'Propia', duracion: '30 días', finalidad: 'Permite ver la confirmación del último pedido' },
+                  { nombre: 'dcbikes_customer_session', tipo: 'localStorage', titular: 'Propia', duracion: '24 horas', finalidad: 'Token temporal de "Mis pedidos" (magic link)' },
+                  { nombre: 'cart-store', tipo: 'localStorage', titular: 'Propia', duracion: 'Indefinida hasta vaciado', finalidad: 'Mantiene tu carrito de compra entre sesiones' },
+                  { nombre: 'dcb_session', tipo: 'sessionStorage', titular: 'Propia', duracion: 'Sesión', finalidad: 'Identificador de sesión para analítica anónima' },
+                  { nombre: 'dcb_groupings_confirmed', tipo: 'localStorage', titular: 'Propia', duracion: 'Indefinida', finalidad: 'Uso exclusivo del panel administrativo' },
+                  { nombre: 'sb-*', tipo: 'localStorage', titular: 'Propia (Supabase Auth)', duracion: 'Sesión administrativa', finalidad: 'Autenticación del administrador de la tienda' },
                 ]} />
               </div>
             </div>
 
-            {/* Analíticas */}
+            {/* B. Terceros funcionales */}
+            <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+              <div className="w-9 h-9 rounded-lg bg-[var(--color-lavender)]/10 flex items-center justify-center shrink-0">
+                <Target size={18} className="text-[var(--color-lavender)]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1">
+                  B. Cookies de terceros funcionales — requieren consentimiento
+                </p>
+                <ul className="list-disc list-inside space-y-2 pl-2">
+                  <li>
+                    <strong className="text-[var(--color-cream)]">Google Maps</strong> (Google LLC, EE.&nbsp;UU.)
+                    — cookies <code className="text-[var(--color-lavender)]">NID</code>,{' '}
+                    <code className="text-[var(--color-lavender)]">1P_JAR</code>,{' '}
+                    <code className="text-[var(--color-lavender)]">CONSENT</code> — duración variable (hasta 24 meses)
+                    — finalidad: mostrar el mapa de localización de la tienda en la página de contacto. Más información en la{' '}
+                    <a
+                      href="https://policies.google.com/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--color-lavender)] underline underline-offset-2"
+                    >
+                      política de privacidad de Google
+                    </a>.
+                  </li>
+                  <li>
+                    <strong className="text-[var(--color-cream)]">Redsys</strong> durante la pasarela de pago
+                    — gestionadas íntegramente por Redsys Servicios de Procesamiento, S.L. desde su propio dominio
+                    (sis.redsys.es). Al tratarse de cookies estrictamente necesarias para procesar el pago
+                    solicitado expresamente por el usuario, están{' '}
+                    <strong className="text-[var(--color-cream)]">exentas de consentimiento previo</strong> conforme
+                    al artículo 22.2 de la Ley 34/2002 (LSSI-CE). Más información en la{' '}
+                    <a
+                      href="https://www.redsys.es/politica-de-privacidad.html"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--color-lavender)] underline underline-offset-2"
+                    >
+                      política de privacidad de Redsys
+                    </a>.
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* C. Analíticas */}
             <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
               <div className="w-9 h-9 rounded-lg bg-[var(--color-lavender)]/10 flex items-center justify-center shrink-0">
                 <BarChart2 size={18} className="text-[var(--color-lavender)]" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1">
-                  Cookies analíticas — requieren consentimiento
+                  C. Cookies analíticas — requieren consentimiento previo
                 </p>
                 <p>
-                  Nos permiten conocer qué productos visitan más los usuarios, qué términos se buscan y cómo mejorar
-                  el catálogo. Los datos se almacenan en nuestra propia base de datos (Supabase) sin ceder información a terceros.
+                  Actualmente <strong className="text-[var(--color-cream)]">no</strong> se utilizan cookies
+                  analíticas de terceros (Google Analytics, Hotjar, Matomo, etc.). La analítica interna se
+                  realiza mediante <code className="text-[var(--color-lavender)]">dcb_session</code>, que es
+                  un identificador anónimo de sesión almacenado en{' '}
+                  <code className="text-[var(--color-lavender)]">sessionStorage</code> y descrito en la
+                  categoría A.
                 </p>
-                <CookieTable rows={[
-                  { nombre: 'dcbikes_session', tipo: 'Propia · Sesión', finalidad: 'Identifica la sesión para registrar visitas a productos', duracion: 'Sesión' },
-                ]} />
               </div>
             </div>
 
-            {/* Marketing */}
+            {/* D. Marketing */}
             <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
               <div className="w-9 h-9 rounded-lg bg-[var(--color-brand-red)]/10 flex items-center justify-center shrink-0">
                 <Target size={18} className="text-[var(--color-brand-red)]" />
               </div>
-              <div>
+              <div className="flex-1 min-w-0">
                 <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1">
-                  Cookies de terceros — Google Maps
+                  D. Cookies de marketing y publicidad
                 </p>
                 <p>
-                  La página de contacto incluye un mapa de Google Maps. Si lo cargas, Google puede depositar sus propias cookies
-                  para funcionar y para sus propios fines analíticos. Consulta la{' '}
-                  <a
-                    href="https://policies.google.com/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[var(--color-lavender)] underline underline-offset-2"
-                  >
-                    política de privacidad de Google
-                  </a>.
-                </p>
-              </div>
-            </div>
-
-            {/* Redsys */}
-            <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
-              <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
-                <Shield size={18} className="text-green-400" />
-              </div>
-              <div>
-                <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1">
-                  Cookies de terceros — Redsys (pasarela de pago)
-                </p>
-                <p>
-                  Durante el proceso de pago, la pasarela <strong className="text-[var(--color-cream)]">Redsys</strong>{' '}
-                  (sis.redsys.es) puede depositar en tu navegador cookies técnicas de sesión necesarias para
-                  completar la transacción de forma segura. Estas cookies son colocadas y gestionadas por Redsys
-                  desde su propio dominio, no por DC Bikes Cantabria.
-                </p>
-                <p className="mt-2 text-xs">
-                  Al tratarse de cookies estrictamente necesarias para la prestación del servicio expresamente
-                  solicitado por el usuario (el pago), están <strong className="text-[var(--color-cream)]">exentas de
-                  consentimiento previo</strong> conforme al art. 22.2 de la Ley 34/2002 (LSSI-CE). Más información en la{' '}
-                  <a
-                    href="https://www.redsys.es/politica-de-privacidad.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[var(--color-lavender)] underline underline-offset-2"
-                  >
-                    política de privacidad de Redsys
-                  </a>.
+                  Actualmente <strong className="text-[var(--color-cream)]">no</strong> se utilizan cookies de
+                  marketing ni publicidad de terceros (Facebook Pixel, TikTok Pixel, Google Ads, etc.). Si en
+                  el futuro se implementan, esta política se actualizará y se solicitará tu{' '}
+                  <strong className="text-[var(--color-cream)]">consentimiento previo expreso</strong> mediante
+                  el banner de cookies antes de su activación.
                 </p>
               </div>
             </div>

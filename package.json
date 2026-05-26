@@ -13,6 +13,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/barlow": "^5.2.8",
+    "@fontsource/barlow-condensed": "^5.2.8",
+    "@fontsource/bebas-neue": "^5.2.7",
     "@hookform/resolvers": "^5.2.2",
     "@supabase/supabase-js": "^2.105.1",
     "clsx": "^2.1.1",

@@ -187,12 +187,20 @@ export default function TermsOfSale() {
           {/* 2. Objeto */}
           <Section title="2. Objeto y aceptación">
             <p>
+              Al realizar un pedido en este sitio web, el cliente declara{' '}
+              <strong className="text-[var(--color-cream)]">ser mayor de 18 años</strong> o, en caso de ser
+              menor de edad, contar con la <strong className="text-[var(--color-cream)]">autorización expresa
+              de su representante legal</strong>. Los pedidos realizados por menores sin dicha autorización
+              podrán ser cancelados sin previo aviso (artículo 1263 del Código Civil y artículo 28 del Real
+              Decreto Legislativo 1/2007 de Defensa de Consumidores y Usuarios).
+            </p>
+            <p>
               Las presentes condiciones generales regulan la venta de los productos ofrecidos por {companyName}{' '}
               a través del sitio web <strong className="text-[var(--color-cream)]">dcbikescantabria.es</strong>.
               La realización de un pedido implica la aceptación expresa y sin reservas de las presentes condiciones.
             </p>
             <p>
-              El cliente declara ser mayor de edad y disponer de la capacidad legal necesaria para contratar.
+              El cliente declara, asimismo, disponer de la capacidad legal necesaria para contratar.
             </p>
           </Section>
 
@@ -363,16 +371,17 @@ export default function TermsOfSale() {
               <strong className="text-[var(--color-cream)]">Plataforma europea de resolución de litigios en línea (ODR)</strong>{' '}
               de la Comisión Europea:{' '}
               <a
-                href="https://ec.europa.eu/consumers/odr/"
+                href="https://ec.europa.eu/odr"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[var(--color-lavender)] underline underline-offset-2 break-all"
               >
-                https://ec.europa.eu/consumers/odr/
+                https://ec.europa.eu/odr
               </a>
             </p>
             <p>
-              Como consumidor, también puedes dirigir tus reclamaciones a la{' '}
+              <strong className="text-[var(--color-cream)]">{companyName} no está actualmente adherido al Sistema
+              Arbitral de Consumo</strong>. Sin perjuicio de ello, el cliente puede ejercer sus derechos ante la{' '}
               <a
                 href="https://www.cantabria.es/web/direccion-general-consumo"
                 target="_blank"
@@ -381,7 +390,7 @@ export default function TermsOfSale() {
               >
                 Dirección General de Consumo del Gobierno de Cantabria
               </a>{' '}
-              o a la Junta Arbitral de Consumo competente.
+              y/o utilizar la plataforma europea de resolución de litigios en línea (ODR) mencionada anteriormente.
             </p>
             <p className="text-xs">
               Conforme al artículo 90 del RDL 1/2007, se consideran abusivas las cláusulas que impongan al

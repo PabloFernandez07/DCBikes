@@ -431,9 +431,69 @@ export function Settings() {
 
   const v = (key: SettingKey) => values[key] ?? ''
 
+  // Aviso legal crítico: faltan datos fiscales obligatorios para operar.
+  const fiscalChecks = [
+    { id: 'legal_company_name', label: 'Razón comercial', value: invoiceValues.legal_company_name.trim() },
+    { id: 'legal_company_cif', label: 'CIF / NIF', value: invoiceValues.legal_company_cif.trim() },
+    { id: 'legal_company_address', label: 'Dirección fiscal', value: invoiceValues.legal_company_address.trim() },
+  ]
+  const fiscalIncomplete = !loading && fiscalChecks.some(c => !c.value)
+
   return (
     <>
       <div className="space-y-6 max-w-2xl">
+        {/* Banner crítico — datos fiscales incompletos */}
+        {fiscalIncomplete && (
+          <div
+            role="alert"
+            className="rounded-2xl border-2 border-[var(--color-brand-red)] bg-[var(--color-brand-red)]/10 p-5"
+          >
+            <div className="flex items-start gap-3">
+              <ShieldAlert size={22} className="text-[var(--color-brand-red)] shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide text-sm mb-2">
+                  ⚠ AVISO LEGAL CRÍTICO
+                </p>
+                <p className="text-xs text-[var(--color-cream-dim)] leading-relaxed mb-3">
+                  Los datos fiscales del titular están incompletos. La web{' '}
+                  <strong className="text-[var(--color-cream)]">NO PUEDE operar legalmente sin ellos</strong>:
+                </p>
+                <ul className="space-y-1 text-xs font-[var(--font-body)] mb-3">
+                  {fiscalChecks.map(c => (
+                    <li key={c.id} className="flex items-center gap-2">
+                      <span
+                        className={
+                          c.value
+                            ? 'text-green-400 font-mono'
+                            : 'text-[var(--color-brand-red)] font-mono'
+                        }
+                      >
+                        {c.value ? '✓' : '☐'}
+                      </span>
+                      <span
+                        className={
+                          c.value ? 'text-[var(--color-mid)] line-through' : 'text-[var(--color-cream-dim)]'
+                        }
+                      >
+                        {c.label} (<code className="text-[var(--color-lavender)]">{c.id}</code>)
+                        {!c.value && (
+                          <span className="text-[var(--color-brand-red)] ml-2 not-italic">← rellenar</span>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-xs text-[var(--color-mid)] leading-relaxed">
+                  Hasta cumplimentar, el Aviso Legal mostrará{' '}
+                  <strong className="text-[var(--color-cream-dim)]">"[Pendiente]"</strong> en lugar del
+                  titular, y las facturas no podrán emitirse correctamente. Rellena los campos en la sección{' '}
+                  <strong className="text-[var(--color-cream)]">Facturación</strong> más abajo.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div>
           <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">

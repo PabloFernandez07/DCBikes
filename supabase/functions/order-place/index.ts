@@ -78,6 +78,10 @@ interface InputBody {
   needs_invoice?: boolean
   invoice_b2b?: InputInvoiceB2B | null
   consents: InputConsents
+  /** Versión vigente de los Términos y Condiciones aceptados (prueba RGPD). */
+  terms_version?: string | null
+  /** Versión vigente de la Política de Privacidad aceptada (prueba RGPD). */
+  privacy_version?: string | null
 }
 
 /* ─────────────── Validación ─────────────── */
@@ -176,6 +180,12 @@ function validateBody(raw: unknown): { ok: true; body: InputBody } | { ok: false
     return { ok: false, error: 'debes aceptar términos y política de privacidad' }
   }
 
+  // Versiones de los documentos legales aceptados (opcionales — el frontend
+  // se actualizará gradualmente para enviarlas; mientras tanto se guardan
+  // como null y seguimos teniendo accepted_*_at como evidencia mínima).
+  const terms_version = asString(b.terms_version).trim().slice(0, 32) || null
+  const privacy_version = asString(b.privacy_version).trim().slice(0, 32) || null
+
   return {
     ok: true,
     body: {
@@ -186,6 +196,8 @@ function validateBody(raw: unknown): { ok: true; body: InputBody } | { ok: false
       needs_invoice,
       invoice_b2b,
       consents,
+      terms_version,
+      privacy_version,
     },
   }
 }
@@ -386,6 +398,15 @@ serve(async (req) => {
     if (!v.ok) return jsonError(v.error, 400)
     const body = v.body
 
+    // Captura IP/UA del cliente para prueba probatoria del consentimiento
+    // (RGPD art. 7.1). Priorizamos cf-connecting-ip (si está detrás de
+    // Cloudflare/Supabase Edge), luego primer hop de x-forwarded-for.
+    const xff = req.headers.get('x-forwarded-for') ?? ''
+    const cfip = req.headers.get('cf-connecting-ip') ?? ''
+    const consent_ip = (cfip || xff.split(',')[0] || '').trim().slice(0, 64) || null
+    const consent_user_agent =
+      (req.headers.get('user-agent') ?? '').slice(0, 512) || null
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -465,6 +486,10 @@ serve(async (req) => {
         accepted_terms_at: now,
         accepted_privacy_at: now,
         marketing_opt_in: !!body.consents.marketing_opt_in,
+        consent_ip,
+        consent_user_agent,
+        consent_terms_version: body.terms_version ?? null,
+        consent_privacy_version: body.privacy_version ?? null,
       })
       .select('id')
       .single<{ id: string }>()

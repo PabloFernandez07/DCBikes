@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isValidSpanishId } from '@/lib/spanish-id'
 
 /**
  * Schemas Zod para el formulario de checkout.
@@ -65,8 +66,6 @@ export const PROVINCIAS_PENINSULA = [
 
 const phoneEsRegex = /^(?:\+34|0034|34)?[\s-]?[6789]\d{2}[\s-]?\d{3}[\s-]?\d{3}$/
 const postalCodePeninsulaRegex = /^[0-5]\d{4}$/
-// CIF español: una letra inicial, 7 dígitos, último carácter dígito o letra de control.
-const cifRegex = /^[ABCDEFGHJKLMNPQRSUVW]\d{7}[0-9A-J]$/i
 
 export const checkoutSchema = z
   .object({
@@ -172,11 +171,12 @@ export const checkoutSchema = z
           path: ['invoice_cif'],
           message: 'CIF obligatorio',
         })
-      } else if (!cifRegex.test(data.invoice_cif.trim())) {
+      } else if (!isValidSpanishId(data.invoice_cif.trim())) {
         ctx.addIssue({
           code: 'custom',
           path: ['invoice_cif'],
-          message: 'CIF no válido (ej. B12345678)',
+          message:
+            'NIF/NIE/CIF no válido. Verifica el formato y la letra de control.',
         })
       }
       if (

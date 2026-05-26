@@ -41,6 +41,21 @@ export interface EmailContext {
   storeAddress?: string
   storePhone?: string
   storeEmail?: string
+  /**
+   * Datos legales para footer (RGPD/LSSI). Si se pasa `legalCompanyName` y/o
+   * `legalCompanyCif`, el footer renderiza una línea identificativa
+   * "Razón social · NIF: …". Si `legalCompanyCif` está vacío, se muestra
+   * el placeholder "NIF: pendiente de configuración" para nunca romper el
+   * envío del email por falta de datos legales.
+   *
+   * `showOdrBlock` controla si se incluye el bloque de resolución de
+   * litigios (plataforma ODR UE + Consumo Cantabria) que es obligatorio
+   * para comercio electrónico B2C.
+   */
+  legalCompanyName?: string
+  legalCompanyCif?: string
+  legalCompanyAddress?: string
+  showOdrBlock?: boolean
   /** Links legales en footer (cookies, privacidad, etc.) */
   footerLinks?: EmailFooterLink[]
   /**
@@ -108,17 +123,6 @@ export function renderEmail(ctx: EmailContext): string {
         </td>
       </tr>`
       : ''
-
-  const footerContact: string[] = []
-  if (ctx.storeAddress) footerContact.push(escapeHtml(ctx.storeAddress))
-  if (ctx.storePhone)
-    footerContact.push(
-      `<a href="tel:${escapeHtml(ctx.storePhone.replace(/\s+/g, ''))}" style="color:${COLORS.lavenderDark};text-decoration:none">${escapeHtml(ctx.storePhone)}</a>`,
-    )
-  if (ctx.storeEmail)
-    footerContact.push(
-      `<a href="mailto:${escapeHtml(ctx.storeEmail)}" style="color:${COLORS.lavenderDark};text-decoration:none">${escapeHtml(ctx.storeEmail)}</a>`,
-    )
 
   // Combinamos el link "Ver mis pedidos" (si viene) con los footerLinks legales.
   // Se renderiza siempre primero para que el cliente lo vea como acción
@@ -214,16 +218,57 @@ export function renderEmail(ctx: EmailContext): string {
           <!-- Footer -->
           <tr>
             <td style="background-color:${COLORS.bgSoft};padding:24px 32px;border-top:1px solid ${COLORS.border}">
+              ${(() => {
+                // Línea identificativa: "DC Bikes Cantabria · NIF: B12345678"
+                // Si CIF no configurado, mostramos placeholder claro (LSSI art. 10
+                // exige identificación, pero nunca rompemos envío del email).
+                const companyName = ctx.legalCompanyName?.trim() || 'DC Bikes Cantabria'
+                const cifText =
+                  ctx.legalCompanyCif && ctx.legalCompanyCif.trim().length > 0
+                    ? `NIF: ${escapeHtml(ctx.legalCompanyCif.trim())}`
+                    : 'NIF: pendiente de configuración'
+                return `<p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${COLORS.textSecondary};text-align:center;line-height:1.6;font-weight:600">
+                    ${escapeHtml(companyName)} · ${cifText}
+                  </p>`
+              })()}
+              ${(() => {
+                // Dirección legal (priorizamos legalCompanyAddress si viene,
+                // sino caemos a storeAddress por compatibilidad con emails
+                // que aún no propagan los settings legales).
+                const addr = (ctx.legalCompanyAddress?.trim() || ctx.storeAddress?.trim() || '')
+                if (!addr) return ''
+                return `<p style="margin:0 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${COLORS.textSecondary};text-align:center;line-height:1.6">
+                    ${escapeHtml(addr)}
+                  </p>`
+              })()}
               ${
-                footerContact.length > 0
+                ctx.storePhone || ctx.storeEmail
                   ? `<p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${COLORS.textSecondary};text-align:center;line-height:1.6">
-                    ${footerContact.join(' · ')}
+                    ${[
+                      ctx.storePhone
+                        ? `<a href="tel:${escapeHtml((ctx.storePhone ?? '').replace(/\s+/g, ''))}" style="color:${COLORS.lavenderDark};text-decoration:none">${escapeHtml(ctx.storePhone)}</a>`
+                        : '',
+                      ctx.storeEmail
+                        ? `<a href="mailto:${escapeHtml(ctx.storeEmail)}" style="color:${COLORS.lavenderDark};text-decoration:none">${escapeHtml(ctx.storeEmail)}</a>`
+                        : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </p>`
+                  : ''
+              }
+              ${
+                ctx.showOdrBlock
+                  ? `<p style="margin:14px 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${COLORS.textSecondary};text-align:center;line-height:1.6">
+                    <strong>Resolución de conflictos de consumo:</strong><br/>
+                    <a href="https://ec.europa.eu/odr" style="color:${COLORS.lavenderDark};text-decoration:underline">Plataforma europea de resolución de litigios en línea (ODR)</a><br/>
+                    Dirección General de Consumo del Gobierno de Cantabria
                   </p>`
                   : ''
               }
               ${
                 footerLinksHtml
-                  ? `<p style="margin:6px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${COLORS.textMuted};text-align:center">
+                  ? `<p style="margin:10px 0 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${COLORS.textMuted};text-align:center">
                     ${footerLinksHtml}
                   </p>`
                   : ''
