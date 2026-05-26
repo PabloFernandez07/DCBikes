@@ -167,7 +167,19 @@ serve(async (req) => {
     await logPayment(supabase, order.id, 'cancel', cancelResult, '9')
     await logStatusChange(supabase, order.id, 'authorized', 'cancelled', null, reason)
 
-    // 7) Email admin (fire-and-forget).
+    // 7) Emails (fire-and-forget). Lanzados en paralelo para reducir latencia.
+    //    a) Confirmación al cliente.
+    supabase.functions
+      .invoke('send-order-cancelled-by-customer-confirmation', {
+        body: { order_id: order.id },
+      })
+      .catch((err) =>
+        console.warn(
+          `[${ts()}] send-order-cancelled-by-customer-confirmation invoke:`,
+          String(err),
+        ),
+      )
+    //    b) Notificación al admin.
     supabase.functions
       .invoke('send-order-cancelled-by-customer-admin', {
         body: { order_id: order.id },
