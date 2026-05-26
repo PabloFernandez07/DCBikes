@@ -123,7 +123,7 @@ insert into settings (key, value) values
   ('quote_destination_email', '"info@dcbikescantabria.es"'),
   ('store_name',              '"DC Bikes Cantabria"'),
   ('store_address',           '"C/ La Cantábrica nº1, El Astillero, Cantabria"'),
-  ('store_phone',             '"+34 000 000 000"'),
+  ('store_phone',             '"+34 942 054 501"'),
   ('store_hours',             '"Lun–Vie 9:00–14:00 y 16:00–19:30 · Sáb 9:00–14:00"'),
   ('social_instagram',        '""'),
   ('social_facebook',         '""');

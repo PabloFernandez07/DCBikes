@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
 import { useSchedule } from '@/hooks/useSchedule'
 import { useCookieConsent } from '@/components/layout/CookieBanner'
+import { STORE_ADDRESS_FALLBACK } from '@/hooks/useStoreAddress'
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return (
@@ -148,14 +149,9 @@ export default function Contact() {
               </div>
               <div>
                 <p className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-mid)] mb-1">Dirección</p>
-                {address ? (
-                  <p className="font-[var(--font-body)] text-sm text-[var(--color-cream)] leading-relaxed">{address}</p>
-                ) : (
-                  <address className="not-italic font-[var(--font-body)] text-sm leading-relaxed">
-                    <span className="block text-[var(--color-cream)]">C. la Cantábrica, bloque 2 n, 1 BAJO</span>
-                    <span className="block text-[var(--color-cream)]">39610 Astillero, Cantabria</span>
-                  </address>
-                )}
+                <p className="font-[var(--font-body)] text-sm text-[var(--color-cream)] leading-relaxed">
+                  {address ?? STORE_ADDRESS_FALLBACK}
+                </p>
                 <a
                   href={settings.maps_link ?? 'https://maps.app.goo.gl/E2dajUcN3rA2fvc57'}
                   target="_blank"

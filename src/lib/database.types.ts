@@ -331,7 +331,6 @@ export interface Database {
           tracking_carrier: string | null
           accepted_terms_at: string
           accepted_privacy_at: string
-          marketing_opt_in: boolean
           deleted_at: string | null
           client_modified_at: string | null
           cancelled_by_customer: boolean
@@ -376,7 +375,6 @@ export interface Database {
           tracking_carrier?: string | null
           accepted_terms_at: string
           accepted_privacy_at: string
-          marketing_opt_in?: boolean
           deleted_at?: string | null
           client_modified_at?: string | null
           cancelled_by_customer?: boolean
@@ -421,7 +419,6 @@ export interface Database {
           tracking_carrier?: string | null
           accepted_terms_at?: string
           accepted_privacy_at?: string
-          marketing_opt_in?: boolean
           deleted_at?: string | null
           client_modified_at?: string | null
           cancelled_by_customer?: boolean

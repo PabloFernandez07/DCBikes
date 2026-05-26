@@ -351,11 +351,6 @@ export default function OrderDetail() {
                     {order.customer_phone}
                   </a>
                 </Field>
-                <Field label="Marketing">
-                  <span className="text-[var(--color-cream-dim)] font-[var(--font-body)]">
-                    {order.marketing_opt_in ? 'Sí' : 'No'}
-                  </span>
-                </Field>
               </div>
             </Section>
 

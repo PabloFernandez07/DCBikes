@@ -30,7 +30,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-import { CORS_HEADERS, jsonError, jsonOk } from '../_shared/email-utils.ts'
+import { buildCorsHeaders, jsonError, jsonOk } from '../_shared/email-utils.ts'
 import { loadRedsysConfig } from '../_shared/redsys-config.ts'
 import { verifyRedsysSignature } from '../_shared/redsys-sign.ts'
 
@@ -191,7 +191,8 @@ async function parsePayload(
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS })
+  const cors = buildCorsHeaders(req)
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   const ts = () => new Date().toISOString()
 
   try {

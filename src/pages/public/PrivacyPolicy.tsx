@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { SEO } from '@/components/layout/SEO'
+import { useStoreAddress } from '@/hooks/useStoreAddress'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -32,6 +33,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function PrivacyPolicy() {
   const pageRef = useReveal()
+  const storeAddress = useStoreAddress()
 
   return (
     <>
@@ -64,7 +66,7 @@ export default function PrivacyPolicy() {
             </p>
             <div className="p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)] space-y-1.5">
               <p><strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Denominación:</strong> DC Bikes Cantabria</p>
-              <p><strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Dirección:</strong> C. la Cantábrica bloque 2, El Astillero, Cantabria</p>
+              <p><strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Dirección:</strong> {storeAddress}</p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Correo electrónico:</strong>{' '}
                 <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
@@ -188,6 +190,49 @@ export default function PrivacyPolicy() {
               o en su caso bloqueados conforme al art. 32 LOPDGDD durante el tiempo en que pudieran derivarse
               responsabilidades legales.
             </p>
+            <p className="text-xs">
+              Transcurridos los plazos indicados, los datos se anonimizan o se eliminan automáticamente mediante
+              un proceso técnico diario. Los datos contables que la legislación obliga a conservar (facturas, IVA,
+              IRPF) se anonimizan parcialmente: se preserva la información legalmente requerida pero se eliminan
+              los datos identificativos no esenciales (teléfono, dirección de entrega, notas).
+            </p>
+          </Section>
+
+          {/* 5 bis. Derecho de supresión (art. 17 RGPD) */}
+          <Section title="5 bis. Derecho de supresión y obligaciones legales de conservación">
+            <p>
+              El <strong className="text-[var(--color-cream)]">art. 17 del RGPD</strong> reconoce tu derecho a
+              solicitar la supresión de tus datos personales (también conocido como "derecho al olvido"). Sin
+              embargo, este derecho no es absoluto: el <strong className="text-[var(--color-cream)]">art. 17.3.b
+              RGPD</strong> permite a DC Bikes Cantabria conservar determinados datos durante el plazo en que
+              exista una obligación legal de hacerlo.
+            </p>
+            <p>
+              Esa obligación legal se concreta, en nuestro caso, en el{' '}
+              <strong className="text-[var(--color-cream)]">art. 30 del Código de Comercio</strong> y el{' '}
+              <strong className="text-[var(--color-cream)]">art. 66 de la Ley General Tributaria</strong>, que
+              imponen la conservación de la documentación contable y fiscal durante{' '}
+              <strong className="text-[var(--color-cream)]">seis años</strong> desde la fecha del último pedido o
+              factura.
+            </p>
+            <p>
+              En la práctica, si solicitas la supresión y tienes pedidos con menos de 6 años de antigüedad,
+              procederemos a una <strong className="text-[var(--color-cream)]">anonimización parcial</strong>:
+              eliminaremos los datos identificativos no esenciales (teléfono, dirección de entrega, notas) y
+              mantendremos exclusivamente los datos contables y de facturación que la ley nos obliga a conservar.
+              Estos datos no son accesibles para terceros y se eliminarán automáticamente una vez transcurrido
+              el plazo legal.
+            </p>
+            <p>
+              Para ejercer este derecho envíanos un correo a{' '}
+              <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
+                info@dcbikescantabria.es
+              </a>{' '}
+              indicando que solicitas la supresión de tus datos. El{' '}
+              <strong className="text-[var(--color-cream)]">plazo legal de respuesta es de 1 mes</strong> desde
+              la recepción (art. 12.3 RGPD), prorrogable a 3 meses en casos especialmente complejos previa
+              notificación al interesado.
+            </p>
           </Section>
 
           {/* 6. Derechos */}
@@ -209,7 +254,7 @@ export default function PrivacyPolicy() {
               <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
                 info@dcbikescantabria.es
               </a>{' '}
-              o visítanos en C. la Cantábrica bloque 2, El Astillero, Cantabria.
+              o visítanos en {storeAddress}.
             </p>
             <p>
               Si consideras que el tratamiento no se ajusta a la normativa, puedes presentar una reclamación ante la{' '}
@@ -313,6 +358,22 @@ export default function PrivacyPolicy() {
               en todos los casos, por las Cláusulas Contractuales Tipo aprobadas por la Comisión Europea
               (Decisión 2021/914), que garantizan un nivel de protección equivalente al exigido en el
               Espacio Económico Europeo.
+            </p>
+          </Section>
+
+          {/* 7 bis. Reseñas de Google */}
+          <Section title="7 bis. Reseñas de Google">
+            <p>
+              Mostramos en nuestra web reseñas que nuestros clientes y visitantes han publicado voluntariamente
+              en Google Maps sobre nuestro negocio. Estas reseñas incluyen el nombre y, en su caso, la foto de
+              perfil tal y como el autor las publicó en Google. La base legal para esta publicación es nuestro{' '}
+              <strong className="text-[var(--color-cream)]">interés legítimo</strong> en compartir valoraciones
+              reales de nuestros clientes (<strong className="text-[var(--color-cream)]">art. 6.1.f RGPD</strong>).
+              Si eres autor de una reseña y deseas que retiremos su visualización en nuestra web, escríbenos a{' '}
+              <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
+                info@dcbikescantabria.es
+              </a>{' '}
+              y procederemos a su retirada en plazo razonable.
             </p>
           </Section>
 

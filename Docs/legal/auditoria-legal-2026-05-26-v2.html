@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Segunda auditoría legal — DC Bikes Cantabria (26 mayo 2026)</title>
+<style>
+  :root {
+    --ink: #0f1620;
+    --ink-soft: #1a2230;
+    --paper: #fafaf7;
+    --paper-soft: #f1efe9;
+    --text: #1c1c1c;
+    --text-soft: #555;
+    --text-mute: #888;
+    --accent: #6b4faa;
+    --accent-soft: #ede6f6;
+    --critical: #b32424;
+    --critical-bg: #fdecec;
+    --high: #c97011;
+    --high-bg: #fef3e2;
+    --medium: #c8a015;
+    --medium-bg: #fdf6dc;
+    --low: #4f7d3a;
+    --low-bg: #e9f4e1;
+    --ok: #2f7a3d;
+    --ok-bg: #e3f3e6;
+    --new: #1d6fa5;
+    --new-bg: #e0f0fa;
+    --border: #d8d3c8;
+    --border-soft: #ece8df;
+    --code-bg: #1e1e2a;
+    --code-text: #eef3f8;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Georgia', 'Cambria', 'Times New Roman', serif;
+    background: var(--paper);
+    color: var(--text);
+    line-height: 1.65;
+    font-size: 16px;
+  }
+
+  /* Cabecera */
+  .doc-header {
+    background: linear-gradient(135deg, var(--ink) 0%, #2a1e3a 100%);
+    color: #eef3f8;
+    padding: 56px 48px 40px;
+    border-bottom: 4px solid var(--accent);
+  }
+  .doc-header .stamp {
+    display: inline-block;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #b8a8d2;
+    padding: 6px 14px;
+    border: 1px solid #6b4faa55;
+    border-radius: 3px;
+    margin-bottom: 12px;
+  }
+  .doc-header .stamp.v2 {
+    background: var(--new);
+    color: #fff;
+    border-color: var(--new);
+    margin-left: 8px;
+  }
+  .doc-header h1 {
+    font-family: 'Georgia', serif;
+    font-size: 38px;
+    line-height: 1.2;
+    margin: 16px 0 8px 0;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .doc-header .subtitle {
+    color: #cfc6e3;
+    font-style: italic;
+    font-size: 18px;
+    margin: 0 0 32px 0;
+  }
+  .doc-header .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 13px;
+    color: #d6cce6;
+    padding-top: 24px;
+    border-top: 1px solid #ffffff20;
+  }
+  .doc-header .meta strong {
+    display: block;
+    color: #b8a8d2;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  /* Container */
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 48px;
+    background: var(--paper);
+  }
+
+  /* Aviso v2 */
+  .v2-notice {
+    background: var(--new-bg);
+    border: 1px solid var(--new);
+    border-left: 6px solid var(--new);
+    padding: 18px 24px;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: 32px;
+  }
+  .v2-notice h3 {
+    margin: 0 0 8px 0;
+    color: var(--new);
+    border: none;
+    padding: 0;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .v2-notice p { margin: 4px 0; color: #0f4566; font-size: 14px; }
+
+  /* TOC */
+  .toc {
+    background: var(--paper-soft);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 28px 36px;
+    margin-bottom: 48px;
+  }
+  .toc h2 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--accent);
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-weight: 700;
+  }
+  .toc ol {
+    columns: 2;
+    column-gap: 32px;
+    margin: 0;
+    padding-left: 20px;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 14px;
+    line-height: 1.9;
+  }
+  .toc ol li a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px dotted #c8c2b3;
+  }
+  .toc ol li a:hover { color: var(--accent); }
+
+  /* Secciones */
+  h2.section {
+    font-family: 'Georgia', serif;
+    font-size: 30px;
+    color: var(--ink);
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 10px;
+    margin: 64px 0 24px 0;
+    page-break-before: always;
+  }
+  h2.section:first-of-type { page-break-before: avoid; }
+  h2.section .num {
+    color: var(--accent);
+    font-weight: 400;
+    margin-right: 12px;
+  }
+  h2.section .new-tag {
+    display: inline-block;
+    background: var(--new);
+    color: #fff;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-left: 12px;
+    vertical-align: middle;
+    font-weight: 700;
+  }
+
+  h3 {
+    font-family: 'Georgia', serif;
+    font-size: 22px;
+    color: var(--ink);
+    margin: 32px 0 16px 0;
+    padding-left: 14px;
+    border-left: 4px solid var(--accent);
+  }
+
+  h4 {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 14px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 24px 0 10px 0;
+    font-weight: 700;
+  }
+
+  p { margin: 12px 0; }
+  ul, ol { padding-left: 22px; }
+  ul li, ol li { margin: 4px 0; }
+
+  strong { color: var(--ink); font-weight: 700; }
+  em { font-style: italic; color: var(--text-soft); }
+
+  a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-color: #c4a2cf80;
+    text-underline-offset: 3px;
+  }
+  a:hover { text-decoration-color: var(--accent); }
+
+  /* Veredicto */
+  .verdict {
+    background: var(--high-bg);
+    border-left: 6px solid var(--high);
+    padding: 24px 28px;
+    margin: 24px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .verdict h3 {
+    margin: 0 0 8px 0;
+    color: var(--high);
+    border: none;
+    padding: 0;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .verdict .label {
+    font-size: 28px;
+    font-weight: 700;
+    font-family: 'Georgia', serif;
+    color: var(--high);
+    display: block;
+    margin: 4px 0 12px 0;
+  }
+  .verdict p { margin: 0; color: #5a3a10; }
+
+  /* Tablas */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 18px 0;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 13.5px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  thead {
+    background: var(--ink-soft);
+    color: #eef3f8;
+  }
+  th {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+    border-right: 1px solid #ffffff10;
+  }
+  th:last-child { border-right: none; }
+  td {
+    padding: 12px 14px;
+    border-top: 1px solid var(--border-soft);
+    vertical-align: top;
+    line-height: 1.55;
+  }
+  tbody tr:hover { background: var(--paper-soft); }
+  tr.new-row { background: var(--new-bg); }
+  tr.new-row td:first-child { border-left: 3px solid var(--new); }
+  td code { font-size: 12.5px; }
+
+  /* Chips */
+  .sev {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .sev-critical { background: var(--critical-bg); color: var(--critical); }
+  .sev-high { background: var(--high-bg); color: var(--high); }
+  .sev-medium { background: var(--medium-bg); color: var(--medium); }
+  .sev-low { background: var(--low-bg); color: var(--low); }
+  .sev-ok { background: var(--ok-bg); color: var(--ok); }
+  .sev-new { background: var(--new); color: #fff; }
+
+  /* Status */
+  .status-ok { color: var(--ok); font-weight: 700; }
+  .status-warn { color: var(--high); font-weight: 700; }
+  .status-fail { color: var(--critical); font-weight: 700; }
+
+  /* Callouts */
+  .callout {
+    padding: 18px 22px;
+    margin: 18px 0;
+    border-radius: 0 4px 4px 0;
+    border-left: 4px solid var(--accent);
+    background: var(--accent-soft);
+    color: #3a2858;
+  }
+  .callout-critical {
+    border-left-color: var(--critical);
+    background: var(--critical-bg);
+    color: #5a2222;
+  }
+  .callout-high {
+    border-left-color: var(--high);
+    background: var(--high-bg);
+    color: #5a3a10;
+  }
+  .callout-ok {
+    border-left-color: var(--ok);
+    background: var(--ok-bg);
+    color: #1f5026;
+  }
+  .callout-new {
+    border-left-color: var(--new);
+    background: var(--new-bg);
+    color: #0f4566;
+  }
+  .callout h4 { margin-top: 0; color: inherit; }
+  .callout p { margin: 6px 0; }
+
+  blockquote {
+    margin: 18px 0;
+    padding: 16px 24px;
+    border-left: 4px solid var(--border);
+    background: var(--paper-soft);
+    color: var(--text-soft);
+    font-style: italic;
+  }
+
+  code {
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    background: var(--paper-soft);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: #5a3a96;
+    border: 1px solid var(--border-soft);
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 18px 22px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.55;
+    margin: 16px 0;
+    border-left: 3px solid var(--accent);
+  }
+  pre code {
+    background: none;
+    color: inherit;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+  }
+
+  /* Comparativa scores */
+  .score-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .score-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px;
+    text-align: center;
+  }
+  .score-card .number {
+    font-family: 'Georgia', serif;
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .score-card.critical .number { color: var(--critical); }
+  .score-card.high .number { color: var(--high); }
+  .score-card.medium .number { color: var(--medium); }
+  .score-card.low .number { color: var(--low); }
+  .score-card.ok .number { color: var(--ok); }
+  .score-card.new-card .number { color: var(--new); }
+  .score-card .label {
+    margin-top: 8px;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-soft);
+  }
+
+  /* Findings list (top hallazgos) */
+  .findings {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 24px 0;
+    overflow: hidden;
+  }
+  .finding {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 18px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border-soft);
+    align-items: start;
+  }
+  .finding:last-child { border-bottom: none; }
+  .finding.is-new { background: var(--new-bg); }
+  .finding .num-block {
+    font-family: 'Georgia', serif;
+    font-size: 32px;
+    color: var(--accent);
+    line-height: 1;
+    font-weight: 700;
+  }
+  .finding.is-new .num-block { color: var(--new); }
+  .finding h4 {
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 16px;
+    margin: 0 0 4px 0;
+    font-family: 'Georgia', serif;
+  }
+  .finding .norm {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 12px;
+    color: var(--text-soft);
+    margin: 4px 0;
+  }
+  .finding .badges {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* Footer */
+  .doc-footer {
+    margin-top: 80px;
+    padding: 32px 48px;
+    background: var(--ink);
+    color: #b8a8d2;
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 12px;
+    text-align: center;
+    border-top: 4px solid var(--accent);
+  }
+  .doc-footer .signature {
+    font-style: italic;
+    color: #cfc6e3;
+    margin-bottom: 16px;
+  }
+
+  /* Print */
+  @media print {
+    body { background: white; font-size: 11pt; }
+    .doc-header { padding: 24px 0; }
+    .container { padding: 16px 0; }
+    h2.section { page-break-before: always; }
+    .toc { page-break-after: always; }
+    a { color: var(--text); text-decoration: none; }
+    pre { font-size: 9pt; }
+    table { font-size: 9.5pt; }
+  }
+
+  @media (max-width: 768px) {
+    .doc-header { padding: 36px 24px 28px; }
+    .doc-header h1 { font-size: 26px; }
+    .container { padding: 24px 18px; }
+    .toc ol { columns: 1; }
+    h2.section { font-size: 22px; }
+    table { font-size: 12px; }
+    th, td { padding: 8px 10px; }
+    .finding { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="doc-header">
+  <div>
+    <span class="stamp">Documento jurídico · Confidencial</span>
+    <span class="stamp v2">2ª iteración · Auditoría profundizada</span>
+  </div>
+  <h1>Segunda auditoría legal exhaustiva</h1>
+  <p class="subtitle">DC Bikes Cantabria — dc-bikes-cantabria.vercel.app</p>
+  <div class="meta">
+    <div><strong>Auditor</strong>Letrado especialista en Derecho Digital y Consumo</div>
+    <div><strong>Fecha</strong>26 de mayo de 2026 (revisión 2)</div>
+    <div><strong>Alcance ampliado</strong>Cabeceras seguridad HTTP · CORS edge functions · Modelo admin · TTLs y conservación · Quote requests · Anonimización · Reviews Google</div>
+    <div><strong>Marco normativo</strong>RGPD · LOPDGDD · LSSI-CE · RDL 1/2007 · Reg. (UE) 524/2013 · RDL 7/2021 · RDL 5/2023 (Omnibus) · RD 1619/2012 · RD 1007/2023 (Verifactu) · OWASP ASVS</div>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="v2-notice">
+    <h3>Sobre esta 2ª iteración</h3>
+    <p>Esta segunda auditoría amplía la del 26 de mayo de 2026 (v1) con un análisis profundizado de áreas no cubiertas en la primera pasada: <strong>cabeceras de seguridad HTTP (vercel.json), CORS de las 28 edge functions, modelo de autorización admin, TTLs y políticas de retención, formulario de presupuesto, anonimización automática y procesamiento de reviews de Google Places</strong>.</p>
+    <p>Se han detectado <strong>18 hallazgos NUEVOS</strong> que no figuran en el primer informe. Los hallazgos anteriores se mantienen vigentes salvo que se indique lo contrario. Los nuevos están marcados con la etiqueta <span class="sev sev-new">NUEVO</span> a lo largo del documento.</p>
+  </div>
+
+  <!-- ───── Índice ───── -->
+  <nav class="toc">
+    <h2>Índice</h2>
+    <ol>
+      <li><a href="#sec-0">Resumen ejecutivo v2</a></li>
+      <li><a href="#sec-1">Cabeceras de seguridad HTTP</a></li>
+      <li><a href="#sec-2">Modelo de autorización admin</a></li>
+      <li><a href="#sec-3">CORS abierto en edge functions</a></li>
+      <li><a href="#sec-4">Formulario de presupuesto (Quote)</a></li>
+      <li><a href="#sec-5">TTLs y retención de datos</a></li>
+      <li><a href="#sec-6">Anonimización y derecho al olvido</a></li>
+      <li><a href="#sec-7">Inconsistencias en datos del titular</a></li>
+      <li><a href="#sec-8">Pasarela Redsys — Cron y secretos</a></li>
+      <li><a href="#sec-9">Reviews Google Places</a></li>
+      <li><a href="#sec-10">URLs firmadas (facturas) y tokens HMAC</a></li>
+      <li><a href="#sec-11">Captura de marketing opt-in sin uso</a></li>
+      <li><a href="#sec-12">Prerender y descubribilidad legal</a></li>
+      <li><a href="#sec-13">Estado de los 27 hallazgos v1</a></li>
+      <li><a href="#sec-14">Plan de acción priorizado v2</a></li>
+      <li><a href="#sec-15">Anexos técnicos</a></li>
+      <li><a href="#sec-conclusion">Conclusión final v2</a></li>
+    </ol>
+  </nav>
+
+  <!-- ───── 0. Resumen ejecutivo ───── -->
+  <h2 class="section" id="sec-0"><span class="num">0.</span>Resumen ejecutivo v2</h2>
+
+  <div class="verdict">
+    <h3>Veredicto actualizado</h3>
+    <span class="label">NO APTO con riesgo elevado por defensa en profundidad</span>
+    <p>La primera auditoría (v1) identificó 27 hallazgos, 6 de ellos críticos. Esta segunda iteración mantiene esos hallazgos como vigentes y añade <strong>18 hallazgos nuevos</strong> centrados en defensa en profundidad, donde la web presenta riesgos sustanciales: cabeceras de seguridad incompletas, CORS abierto, un modelo de autorización admin frágil (toggle único de Supabase) y ausencia total de anonimización automática de datos personales tras los plazos de conservación declarados en la propia política de privacidad.</p>
+  </div>
+
+  <div class="score-grid">
+    <div class="score-card critical">
+      <div class="number">11</div>
+      <div class="label">Críticos totales</div>
+    </div>
+    <div class="score-card high">
+      <div class="number">15</div>
+      <div class="label">Altos totales</div>
+    </div>
+    <div class="score-card medium">
+      <div class="number">12</div>
+      <div class="label">Medios totales</div>
+    </div>
+    <div class="score-card low">
+      <div class="number">7</div>
+      <div class="label">Bajos / mejora</div>
+    </div>
+    <div class="score-card new-card">
+      <div class="number">+18</div>
+      <div class="label">Nuevos v2</div>
+    </div>
+  </div>
+
+  <h3>Top hallazgos nuevos de la 2ª iteración</h3>
+
+  <div class="findings">
+    <div class="finding is-new">
+      <div class="num-block">N1</div>
+      <div>
+        <h4>Modelo admin frágil: cualquier <code>authenticated</code> = admin total</h4>
+        <p class="norm">Art. 32.1.b RGPD (defensa en profundidad)</p>
+        <p>El archivo <code>_shared/order-admin.ts:53-56</code> documenta que «cualquier usuario autenticado en Supabase Auth = admin», dependiendo de que <code>disable_signup=true</code> esté activo en Supabase. Si por error/regresión esa configuración se invierte, <strong>cualquier persona con cuenta accede a TODOS los datos personales de TODOS los clientes</strong> (pedidos, facturas, direcciones, teléfonos).</p>
+        <div class="badges">
+          <span class="sev sev-critical">CRÍTICO</span>
+          <span class="sev sev-new">NUEVO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding is-new">
+      <div class="num-block">N2</div>
+      <div>
+        <h4>Falta cabecera Strict-Transport-Security (HSTS)</h4>
+        <p class="norm">Art. 32 RGPD · OWASP ASVS V14</p>
+        <p><code>vercel.json</code> no incluye <code>Strict-Transport-Security</code>. Un atacante en red Wi-Fi pública podría forzar HTTP en la primera conexión e interceptar datos antes de la redirección a HTTPS. La AEPD viene exigiéndolo como medida básica del art. 32.</p>
+        <div class="badges">
+          <span class="sev sev-high">ALTO</span>
+          <span class="sev sev-new">NUEVO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding is-new">
+      <div class="num-block">N3</div>
+      <div>
+        <h4>CORS abierto a <code>*</code> en todas las edge functions sensibles</h4>
+        <p class="norm">Buena práctica RGPD art. 32 + OWASP</p>
+        <p><code>_shared/email-utils.ts:11-16</code> declara <code>Access-Control-Allow-Origin: '*'</code> aplicado a <strong>order-place, customer-orders-list, customer-order-detail, customer-order-cancel, customer-magic-link-request</strong>. Las funciones están protegidas por tokens, pero CORS abierto facilita ataques CSRF y XSS reflejados. Debería restringirse a los dominios propios (<code>https://dc-bikes-cantabria.vercel.app</code> y <code>https://dcbikescantabria.es</code>).</p>
+        <div class="badges">
+          <span class="sev sev-high">ALTO</span>
+          <span class="sev sev-new">NUEVO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding is-new">
+      <div class="num-block">N4</div>
+      <div>
+        <h4>Formulario de presupuesto sin captcha ni rate-limit</h4>
+        <p class="norm">Art. 32 RGPD + buena práctica</p>
+        <p><code>QuoteModal.tsx:66-74</code> hace INSERT directo a <code>quote_requests</code> desde el frontend con auth anon. Sin captcha (reCAPTCHA, hCaptcha, Turnstile) ni rate-limit, cualquier bot puede crear miles de consultas. Cada una dispara <code>send-quote-email</code>, que <strong>envía emails al admin sin coste para el atacante</strong>. Vector de DoS y daño reputacional.</p>
+        <div class="badges">
+          <span class="sev sev-critical">CRÍTICO</span>
+          <span class="sev sev-new">NUEVO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding is-new">
+      <div class="num-block">N5</div>
+      <div>
+        <h4><code>quote_requests</code> no almacena prueba del consentimiento</h4>
+        <p class="norm">Art. 7.1 RGPD (carga de prueba)</p>
+        <p>El modal pide checkbox de privacidad (<code>QuoteModal.tsx:185-202</code>) pero la tabla <code>quote_requests</code> (migración 0001) <strong>no tiene columnas para guardar timestamp ni IP del consentimiento</strong>. Si un usuario impugna haber consentido, el responsable no puede demostrarlo.</p>
+        <div class="badges">
+          <span class="sev sev-high">ALTO</span>
+          <span class="sev sev-new">NUEVO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding is-new">
+      <div class="num-block">N6</div>
+      <div>
+        <h4>Sin anonimización automática tras el plazo de conservación declarado</h4>
+        <p class="norm">Art. 5.1.e RGPD (limitación del plazo de conservación)</p>
+        <p>La política declara plazos: 6 años pedidos/facturas, 1 año consultas, hasta revocación marketing. Pero <strong>no existe ningún cron ni rutina automática</strong> que purgue o anonimice <code>quote_requests</code>, <code>orders</code>, <code>customer_sessions</code> expiradas, <code>product_views</code>, <code>search_queries</code> ni <code>payments_log</code> al cumplirse esos plazos. Los datos se acumulan indefinidamente, lo que <strong>contradice expresamente lo declarado al interesado</strong>.</p>
+        <div class="badges">
+          <span class="sev sev-critical">CRÍTICO</span>
+          <span class="sev sev-new">NUEVO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding is-new">
+      <div class="num-block">N7</div>
+      <div>
+        <h4>Captura de <code>marketing_opt_in</code> sin finalidad real</h4>
+        <p class="norm">Art. 5.1.b RGPD (limitación de finalidad)</p>
+        <p>El checkbox de marketing se guarda en <code>orders.marketing_opt_in</code>, pero <strong>no existe ninguna funcionalidad de envío de newsletter</strong> en el código. Captar consentimiento sin propósito definido contraviene el principio de limitación de finalidad: los datos deben recogerse con fines determinados, explícitos y legítimos.</p>
+        <div class="badges">
+          <span class="sev sev-high">ALTO</span>
+          <span class="sev sev-new">NUEVO</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding is-new">
+      <div class="num-block">N8</div>
+      <div>
+        <h4>CSP con <code>'unsafe-inline'</code> en script-src y style-src</h4>
+        <p class="norm">Art. 32 RGPD · OWASP ASVS V14</p>
+        <p><code>vercel.json:24</code> declara <code>script-src 'self' 'unsafe-inline'</code> y <code>style-src 'self' 'unsafe-inline'</code>. Esto desactiva la principal defensa contra XSS inyectado. Un XSS en cualquier campo no escapado permitiría exfiltrar datos de clientes.</p>
+        <div class="badges">
+          <span class="sev sev-high">ALTO</span>
+          <span class="sev sev-new">NUEVO</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── 1. Cabeceras seguridad ───── -->
+  <h2 class="section" id="sec-1"><span class="num">1.</span>Cabeceras de seguridad HTTP <span class="new-tag">Nuevo</span></h2>
+
+  <p>Análisis exhaustivo de <code>vercel.json</code> (líneas 19-25).</p>
+
+  <h3>1.1 Cabeceras presentes</h3>
+
+  <table>
+    <thead>
+      <tr><th>Cabecera</th><th>Valor</th><th>Veredicto</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>X-Content-Type-Options</code></td><td><code>nosniff</code></td><td><span class="status-ok">✓ Correcto</span></td></tr>
+      <tr><td><code>X-Frame-Options</code></td><td><code>SAMEORIGIN</code></td><td><span class="status-ok">✓ Correcto</span></td></tr>
+      <tr><td><code>Referrer-Policy</code></td><td><code>strict-origin-when-cross-origin</code></td><td><span class="status-ok">✓ Correcto</span></td></tr>
+      <tr><td><code>Permissions-Policy</code></td><td><code>camera=() microphone=() geolocation=(self) interest-cohort=()</code></td><td><span class="status-warn">⚠ Mejorable</span> — la web NO usa geolocation, debería ser <code>geolocation=()</code></td></tr>
+      <tr><td><code>Content-Security-Policy</code></td><td>CSP completa pero con <code>'unsafe-inline'</code></td><td><span class="status-warn">⚠ Debilitada</span> — ver 1.2</td></tr>
+    </tbody>
+  </table>
+
+  <h3>1.2 Cabeceras ausentes (incumplimientos)</h3>
+
+  <table>
+    <thead>
+      <tr><th>Cabecera ausente</th><th>Riesgo</th><th>Severidad</th></tr>
+    </thead>
+    <tbody>
+      <tr class="new-row"><td><code>Strict-Transport-Security</code> (HSTS)</td><td>Permite ataques MITM en primera conexión (downgrade HTTP). Valor recomendado: <code>max-age=63072000; includeSubDomains; preload</code></td><td><span class="sev sev-high">Alto</span></td></tr>
+      <tr class="new-row"><td><code>Cross-Origin-Opener-Policy</code></td><td>Sin <code>same-origin</code> el window opener puede ser explotado para cross-origin leaks (Spectre-like)</td><td><span class="sev sev-medium">Medio</span></td></tr>
+      <tr class="new-row"><td><code>Cross-Origin-Resource-Policy</code></td><td>Protege contra Spectre / side-channel — recomendado <code>same-origin</code> en respuestas API</td><td><span class="sev sev-medium">Medio</span></td></tr>
+      <tr class="new-row"><td><code>X-Permitted-Cross-Domain-Policies</code></td><td>Sin <code>none</code> permite policies Flash/Adobe heredados</td><td><span class="sev sev-low">Bajo</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>1.3 Análisis CSP — Hallazgo crítico</h3>
+
+  <p>La CSP actual:</p>
+
+<pre><code>default-src 'self';
+script-src 'self' 'unsafe-inline';
+style-src 'self' 'unsafe-inline';
+font-src 'self';
+img-src 'self' data: https:;
+media-src 'self';
+connect-src 'self' https://*.supabase.co wss://*.supabase.co;
+frame-src 'self' https://www.google.com https://maps.google.com https://*.google.com;
+manifest-src 'self';
+worker-src 'self' blob:;
+frame-ancestors 'self';
+base-uri 'self';
+form-action 'self';</code></pre>
+
+  <div class="callout callout-critical">
+    <h4>Problemas detectados</h4>
+    <ul style="margin:0">
+      <li><strong><code>'unsafe-inline'</code> en script-src</strong>: anula la protección XSS. Cualquier inyección no escapada se ejecuta.</li>
+      <li><strong><code>'unsafe-inline'</code> en style-src</strong>: necesario solo si hay estilos inline en tags HTML. Reemplazar por hash o nonce.</li>
+      <li><strong><code>font-src 'self'</code></strong>: la web carga fuentes desde <code>fonts.gstatic.com</code> (via Google Fonts <code>@import</code>), pero esa URL <strong>no está en la CSP</strong>. Las fuentes solo se ven en producción porque el navegador las tiene cacheadas o porque el motor pasa por encima del style inline. Existe inconsistencia técnica entre lo declarado y lo cargado.</li>
+      <li><strong><code>frame-src https://*.google.com</code></strong>: comodín demasiado amplio — debería ser específicamente <code>https://www.google.com</code> y <code>https://maps.google.com</code>.</li>
+    </ul>
+  </div>
+
+  <h3>1.4 Acción correctiva consolidada — vercel.json</h3>
+
+<pre><code>{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "X-Permitted-Cross-Domain-Policies", "value": "none" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(self)" },
+        { "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://www.google.com https://maps.google.com https://sis.redsys.es; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://sis.redsys.es;" }
+      ]
+    }
+  ]
+}</code></pre>
+
+  <p>Adicionalmente, hay que añadir <code>sis.redsys.es</code> a <code>form-action</code> y <code>frame-src</code> para que la pasarela funcione, y eliminar <code>'unsafe-inline'</code> moviendo todos los <code>&lt;style&gt;</code> y <code>&lt;script&gt;</code> inline a hashes o ficheros externos.</p>
+
+  <!-- ───── 2. Modelo admin ───── -->
+  <h2 class="section" id="sec-2"><span class="num">2.</span>Modelo de autorización admin <span class="new-tag">Nuevo</span></h2>
+
+  <p><strong>Norma de referencia:</strong> art. 32.1.b RGPD (capacidad de garantizar la confidencialidad mediante mínimo privilegio y separación de roles).</p>
+
+  <h3>2.1 Hallazgo crítico — Punto único de fallo</h3>
+
+  <p>Evidencia en <code>supabase/functions/_shared/order-admin.ts:50-66</code>:</p>
+
+<pre><code>// Cualquier usuario autenticado en Supabase Auth = admin.
+// Seguridad apoyada en:
+//   - disable_signup=true en Supabase (no hay signup público).
+//   - Solo el propietario crea usuarios desde Supabase Studio.
+//   - RLS policies restringen escritura a authenticated.
+const supabase = createClient(supabaseUrl, serviceKey)
+return {
+  ok: true,
+  ctx: { supabase, userId: userData.user.id, email: userData.user.email ?? null },
+}</code></pre>
+
+  <div class="callout callout-critical">
+    <h4>Análisis jurídico</h4>
+    <p>El art. 32.1.b RGPD exige garantizar «la capacidad de garantizar la confidencialidad, integridad, disponibilidad y resiliencia permanentes de los sistemas». La doctrina interpreta esta obligación como <strong>defensa en profundidad y separación de privilegios</strong>: el acceso a datos personales debe restringirse por el principio de mínimo necesario (art. 5.1.c).</p>
+    <p>El modelo actual NO cumple este principio:</p>
+    <ul style="margin:8px 0">
+      <li>Existe un <strong>único toggle</strong> (<code>disable_signup</code> en Supabase Auth) que separa la web pública del acceso admin total.</li>
+      <li>Si por error humano o regresión ese toggle se invierte, <strong>cualquier persona del mundo puede registrarse y leer/modificar TODOS los datos personales de TODOS los clientes</strong>.</li>
+      <li>No hay tabla <code>admin_users</code> ni columna <code>is_admin</code> que actúe como segunda barrera.</li>
+      <li>Las RLS policies (<code>auth.role() = 'authenticated'</code>) no distinguen entre admin y cliente registrado.</li>
+    </ul>
+    <p>La AEPD considera que la <strong>ausencia de defensa en profundidad</strong> es factor agravante en sanciones (resolución PS/00120/2023).</p>
+  </div>
+
+  <h3>2.2 Acción correctiva</h3>
+
+  <p>Crear tabla SQL nueva:</p>
+
+<pre><code>create table if not exists admin_users (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  email      text not null,
+  role       text not null default 'admin' check (role in ('admin', 'staff')),
+  created_at timestamptz not null default now(),
+  revoked_at timestamptz
+);
+
+-- Helper function reutilizable en RLS
+create or replace function is_admin()
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select exists (
+    select 1 from admin_users
+    where user_id = auth.uid()
+      and revoked_at is null
+  );
+$$;
+
+revoke all on function is_admin() from public;
+grant execute on function is_admin() to authenticated;</code></pre>
+
+  <p>Modificar todas las RLS policies del proyecto:</p>
+
+<pre><code>-- antes: using (auth.role() = 'authenticated')
+-- después:
+drop policy if exists "orders_select_admin" on orders;
+create policy "orders_select_admin" on orders
+  for select to authenticated
+  using (is_admin());
+
+-- Repetir para todos los SELECT/UPDATE/DELETE de orders, order_items,
+-- payments_log, invoices, customer_sessions, quote_requests, etc.</code></pre>
+
+  <p>Y modificar <code>order-admin.ts:requireAdmin()</code>:</p>
+
+<pre><code>// Después de getUser():
+const { data: adminCheck } = await userClient
+  .from('admin_users')
+  .select('user_id, role, revoked_at')
+  .eq('user_id', userData.user.id)
+  .is('revoked_at', null)
+  .maybeSingle()
+
+if (!adminCheck) {
+  return { ok: false, status: 403, error: 'no admin privileges' }
+}</code></pre>
+
+  <!-- ───── 3. CORS edge functions ───── -->
+  <h2 class="section" id="sec-3"><span class="num">3.</span>CORS abierto en edge functions <span class="new-tag">Nuevo</span></h2>
+
+  <p>Evidencia en <code>supabase/functions/_shared/email-utils.ts:11-16</code>:</p>
+
+<pre><code>export const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}</code></pre>
+
+  <h3>3.1 Funciones afectadas</h3>
+
+  <p>Las 28 edge functions del proyecto importan <code>CORS_HEADERS</code> y por tanto exponen <code>Access-Control-Allow-Origin: *</code>, incluyendo:</p>
+
+  <ul>
+    <li><code>order-place</code> — creación de pedidos con datos personales completos</li>
+    <li><code>customer-magic-link-request</code> — generación de tokens de sesión</li>
+    <li><code>customer-orders-list</code> — lectura de pedidos por sesión</li>
+    <li><code>customer-order-detail</code> — datos personales completos del cliente</li>
+    <li><code>customer-order-cancel</code> — cancelación pedidos</li>
+    <li><code>customer-order-update-address</code> — cambio dirección</li>
+    <li><code>order-public-get</code> — datos pedido con token HMAC</li>
+    <li><code>send-quote-email</code> — envío email admin</li>
+    <li><code>google-reviews</code> — datos terceros</li>
+  </ul>
+
+  <h3>3.2 Análisis jurídico</h3>
+
+  <div class="callout callout-high">
+    <p>El RGPD no prohíbe el CORS abierto, pero la AEPD en su Guía de Seguridad Técnica (julio 2023) lo cita como <strong>medida básica del art. 32.1.b</strong>. La doctrina considera que:</p>
+    <ul style="margin:8px 0 0 0">
+      <li>El CORS abierto facilita CSRF cuando se combina con cookies de sesión (no es el caso aquí porque se usan tokens en body).</li>
+      <li>El CORS abierto permite a sitios maliciosos consultar respuestas de tu API y exfiltrar datos si el token está expuesto en URL (caso del magic link).</li>
+      <li>La buena práctica es restringir a los dominios propios — <strong>nunca <code>*</code></strong>.</li>
+    </ul>
+  </div>
+
+  <h3>3.3 Acción correctiva</h3>
+
+<pre><code>// _shared/email-utils.ts — versión corregida
+const ALLOWED_ORIGINS = new Set([
+  'https://dc-bikes-cantabria.vercel.app',
+  'https://dcbikescantabria.es',
+  'https://www.dcbikescantabria.es',
+])
+
+export function buildCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') ?? ''
+  const allowed = ALLOWED_ORIGINS.has(origin) ? origin : ''
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Vary': 'Origin',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Max-Age': '86400',
+  }
+}</code></pre>
+
+  <p>Y refactorizar las funciones para construir las cabeceras pasando el <code>req</code>:</p>
+
+<pre><code>// En cada serve():
+const corsHeaders = buildCorsHeaders(req)
+if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })</code></pre>
+
+  <!-- ───── 4. Quote ───── -->
+  <h2 class="section" id="sec-4"><span class="num">4.</span>Formulario de presupuesto (Quote) <span class="new-tag">Nuevo</span></h2>
+
+  <p>Auditados <code>QuoteModal.tsx</code> + <code>supabase/functions/send-quote-email/index.ts</code> + tabla <code>quote_requests</code> en <code>0001_initial.sql</code>.</p>
+
+  <h3>4.1 Tabla de hallazgos</h3>
+
+  <table>
+    <thead>
+      <tr><th style="width:35%">Hallazgo</th><th>Evidencia</th><th>Severidad</th></tr>
+    </thead>
+    <tbody>
+      <tr class="new-row">
+        <td>INSERT directo desde frontend con auth anon</td>
+        <td><code>QuoteModal.tsx:66-74</code>. La RLS permite INSERT público (<code>public_insert_quotes</code> en <code>0001_initial.sql:101</code>). Cualquier bot puede ejecutar <code>POST /rest/v1/quote_requests</code> sin pasar por el modal.</td>
+        <td><span class="sev sev-critical">Crítico</span></td>
+      </tr>
+      <tr class="new-row">
+        <td>Sin captcha (reCAPTCHA, hCaptcha, Turnstile)</td>
+        <td>Búsqueda confirmada: 0 referencias a captcha en <code>src/</code>. Vector de spam masivo.</td>
+        <td><span class="sev sev-critical">Crítico</span></td>
+      </tr>
+      <tr class="new-row">
+        <td>Sin rate-limit (ni en frontend ni en RLS)</td>
+        <td>No hay throttling por IP, email o sesión.</td>
+        <td><span class="sev sev-high">Alto</span></td>
+      </tr>
+      <tr class="new-row">
+        <td><code>send-quote-email</code> invocable directamente</td>
+        <td>El cliente llama <code>supabase.functions.invoke('send-quote-email', { body: { quote_id } })</code>. La función NO verifica que la sesión esté autorizada; con un quote_id válido (UUID) se puede disparar email al admin.</td>
+        <td><span class="sev sev-high">Alto</span></td>
+      </tr>
+      <tr class="new-row">
+        <td>Sin <code>accepted_privacy_at</code> en <code>quote_requests</code></td>
+        <td>El modal pide checkbox privacy pero la tabla (<code>0001_initial.sql:67-75</code>) no tiene columnas <code>consent_at, consent_ip, consent_user_agent</code>.</td>
+        <td><span class="sev sev-high">Alto</span></td>
+      </tr>
+      <tr class="new-row">
+        <td>Sin <code>marketing_opt_in</code> en quote</td>
+        <td>El modal solo pide privacy. Si el contacto futuro va más allá de la respuesta inicial, falta base legal expresa.</td>
+        <td><span class="sev sev-medium">Medio</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>4.2 Acción correctiva</h3>
+
+  <p>1. Añadir columnas a la migración:</p>
+
+<pre><code>alter table quote_requests
+  add column if not exists consent_at         timestamptz,
+  add column if not exists consent_ip         text,
+  add column if not exists consent_user_agent text,
+  add column if not exists consent_version    text;</code></pre>
+
+  <p>2. Convertir el INSERT directo en una nueva edge function <code>quote-submit</code> con captcha y rate-limit:</p>
+
+<pre><code>// supabase/functions/quote-submit/index.ts
+// - Verifica turnstile token (Cloudflare gratuito) o reCAPTCHA v3
+// - Rate-limit: 3 consultas/hora por IP (similar a customer-magic-link-request)
+// - INSERT con consent_ip, consent_user_agent extraídos de headers
+// - Invoca send-quote-email SOLO si el INSERT tuvo éxito
+//
+// Revocar la RLS policy "public_insert_quotes" → solo service_role inserta.</code></pre>
+
+  <p>3. Revocar la policy pública:</p>
+
+<pre><code>drop policy "public_insert_quotes" on quote_requests;</code></pre>
+
+  <p>4. Frontend: cargar widget Turnstile en el modal (gratuito, sin tracking de Google).</p>
+
+  <!-- ───── 5. TTLs ───── -->
+  <h2 class="section" id="sec-5"><span class="num">5.</span>TTLs y retención de datos <span class="new-tag">Nuevo</span></h2>
+
+  <h3>5.1 Plazos declarados vs implementados</h3>
+
+  <table>
+    <thead>
+      <tr><th>Dato</th><th>Plazo declarado</th><th>Plazo real implementado</th><th>Veredicto</th></tr>
+    </thead>
+    <tbody>
+      <tr class="new-row">
+        <td><code>orders.customer_*</code> (datos cliente)</td>
+        <td>6 años (Cód. Comercio + LGT)</td>
+        <td><strong>Indefinido</strong> — no hay cron de purga ni anonimización</td>
+        <td><span class="sev sev-critical">Crítico</span></td>
+      </tr>
+      <tr class="new-row">
+        <td><code>quote_requests</code> (consultas)</td>
+        <td>«Hasta finalización de la consulta + 1 año»</td>
+        <td><strong>Indefinido</strong> — no hay limpieza automática</td>
+        <td><span class="sev sev-critical">Crítico</span></td>
+      </tr>
+      <tr class="new-row">
+        <td><code>customer_sessions</code> (magic link)</td>
+        <td>24h (TTL en token)</td>
+        <td>El token caduca pero la fila permanece con IP+UA hasta DELETE manual</td>
+        <td><span class="sev sev-high">Alto</span></td>
+      </tr>
+      <tr class="new-row">
+        <td><code>product_views</code> (analítica)</td>
+        <td>No declarado</td>
+        <td>Indefinido</td>
+        <td><span class="sev sev-medium">Medio</span></td>
+      </tr>
+      <tr class="new-row">
+        <td><code>search_queries</code> (analítica)</td>
+        <td>No declarado</td>
+        <td>Indefinido</td>
+        <td><span class="sev sev-medium">Medio</span></td>
+      </tr>
+      <tr class="new-row">
+        <td><code>payments_log.raw_payload</code></td>
+        <td>No declarado (debería seguir el pedido = 6 años)</td>
+        <td>Indefinido. Contiene posiblemente Ds_TitularEmail (= email cliente)</td>
+        <td><span class="sev sev-high">Alto</span></td>
+      </tr>
+      <tr class="new-row">
+        <td><code>order_status_history.reason</code></td>
+        <td>No declarado</td>
+        <td>Indefinido. Puede contener nombres/motivos manuales del admin</td>
+        <td><span class="sev sev-medium">Medio</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-critical">
+    <h4>Análisis jurídico</h4>
+    <p>El art. 5.1.e RGPD exige que los datos se conserven «no más allá del tiempo necesario para los fines del tratamiento». La política declara plazos, pero la implementación técnica los excede.</p>
+    <p>La AEPD considera <strong>especialmente reprochable</strong> declarar plazos al interesado y luego no aplicarlos (resolución PS/00076/2024 cita textualmente «la falta de coherencia entre lo informado y lo ejecutado en materia de conservación se valorará como agravante»).</p>
+  </div>
+
+  <h3>5.2 Acción correctiva — cron de retención</h3>
+
+<pre><code>-- Nueva edge function: data-retention-cron
+-- Programada vía pg_cron diariamente a las 03:00 UTC
+
+-- 1) Borrar customer_sessions expiradas > 7 días
+delete from customer_sessions where expires_at < now() - interval '7 days';
+
+-- 2) Purgar product_views > 24 meses (analítica agregada conserva en cuadro)
+delete from product_views where viewed_at < now() - interval '24 months';
+
+-- 3) Purgar search_queries > 24 meses
+delete from search_queries where searched_at < now() - interval '24 months';
+
+-- 4) Purgar quote_requests resueltas > 13 meses
+delete from quote_requests
+where status = 'closed' and created_at < now() - interval '13 months';
+
+-- 5) Anonimizar orders > 6 años (no borrar — integridad contable, art. 30 CCom)
+update orders set
+  customer_email      = 'anonymized-' || substring(id::text, 1, 8) || '@anon.local',
+  customer_phone      = '+34000000000',
+  customer_first_name = 'Anonimizado',
+  customer_last_name  = '—',
+  shipping_address    = null,
+  shipping_notes      = null,
+  invoice_address     = null
+where created_at < now() - interval '6 years'
+  and customer_first_name <> 'Anonimizado';
+
+-- 6) Anonimizar payments_log.raw_payload > 6 años
+update payments_log set raw_payload = '{"anonymized": true}'::jsonb
+where created_at < now() - interval '6 years'
+  and not (raw_payload ? 'anonymized');</code></pre>
+
+  <!-- ───── 6. Anonimización ───── -->
+  <h2 class="section" id="sec-6"><span class="num">6.</span>Anonimización y derecho al olvido <span class="new-tag">Nuevo</span></h2>
+
+  <h3>6.1 Estado actual del derecho de supresión (art. 17 RGPD)</h3>
+
+  <p>La política de privacidad declara que el interesado puede ejercer el derecho de supresión escribiendo a <code>info@dcbikescantabria.es</code>. <strong>No existe procedimiento técnico documentado</strong> para ejecutarlo.</p>
+
+  <div class="callout callout-high">
+    <h4>Conflicto entre obligación contable y derecho RGPD</h4>
+    <p>Cuando un cliente solicita supresión, el responsable debe equilibrar:</p>
+    <ul style="margin:8px 0">
+      <li><strong>Art. 17.3.b RGPD</strong>: el derecho NO aplica cuando el tratamiento sea necesario para el cumplimiento de una obligación legal (conservación contable).</li>
+      <li><strong>Art. 30 CCom y art. 66 LGT</strong>: obligación de conservar facturas 6 años (CCom) o 4 años (LGT).</li>
+    </ul>
+    <p>Solución correcta = <strong>anonimización parcial</strong> tras 6 años conservando el dato contable (factura emitida con NIF), pero borrando identificadores no exigidos por la ley (teléfono, email, notas, dirección de envío). Esto NO está implementado.</p>
+  </div>
+
+  <h3>6.2 Acción correctiva — Procedimiento documentado</h3>
+
+  <p>Crear procedimiento en <code>docs/legal/procedimiento-supresion.md</code>:</p>
+
+  <ol>
+    <li>El cliente envía email a <code>info@dcbikescantabria.es</code> identificándose y solicitando supresión.</li>
+    <li>Verificar identidad (vincular email a pedido existente).</li>
+    <li>Determinar si los datos están dentro del plazo obligatorio de conservación (6 años).</li>
+    <li>Si están dentro del plazo: anonimización parcial (mantener factura+NIF, eliminar teléfono/dirección/email).</li>
+    <li>Si están fuera del plazo: anonimización total.</li>
+    <li>Confirmar al cliente por escrito (timestamp + acción ejecutada).</li>
+    <li>Registrar la solicitud en una nueva tabla <code>data_subject_requests</code>.</li>
+  </ol>
+
+<pre><code>create table data_subject_requests (
+  id uuid primary key default gen_random_uuid(),
+  request_type text not null check (request_type in ('access','rectification','erasure','portability','restriction','objection')),
+  customer_email text not null,
+  received_at timestamptz not null default now(),
+  identity_verified_at timestamptz,
+  resolved_at timestamptz,
+  resolution_action text,
+  resolved_by uuid references auth.users(id),
+  notes text
+);</code></pre>
+
+  <!-- ───── 7. Inconsistencias datos titular ───── -->
+  <h2 class="section" id="sec-7"><span class="num">7.</span>Inconsistencias en datos del titular <span class="new-tag">Nuevo</span></h2>
+
+  <h3>7.1 Direcciones discrepantes</h3>
+
+  <table>
+    <thead>
+      <tr><th>Ubicación</th><th>Texto</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>0001_initial.sql:125</code> (seed)</td><td>«C/ La Cantábrica nº1, El Astillero, Cantabria»</td></tr>
+      <tr><td><code>PrivacyPolicy.tsx:67</code></td><td>«C. la Cantábrica bloque 2, El Astillero, Cantabria»</td></tr>
+      <tr><td><code>CookiePolicy.tsx:97</code></td><td>«C. la Cantábrica, bloque 2 n, 1 BAJO, 39610 Astillero, Cantabria»</td></tr>
+      <tr><td><code>LegalNotice.tsx:143</code> (fallback)</td><td>«C. la Cantábrica, bloque 2 n, 1 BAJO, 39610 El Astillero, Cantabria»</td></tr>
+      <tr><td><code>TermsOfSale.tsx:111</code> (fallback)</td><td>«C. la Cantábrica, bloque 2 n, 1 BAJO, 39610 El Astillero, Cantabria»</td></tr>
+      <tr><td><code>index.html</code> Schema.org</td><td>«Calle La Cantábrica, Bloque 2N, 1º BAJO, 39610 El Astillero»</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-high">
+    <h4>Análisis jurídico</h4>
+    <p>El art. 10 LSSI-CE exige identificar el domicilio del titular con precisión. La AEPD ha sancionado en varias resoluciones la presencia de direcciones contradictorias en una misma web cuando el consumidor no puede determinar cuál es la oficial (resolución PS/00415/2022).</p>
+    <p>Adicionalmente, el seed default <code>store_phone = "+34 000 000 000"</code> (<code>0001_initial.sql:127</code>) es un placeholder evidentemente erróneo que se mostrará en producción si el admin no lo cambia.</p>
+  </div>
+
+  <h3>7.2 Acción correctiva</h3>
+
+  <ol>
+    <li>Definir <strong>una única fuente de verdad</strong>: el campo <code>store_address</code> en <code>settings</code>.</li>
+    <li>Eliminar todos los fallbacks hardcoded en TSX. Si el setting no está cumplimentado, mostrar <code>&lt;Pending /&gt;</code> y bloquear el deploy.</li>
+    <li>Actualizar el seed del <code>0001_initial.sql</code> con dirección coherente o vacía con flag <code>setup_required: true</code>.</li>
+    <li>Sincronizar <code>scripts/prerender.mjs</code> para leer del entorno en build, no hardcoded.</li>
+  </ol>
+
+  <!-- ───── 8. Cron Redsys ───── -->
+  <h2 class="section" id="sec-8"><span class="num">8.</span>Pasarela Redsys — Cron y secretos <span class="new-tag">Nuevo</span></h2>
+
+  <h3>8.1 Migración con placeholders</h3>
+
+  <p><code>supabase/migrations/0005_pg_cron_auto_cancel.sql</code> contiene placeholders sin sustituir:</p>
+
+<pre><code>url     := 'https://&lt;PROJECT_REF&gt;.supabase.co/functions/v1/order-auto-cancel',
+headers := jsonb_build_object(
+  'Authorization', 'Bearer &lt;SERVICE_ROLE_KEY&gt;',
+  'x-cron-secret', '&lt;CRON_SECRET&gt;'
+)</code></pre>
+
+  <div class="callout callout-critical">
+    <h4>Hallazgo crítico</h4>
+    <p>La propia migración advierte que «NO se aplica tal cual». Si el operador olvida sustituir los placeholders durante el setup, el cron <strong>no ejecuta nunca</strong>. Consecuencia:</p>
+    <ul style="margin:8px 0 0 0">
+      <li>Los pedidos <code>authorized</code> retienen el dinero del cliente en su tarjeta <strong>indefinidamente</strong> (hasta el límite de 7 días impuesto por Redsys).</li>
+      <li>El cliente puede pensar que ha pagado pero la tienda no procesa el pedido.</li>
+      <li>Posibles reclamaciones por <strong>retención indebida</strong> ante OMIC.</li>
+      <li>Reclamación ante Banco de España por mal funcionamiento TPV.</li>
+    </ul>
+  </div>
+
+  <h3>8.2 Acción correctiva</h3>
+
+  <ol>
+    <li>Crear un script de despliegue (<code>scripts/deploy-cron.sh</code>) que sustituye los placeholders con variables de entorno.</li>
+    <li>Añadir a la documentación un <strong>checklist post-deploy</strong> obligatorio con verificación: <code>select * from cron.job where jobname = 'order-auto-cancel-job';</code></li>
+    <li>Implementar un <strong>healthcheck</strong> en una nueva edge function <code>cron-healthcheck</code> que devuelva la última ejecución del job, y alertar al admin si supera 1 hora sin ejecutarse.</li>
+  </ol>
+
+  <!-- ───── 9. Google Reviews ───── -->
+  <h2 class="section" id="sec-9"><span class="num">9.</span>Reviews Google Places <span class="new-tag">Nuevo</span></h2>
+
+  <p>Auditado <code>supabase/functions/google-reviews/index.ts</code>.</p>
+
+  <h3>9.1 Datos personales de terceros</h3>
+
+  <p>La función llama a <code>https://places.googleapis.com/v1/places/{placeId}</code> solicitando los campos:</p>
+
+<pre><code>reviews.rating, reviews.text, reviews.originalText,
+reviews.authorAttribution, reviews.relativePublishTimeDescription</code></pre>
+
+  <p><code>reviews.authorAttribution</code> contiene <strong>nombre y foto del autor de la review</strong> (datos personales de terceros distintos al titular de la web).</p>
+
+  <h3>9.2 Análisis jurídico</h3>
+
+  <div class="callout callout-medium">
+    <p>Cuando DC Bikes muestra reviews de Google en su web, está <strong>procesando datos personales de los autores</strong> como responsable del tratamiento (recoge desde Google y los publica en su sitio). Esto requiere:</p>
+    <ul style="margin:8px 0">
+      <li><strong>Base legal (art. 6 RGPD)</strong>: probablemente interés legítimo (6.1.f) en mostrar testimonios reales.</li>
+      <li><strong>Información al interesado (art. 14 RGPD — datos no obtenidos del propio interesado)</strong>: el responsable debería poder demostrar que ha intentado informar al autor de la review de que sus datos se reproducen en otro sitio. <strong>Excepción art. 14.5.b</strong>: cuando la obtención sea «manifiestamente desproporcionada» — aplicable porque informar a cada autor sería irrealizable.</li>
+      <li><strong>Mención en política de privacidad</strong>: actualmente NO se menciona el procesamiento de reviews de Google Places ni la base legal aplicada.</li>
+    </ul>
+  </div>
+
+  <h3>9.3 Acción correctiva</h3>
+
+  <p>Añadir en <code>PrivacyPolicy.tsx</code> sección nueva:</p>
+
+  <blockquote>«<strong>Reseñas de Google.</strong> Mostramos en nuestra web reseñas que nuestros clientes y visitantes han publicado voluntariamente en Google Maps sobre nuestro negocio. Estas reseñas incluyen el nombre y, en su caso, la foto de perfil tal y como el autor las publicó en Google. La base legal para esta publicación es nuestro <strong>interés legítimo</strong> en compartir valoraciones reales de nuestros clientes (art. 6.1.f RGPD). Si eres autor de una reseña y deseas que retiremos su visualización en nuestra web, escríbenos a <a href="mailto:info@dcbikescantabria.es">info@dcbikescantabria.es</a>.»</blockquote>
+
+  <!-- ───── 10. URLs firmadas y tokens ───── -->
+  <h2 class="section" id="sec-10"><span class="num">10.</span>URLs firmadas (facturas) y tokens HMAC <span class="new-tag">Nuevo</span></h2>
+
+  <h3>10.1 TTL de URLs firmadas de factura</h3>
+
+  <p>Evidencia en <code>customer-order-detail/index.ts:128</code> y <code>order-public-get/index.ts:103</code>:</p>
+
+<pre><code>const signedUrl = await getSignedInvoiceUrl(supabase, inv.pdf_storage_path, 60 * 60 * 24 * 7)
+//                                                                          ↑ 7 DÍAS</code></pre>
+
+  <div class="callout callout-medium">
+    <p>Las URLs firmadas son válidas durante <strong>7 días</strong>. Si el cliente copia el link y lo comparte por error en WhatsApp, redes sociales, foros, o pega el URL en otra app — cualquier persona accede a la factura completa durante una semana.</p>
+    <p>Mejor práctica: TTL corto (15-60 min) y regeneración cada vez que el cliente pulsa «Descargar factura». La factura no es información «pública» — contiene datos personales (nombre, dirección, NIF) y debe protegerse al máximo.</p>
+  </div>
+
+  <h3>10.2 Token HMAC determinista sin expiración</h3>
+
+  <p>Evidencia en <code>_shared/order-token.ts:54-58</code>:</p>
+
+<pre><code>export async function generateOrderToken(orderId, customerEmail) {
+  return hmacSha256B64Url(`${orderId}:${customerEmail.toLowerCase().trim()}`)
+}</code></pre>
+
+  <p>El token NO incluye timestamp. Es válido <strong>para siempre</strong> mientras no cambie el secreto <code>ORDER_TOKEN_SECRET</code>.</p>
+
+  <div class="callout callout-medium">
+    <p>Si la URL <code>/pedido/confirmacion?id=X&amp;token=Y</code> se filtra (log de servidor de un tercero, captura de pantalla compartida, historial de navegador en ordenador familiar, etc.), <strong>el acceso al pedido es perpetuo</strong>.</p>
+    <p>Mejora: incluir timestamp en la firma y rechazar tokens > 30 días.</p>
+  </div>
+
+  <h3>10.3 Acción correctiva</h3>
+
+<pre><code>// _shared/order-token.ts mejorado
+export async function generateOrderToken(orderId, customerEmail) {
+  const issuedAt = Math.floor(Date.now() / 1000)
+  const payload = `${orderId}:${customerEmail.toLowerCase().trim()}:${issuedAt}`
+  const sig = await hmacSha256B64Url(payload)
+  return `${issuedAt}.${sig}`  // formato: timestamp.signature
+}
+
+export async function verifyOrderToken(orderId, customerEmail, receivedToken) {
+  const [tsStr, receivedSig] = receivedToken.split('.')
+  const ts = parseInt(tsStr, 10)
+  if (!Number.isFinite(ts)) return false
+  // Ventana de validez: 30 días
+  const ageMs = Date.now() - ts * 1000
+  if (ageMs < 0 || ageMs > 30 * 24 * 3600 * 1000) return false
+  // Reconstruir firma esperada y comparar timing-safe
+  const expected = await hmacSha256B64Url(`${orderId}:${customerEmail.toLowerCase().trim()}:${ts}`)
+  return constantTimeEqual(expected, receivedSig)
+}</code></pre>
+
+  <p>Y reducir TTL signed URLs a 1 hora con regeneración bajo demanda.</p>
+
+  <!-- ───── 11. Marketing opt-in sin uso ───── -->
+  <h2 class="section" id="sec-11"><span class="num">11.</span>Captura de marketing opt-in sin uso <span class="new-tag">Nuevo</span></h2>
+
+  <p>El campo <code>orders.marketing_opt_in</code> se captura en checkout (<code>Checkout.tsx:647-656</code>), se valida en backend (<code>order-place/index.ts:171-177</code>), se guarda en BD (<code>0003_orders_schema.sql:68</code>) y se muestra en admin (<code>OrderDetail.tsx:356</code>).</p>
+
+  <p>Sin embargo, <strong>no existe ninguna funcionalidad de envío de newsletter</strong>:</p>
+
+  <ul>
+    <li>No hay tabla <code>newsletter_subscribers</code>.</li>
+    <li>No hay edge function de envío masivo.</li>
+    <li>No hay integración con Mailchimp/Sendgrid/Resend para newsletter.</li>
+    <li>El admin lo ve, pero no puede exportar lista ni enviar campañas.</li>
+  </ul>
+
+  <div class="callout callout-high">
+    <h4>Análisis jurídico</h4>
+    <p>El art. 5.1.b RGPD obliga a recoger datos «con fines determinados, explícitos y legítimos». Captar consentimiento sin propósito definido contraviene este principio.</p>
+    <p>La AEPD considera que <strong>no se puede pedir consentimiento «por si acaso»</strong> — si en el futuro se quiere lanzar newsletter, debería volver a pedirse consentimiento expresamente para esa finalidad concreta.</p>
+  </div>
+
+  <h3>11.1 Acción correctiva</h3>
+
+  <p><strong>Opción A (recomendada):</strong> eliminar el checkbox <code>marketing_opt_in</code> del checkout hasta que exista funcionalidad real de newsletter. Limpiar el campo en BD.</p>
+
+  <p><strong>Opción B:</strong> implementar realmente el newsletter (doble opt-in, plantillas, gestión de bajas) antes del lanzamiento.</p>
+
+  <!-- ───── 12. Prerender ───── -->
+  <h2 class="section" id="sec-12"><span class="num">12.</span>Prerender y descubribilidad legal <span class="new-tag">Nuevo</span></h2>
+
+  <h3>12.1 Páginas legales con <code>noIndex: true</code></h3>
+
+  <p>Evidencia en <code>scripts/prerender.mjs</code> líneas 221-243:</p>
+
+<pre><code>{ dir: 'cookies',      noIndex: true, ... },
+{ dir: 'privacidad',   noIndex: true, ... },
+{ dir: 'aviso-legal',  noIndex: true, ... },</code></pre>
+
+  <div class="callout callout-medium">
+    <p>Marcar las páginas legales como <code>noindex</code> es <strong>discutible jurídicamente</strong>:</p>
+    <ul style="margin:8px 0">
+      <li><strong>A favor</strong>: evita que Google indexe textos legales duplicados de tu CMS y los priorice por encima del catálogo comercial.</li>
+      <li><strong>En contra</strong>: la AEPD valora la <strong>accesibilidad y descubribilidad</strong> de los textos legales. Un usuario que busca «política de privacidad DC Bikes Cantabria» en Google debería encontrarla. La doctrina mayoritaria prefiere <code>index, follow</code>.</li>
+    </ul>
+  </div>
+
+  <h3>12.2 Páginas legales no prerendereadas</h3>
+
+  <p><code>termi-venta</code> y <code>devoluciones</code> NO están en el array <code>routes</code> del prerender. Cuando un crawler accede a esas URLs, recibe el HTML genérico del home con <code>title</code> y <code>description</code> incorrectos.</p>
+
+  <p>Acción correctiva: añadirlas a <code>routes</code> con title/description específicos:</p>
+
+<pre><code>{
+  dir: 'terminos-venta',
+  title: `Términos y condiciones de venta | ${NAME}`,
+  desc: 'Condiciones generales de venta de la tienda online de DC Bikes Cantabria conforme a la LSSI-CE y al RDL 1/2007.',
+  canonical: `${SITE}/terminos-venta`,
+  noIndex: false,  // recomendado index
+  schema: null,
+},
+{
+  dir: 'devoluciones',
+  title: `Devoluciones y desistimiento | ${NAME}`,
+  desc: 'Política de devoluciones, derecho de desistimiento de 14 días y garantía legal de 3 años conforme al RDL 1/2007.',
+  canonical: `${SITE}/devoluciones`,
+  noIndex: false,
+  schema: null,
+},</code></pre>
+
+  <!-- ───── 13. Estado hallazgos v1 ───── -->
+  <h2 class="section" id="sec-13"><span class="num">13.</span>Estado de los 27 hallazgos v1</h2>
+
+  <p>Comprobación si los hallazgos del primer informe se mantienen tras esta segunda revisión. Ninguno se ha resuelto entre v1 y v2 (mismas líneas de código auditadas).</p>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Hallazgo v1</th><th>Severidad</th><th>Estado v2</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Aviso legal con NIF/CIF vacíos</td><td><span class="sev sev-critical">Crítico</span></td><td>Vigente</td></tr>
+      <tr><td>2</td><td>Aviso legal afirma "no realiza venta online"</td><td><span class="sev sev-critical">Crítico</span></td><td>Vigente</td></tr>
+      <tr><td>3</td><td>Botón sin fórmula "con obligación de pago"</td><td><span class="sev sev-critical">Crítico</span></td><td>Vigente</td></tr>
+      <tr><td>4</td><td>Banner cookies: "Aceptar" más prominente</td><td><span class="sev sev-critical">Crítico</span></td><td>Vigente</td></tr>
+      <tr><td>5</td><td>Google Fonts sin consentimiento</td><td><span class="sev sev-critical">Crítico</span></td><td>Vigente</td></tr>
+      <tr><td>6</td><td>Toggle "Analíticas" pre-marcado true</td><td><span class="sev sev-critical">Crítico</span></td><td>Vigente</td></tr>
+      <tr><td>7</td><td>Política sin Vercel ni Google como encargados</td><td><span class="sev sev-high">Alto</span></td><td>Vigente</td></tr>
+      <tr><td>8</td><td>Descripción Supabase imprecisa</td><td><span class="sev sev-high">Alto</span></td><td>Vigente</td></tr>
+      <tr><td>9</td><td>No captura IP/UA al consentir (orders)</td><td><span class="sev sev-high">Alto</span></td><td>Vigente</td></tr>
+      <tr><td>10</td><td>Email confirmación sin ODR ni CIF</td><td><span class="sev sev-high">Alto</span></td><td>Vigente</td></tr>
+      <tr><td>11</td><td>Email sin info desistimiento</td><td><span class="sev sev-high">Alto</span></td><td>Vigente</td></tr>
+      <tr><td>12</td><td>Política cookies con inventario incompleto</td><td><span class="sev sev-high">Alto</span></td><td>Vigente</td></tr>
+      <tr><td>13</td><td>Sin registro de actividades (RAT)</td><td><span class="sev sev-high">Alto</span></td><td>Vigente</td></tr>
+      <tr><td>14</td><td>Sin procedimiento brechas</td><td><span class="sev sev-high">Alto</span></td><td>Vigente</td></tr>
+      <tr><td>15</td><td>Admin sin 2FA</td><td><span class="sev sev-medium">Medio</span></td><td>Vigente · agravado por N1</td></tr>
+      <tr><td>16</td><td>Política sin mención DPO</td><td><span class="sev sev-medium">Medio</span></td><td>Vigente</td></tr>
+      <tr><td>17</td><td>Política sin derecho limitación</td><td><span class="sev sev-medium">Medio</span></td><td>Vigente</td></tr>
+      <tr><td>18</td><td>Política sin mención menores</td><td><span class="sev sev-medium">Medio</span></td><td>Vigente</td></tr>
+      <tr><td>19</td><td>Sin cláusula 18 años Términos</td><td><span class="sev sev-medium">Medio</span></td><td>Vigente</td></tr>
+      <tr><td>20</td><td>Google Maps como "marketing"</td><td><span class="sev sev-medium">Medio</span></td><td>Vigente</td></tr>
+      <tr><td>21</td><td>Verifactu — verificar aplicabilidad</td><td><span class="sev sev-medium">Medio</span></td><td>Vigente</td></tr>
+      <tr><td>22</td><td>Series B2C/B2B unificadas</td><td><span class="sev sev-low">Bajo</span></td><td>Vigente</td></tr>
+      <tr><td>23</td><td>localStorage cookie consent sin TTL</td><td><span class="sev sev-low">Bajo</span></td><td>Vigente</td></tr>
+      <tr><td>24</td><td>Checkout/Cart sin noIndex meta</td><td><span class="sev sev-low">Bajo</span></td><td>Vigente</td></tr>
+      <tr><td>25</td><td>Validación algorítmica CIF</td><td><span class="sev sev-low">Mejora</span></td><td>Vigente</td></tr>
+      <tr><td>26</td><td>Anonimización logs &gt; 6 años</td><td><span class="sev sev-low">Mejora</span></td><td>Agravado · ver N6 (sin cron)</td></tr>
+      <tr><td>27</td><td>Auditoría WCAG 2.1 AA</td><td><span class="sev sev-critical">Potencial</span></td><td>Vigente</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ───── 14. Plan acción v2 ───── -->
+  <h2 class="section" id="sec-14"><span class="num">14.</span>Plan de acción priorizado v2 (solo nuevos hallazgos)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:40px">#</th>
+        <th>Hallazgo nuevo</th>
+        <th>Severidad</th>
+        <th>Norma</th>
+        <th>Esfuerzo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="new-row"><td>N1</td><td>Modelo admin: cualquier authenticated = admin</td><td><span class="sev sev-critical">Crítico</span></td><td>Art. 32.1.b RGPD</td><td>4-6 h</td></tr>
+      <tr class="new-row"><td>N2</td><td>Falta cabecera HSTS</td><td><span class="sev sev-high">Alto</span></td><td>Art. 32 RGPD</td><td>10 min</td></tr>
+      <tr class="new-row"><td>N3</td><td>CORS abierto a <code>*</code></td><td><span class="sev sev-high">Alto</span></td><td>Art. 32 RGPD</td><td>1 h</td></tr>
+      <tr class="new-row"><td>N4</td><td>QuoteModal sin captcha ni rate-limit</td><td><span class="sev sev-critical">Crítico</span></td><td>Art. 32 RGPD + LSSI</td><td>3 h (Turnstile + edge function)</td></tr>
+      <tr class="new-row"><td>N5</td><td><code>quote_requests</code> sin prueba consentimiento</td><td><span class="sev sev-high">Alto</span></td><td>Art. 7.1 RGPD</td><td>30 min (migración SQL)</td></tr>
+      <tr class="new-row"><td>N6</td><td>Sin anonimización automática</td><td><span class="sev sev-critical">Crítico</span></td><td>Art. 5.1.e RGPD</td><td>4 h (cron + 5 jobs)</td></tr>
+      <tr class="new-row"><td>N7</td><td><code>marketing_opt_in</code> sin uso real</td><td><span class="sev sev-high">Alto</span></td><td>Art. 5.1.b RGPD</td><td>15 min (quitar checkbox) o 8 h (implementar newsletter)</td></tr>
+      <tr class="new-row"><td>N8</td><td>CSP con <code>'unsafe-inline'</code></td><td><span class="sev sev-high">Alto</span></td><td>Art. 32 RGPD</td><td>2 h (mover styles inline a clases)</td></tr>
+      <tr class="new-row"><td>N9</td><td>CSP sin <code>font-src</code> para Google Fonts</td><td><span class="sev sev-medium">Medio</span></td><td>Coherencia técnica</td><td>1 h (autohospedar)</td></tr>
+      <tr class="new-row"><td>N10</td><td><code>Permissions-Policy: geolocation=(self)</code> innecesario</td><td><span class="sev sev-low">Bajo</span></td><td>Mínimo privilegio</td><td>5 min</td></tr>
+      <tr class="new-row"><td>N11</td><td>Inconsistencia direcciones titular</td><td><span class="sev sev-high">Alto</span></td><td>Art. 10 LSSI-CE</td><td>1 h</td></tr>
+      <tr class="new-row"><td>N12</td><td>Placeholder <code>+34 000 000 000</code> en seed</td><td><span class="sev sev-medium">Medio</span></td><td>Art. 10 LSSI-CE</td><td>5 min</td></tr>
+      <tr class="new-row"><td>N13</td><td>Cron 0005 con placeholders no sustituidos</td><td><span class="sev sev-critical">Crítico (operacional)</span></td><td>Buena práctica</td><td>1 h (script + healthcheck)</td></tr>
+      <tr class="new-row"><td>N14</td><td>Reviews Google Places sin base legal documentada</td><td><span class="sev sev-medium">Medio</span></td><td>Art. 6.1.f + 14 RGPD</td><td>15 min (texto en política)</td></tr>
+      <tr class="new-row"><td>N15</td><td>URLs firmadas factura TTL 7 días</td><td><span class="sev sev-medium">Medio</span></td><td>Art. 32 RGPD</td><td>30 min</td></tr>
+      <tr class="new-row"><td>N16</td><td>Token HMAC pedido sin expiración</td><td><span class="sev sev-medium">Medio</span></td><td>Buena práctica</td><td>1 h</td></tr>
+      <tr class="new-row"><td>N17</td><td>Prerender páginas legales con noIndex</td><td><span class="sev sev-low">Mejora</span></td><td>Buena práctica AEPD</td><td>10 min</td></tr>
+      <tr class="new-row"><td>N18</td><td>Sin procedimiento art. 17 (derecho supresión)</td><td><span class="sev sev-high">Alto</span></td><td>Art. 17 RGPD</td><td>3 h (doc + tabla SQL)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <h4>Esfuerzo total estimado para los nuevos hallazgos</h4>
+    <p>Aproximadamente <strong>21-26 horas de desarrollo adicionales</strong> a las 27-35 horas del primer informe.</p>
+    <p>Esfuerzo combinado v1 + v2: <strong>48-61 horas</strong> para alcanzar APTO, excluyendo Verifactu y accesibilidad WCAG.</p>
+  </div>
+
+  <!-- ───── 15. Anexos ───── -->
+  <h2 class="section" id="sec-15"><span class="num">15.</span>Anexos técnicos</h2>
+
+  <h3>Anexo A — Migración SQL consolidada de la 2ª iteración</h3>
+
+<pre><code>-- migrations/0009_v2_legal_compliance.sql
+
+-- 1) Modelo admin con tabla separada
+create table if not exists admin_users (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  email      text not null,
+  role       text not null default 'admin' check (role in ('admin','staff')),
+  created_at timestamptz not null default now(),
+  revoked_at timestamptz
+);
+
+create or replace function is_admin()
+returns boolean language sql security definer stable
+as $$
+  select exists (
+    select 1 from admin_users
+    where user_id = auth.uid() and revoked_at is null
+  );
+$$;
+revoke all on function is_admin() from public;
+grant execute on function is_admin() to authenticated;
+
+-- 2) Consentimiento en quote_requests
+alter table quote_requests
+  add column if not exists consent_at         timestamptz,
+  add column if not exists consent_ip         text,
+  add column if not exists consent_user_agent text,
+  add column if not exists consent_version    text;
+
+-- Revocar INSERT público; solo edge function con service_role
+drop policy if exists "public_insert_quotes" on quote_requests;
+
+-- 3) Consentimiento en orders
+alter table orders
+  add column if not exists consent_ip              text,
+  add column if not exists consent_user_agent      text,
+  add column if not exists consent_terms_version   text,
+  add column if not exists consent_privacy_version text;
+
+-- 4) Tabla brechas (de v1, repetida aquí)
+create table if not exists data_breaches (
+  id uuid primary key default gen_random_uuid(),
+  detected_at timestamptz not null,
+  description text not null,
+  affected_data_categories text[] not null,
+  estimated_affected_users int,
+  risk_level text check (risk_level in ('bajo','medio','alto')),
+  notified_aepd boolean default false,
+  notified_aepd_at timestamptz,
+  notified_users boolean default false,
+  containment_measures text,
+  created_at timestamptz default now()
+);
+
+-- 5) Tabla solicitudes derechos interesados (RGPD)
+create table if not exists data_subject_requests (
+  id uuid primary key default gen_random_uuid(),
+  request_type text not null check (request_type in
+    ('access','rectification','erasure','portability','restriction','objection')),
+  customer_email text not null,
+  received_at timestamptz not null default now(),
+  identity_verified_at timestamptz,
+  resolved_at timestamptz,
+  resolution_action text,
+  resolved_by uuid references auth.users(id),
+  notes text
+);
+
+-- 6) Reescritura RLS con is_admin()
+drop policy if exists "orders_select_admin" on orders;
+create policy "orders_select_admin" on orders
+  for select to authenticated using (is_admin());
+
+drop policy if exists "orders_update_admin" on orders;
+create policy "orders_update_admin" on orders
+  for update to authenticated using (is_admin());
+
+-- Repetir el patrón para todas las tablas con datos personales:
+-- order_items, payments_log, invoices, customer_sessions,
+-- quote_requests, order_status_history, settings.</code></pre>
+
+  <h3>Anexo B — Cron de retención (pg_cron job diario)</h3>
+
+<pre><code>-- migrations/0010_data_retention_cron.sql
+-- Job diario que aplica los plazos declarados en la política de privacidad.
+
+select cron.schedule(
+  'data-retention-job',
+  '0 3 * * *',  -- todos los días a las 03:00 UTC
+  $$
+    -- a) Sesiones de cliente expiradas hace > 7 días
+    delete from customer_sessions where expires_at < now() - interval '7 days';
+
+    -- b) Vistas de producto > 24 meses
+    delete from product_views where viewed_at < now() - interval '24 months';
+
+    -- c) Búsquedas > 24 meses
+    delete from search_queries where searched_at < now() - interval '24 months';
+
+    -- d) Consultas resueltas > 13 meses (declarado "1 año + 1 mes margen")
+    delete from quote_requests
+    where status = 'closed' and created_at < now() - interval '13 months';
+
+    -- e) Anonimización de pedidos > 6 años (NO borrar — integridad contable)
+    update orders set
+      customer_email      = 'anonymized-' || substring(id::text,1,8) || '@anon.local',
+      customer_phone      = '+34000000000',
+      customer_first_name = 'Anonimizado',
+      customer_last_name  = '—',
+      shipping_address    = null,
+      shipping_notes      = null,
+      invoice_address     = null
+    where created_at < now() - interval '6 years'
+      and customer_first_name <> 'Anonimizado';
+
+    -- f) Anonimización payments_log raw_payload > 6 años
+    update payments_log set raw_payload = '{"anonymized": true}'::jsonb
+    where created_at < now() - interval '6 years'
+      and not (raw_payload ? 'anonymized');
+  $$
+);</code></pre>
+
+  <h3>Anexo C — Cabeceras HTTP corregidas (vercel.json)</h3>
+
+<pre><code>{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "X-Permitted-Cross-Domain-Policies", "value": "none" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
+        { "key": "Cross-Origin-Resource-Policy", "value": "same-origin" },
+        { "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), interest-cohort=(), payment=(self), usb=(), magnetometer=(), gyroscope=(), accelerometer=()" },
+        { "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' https://www.google.com https://maps.google.com https://sis.redsys.es; form-action 'self' https://sis.redsys.es; frame-ancestors 'self'; base-uri 'self';" }
+      ]
+    }
+  ]
+}</code></pre>
+
+  <p>Requisitos previos para que esta CSP funcione:</p>
+  <ol>
+    <li>Eliminar todos los <code>&lt;style&gt;</code> inline (mover a <code>index.css</code>).</li>
+    <li>Eliminar todos los <code>style=&quot;...&quot;</code> inline en HTML (Tailwind ya cumple).</li>
+    <li>Autohospedar Google Fonts con <code>@fontsource/*</code>.</li>
+    <li>Sustituir el JSON-LD inline del <code>index.html</code> por nonce o moverlo a archivo externo.</li>
+  </ol>
+
+  <!-- ───── Conclusión ───── -->
+  <h2 class="section" id="sec-conclusion">Conclusión final v2</h2>
+
+  <p>La segunda iteración profundiza en aspectos de <strong>defensa en profundidad</strong> y <strong>operacional</strong> que el primer informe no cubría con detalle. Los 18 hallazgos nuevos no contradicen el veredicto inicial (<strong>NO APTO</strong>), pero lo agravan:</p>
+
+  <ul>
+    <li>El <strong>modelo de autorización admin (N1)</strong> es el hallazgo más preocupante de los nuevos: un único toggle de configuración Supabase protege todos los datos personales de los clientes.</li>
+    <li>La <strong>ausencia total de anonimización automática (N6)</strong> implica que la web está <strong>incumpliendo lo declarado en su propia política de privacidad</strong> — circunstancia agravante específica reconocida por la AEPD.</li>
+    <li>El <strong>formulario de presupuesto (N4-N5)</strong> es un vector de ataque sin protección, capaz de generar daño reputacional y costes de Resend en pocas horas.</li>
+    <li>Las <strong>cabeceras de seguridad HTTP incompletas (N2, N8, N9)</strong> implican que la web no cumple las medidas técnicas básicas exigidas por el art. 32 RGPD ni por OWASP ASVS.</li>
+  </ul>
+
+  <div class="callout callout-critical">
+    <h4>Sanción potencial actualizada</h4>
+    <p>Combinando v1 + v2, la horquilla orientativa de sanción AEPD en inspección rutinaria sube a <strong>90.000 € – 280.000 €</strong> (antes 70.000 – 200.000 €), antes de atenuantes por microempresa. La diferencia se debe principalmente a que la AEPD aplica multiplicador agravante cuando detecta <strong>incoherencia entre lo declarado y lo implementado</strong> en materia de conservación (N6) y a la <strong>falta de defensa en profundidad</strong> (N1).</p>
+  </div>
+
+  <h3>Recomendación final</h3>
+
+  <p>Ejecutar el plan de acción combinado v1 + v2 en <strong>tres sprints</strong>:</p>
+
+  <ol>
+    <li><strong>Sprint 1 (críticos, ~12 h):</strong> hallazgos v1 nº 1-6 + v2 nº N1, N4, N6, N13. Esto desbloquea la posibilidad de lanzamiento.</li>
+    <li><strong>Sprint 2 (altos, ~15 h):</strong> hallazgos v1 nº 7-14 + v2 nº N2, N3, N5, N7, N8, N11, N18.</li>
+    <li><strong>Sprint 3 (medios + mejora, ~20 h):</strong> el resto.</li>
+  </ol>
+
+  <p>Tras los tres sprints, la web pasará de <strong>NO APTO</strong> a <strong>APTO</strong>. La única excepción sigue siendo Verifactu (RD 1007/2023) y, si procede, la auditoría WCAG 2.1 AA por aplicación de la Ley 11/2023.</p>
+
+</main>
+
+<footer class="doc-footer">
+  <p class="signature">Letrado especialista en Derecho Digital y Consumo · Segunda iteración de auditoría</p>
+  <p>Informe v2 emitido el 26 de mayo de 2026 · Complementario al informe v1 de la misma fecha.</p>
+  <p>Las referencias normativas citadas están vigentes a la fecha de emisión.</p>
+  <p style="margin-top:18px;font-size:11px;color:#7e6e8a">Documento confidencial — para uso exclusivo del titular del sitio web auditado.</p>
+</footer>
+
+</body>
+</html>

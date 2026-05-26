@@ -222,24 +222,55 @@ const routes = [
     title: `Política de Cookies | ${NAME}`,
     desc: 'Política de cookies de DC Bikes Cantabria: tipos de cookies utilizadas, finalidad y cómo gestionarlas o desactivarlas en tu navegador.',
     canonical: `${SITE}/cookies`,
-    noIndex: true,
-    schema: null,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Cookies', url: `${SITE}/cookies` },
+    ]),
   },
   {
     dir: 'privacidad',
     title: `Política de Privacidad | ${NAME}`,
     desc: 'Política de privacidad de DC Bikes Cantabria: qué datos personales tratamos, con qué finalidad, base legal y tus derechos según el RGPD.',
     canonical: `${SITE}/privacidad`,
-    noIndex: true,
-    schema: null,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Privacidad', url: `${SITE}/privacidad` },
+    ]),
   },
   {
     dir: 'aviso-legal',
     title: `Aviso Legal | ${NAME}`,
     desc: 'Aviso legal de DC Bikes Cantabria: titularidad del sitio, condiciones de uso, propiedad intelectual y limitación de responsabilidad conforme a la LSSI-CE.',
     canonical: `${SITE}/aviso-legal`,
-    noIndex: true,
-    schema: null,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Aviso legal', url: `${SITE}/aviso-legal` },
+    ]),
+  },
+  {
+    dir: 'terminos-venta',
+    title: `Términos y condiciones de venta | ${NAME}`,
+    desc: 'Condiciones generales de compra en DC Bikes Cantabria: proceso de pedido, pago, envío, devoluciones, garantía y resolución de conflictos.',
+    canonical: `${SITE}/terminos-venta`,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Términos de venta', url: `${SITE}/terminos-venta` },
+    ]),
+  },
+  {
+    dir: 'devoluciones',
+    title: `Política de devoluciones | ${NAME}`,
+    desc: 'Información sobre el derecho de desistimiento (14 días), formulario oficial, garantía legal de 3 años y procedimiento de devolución en DC Bikes Cantabria.',
+    canonical: `${SITE}/devoluciones`,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Devoluciones', url: `${SITE}/devoluciones` },
+    ]),
   },
 ]
 

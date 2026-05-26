@@ -50,12 +50,20 @@ export async function requireAdmin(req: Request): Promise<
     return { ok: false, status: 401, error: 'invalid bearer token' }
   }
 
-  // Cualquier usuario autenticado en Supabase Auth = admin.
-  // Seguridad apoyada en:
-  //   - disable_signup=true en Supabase (no hay signup público).
-  //   - Solo el propietario crea usuarios desde Supabase Studio.
-  //   - RLS policies restringen escritura a authenticated.
+  // Verificar que el usuario está en admin_users vía función is_admin().
+  // Defensa en profundidad: aunque disable_signup se invierta accidentalmente
+  // en Supabase Auth, un nuevo registro NO es admin.
   const supabase = createClient(supabaseUrl, serviceKey)
+  const { data: isAdmin, error: adminCheckError } = await supabase
+    .rpc('is_admin', { uid: userData.user.id })
+  if (adminCheckError) {
+    console.error('[requireAdmin] is_admin RPC error:', adminCheckError.message)
+    return { ok: false, status: 500, error: 'admin check failed' }
+  }
+  if (!isAdmin) {
+    console.warn(`[requireAdmin] user ${userData.user.email} not in admin_users`)
+    return { ok: false, status: 403, error: 'not authorized as admin' }
+  }
   return {
     ok: true,
     ctx: {

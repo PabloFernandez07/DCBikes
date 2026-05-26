@@ -29,7 +29,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-import { CORS_HEADERS, jsonError, jsonOk } from '../_shared/email-utils.ts'
+import { buildCorsHeaders, jsonError, jsonOk } from '../_shared/email-utils.ts'
 import { verifyCustomerSession } from '../_shared/customer-session.ts'
 
 /* ─────────────────── Validación ─────────────────── */
@@ -126,7 +126,8 @@ function buildDiff(
 const MODIFIABLE_STATUSES = new Set(['pending', 'authorized', 'accepted'])
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS })
+  const cors = buildCorsHeaders(req)
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   const ts = () => new Date().toISOString()
 
   try {
@@ -205,7 +206,7 @@ serve(async (req) => {
         }),
         {
           status: 422,
-          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+          headers: { 'Content-Type': 'application/json', ...cors },
         },
       )
     }
@@ -219,7 +220,7 @@ serve(async (req) => {
         }),
         {
           status: 422,
-          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+          headers: { 'Content-Type': 'application/json', ...cors },
         },
       )
     }

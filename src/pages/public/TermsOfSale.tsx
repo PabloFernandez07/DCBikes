@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { SEO } from '@/components/layout/SEO'
 import { supabase } from '@/lib/supabase'
 import { useSchedule } from '@/hooks/useSchedule'
+import { STORE_ADDRESS_FALLBACK } from '@/hooks/useStoreAddress'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -108,7 +109,7 @@ export default function TermsOfSale() {
   const companyName = s.legal_company_name ?? 'DC Bikes Cantabria'
   const cif = s.legal_company_cif ?? s.legal_nif ?? null
   const address =
-    s.legal_company_address ?? s.store_address ?? 'C. la Cantábrica, bloque 2 n, 1 BAJO, 39610 El Astillero, Cantabria'
+    s.legal_company_address ?? s.store_address ?? STORE_ADDRESS_FALLBACK
   const phone = s.store_phone ?? null
   const email = s.quote_destination_email ?? 'info@dcbikes.es'
   const pickupDays = s.pickup_retention_days ?? '15'

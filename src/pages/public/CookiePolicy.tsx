@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Cookie, Shield, BarChart2, Target, Trash2 } from 'lucide-react'
+import { useStoreAddress } from '@/hooks/useStoreAddress'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -80,6 +81,7 @@ function CookieTable({
 
 export default function CookiePolicy() {
   const pageRef = useReveal()
+  const storeAddress = useStoreAddress()
 
   const resetConsent = () => {
     localStorage.removeItem('dcbikes_cookie_consent')
@@ -110,7 +112,7 @@ export default function CookiePolicy() {
           </p>
           <p>
             Esta política explica qué cookies utiliza <strong className="text-[var(--color-cream)]">DC Bikes Cantabria</strong>{' '}
-            (C. la Cantábrica, bloque 2 n, 1 BAJO, 39610 Astillero, Cantabria), cómo y por qué, en cumplimiento del
+            ({storeAddress}), cómo y por qué, en cumplimiento del
             Reglamento General de Protección de Datos (RGPD/GDPR) y la Ley de Servicios de la Sociedad de la Información (LSSI).
           </p>
         </Section>
@@ -255,7 +257,7 @@ export default function CookiePolicy() {
             <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
               info@dcbikescantabria.es
             </a>{' '}
-            o visítanos en C. la Cantábrica, bloque 2 n, 1 BAJO, 39610 Astillero, Cantabria.
+            o visítanos en {storeAddress}.
           </p>
           <p>
             También puedes presentar una reclamación ante la{' '}

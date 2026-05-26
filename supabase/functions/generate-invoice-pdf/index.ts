@@ -23,7 +23,7 @@ import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supa
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1'
 
 import {
-  CORS_HEADERS,
+  buildCorsHeaders,
   asString,
   getSettings,
   jsonError,
@@ -68,7 +68,8 @@ interface ExistingInvoice {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS })
+  const cors = buildCorsHeaders(req)
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   const ts = () => new Date().toISOString()
 
   try {

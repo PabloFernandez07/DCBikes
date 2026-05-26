@@ -107,7 +107,6 @@ export const checkoutSchema = z
         v => v === true,
         'Debes aceptar el plazo de confirmación de 48h',
       ),
-    marketing_opt_in: z.boolean(),
   })
   .superRefine((data, ctx) => {
     // Si shipping → exigir todos los campos de dirección.
@@ -212,5 +211,4 @@ export const checkoutDefaults: CheckoutFormValues = {
   accepted_terms: false,
   accepted_privacy: false,
   accepted_approval_flow: false,
-  marketing_opt_in: false,
 }

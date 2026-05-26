@@ -19,13 +19,14 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 
-import { CORS_HEADERS, jsonError, jsonOk } from '../_shared/email-utils.ts'
+import { buildCorsHeaders, jsonError, jsonOk } from '../_shared/email-utils.ts'
 import { requireAdmin, logStatusChange } from '../_shared/order-admin.ts'
 
 const DELETABLE_STATUSES = new Set(['pending', 'payment_failed'])
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS })
+  const cors = buildCorsHeaders(req)
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   const ts = () => new Date().toISOString()
 
   try {

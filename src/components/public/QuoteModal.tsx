@@ -3,12 +3,17 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle, Tag } from 'lucide-react'
+import { Turnstile } from '@marsidev/react-turnstile'
 import { Modal } from '@/components/ui/Modal'
 import { Field } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
+import { PRIVACY_VERSION } from '@/lib/legal-versions'
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
 const schema = z.object({
+  name: z.string().min(2, 'Indica tu nombre'),
   email: z.string().email('Email inválido'),
   phone: z.string().optional(),
   message: z.string().min(20, 'El mensaje debe tener al menos 20 caracteres'),
@@ -32,12 +37,31 @@ interface QuoteModalProps {
 
 type Status = 'idle' | 'loading' | 'success' | 'error'
 
+interface InvokeResult {
+  ok: boolean
+  errorMessage?: string
+}
+
+async function invokeFn(name: string, body: unknown): Promise<InvokeResult> {
+  try {
+    const { error } = await supabase.functions.invoke(name, { body: body as Record<string, unknown> })
+    if (!error) return { ok: true }
+    const message = error.message ?? String(error)
+    return { ok: false, errorMessage: message }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    return { ok: false, errorMessage: message }
+  }
+}
+
 function fmt(n: number) {
   return n.toLocaleString('es-ES', { minimumFractionDigits: 0 })
 }
 
 export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
   const [status, setStatus] = useState<Status>('idle')
+  const [errorText, setErrorText] = useState<string>('')
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
 
   const pct = product?.discount_percent
   const hasDiscount = pct != null && pct > 0
@@ -58,34 +82,44 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
     defaultValues: { message: defaultMessage, privacy: false },
   })
 
+  const captchaRequired = Boolean(TURNSTILE_SITE_KEY)
+  const submitDisabled = captchaRequired && !turnstileToken
+
   const onSubmit = async (data: FormData) => {
-    setStatus('loading')
-    const quoteId = crypto.randomUUID()
-
-    try {
-      const { error: insertError } = await supabase
-        .from('quote_requests')
-        .insert({
-          id: quoteId,
-          product_id: productId ?? null,
-          email: data.email,
-          phone: data.phone ?? null,
-          message: data.message,
-        })
-
-      if (insertError) throw insertError
-
-      const { error: fnError } = await supabase.functions.invoke('send-quote-email', {
-        body: { quote_id: quoteId },
-      })
-
-      if (fnError) throw fnError
-
-      setStatus('success')
-      setTimeout(() => onClose(), 3000)
-    } catch {
+    if (captchaRequired && !turnstileToken) {
+      setErrorText('Verifica que no eres un robot antes de enviar.')
       setStatus('error')
+      return
     }
+
+    setStatus('loading')
+    setErrorText('')
+
+    const res = await invokeFn('quote-submit', {
+      name: data.name,
+      email: data.email,
+      phone: data.phone ?? null,
+      message: data.message,
+      product_id: productId ?? null,
+      cf_turnstile_token: turnstileToken ?? '',
+      consent_version: PRIVACY_VERSION,
+    })
+
+    if (!res.ok) {
+      const msg = res.errorMessage ?? ''
+      if (/rate.?limit/i.test(msg)) {
+        setErrorText('Has enviado demasiadas solicitudes. Vuelve a intentarlo en 1 hora.')
+      } else if (/captcha/i.test(msg)) {
+        setErrorText('Verifica que no eres un robot antes de enviar.')
+      } else {
+        setErrorText('No se pudo enviar la solicitud. Inténtalo de nuevo.')
+      }
+      setStatus('error')
+      return
+    }
+
+    setStatus('success')
+    setTimeout(() => onClose(), 3000)
   }
 
   return (
@@ -104,11 +138,11 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
             Error al enviar
           </h3>
           <p className="text-[var(--color-mid)] text-sm">
-            No se pudo enviar la solicitud. Por favor, inténtalo de nuevo o contáctanos por teléfono.
+            {errorText || 'No se pudo enviar la solicitud. Por favor, inténtalo de nuevo o contáctanos por teléfono.'}
           </p>
           <button
             type="button"
-            onClick={() => setStatus('idle')}
+            onClick={() => { setStatus('idle'); setErrorText('') }}
             className="px-4 py-2 rounded-xl border border-[var(--color-lavender)]/30 text-[var(--color-lavender)] font-[var(--font-cond)] text-sm tracking-wide hover:bg-[var(--color-lavender)]/10 transition-colors"
           >
             Volver a intentarlo
@@ -159,6 +193,14 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
           )}
 
           <Field
+            label="Nombre"
+            type="text"
+            required
+            placeholder="Tu nombre"
+            error={errors.name?.message}
+            {...register('name')}
+          />
+          <Field
             label="Email"
             type="email"
             required
@@ -200,11 +242,33 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
           {errors.privacy && (
             <p className="text-xs text-[var(--color-brand-red)] font-[var(--font-body)] -mt-2">{errors.privacy.message}</p>
           )}
+
+          {TURNSTILE_SITE_KEY ? (
+            <Turnstile
+              siteKey={TURNSTILE_SITE_KEY}
+              onSuccess={(token) => setTurnstileToken(token)}
+              onError={() => setTurnstileToken(null)}
+              onExpire={() => setTurnstileToken(null)}
+              options={{ theme: 'dark', size: 'flexible' }}
+            />
+          ) : (
+            <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+              ⚠ Captcha no configurado (VITE_TURNSTILE_SITE_KEY). Las solicitudes seguirán rate-limit por IP.
+            </p>
+          )}
+
           <div className="flex gap-3 pt-1">
             <Button type="button" variant="ghost" size="md" onClick={onClose} className="flex-1">
               Cancelar
             </Button>
-            <Button type="submit" variant="primary" size="md" loading={status === 'loading'} className="flex-1">
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              loading={status === 'loading'}
+              disabled={submitDisabled}
+              className="flex-1"
+            >
               Enviar solicitud
             </Button>
           </div>

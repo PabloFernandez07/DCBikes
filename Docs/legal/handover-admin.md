@@ -121,3 +121,25 @@ El registro de la brecha en la tabla `data_breaches` es **obligatorio** incluso 
 - No instales extensiones de navegador de origen dudoso en el equipo desde el que administras.
 - Si delegas el acceso al panel en alguien (asesoría, colaborador): que cada persona tenga **su propia cuenta** con 2FA activado. **Nunca compartas tu cuenta personal.**
 - Revisa periódicamente los logs de Supabase y Vercel para detectar accesos anómalos.
+
+---
+
+## 8. Configuración Cloudflare Turnstile (captcha formulario presupuestos)
+
+1. Crear cuenta gratuita en https://dash.cloudflare.com/sign-up
+2. En el panel: Turnstile → Add site
+   - Sitekey name: `dc-bikes-cantabria`
+   - Domain: `dc-bikes-cantabria.vercel.app` (añadir más cuando se compre dominio)
+   - Widget Mode: Managed
+3. Obtienes 2 valores: Site Key (público) y Secret Key (privado).
+4. Configurar en Vercel:
+   - Settings → Environment Variables
+   - Añadir `VITE_TURNSTILE_SITE_KEY` con el Site Key
+   - Redeploy
+5. Configurar en Supabase Functions secrets:
+   - https://supabase.com/dashboard/project/zdfzxjnuksuyagdqoouu/functions/quote-submit/secrets
+   - Añadir `TURNSTILE_SECRET` con el Secret Key
+6. Verificar: abrir QuoteModal en /catalogo → debe aparecer el widget Cloudflare.
+
+Mientras no estén configuradas, el formulario sigue funcionando pero sin captcha
+(solo rate-limit por IP), y muestra un aviso amarillo de configuración pendiente.

@@ -863,7 +863,7 @@ export function Settings() {
                 as="textarea"
                 rows={2}
                 required
-                placeholder="C/ La Cantábrica nº1, 39610 El Astillero, Cantabria"
+                placeholder="Calle La Cantábrica, Bloque 2N, 1º BAJO, 39610 El Astillero, Cantabria"
                 value={invoiceValues.legal_company_address}
                 onChange={e =>
                   setInvoiceValues(prev => ({

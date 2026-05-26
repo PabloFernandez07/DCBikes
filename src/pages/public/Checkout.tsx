@@ -137,7 +137,6 @@ export default function Checkout() {
       consents: {
         accepted_terms: data.accepted_terms,
         accepted_privacy: data.accepted_privacy,
-        marketing_opt_in: data.marketing_opt_in,
       },
       terms_version: TERMS_VERSION,
       privacy_version: PRIVACY_VERSION,
@@ -647,17 +646,6 @@ export default function Checkout() {
                   {errors.accepted_approval_flow.message}
                 </p>
               )}
-
-              <label className="flex items-start gap-3 cursor-pointer pt-2">
-                <input
-                  type="checkbox"
-                  {...register('marketing_opt_in')}
-                  className="mt-1 accent-[var(--color-lavender)] w-4 h-4 shrink-0"
-                />
-                <span className="text-sm font-[var(--font-body)] text-[var(--color-mid)] leading-relaxed">
-                  Quiero recibir ofertas y novedades por email (opcional).
-                </span>
-              </label>
             </div>
           </section>
 

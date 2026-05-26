@@ -100,7 +100,8 @@ serve(async (req) => {
         .maybeSingle()
       if (inv) {
         invoiceNumber = inv.invoice_number
-        invoiceUrl = await getSignedInvoiceUrl(supabase, inv.pdf_storage_path, 60 * 60 * 24 * 7)
+        // TTL 1h (auditoría v2 N15): URL firmada de factura caduca pronto.
+        invoiceUrl = await getSignedInvoiceUrl(supabase, inv.pdf_storage_path, 60 * 60)
       }
     }
 

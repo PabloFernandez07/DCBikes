@@ -67,7 +67,6 @@ interface InputInvoiceB2B {
 interface InputConsents {
   accepted_terms: boolean
   accepted_privacy: boolean
-  marketing_opt_in?: boolean
 }
 
 interface InputBody {
@@ -174,7 +173,6 @@ function validateBody(raw: unknown): { ok: true; body: InputBody } | { ok: false
   const consents: InputConsents = {
     accepted_terms: !!co.accepted_terms,
     accepted_privacy: !!co.accepted_privacy,
-    marketing_opt_in: !!co.marketing_opt_in,
   }
   if (!consents.accepted_terms || !consents.accepted_privacy) {
     return { ok: false, error: 'debes aceptar términos y política de privacidad' }
@@ -485,7 +483,6 @@ serve(async (req) => {
         payment_pre_auth_id: redsysOrderId,
         accepted_terms_at: now,
         accepted_privacy_at: now,
-        marketing_opt_in: !!body.consents.marketing_opt_in,
         consent_ip,
         consent_user_agent,
         consent_terms_version: body.terms_version ?? null,

@@ -8,11 +8,33 @@ import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 /* ─────────────────── CORS ─────────────────── */
 
-export const CORS_HEADERS = {
+// CORS dinámico por origen. Permite solo dominios propios.
+// Si se compra dcbikescantabria.es, añadir aquí + redeploy de las funciones.
+const ALLOWED_ORIGINS = new Set<string>([
+  'https://dc-bikes-cantabria.vercel.app',
+  // 'https://dcbikescantabria.es',
+  // 'https://www.dcbikescantabria.es',
+])
+
+export function buildCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin') ?? ''
+  const allow = ALLOWED_ORIGINS.has(origin) ? origin : ''
+  return {
+    'Access-Control-Allow-Origin': allow,
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Max-Age': '86400',
+    'Vary': 'Origin',
+  }
+}
+
+// Mantener el CORS_HEADERS exportado por compat con archivos que aún
+// no se refactorizan. Devuelve un wildcard provisional.
+// TODO: eliminar tras refactor completo.
+export const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 export function jsonOk(data: Record<string, unknown>): Response {

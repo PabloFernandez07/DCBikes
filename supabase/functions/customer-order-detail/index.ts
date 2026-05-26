@@ -122,10 +122,12 @@ serve(async (req) => {
         .eq('order_id', order.id)
         .maybeSingle<{ invoice_number: string; pdf_storage_path: string }>()
       if (inv) {
+        // TTL 1h (auditoría v2 N15): la URL firmada de factura caduca pronto;
+        // si el cliente la necesita de nuevo, vuelve a pedir un detalle.
         const signedUrl = await getSignedInvoiceUrl(
           supabase,
           inv.pdf_storage_path,
-          60 * 60 * 24 * 7,
+          60 * 60,
         )
         invoice = { invoice_number: inv.invoice_number, signed_url: signedUrl }
       }

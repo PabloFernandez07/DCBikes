@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SEO } from '@/components/layout/SEO'
 import { supabase } from '@/lib/supabase'
+import { STORE_ADDRESS_FALLBACK } from '@/hooks/useStoreAddress'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -131,7 +132,7 @@ export default function LegalNotice() {
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Domicilio:</strong>{' '}
                 <span className="text-[var(--color-cream)]">
-                  {legal.store_address || 'Calle La Cantábrica, Bloque 2N, 1º BAJO, 39610 El Astillero, Cantabria'}
+                  {legal.store_address || STORE_ADDRESS_FALLBACK}
                 </span>
               </p>
               <p>
