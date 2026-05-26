@@ -19,27 +19,130 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'newest',     label: 'Más recientes' },
 ]
 
-function sortProducts(products: Product[], sort: SortKey): Product[] {
-  const arr = [...products]
+/**
+ * Una "card del catálogo" es un grupo (model_group) o un producto suelto.
+ * Internamente normalizamos todo a una estructura uniforme.
+ */
+interface CatalogCard {
+  /** Producto padre del grupo (primero ordenado o el suelto) usado para imagen/slug/nombre */
+  parent: Product
+  /** Variantes del grupo. Si producto suelto, length === 1 */
+  variants: Product[]
+  /** Nombre limpio derivado del grupo (sin sufijo de talla cuando aplica) */
+  displayName: string
+  /** Precio mínimo (con descuento aplicado por variante si lo hubiera) */
+  minPrice: number
+  /** Precio máximo (idem) */
+  maxPrice: number
+  /** Todas las variantes con stock 0 */
+  allOutOfStock: boolean
+  /** Alguna variante con is_purchasable=true */
+  onlineAvailable: boolean
+}
+
+function effectivePrice(p: Product): number {
+  return p.discount_percent && p.discount_percent > 0
+    ? p.retail_price * (1 - p.discount_percent / 100)
+    : p.retail_price
+}
+
+/**
+ * Devuelve el prefijo común a un array de strings, recortado en límite de palabra.
+ * Si no hay prefijo significativo (>=4 chars), devuelve null.
+ */
+function commonNamePrefix(names: string[]): string | null {
+  if (names.length === 0) return null
+  if (names.length === 1) return names[0]
+  let prefix = names[0]
+  for (let i = 1; i < names.length; i++) {
+    let j = 0
+    while (j < prefix.length && j < names[i].length && prefix[j].toUpperCase() === names[i][j].toUpperCase()) {
+      j++
+    }
+    prefix = prefix.slice(0, j)
+    if (!prefix) return null
+  }
+  // recortar a límite de palabra y quitar separadores trailing
+  const trimmed = prefix.replace(/[\s\-_,/]+$/g, '').trim()
+  return trimmed.length >= 4 ? trimmed : null
+}
+
+/**
+ * Quita un sufijo de talla del nombre, ej. "AGILIS M" → "AGILIS".
+ */
+function stripSizeFromName(name: string, sizeLabel: string | null | undefined): string {
+  if (!sizeLabel) return name
+  const escaped = sizeLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return name.replace(new RegExp(`\\s*[-_,/]?\\s*${escaped}\\s*$`, 'i'), '').trim() || name
+}
+
+function buildCatalogCards(products: Product[]): CatalogCard[] {
+  const grouped = new Map<string, Product[]>()
+  const individuals: Product[] = []
+
+  for (const p of products) {
+    if (p.model_group) {
+      const list = grouped.get(p.model_group) ?? []
+      list.push(p)
+      grouped.set(p.model_group, list)
+    } else {
+      individuals.push(p)
+    }
+  }
+
+  const cards: CatalogCard[] = []
+
+  for (const [, variants] of grouped) {
+    // Padre: el primero con imagen sería ideal, pero como no tenemos imágenes
+    // aquí, usamos simplemente el primero por nombre (estable).
+    const sortedByName = [...variants].sort((a, b) => a.name.localeCompare(b.name, 'es'))
+    const parent = sortedByName[0]
+    const prefix = commonNamePrefix(variants.map(v => v.name))
+    const displayName = prefix ?? stripSizeFromName(parent.name, parent.size_label)
+    const prices = variants.map(effectivePrice)
+    const minPrice = Math.min(...prices)
+    const maxPrice = Math.max(...prices)
+    const allOutOfStock = variants.every(v => v.stock <= 0)
+    const onlineAvailable = variants.some(v => v.is_purchasable)
+    cards.push({
+      parent,
+      variants,
+      displayName,
+      minPrice,
+      maxPrice,
+      allOutOfStock,
+      onlineAvailable,
+    })
+  }
+
+  for (const p of individuals) {
+    cards.push({
+      parent: p,
+      variants: [p],
+      displayName: p.name,
+      minPrice: effectivePrice(p),
+      maxPrice: effectivePrice(p),
+      allOutOfStock: p.stock <= 0,
+      onlineAvailable: p.is_purchasable,
+    })
+  }
+
+  return cards
+}
+
+function sortCards(cards: CatalogCard[], sort: SortKey): CatalogCard[] {
+  const arr = [...cards]
   switch (sort) {
     case 'price_asc':
-      return arr.sort((a, b) => {
-        const pa = a.discount_percent ? a.retail_price * (1 - a.discount_percent / 100) : a.retail_price
-        const pb = b.discount_percent ? b.retail_price * (1 - b.discount_percent / 100) : b.retail_price
-        return pa - pb
-      })
+      return arr.sort((a, b) => a.minPrice - b.minPrice)
     case 'price_desc':
-      return arr.sort((a, b) => {
-        const pa = a.discount_percent ? a.retail_price * (1 - a.discount_percent / 100) : a.retail_price
-        const pb = b.discount_percent ? b.retail_price * (1 - b.discount_percent / 100) : b.retail_price
-        return pb - pa
-      })
+      return arr.sort((a, b) => b.maxPrice - a.maxPrice)
     case 'discount':
-      return arr.sort((a, b) => (b.discount_percent ?? 0) - (a.discount_percent ?? 0))
+      return arr.sort((a, b) => (b.parent.discount_percent ?? 0) - (a.parent.discount_percent ?? 0))
     case 'newest':
-      return arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      return arr.sort((a, b) => new Date(b.parent.created_at).getTime() - new Date(a.parent.created_at).getTime())
     default:
-      return arr.sort((a, b) => a.name.localeCompare(b.name, 'es'))
+      return arr.sort((a, b) => a.displayName.localeCompare(b.displayName, 'es'))
   }
 }
 
@@ -108,10 +211,22 @@ export default function Catalog() {
       .then(({ data }) => setImages(data ?? []))
   }, [products])
 
-  const sorted = useMemo(() => sortProducts(products, sort), [products, sort])
+  const cards = useMemo(() => buildCatalogCards(products), [products])
+  const sortedCards = useMemo(() => sortCards(cards, sort), [cards, sort])
 
-  const getProductImages = (productId: string) =>
-    images.filter(img => img.product_id === productId).sort((a, b) => a.sort_order - b.sort_order)
+  // Para que la imagen del card pueda venir de cualquier variante del grupo
+  // (no solo del padre), permitimos buscar imágenes entre todas las variantes
+  // y, si el padre no tiene foto, devolver las del primer producto del grupo
+  // que tenga.
+  const getProductImagesForCard = (card: CatalogCard) => {
+    for (const variant of card.variants) {
+      const imgs = images
+        .filter(img => img.product_id === variant.id)
+        .sort((a, b) => a.sort_order - b.sort_order)
+      if (imgs.length > 0) return imgs
+    }
+    return []
+  }
 
   const hasOffers = products.some(p => p.discount_percent && p.discount_percent > 0)
   const activeFilters = [
@@ -145,7 +260,7 @@ export default function Catalog() {
             CATÁLOGO
           </h1>
           <p className="mt-4 text-[var(--color-mid)] font-[var(--font-body)] text-base">
-            {loading ? '—' : `${products.length} ${products.length === 1 ? 'producto' : 'productos'}`}
+            {loading ? '—' : `${cards.length} ${cards.length === 1 ? 'modelo' : 'modelos'}`}
             {selectedCategory && ` · ${categories.find(c => c.id === selectedCategory)?.name}`}
           </p>
         </div>
@@ -264,7 +379,7 @@ export default function Catalog() {
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
               {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
-          ) : sorted.length === 0 ? (
+          ) : sortedCards.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32 gap-4 text-center">
               <span className="font-[var(--font-display)] text-8xl text-[rgba(196,162,207,0.1)]">?</span>
               <h3 className="font-[var(--font-display)] text-3xl text-[var(--color-cream)] tracking-wide">SIN RESULTADOS</h3>
@@ -280,21 +395,29 @@ export default function Catalog() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-              {sorted.map((product, i) => (
-                <div key={product.id} className="rv" style={{ transitionDelay: `${(i % 8) * 40}ms` }}>
-                  <ProductCard
-                    product={product}
-                    images={getProductImages(product.id)}
-                    onClick={() => navigate(`/producto/${product.slug}`)}
-                  />
-                </div>
-              ))}
+              {sortedCards.map((card, i) => {
+                const hasPriceRange = card.minPrice !== card.maxPrice
+                return (
+                  <div key={card.parent.id} className="rv" style={{ transitionDelay: `${(i % 8) * 40}ms` }}>
+                    <ProductCard
+                      product={card.parent}
+                      images={getProductImagesForCard(card)}
+                      onClick={() => navigate(`/producto/${card.parent.slug}`)}
+                      displayName={card.displayName}
+                      fromPrice={hasPriceRange ? card.minPrice : undefined}
+                      variantCount={card.variants.length}
+                      onlineAvailable={card.onlineAvailable}
+                      allOutOfStock={card.allOutOfStock}
+                    />
+                  </div>
+                )
+              })}
             </div>
           )}
 
-          {!loading && sorted.length > 0 && (
+          {!loading && sortedCards.length > 0 && (
             <p className="mt-10 text-center text-[var(--color-mid)] font-[var(--font-cond)] text-sm tracking-widest uppercase">
-              — {sorted.length} {sorted.length === 1 ? 'producto' : 'productos'} —
+              — {sortedCards.length} {sortedCards.length === 1 ? 'modelo' : 'modelos'} —
             </p>
           )}
         </div>

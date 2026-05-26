@@ -7,22 +7,43 @@ interface ProductCardProps {
   product: Product
   images: ProductImage[]
   onClick: () => void
+  /** Override del nombre mostrado (ej. nombre limpio del grupo) */
+  displayName?: string
+  /** Si se pasa, muestra "desde X €" con este precio mínimo */
+  fromPrice?: number
+  /** Total de variantes del grupo (>=2 muestra badge "X tallas") */
+  variantCount?: number
+  /** ¿Alguna variante con is_purchasable=true? */
+  onlineAvailable?: boolean
+  /** ¿Todas las variantes sin stock? */
+  allOutOfStock?: boolean
 }
 
 function fmt(n: number) {
   return n.toLocaleString('es-ES', { minimumFractionDigits: 0 })
 }
 
-export function ProductCard({ product, images, onClick }: ProductCardProps) {
+export function ProductCard({
+  product,
+  images,
+  onClick,
+  displayName,
+  fromPrice,
+  variantCount,
+  onlineAvailable,
+  allOutOfStock,
+}: ProductCardProps) {
   const mainImageRow = images.find(img => img.sort_order === 0) ?? images[0]
   const mainImage = mainImageRow
     ? { ...mainImageRow, publicUrl: supabase.storage.from('product-images').getPublicUrl(mainImageRow.storage_path).data.publicUrl }
     : null
   const pct = product.discount_percent
   const hasDiscount = pct != null && pct > 0
-  const finalPrice = hasDiscount
-    ? product.retail_price * (1 - pct / 100)
-    : product.retail_price
+  const baseFinal = hasDiscount ? product.retail_price * (1 - pct / 100) : product.retail_price
+  const finalPrice = fromPrice ?? baseFinal
+  const showFromPrice = fromPrice != null && fromPrice !== baseFinal
+  const hasMultipleSizes = (variantCount ?? 0) >= 2
+  const cardName = displayName ?? product.name
 
   return (
     <article
@@ -35,13 +56,13 @@ export function ProductCard({ product, images, onClick }: ProductCardProps) {
       tabIndex={0}
       role="button"
       onKeyDown={e => e.key === 'Enter' && onClick()}
-      aria-label={`Ver ${product.name}`}
+      aria-label={`Ver ${cardName}`}
     >
       <div className="aspect-square bg-[var(--color-ink)] overflow-hidden relative">
         {mainImage ? (
           <img
             src={mainImage.publicUrl}
-            alt={mainImage.alt ?? product.name}
+            alt={mainImage.alt ?? cardName}
             className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
@@ -55,6 +76,19 @@ export function ProductCard({ product, images, onClick }: ProductCardProps) {
             -{pct}%
           </span>
         )}
+        {/* Badges esquina superior derecha */}
+        <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+          {allOutOfStock && (
+            <span className="bg-[var(--color-ink)]/85 text-[var(--color-brand-red)] text-[10px] font-[var(--font-cond)] font-bold tracking-widest uppercase px-2 py-1 rounded-md border border-[var(--color-brand-red)]/40">
+              Sin stock
+            </span>
+          )}
+          {onlineAvailable && !allOutOfStock && (
+            <span className="bg-[var(--color-lavender)] text-[var(--color-ink)] text-[10px] font-[var(--font-cond)] font-bold tracking-widest uppercase px-2 py-1 rounded-md">
+              Comprar online
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="p-4 flex flex-col gap-1">
@@ -62,15 +96,25 @@ export function ProductCard({ product, images, onClick }: ProductCardProps) {
           {product.brand ?? 'DC Bikes'}
         </p>
         <h3 className="font-[var(--font-cond)] text-base font-semibold text-[var(--color-cream)] leading-tight line-clamp-2">
-          {product.name}
+          {cardName}
         </h3>
         <div className="mt-2 flex items-baseline gap-2 flex-wrap">
+          {showFromPrice && (
+            <span className="text-[10px] font-[var(--font-cond)] uppercase tracking-widest text-[var(--color-mid)]">
+              desde
+            </span>
+          )}
           <span className="font-[var(--font-display)] text-xl text-[var(--color-lavender)] tracking-wide">
             {fmt(finalPrice)} €
           </span>
-          {hasDiscount && (
+          {hasDiscount && !showFromPrice && (
             <span className="font-[var(--font-cond)] text-sm text-[var(--color-mid)] line-through">
               {fmt(product.retail_price)} €
+            </span>
+          )}
+          {hasMultipleSizes && (
+            <span className="ml-auto text-[10px] font-[var(--font-cond)] uppercase tracking-widest text-[var(--color-cream-dim)] bg-[var(--color-card-hover)] px-1.5 py-0.5 rounded">
+              {variantCount} tallas
             </span>
           )}
         </div>
