@@ -209,11 +209,12 @@ async function resolveCategoryId(familia: string, cache: Map<string, string>): P
     .replace(/^-|-$/g, '')
 
   // Lookup por slug primero
-  const { data: existing } = await supabase
+  const { data: existing, error: lookupErr } = await supabase
     .from('categories')
     .select('id')
     .eq('slug', slug)
     .maybeSingle()
+  if (lookupErr) console.warn('[Import] lookup categoría falló', familia, lookupErr)
   if (existing?.id) {
     cache.set(key, existing.id)
     return existing.id
@@ -228,11 +229,22 @@ async function resolveCategoryId(familia: string, cache: Map<string, string>): P
     .maybeSingle()
   const sortOrder = (max?.sort_order ?? 0) + 1
 
-  const { data: created } = await supabase
+  const { data: created, error: insertErr } = await supabase
     .from('categories')
     .insert({ slug, name: familia, sort_order: sortOrder })
     .select('id')
     .single()
+  if (insertErr) {
+    console.error('[Import] no se pudo crear categoría', familia, insertErr)
+    // Si fue conflict de slug, intentar release race-safe: relookup.
+    const { data: retry } = await supabase
+      .from('categories').select('id').eq('slug', slug).maybeSingle()
+    if (retry?.id) {
+      cache.set(key, retry.id)
+      return retry.id
+    }
+    return null
+  }
   if (created?.id) {
     cache.set(key, created.id)
     return created.id
@@ -350,7 +362,18 @@ export function ExcelImporter() {
         count++
         setImported(count)
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
+        // Supabase devuelve objetos { message, code, details, hint }. NO son
+        // instanceof Error, por eso String(err) → '[object Object]'.
+        // Loggeamos el objeto completo a consola para inspección y formateamos
+        // un mensaje legible para la UI.
+        console.error('[Import] Error en producto:', row.nombre, err, 'payload:', row)
+        const errAny = err as { message?: string; details?: string; hint?: string; code?: string }
+        const parts: string[] = []
+        if (errAny?.message) parts.push(errAny.message)
+        if (errAny?.details) parts.push(errAny.details)
+        if (errAny?.hint) parts.push('(' + errAny.hint + ')')
+        if (errAny?.code) parts.push('[' + errAny.code + ']')
+        const msg = parts.length ? parts.join(' · ') : (err instanceof Error ? err.message : 'Error desconocido (ver consola)')
         errors.push({ name: row.nombre, error: msg })
       }
     }
