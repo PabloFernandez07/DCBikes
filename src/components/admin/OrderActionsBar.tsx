@@ -260,18 +260,28 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
   }
 
   // ─── Mark delivered (shipping → delivered or ready_pickup → delivered) ───
+  // Invoca order-mark-delivered (validates source state). Fallback a UPDATE
+  // directo si la edge function devuelve 404 (mismo patrón que las demás).
   async function handleMarkDelivered() {
     if (busy) return
     setBusy(true)
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: 'delivered' })
-        .eq('id', order.id)
-      if (error) throw new Error(error.message)
-      await appendHistory(order.id, status, 'delivered', currentUserId, null)
-      onChanged({ status: 'delivered' })
-      onToast('success', 'Pedido marcado como entregado')
+      const res = await invokeFn('order-mark-delivered', { order_id: order.id })
+
+      if (res.ok) {
+        onToast('success', 'Pedido marcado como entregado')
+      } else if (res.notImplemented) {
+        const { error } = await supabase
+          .from('orders')
+          .update({ status: 'delivered' })
+          .eq('id', order.id)
+        if (error) throw new Error(error.message)
+        await appendHistory(order.id, status, 'delivered', currentUserId, null)
+        onChanged({ status: 'delivered' })
+        onToast('info', 'Función pendiente — esta acción se completará al desplegar Fase E. Estado actualizado localmente.')
+      } else {
+        throw new Error(res.errorMessage ?? 'Error desconocido')
+      }
       setDeliveredOpen(false)
       await onRefresh?.()
     } catch (err) {

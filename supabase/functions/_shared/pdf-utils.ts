@@ -22,7 +22,7 @@ export function sanitizeWinAnsi(input: string | null | undefined): string {
     .replace(/…/g, '...')
     // various unicode spaces (NBSP U+00A0, en/em quad/space U+2000-U+200A,
     // narrow nbsp U+202F, medium math space U+205F, ideographic space U+3000)
-    .replace(/[  -   　]/g, ' ')
+    .replace(/[  -    ]/g, ' ')
     // bullets (U+2022, U+2023, U+25E6)
     .replace(/[•‣◦]/g, '*')
     // arrows (U+2190..U+21FF) → simple ascii
@@ -30,11 +30,11 @@ export function sanitizeWinAnsi(input: string | null | undefined): string {
     // soft hyphen (U+00AD) → remove
     .replace(/­/g, '')
     // zero-width chars (U+200B..U+200D, U+FEFF)
-    .replace(/[​-‍﻿]/g, '')
+    .replace(/[ -  ]/g, '')
     // any remaining char outside WinAnsi-safe set → '?' as last resort
     // (WinAnsi: ASCII 0x20-0x7E + Latin-1 Suppl 0xA0-0xFF + selected 0x80-0x9F)
     // Keep €(U+20AC), Š(U+0160) etc. that are in CP-1252.
-    .replace(/[^\x20-\x7E -ÿ€ŠšŽžŒœŸ‰‹›™†‡ˆ˜ƒ]/g, '?')
+    .replace(/[^\x20-\x7E -ÿ€ŠšŽžŒœŸ‰‹›™†‡ˆ˜ƒ]/g, '?')
 }
 
 /**

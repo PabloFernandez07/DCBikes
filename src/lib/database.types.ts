@@ -247,6 +247,40 @@ export interface Database {
         }
         Relationships: []
       }
+      // ── 0007_customer_sessions ────────────────────────────────
+      customer_sessions: {
+        Row: {
+          id: string
+          email: string
+          token_hash: string
+          expires_at: string
+          created_at: string
+          used_at: string | null
+          ip_address: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          token_hash: string
+          expires_at: string
+          created_at?: string
+          used_at?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          token_hash?: string
+          expires_at?: string
+          created_at?: string
+          used_at?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       // ── 0003_orders_schema ────────────────────────────────────
       orders: {
         Row: {

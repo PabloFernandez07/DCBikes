@@ -57,25 +57,24 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
           sizeClasses[size],
         )}
       >
-        {(title || true) && (
-          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--color-mid)]/20 shrink-0">
-            {title && (
-              <h2
-                id="modal-title"
-                className="text-xl font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide"
-              >
-                {title}
-              </h2>
-            )}
-            <button
-              onClick={onClose}
-              className="ml-auto p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-mid)]/20 transition-colors"
-              aria-label="Cerrar"
+        {/* Header siempre presente: tiene el botón cerrar incluso sin title. */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--color-mid)]/20 shrink-0">
+          {title && (
+            <h2
+              id="modal-title"
+              className="text-xl font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide"
             >
-              <X size={18} />
-            </button>
-          </div>
-        )}
+              {title}
+            </h2>
+          )}
+          <button
+            onClick={onClose}
+            className="ml-auto p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-mid)]/20 transition-colors"
+            aria-label="Cerrar"
+          >
+            <X size={18} />
+          </button>
+        </div>
         <div className="px-6 py-5 overflow-y-auto flex-1 min-h-0">{children}</div>
       </div>
     </div>

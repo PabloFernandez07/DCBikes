@@ -18,14 +18,19 @@ const out = join(__dir, '..', 'public', 'sitemap.xml')
 const BASE = process.env.SITE_URL || 'https://dc-bikes-cantabria.vercel.app'
 const today = new Date().toISOString().split('T')[0]
 
+// URLs indexables del sitio. Excluimos las páginas con <meta robots="noindex">
+// (privacidad, cookies, aviso-legal) — incluirlas desperdicia crawl budget
+// y envía señal contradictoria a buscadores.
+//
+// Incluimos las informacionales (devoluciones, terminos-venta) porque sí
+// queremos que Google las descubra como soporte de confianza.
 const urls = [
-  { loc: '/',            changefreq: 'weekly',  priority: '1.0' },
-  { loc: '/catalogo',    changefreq: 'weekly',  priority: '0.9' },
-  { loc: '/taller',      changefreq: 'monthly', priority: '0.7' },
-  { loc: '/contacto',    changefreq: 'monthly', priority: '0.7' },
-  { loc: '/aviso-legal', changefreq: 'yearly',  priority: '0.3' },
-  { loc: '/privacidad',  changefreq: 'yearly',  priority: '0.3' },
-  { loc: '/cookies',     changefreq: 'yearly',  priority: '0.3' },
+  { loc: '/',              changefreq: 'weekly',  priority: '1.0' },
+  { loc: '/catalogo',      changefreq: 'weekly',  priority: '0.9' },
+  { loc: '/taller',        changefreq: 'monthly', priority: '0.7' },
+  { loc: '/contacto',      changefreq: 'monthly', priority: '0.7' },
+  { loc: '/devoluciones',  changefreq: 'yearly',  priority: '0.4' },
+  { loc: '/terminos-venta', changefreq: 'yearly', priority: '0.4' },
 ]
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>

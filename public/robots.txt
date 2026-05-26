@@ -1,6 +1,16 @@
 User-agent: *
+
+# Áreas privadas / transaccionales — fuera del index
 Disallow: /admin/
 Disallow: /api/
+Disallow: /carrito
+Disallow: /checkout
+Disallow: /pedido/
+Disallow: /mock-redsys-pago/
+Disallow: /mis-pedidos
+Disallow: /mis-pedidos/
+
+# Resto explícitamente permitido
 Allow: /
 Allow: /assets/
 

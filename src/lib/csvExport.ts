@@ -8,7 +8,7 @@
  *   - Total en formato español ("12,50") porque la coma es decimal habitual en
  *     plantillas de transportistas españoles. Como el campo va entre comillas el
  *     parser respeta el contenido literal.
- *   - Se antepone BOM UTF-8 (`﻿`) para que Excel detecte UTF-8 al abrir.
+ *   - Se antepone BOM UTF-8 (` `) para que Excel detecte UTF-8 al abrir.
  *
  * NOTA sobre el peso: `order_items` no guarda snapshot de `weight_grams`. Para
  * calcular el peso real necesitamos hacer un join con la tabla `products` usando
@@ -137,7 +137,7 @@ export function buildOrdersCsv(rows: CsvRowInput[]): string {
   }
 
   // BOM UTF-8 + CRLF para máxima compatibilidad con Excel en Windows.
-  return '﻿' + lines.join('\r\n') + '\r\n'
+  return ' ' + lines.join('\r\n') + '\r\n'
 }
 
 /**
