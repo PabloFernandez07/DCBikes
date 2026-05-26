@@ -46,6 +46,11 @@ export default function ProductDetail() {
   const [quoteOpen, setQuoteOpen] = useState(false)
   const pageRef = useReveal([parentProduct, selectedVariant?.id])
 
+  // IMPORTANTE: los hooks de stores deben ir antes de cualquier return condicional
+  // (los `if (loading) return ...` más abajo) para no romper las Rules of Hooks.
+  const addItem = useCartStore(s => s.addItem)
+  const openCart = useUiStore(s => s.openCart)
+
   // Si error o no encuentra: redirect.
   useEffect(() => {
     if (!loading && (error || !parentProduct)) {
@@ -145,9 +150,6 @@ export default function ProductDetail() {
 
   const isPurchasable = selectedVariant.is_purchasable
   const inStock = selectedVariant.stock > 0
-
-  const addItem = useCartStore(s => s.addItem)
-  const openCart = useUiStore(s => s.openCart)
 
   const handleAddToCart = () => {
     // Selecciona la primera imagen disponible para el snapshot.
