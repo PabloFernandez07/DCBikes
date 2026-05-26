@@ -482,32 +482,31 @@ export default function OrdersList() {
             </div>
           </div>
 
-          <label className="flex items-center gap-2 pb-1.5 cursor-pointer select-none">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showDeleted}
+            onClick={() => setShowDeleted(v => !v)}
+            className="flex items-center gap-2 pb-1.5 cursor-pointer select-none group"
+          >
             <span
               className={clsx(
-                'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
+                'relative inline-block h-5 w-10 shrink-0 rounded-full transition-colors',
                 showDeleted ? 'bg-[var(--color-lavender)]/60' : 'bg-[var(--color-card-hover)]',
               )}
               aria-hidden="true"
             >
               <span
                 className={clsx(
-                  'inline-block h-3.5 w-3.5 transform rounded-full bg-[var(--color-cream)] transition-transform',
-                  showDeleted ? 'translate-x-4.5' : 'translate-x-0.5',
+                  'absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full bg-[var(--color-cream)] transition-all',
+                  showDeleted ? 'left-[1.375rem]' : 'left-[0.125rem]',
                 )}
-                style={{ transform: showDeleted ? 'translateX(1.125rem)' : 'translateX(0.125rem)' }}
               />
             </span>
-            <input
-              type="checkbox"
-              checked={showDeleted}
-              onChange={e => setShowDeleted(e.target.checked)}
-              className="sr-only"
-            />
-            <span className="text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-cream-dim)] whitespace-nowrap">
+            <span className="text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-cream-dim)] whitespace-nowrap group-hover:text-[var(--color-cream)] transition-colors">
               Mostrar eliminados
             </span>
-          </label>
+          </button>
 
           <button
             type="button"
