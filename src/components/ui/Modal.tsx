@@ -53,11 +53,12 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
         className={clsx(
           'relative w-full bg-[var(--color-card)] border border-[var(--color-mid)]/30 rounded-2xl shadow-2xl',
           'animate-[fadeup_0.25s_ease_forwards]',
+          'max-h-[calc(100vh-2rem)] flex flex-col',
           sizeClasses[size],
         )}
       >
         {(title || true) && (
-          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--color-mid)]/20">
+          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--color-mid)]/20 shrink-0">
             {title && (
               <h2
                 id="modal-title"
@@ -75,7 +76,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
             </button>
           </div>
         )}
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-6 py-5 overflow-y-auto flex-1 min-h-0">{children}</div>
       </div>
     </div>
   )
