@@ -357,7 +357,7 @@ export default function Cart() {
           <Button
             variant="primary"
             size="lg"
-            onClick={() => navigate('/checkout')}
+            onClick={() => navigate(`/checkout?delivery=${deliveryPreview}`)}
             className="w-full font-[var(--font-display)] tracking-widest"
           >
             Continuar al checkout

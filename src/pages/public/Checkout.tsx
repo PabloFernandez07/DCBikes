@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronLeft, Truck, Store, Receipt, Clock, Bike } from 'lucide-react'
@@ -40,10 +40,16 @@ interface OrderPlaceResponse {
 
 export default function Checkout() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const items = useCartStore(s => s.items)
   const getSubtotalCents = useCartStore(s => s.getSubtotalCents)
   const { schedule } = useSchedule()
   const { toasts, toast, dismiss } = useToast()
+
+  // Preferencia traída desde /carrito (?delivery=pickup|shipping). Si no
+  // viene o es inválida, mantenemos el default del schema (shipping).
+  const initialDelivery: 'shipping' | 'pickup' =
+    searchParams.get('delivery') === 'pickup' ? 'pickup' : checkoutDefaults.delivery_method
 
   // Settings tienda (envío, umbral, IVA, auto-cancel). Defaults se usan
   // mientras carga para no bloquear el render del formulario.
@@ -66,7 +72,7 @@ export default function Checkout() {
     // El resolver acepta el output type del schema (con refines) — casteamos para
     // satisfacer el chequeo de defaults vs InferredType bajo `superRefine`.
     resolver: zodResolver(checkoutSchema) as never,
-    defaultValues: checkoutDefaults,
+    defaultValues: { ...checkoutDefaults, delivery_method: initialDelivery },
     mode: 'onBlur',
   })
 
