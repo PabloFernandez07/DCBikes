@@ -9,6 +9,7 @@ import { Import } from '@/pages/admin/Import'
 import { Quotes } from '@/pages/admin/Quotes'
 import { Settings } from '@/pages/admin/Settings'
 import { Categories } from '@/pages/admin/Categories'
+import Groupings from '@/pages/admin/Groupings'
 
 export function AdminRoutes() {
   return (
@@ -20,6 +21,7 @@ export function AdminRoutes() {
           <Route path="productos" element={<ProductsList />} />
           <Route path="productos/:id" element={<ProductEdit />} />
           <Route path="categorias" element={<Categories />} />
+          <Route path="agrupaciones" element={<Groupings />} />
           <Route path="importar" element={<Import />} />
           <Route path="consultas" element={<Quotes />} />
           <Route path="configuracion" element={<Settings />} />

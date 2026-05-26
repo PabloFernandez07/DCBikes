@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search, Pencil, Archive } from 'lucide-react'
 import { clsx } from 'clsx'
@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ProductForm } from '@/components/admin/ProductForm'
+import { BulkActionsBar } from '@/components/admin/BulkActionsBar'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
 import type { Product, Category } from '@/lib/database.types'
@@ -17,6 +18,8 @@ interface ProductWithCategory extends Product {
   categories: Pick<Category, 'name'> | null
 }
 
+type BulkAction = 'enable' | 'disable'
+
 export default function ProductsList() {
   const navigate = useNavigate()
   const { toasts, toast, dismiss } = useToast()
@@ -24,11 +27,16 @@ export default function ProductsList() {
   const [categories, setCategories] = useState<Category[]>([])
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [onlyOnline, setOnlyOnline] = useState(false)
+  const [onlyGrouped, setOnlyGrouped] = useState(false)
   const [page, setPage] = useState(0)
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [pendingBulk, setPendingBulk] = useState<BulkAction | null>(null)
+  const [bulkRunning, setBulkRunning] = useState(false)
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
@@ -44,12 +52,18 @@ export default function ProductsList() {
     if (categoryFilter) {
       query = query.eq('category_id', categoryFilter)
     }
+    if (onlyOnline) {
+      query = query.eq('is_purchasable', true)
+    }
+    if (onlyGrouped) {
+      query = query.not('model_group', 'is', null)
+    }
 
     const { data, count } = await query
     setProducts((data as ProductWithCategory[]) ?? [])
     setTotal(count ?? 0)
     setLoading(false)
-  }, [page, search, categoryFilter])
+  }, [page, search, categoryFilter, onlyOnline, onlyGrouped])
 
   useEffect(() => {
     fetchProducts()
@@ -60,6 +74,11 @@ export default function ProductsList() {
       setCategories(data ?? [])
     })
   }, [])
+
+  // Reset bulk selection when filters change (the visible page changed).
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [page, search, categoryFilter, onlyOnline, onlyGrouped])
 
   const handleToggleActive = async (product: Product) => {
     const { error } = await supabase
@@ -93,13 +112,19 @@ export default function ProductsList() {
       slug: values.slug,
       category_id: values.category_id,
       sku: values.sku || null,
+      ean: values.ean || null,
       brand: values.brand || null,
       short_description: values.short_description || null,
       description: values.description || null,
       retail_price: Number(values.retail_price),
+      discount_percent: values.discount_percent ? Number(values.discount_percent) : null,
       stock: Number(values.stock),
       featured: values.featured,
       active: values.active,
+      is_purchasable: values.is_purchasable,
+      size_label: values.size_label?.trim() ? values.size_label.trim() : null,
+      model_group: values.model_group?.trim() ? values.model_group.trim() : null,
+      weight_grams: values.weight_grams ? Number(values.weight_grams) : null,
     })
     setSaving(false)
     if (error) {
@@ -109,6 +134,55 @@ export default function ProductsList() {
       setModalOpen(false)
       fetchProducts()
     }
+  }
+
+  // ─── Bulk selection ─────────────────────────────────────────────────
+  const visibleIds = useMemo(() => products.map(p => p.id), [products])
+  const allSelected =
+    visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id))
+  const someSelected = visibleIds.some(id => selectedIds.has(id))
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(visibleIds))
+    }
+  }
+
+  const toggleOne = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const runBulk = async () => {
+    if (!pendingBulk || selectedIds.size === 0) return
+    const ids = Array.from(selectedIds)
+    const newValue = pendingBulk === 'enable'
+    setBulkRunning(true)
+    const { error } = await supabase
+      .from('products')
+      .update({ is_purchasable: newValue })
+      .in('id', ids)
+    setBulkRunning(false)
+    if (error) {
+      toast.error('Error en bulk: ' + error.message)
+    } else {
+      toast.success(
+        `${ids.length} ${ids.length === 1 ? 'producto actualizado' : 'productos actualizados'}`,
+      )
+      setProducts(prev =>
+        prev.map(p =>
+          selectedIds.has(p.id) ? { ...p, is_purchasable: newValue } : p,
+        ),
+      )
+      setSelectedIds(new Set())
+    }
+    setPendingBulk(null)
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
@@ -128,8 +202,8 @@ export default function ProductsList() {
           </Button>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="relative flex-1 min-w-[200px]">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)]" />
             <input
               type="text"
@@ -149,7 +223,28 @@ export default function ProductsList() {
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
+
+          <FilterToggle
+            label="Solo online"
+            checked={onlyOnline}
+            onChange={v => { setOnlyOnline(v); setPage(0) }}
+          />
+          <FilterToggle
+            label="Solo agrupados"
+            checked={onlyGrouped}
+            onChange={v => { setOnlyGrouped(v); setPage(0) }}
+          />
         </div>
+
+        {selectedIds.size > 0 && (
+          <BulkActionsBar
+            count={selectedIds.size}
+            onEnablePurchasable={() => setPendingBulk('enable')}
+            onDisablePurchasable={() => setPendingBulk('disable')}
+            onClear={() => setSelectedIds(new Set())}
+            disabled={bulkRunning}
+          />
+        )}
 
         <div className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl overflow-hidden">
           {loading ? (
@@ -161,13 +256,28 @@ export default function ProductsList() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[var(--color-card-hover)]">
-                    <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide w-14">Img</th>
-                    <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Nombre</th>
-                    <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden md:table-cell">Categoría</th>
-                    <th className="px-4 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">PVP</th>
-                    <th className="px-4 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden sm:table-cell">Stock</th>
-                    <th className="px-4 py-3.5 text-center text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Activo</th>
-                    <th className="px-4 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Acciones</th>
+                    <th className="px-3 py-3.5 w-10">
+                      <input
+                        type="checkbox"
+                        aria-label="Seleccionar todos"
+                        checked={allSelected}
+                        ref={el => {
+                          if (el) el.indeterminate = !allSelected && someSelected
+                        }}
+                        onChange={toggleSelectAll}
+                        className="accent-[var(--color-lavender)] cursor-pointer"
+                      />
+                    </th>
+                    <th className="px-3 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide w-14">Img</th>
+                    <th className="px-3 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Nombre</th>
+                    <th className="px-3 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden md:table-cell">Categoría</th>
+                    <th className="px-3 py-3.5 text-center text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden lg:table-cell">Talla</th>
+                    <th className="px-3 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden lg:table-cell">Grupo</th>
+                    <th className="px-3 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">PVP</th>
+                    <th className="px-3 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden sm:table-cell">Stock</th>
+                    <th className="px-3 py-3.5 text-center text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Online</th>
+                    <th className="px-3 py-3.5 text-center text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Activo</th>
+                    <th className="px-3 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -175,6 +285,8 @@ export default function ProductsList() {
                     <ProductRow
                       key={p.id}
                       product={p}
+                      selected={selectedIds.has(p.id)}
+                      onToggleSelected={() => toggleOne(p.id)}
                       onToggleActive={() => handleToggleActive(p)}
                       onEdit={() => navigate(`/admin/productos/${p.id}`)}
                       onArchive={() => handleArchive(p)}
@@ -182,7 +294,7 @@ export default function ProductsList() {
                   ))}
                   {products.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-5 py-10 text-center text-[var(--color-mid)] font-[var(--font-body)]">
+                      <td colSpan={11} className="px-5 py-10 text-center text-[var(--color-mid)] font-[var(--font-body)]">
                         No se encontraron productos.
                       </td>
                     </tr>
@@ -231,18 +343,90 @@ export default function ProductsList() {
         />
       </Modal>
 
+      <Modal
+        open={pendingBulk !== null}
+        onClose={() => (bulkRunning ? undefined : setPendingBulk(null))}
+        title="Confirmar acción en lote"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed">
+            {pendingBulk === 'enable'
+              ? `Se marcarán ${selectedIds.size} ${selectedIds.size === 1 ? 'producto' : 'productos'} como comprables online. Los clientes podrán añadirlos al carrito.`
+              : `Se desactivará "Comprar online" en ${selectedIds.size} ${selectedIds.size === 1 ? 'producto' : 'productos'}. Solo aparecerán como consulta para tienda.`}
+          </p>
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--color-card-hover)]">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setPendingBulk(null)}
+              disabled={bulkRunning}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant={pendingBulk === 'enable' ? 'primary' : 'danger'}
+              loading={bulkRunning}
+              onClick={runBulk}
+            >
+              Confirmar
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </>
   )
 }
 
+function FilterToggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer select-none px-3 py-2 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)] hover:border-[var(--color-mid)]/60 transition-colors">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={clsx(
+          'relative inline-flex h-4 w-7 items-center rounded-full transition-colors duration-200',
+          checked ? 'bg-[var(--color-lavender)]' : 'bg-[var(--color-mid)]/40',
+        )}
+      >
+        <span
+          className={clsx(
+            'inline-block h-3 w-3 rounded-full bg-white shadow transition-transform duration-200',
+            checked ? 'translate-x-3.5' : 'translate-x-0.5',
+          )}
+        />
+      </button>
+      <span className="text-xs font-[var(--font-cond)] text-[var(--color-cream-dim)] tracking-wide whitespace-nowrap">
+        {label}
+      </span>
+    </label>
+  )
+}
+
 function ProductRow({
   product,
+  selected,
+  onToggleSelected,
   onToggleActive,
   onEdit,
   onArchive,
 }: {
   product: ProductWithCategory
+  selected: boolean
+  onToggleSelected: () => void
   onToggleActive: () => void
   onEdit: () => void
   onArchive: () => void
@@ -266,8 +450,24 @@ function ProductRow({
   }, [product.id])
 
   return (
-    <tr className="border-b border-[var(--color-card-hover)]/40 last:border-0 hover:bg-[var(--color-card-hover)]/30 transition-colors">
-      <td className="px-4 py-3">
+    <tr
+      className={clsx(
+        'border-b border-[var(--color-card-hover)]/40 last:border-0 transition-colors',
+        selected
+          ? 'bg-[var(--color-lavender)]/10 hover:bg-[var(--color-lavender)]/15'
+          : 'hover:bg-[var(--color-card-hover)]/30',
+      )}
+    >
+      <td className="px-3 py-3">
+        <input
+          type="checkbox"
+          aria-label={`Seleccionar ${product.name}`}
+          checked={selected}
+          onChange={onToggleSelected}
+          className="accent-[var(--color-lavender)] cursor-pointer"
+        />
+      </td>
+      <td className="px-3 py-3">
         <div className="w-10 h-10 rounded-lg bg-[var(--color-ink)] overflow-hidden flex items-center justify-center">
           {thumb ? (
             <img src={thumb} alt={product.name} className="w-full h-full object-cover" />
@@ -276,22 +476,41 @@ function ProductRow({
           )}
         </div>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3">
         <p className="font-[var(--font-body)] text-[var(--color-cream)] font-medium leading-tight">{product.name}</p>
         {product.sku && (
           <p className="text-xs text-[var(--color-mid)] mt-0.5">{product.sku}</p>
         )}
       </td>
-      <td className="px-4 py-3 text-[var(--color-mid)] font-[var(--font-body)] hidden md:table-cell">
+      <td className="px-3 py-3 text-[var(--color-mid)] font-[var(--font-body)] hidden md:table-cell">
         {product.categories?.name ?? '—'}
       </td>
-      <td className="px-4 py-3 text-right font-[var(--font-cond)] font-semibold text-[var(--color-cream)]">
+      <td className="px-3 py-3 text-center font-[var(--font-cond)] text-[var(--color-cream-dim)] hidden lg:table-cell">
+        {product.size_label ? (
+          <span className="inline-flex items-center justify-center min-w-7 px-2 py-0.5 rounded-md bg-[var(--color-ink)] text-xs">
+            {product.size_label}
+          </span>
+        ) : (
+          <span className="text-[var(--color-mid)]">—</span>
+        )}
+      </td>
+      <td className="px-3 py-3 text-[var(--color-mid)] font-[var(--font-body)] text-xs hidden lg:table-cell">
+        {product.model_group ? (
+          <span className="font-mono text-[var(--color-lavender)]/80">{product.model_group}</span>
+        ) : (
+          <span>—</span>
+        )}
+      </td>
+      <td className="px-3 py-3 text-right font-[var(--font-cond)] font-semibold text-[var(--color-cream)]">
         {product.retail_price.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €
       </td>
-      <td className="px-4 py-3 text-right text-[var(--color-cream-dim)] font-[var(--font-body)] hidden sm:table-cell">
+      <td className="px-3 py-3 text-right text-[var(--color-cream-dim)] font-[var(--font-body)] hidden sm:table-cell">
         {product.stock}
       </td>
-      <td className="px-4 py-3 text-center">
+      <td className="px-3 py-3 text-center">
+        <OnlineBadge active={product.is_purchasable} />
+      </td>
+      <td className="px-3 py-3 text-center">
         <button
           type="button"
           role="switch"
@@ -310,7 +529,7 @@ function ProductRow({
           />
         </button>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3">
         <div className="flex items-center justify-end gap-1">
           <button
             type="button"
@@ -331,5 +550,26 @@ function ProductRow({
         </div>
       </td>
     </tr>
+  )
+}
+
+function OnlineBadge({ active }: { active: boolean }) {
+  return (
+    <span
+      className={clsx(
+        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-[var(--font-cond)] font-semibold tracking-wider uppercase',
+        active
+          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+          : 'bg-[var(--color-card-hover)] text-[var(--color-mid)] border border-transparent',
+      )}
+    >
+      <span
+        className={clsx(
+          'w-1.5 h-1.5 rounded-full',
+          active ? 'bg-emerald-400' : 'bg-[var(--color-mid)]',
+        )}
+      />
+      {active ? 'Online' : 'Off'}
+    </span>
   )
 }

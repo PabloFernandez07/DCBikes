@@ -50,6 +50,7 @@ export function ProductEdit() {
       slug: values.slug,
       category_id: values.category_id,
       sku: values.sku || null,
+      ean: values.ean || null,
       brand: values.brand || null,
       short_description: values.short_description || null,
       description: values.description || null,
@@ -58,6 +59,10 @@ export function ProductEdit() {
       stock: Number(values.stock),
       featured: values.featured,
       active: values.active,
+      is_purchasable: values.is_purchasable,
+      size_label: values.size_label?.trim() ? values.size_label.trim() : null,
+      model_group: values.model_group?.trim() ? values.model_group.trim() : null,
+      weight_grams: values.weight_grams ? Number(values.weight_grams) : null,
     }
 
     // Cast builder to bypass TypeScript 6 strict generic inference with Supabase typed client

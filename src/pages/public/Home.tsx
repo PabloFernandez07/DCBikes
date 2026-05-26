@@ -305,6 +305,13 @@ export default function Home() {
       active: true,
       created_at: "",
       updated_at: "",
+      // Campos añadidos en migración 0002 (carrito + agrupación). Los placeholders
+      // del Home no son productos reales, así que valores por defecto seguros.
+      is_purchasable: false,
+      size_label: null,
+      model_group: null,
+      weight_grams: null,
+      ean: null,
     }),
   );
 

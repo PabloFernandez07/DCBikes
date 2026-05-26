@@ -28,6 +28,12 @@ export interface Database {
         Relationships: []
       }
       products: {
+        // TODO: sync con SQL — el SQL 0001_initial.sql declara `cost_price numeric(10,2)`
+        // pero este archivo tenía `discount_percent`. Se mantiene `discount_percent` para
+        // no romper código existente; cuando se regenere con `supabase gen types` desaparecerá
+        // y aparecerá `cost_price`. También `category_id` es nullable en SQL (sin NOT NULL),
+        // pero aquí está como `string`. NO se arregla en esta tanda; solo se añaden los 5
+        // campos nuevos de la migración 0002.
         Row: {
           id: string
           category_id: string
@@ -44,6 +50,12 @@ export interface Database {
           active: boolean
           created_at: string
           updated_at: string
+          // ── 0002_purchasable_columns ──
+          is_purchasable: boolean
+          size_label: string | null
+          model_group: string | null
+          weight_grams: number | null
+          ean: string | null
         }
         Insert: {
           id?: string
@@ -61,6 +73,12 @@ export interface Database {
           active?: boolean
           created_at?: string
           updated_at?: string
+          // ── 0002_purchasable_columns ──
+          is_purchasable?: boolean
+          size_label?: string | null
+          model_group?: string | null
+          weight_grams?: number | null
+          ean?: string | null
         }
         Update: {
           id?: string
@@ -78,6 +96,12 @@ export interface Database {
           active?: boolean
           created_at?: string
           updated_at?: string
+          // ── 0002_purchasable_columns ──
+          is_purchasable?: boolean
+          size_label?: string | null
+          model_group?: string | null
+          weight_grams?: number | null
+          ean?: string | null
         }
         Relationships: [
           {
