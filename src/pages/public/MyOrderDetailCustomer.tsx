@@ -211,7 +211,18 @@ export default function MyOrderDetailCustomer() {
         }
         throw new Error(data?.error ?? 'No se pudo cargar el pedido')
       }
-      setOrder(data.order)
+      // El backend devuelve { ok, order, invoice }. La factura viene en una
+      // propiedad SEPARADA (no anidada en order). Fusionamos los campos de
+      // factura en el order para que el render condicional del botón de
+      // descarga funcione.
+      const invoiceData = (data as unknown as {
+        invoice?: { invoice_number: string; signed_url: string | null } | null
+      }).invoice
+      setOrder({
+        ...data.order,
+        invoice_number: invoiceData?.invoice_number ?? null,
+        invoice_signed_url: invoiceData?.signed_url ?? null,
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar el pedido')
     } finally {
