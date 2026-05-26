@@ -10,6 +10,8 @@ import { Quotes } from '@/pages/admin/Quotes'
 import { Settings } from '@/pages/admin/Settings'
 import { Categories } from '@/pages/admin/Categories'
 import Groupings from '@/pages/admin/Groupings'
+import OrdersList from '@/pages/admin/OrdersList'
+import OrderDetail from '@/pages/admin/OrderDetail'
 
 export function AdminRoutes() {
   return (
@@ -20,6 +22,8 @@ export function AdminRoutes() {
           <Route index element={<Dashboard />} />
           <Route path="productos" element={<ProductsList />} />
           <Route path="productos/:id" element={<ProductEdit />} />
+          <Route path="pedidos" element={<OrdersList />} />
+          <Route path="pedidos/:id" element={<OrderDetail />} />
           <Route path="categorias" element={<Categories />} />
           <Route path="agrupaciones" element={<Groupings />} />
           <Route path="importar" element={<Import />} />

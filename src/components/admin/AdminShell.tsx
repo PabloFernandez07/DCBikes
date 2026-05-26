@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
+  ShoppingBag,
   FolderOpen,
   Layers,
   Upload,
@@ -32,13 +33,51 @@ function usePendingQuotes() {
   return count
 }
 
-const navItems = [
+function usePendingOrders() {
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchCount = () => {
+      supabase
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'authorized')
+        .then(({ count: c }) => {
+          if (!cancelled) setCount(c ?? 0)
+        })
+    }
+
+    fetchCount()
+    const interval = window.setInterval(fetchCount, 60_000)
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+    }
+  }, [])
+
+  return count
+}
+
+type BadgeKey = 'quotes' | 'orders'
+
+interface NavItem {
+  to: string
+  label: string
+  icon: typeof LayoutDashboard
+  end: boolean
+  badge?: BadgeKey
+}
+
+const navItems: NavItem[] = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/productos', label: 'Productos', icon: Package, end: false },
+  { to: '/admin/pedidos', label: 'Pedidos', icon: ShoppingBag, end: false, badge: 'orders' },
   { to: '/admin/categorias', label: 'Categorías', icon: FolderOpen, end: false },
   { to: '/admin/agrupaciones', label: 'Agrupaciones', icon: Layers, end: false },
   { to: '/admin/importar', label: 'Importar Excel', icon: Upload, end: false },
-  { to: '/admin/consultas', label: 'Consultas', icon: MessageSquare, end: false, badge: true },
+  { to: '/admin/consultas', label: 'Consultas', icon: MessageSquare, end: false, badge: 'quotes' },
   { to: '/admin/configuracion', label: 'Configuración', icon: Settings, end: false },
 ]
 
@@ -47,6 +86,7 @@ export function AdminShell() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const pendingQuotes = usePendingQuotes()
+  const pendingOrders = usePendingOrders()
 
   const handleSignOut = async () => {
     await signOut()
@@ -72,30 +112,36 @@ export function AdminShell() {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {navItems.map(item => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            onClick={() => setMobileOpen(false)}
-            className={({ isActive }) =>
-              clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-[var(--font-cond)] font-medium tracking-wide transition-all duration-150',
-                isActive
-                  ? 'bg-[var(--color-lavender)]/15 text-[var(--color-lavender)]'
-                  : 'text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)]',
-              )
-            }
-          >
-            <item.icon size={17} className="shrink-0" />
-            <span className="flex-1">{item.label}</span>
-            {item.badge && pendingQuotes > 0 && (
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-brand-red)] text-white text-[10px] font-bold">
-                {pendingQuotes > 99 ? '99+' : pendingQuotes}
-              </span>
-            )}
-          </NavLink>
-        ))}
+        {navItems.map(item => {
+          const badgeValue =
+            item.badge === 'quotes' ? pendingQuotes :
+            item.badge === 'orders' ? pendingOrders :
+            0
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              onClick={() => setMobileOpen(false)}
+              className={({ isActive }) =>
+                clsx(
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-[var(--font-cond)] font-medium tracking-wide transition-all duration-150',
+                  isActive
+                    ? 'bg-[var(--color-lavender)]/15 text-[var(--color-lavender)]'
+                    : 'text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)]',
+                )
+              }
+            >
+              <item.icon size={17} className="shrink-0" />
+              <span className="flex-1">{item.label}</span>
+              {item.badge && badgeValue > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-brand-red)] text-white text-[10px] font-bold">
+                  {badgeValue > 99 ? '99+' : badgeValue}
+                </span>
+              )}
+            </NavLink>
+          )
+        })}
       </nav>
 
       <div className="px-3 py-4 border-t border-[var(--color-card)]">

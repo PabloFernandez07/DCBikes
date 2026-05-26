@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import {
   BarChart,
   Bar,
@@ -9,7 +10,8 @@ import {
   Line,
   ResponsiveContainer,
 } from 'recharts'
-import { Package, MessageSquare, Eye } from 'lucide-react'
+import { Package, MessageSquare, Eye, Bell, ShoppingBag } from 'lucide-react'
+import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { ChartCard } from '@/components/admin/ChartCard'
 
@@ -63,6 +65,8 @@ export default function Dashboard() {
   const [activeProducts, setActiveProducts] = useState(0)
   const [quotesToday, setQuotesToday] = useState(0)
   const [viewsToday, setViewsToday] = useState(0)
+  const [ordersPendingApproval, setOrdersPendingApproval] = useState(0)
+  const [ordersToday, setOrdersToday] = useState(0)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -97,7 +101,15 @@ export default function Dashboard() {
         .from('product_views')
         .select('id', { count: 'exact', head: true })
         .gte('viewed_at', todayStart.toISOString()),
-    ]).then(([views, quotes, searches, activeProd, quotesT, viewsT]) => {
+      supabase
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'authorized'),
+      supabase
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', todayStart.toISOString()),
+    ]).then(([views, quotes, searches, activeProd, quotesT, viewsT, ordersAuth, ordersT]) => {
       type ViewRow = { product_id: string; products: { name: string } }
       const viewsData = (views.data ?? []) as ViewRow[]
 
@@ -138,6 +150,8 @@ export default function Dashboard() {
       setActiveProducts(activeProd.count ?? 0)
       setQuotesToday(quotesT.count ?? 0)
       setViewsToday(viewsT.count ?? 0)
+      setOrdersPendingApproval(ordersAuth.count ?? 0)
+      setOrdersToday(ordersT.count ?? 0)
       setLoading(false)
     })
   }, [period])
@@ -169,6 +183,47 @@ export default function Dashboard() {
           value={viewsToday}
           icon={<Eye size={20} />}
         />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link
+          to="/admin/pedidos?status=authorized"
+          className={clsx(
+            'bg-[var(--color-card)] border rounded-2xl p-5 flex items-center gap-4 transition-all hover:bg-[var(--color-card-hover)]/60',
+            ordersPendingApproval > 0
+              ? 'border-yellow-500/30 ring-1 ring-yellow-500/20'
+              : 'border-[var(--color-card-hover)]',
+          )}
+        >
+          <div className="w-11 h-11 rounded-xl bg-yellow-500/15 flex items-center justify-center text-yellow-300 shrink-0">
+            <Bell size={20} />
+          </div>
+          <div>
+            <p className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] leading-none">
+              {ordersPendingApproval}
+            </p>
+            <p className="text-xs font-[var(--font-cond)] text-[var(--color-mid)] tracking-wide mt-0.5">
+              Pedidos pendientes de aprobación
+            </p>
+          </div>
+        </Link>
+
+        <Link
+          to="/admin/pedidos?date=today"
+          className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-5 flex items-center gap-4 transition-all hover:bg-[var(--color-card-hover)]/60"
+        >
+          <div className="w-11 h-11 rounded-xl bg-[var(--color-lavender)]/15 flex items-center justify-center text-[var(--color-lavender)] shrink-0">
+            <ShoppingBag size={20} />
+          </div>
+          <div>
+            <p className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] leading-none">
+              {ordersToday}
+            </p>
+            <p className="text-xs font-[var(--font-cond)] text-[var(--color-mid)] tracking-wide mt-0.5">
+              Pedidos hoy
+            </p>
+          </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
