@@ -24,3 +24,16 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Supabase CLI temp/cache (regenerados al `supabase link`)
+supabase/.temp/
+
+# Documentos de trabajo del cliente (Excel/Word importables, no van al repo)
+Docs/*.xlsx
+Docs/*.xls
+Docs/*.docx
+Docs/*.doc
+
+# Mantenemos los markdown/html de Docs (auditoría legal, testing report, etc.)
+!Docs/**/*.md
+!Docs/**/*.html
