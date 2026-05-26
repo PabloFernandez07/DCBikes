@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Mail, Phone, FileText, Download, Save, Loader2, Package as PackageIcon, Store, MapPin, Receipt, Trash2 } from 'lucide-react'
+import { ArrowLeft, Mail, Phone, FileText, Download, Save, Loader2, Package as PackageIcon, Store, MapPin, Receipt, Trash2, History, XCircle } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { OrderStatusBadge, ORDER_STATUS_META, type OrderStatus } from '@/components/admin/OrderStatusBadge'
@@ -278,6 +278,38 @@ export default function OrderDetail() {
             </p>
           </div>
         </div>
+
+        {/* Banners de cambios del cliente */}
+        {order.cancelled_by_customer && (
+          <div className="bg-red-900/15 border border-red-700/40 rounded-2xl px-5 py-4 flex items-start gap-3">
+            <XCircle size={20} className="text-red-300 shrink-0 mt-0.5" />
+            <div className="text-sm font-[var(--font-body)] text-[var(--color-cream-dim)]">
+              <p className="font-[var(--font-cond)] font-semibold text-red-200 mb-0.5 tracking-wide">
+                El cliente canceló este pedido
+              </p>
+              <p>
+                {(() => {
+                  const iso = order.payment_cancelled_at ?? order.client_modified_at ?? order.updated_at
+                  return iso ? `Fecha de cancelación: ${formatDate(iso)}` : 'Cancelación registrada.'
+                })()}
+              </p>
+            </div>
+          </div>
+        )}
+        {order.client_modified_at && !order.cancelled_by_customer && (
+          <div className="bg-orange-500/10 border border-orange-500/40 rounded-2xl px-5 py-4 flex items-start gap-3">
+            <History size={20} className="text-orange-300 shrink-0 mt-0.5" />
+            <div className="text-sm font-[var(--font-body)] text-[var(--color-cream-dim)]">
+              <p className="font-[var(--font-cond)] font-semibold text-orange-200 mb-0.5 tracking-wide">
+                Este pedido fue modificado por el cliente
+              </p>
+              <p>
+                Fecha de modificación: {formatDate(order.client_modified_at)}. Revisa los datos
+                de envío antes de continuar con la preparación.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* 2-col grid */}
         <div className="grid lg:grid-cols-3 gap-5">

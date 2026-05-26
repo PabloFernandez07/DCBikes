@@ -84,6 +84,7 @@ serve(async (req) => {
           'accepted_at, ready_pickup_at, shipped_at, ' +
           'tracking_number, tracking_carrier, created_at, ' +
           'deleted_at, ' +
+          'client_modified_at, cancelled_by_customer, ' +
           'order_items(product_id, product_name, product_sku, product_size_label, ' +
           'quantity, unit_price_cents, line_total_cents)',
       )

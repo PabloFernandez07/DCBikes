@@ -11,11 +11,27 @@ import {
   MapPin,
   CheckCircle2,
   Circle,
+  XCircle,
+  Pencil,
+  Loader2,
+  History,
 } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { SEO } from '@/components/layout/SEO'
 import { OrderStatusBadge, type OrderStatus } from '@/components/public/OrderStatusBadge'
+import { Modal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
+import { Field } from '@/components/ui/Field'
+import { ToastContainer } from '@/components/ui/Toast'
+import { useToast } from '@/hooks/useToast'
+import {
+  orderShippingSchema,
+  type OrderShippingFormValues,
+  PROVINCIAS_PENINSULA,
+} from '@/schemas/order-shipping'
 
 const STORAGE_KEY = 'dcbikes_customer_session'
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000
@@ -62,6 +78,7 @@ interface CustomerOrderDetail {
   shipping_city: string | null
   shipping_postal_code: string | null
   shipping_province: string | null
+  shipping_notes?: string | null
   tracking_number: string | null
   tracking_carrier: string | null
   subtotal_cents: number
@@ -72,6 +89,8 @@ interface CustomerOrderDetail {
   invoice_signed_url?: string | null
   invoice_number?: string | null
   created_at: string
+  client_modified_at?: string | null
+  cancelled_by_customer?: boolean
 }
 
 interface DetailResponse {
@@ -92,6 +111,16 @@ function formatDate(iso: string) {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
+  })
+}
+
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   })
 }
 
@@ -127,10 +156,36 @@ const STEP_ORDER: Record<string, number> = {
 export default function MyOrderDetailCustomer() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { toasts, toast, dismiss } = useToast()
 
   const [loading, setLoading] = useState(true)
   const [order, setOrder] = useState<CustomerOrderDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Cancel modal
+  const [cancelOpen, setCancelOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+  const [cancelling, setCancelling] = useState(false)
+
+  // Edit address modal
+  const [editOpen, setEditOpen] = useState(false)
+  const [savingAddress, setSavingAddress] = useState(false)
+
+  const {
+    register: registerAddress,
+    handleSubmit: handleSubmitAddress,
+    reset: resetAddress,
+    formState: { errors: addressErrors },
+  } = useForm<OrderShippingFormValues>({
+    resolver: zodResolver(orderShippingSchema),
+    defaultValues: {
+      address: '',
+      city: '',
+      postal_code: '',
+      province: '',
+      notes: '',
+    },
+  })
 
   const fetchDetail = useCallback(async (orderId: string, token: string) => {
     setLoading(true)
@@ -176,6 +231,126 @@ export default function MyOrderDetailCustomer() {
     }
     fetchDetail(id, session.token)
   }, [id, navigate, fetchDetail])
+
+  // Pre-fill address form when opening modal.
+  const openEditModal = () => {
+    if (!order) return
+    resetAddress({
+      address: order.shipping_address ?? '',
+      city: order.shipping_city ?? '',
+      postal_code: order.shipping_postal_code ?? '',
+      province: order.shipping_province ?? '',
+      notes: order.shipping_notes ?? '',
+    })
+    setEditOpen(true)
+  }
+
+  const handleCancelOrder = async () => {
+    if (!order || cancelling) return
+    const session = readSession()
+    if (!session) {
+      navigate('/mis-pedidos', { replace: true })
+      return
+    }
+    setCancelling(true)
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke<{
+        ok: boolean
+        error?: string
+      }>('customer-order-cancel', {
+        body: {
+          token: session.token,
+          order_id: order.id,
+          ...(cancelReason.trim() ? { reason: cancelReason.trim() } : {}),
+        },
+      })
+      if (fnError) {
+        const ctx = (fnError as unknown as { context?: { status?: number } }).context
+        const status = ctx?.status
+        if (status === 422) {
+          // El edge function devuelve mensaje en data.error si pudo serializar.
+          toast.error(data?.error ?? 'No se puede cancelar este pedido en su estado actual.')
+        } else if (status === 502) {
+          toast.error('Error con la pasarela de pago. Contacta con la tienda.')
+        } else if (status === 401 || status === 403) {
+          try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+          navigate('/mis-pedidos', { replace: true })
+          return
+        } else {
+          toast.error(fnError.message || 'No se pudo cancelar el pedido')
+        }
+        return
+      }
+      if (!data?.ok) {
+        toast.error(data?.error ?? 'No se pudo cancelar el pedido')
+        return
+      }
+      toast.success('Pedido cancelado')
+      setCancelOpen(false)
+      setCancelReason('')
+      // Recargamos el detail para reflejar el nuevo estado.
+      await fetchDetail(order.id, session.token)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al cancelar el pedido')
+    } finally {
+      setCancelling(false)
+    }
+  }
+
+  const onSubmitAddress = async (values: OrderShippingFormValues) => {
+    if (!order || savingAddress) return
+    const session = readSession()
+    if (!session) {
+      navigate('/mis-pedidos', { replace: true })
+      return
+    }
+    setSavingAddress(true)
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke<{
+        ok: boolean
+        error?: string
+      }>('customer-order-update-address', {
+        body: {
+          token: session.token,
+          order_id: order.id,
+          shipping: {
+            address: values.address.trim(),
+            city: values.city.trim(),
+            postal_code: values.postal_code.trim(),
+            province: values.province,
+            ...(values.notes && values.notes.trim()
+              ? { notes: values.notes.trim() }
+              : {}),
+          },
+        },
+      })
+      if (fnError) {
+        const ctx = (fnError as unknown as { context?: { status?: number } }).context
+        const status = ctx?.status
+        if (status === 422) {
+          toast.error(data?.error ?? 'Datos no válidos. Revisa los campos.')
+        } else if (status === 401 || status === 403) {
+          try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+          navigate('/mis-pedidos', { replace: true })
+          return
+        } else {
+          toast.error(fnError.message || 'Error al actualizar la dirección')
+        }
+        return
+      }
+      if (!data?.ok) {
+        toast.error(data?.error ?? 'No se pudo actualizar la dirección')
+        return
+      }
+      toast.success('Dirección actualizada')
+      setEditOpen(false)
+      await fetchDetail(order.id, session.token)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al actualizar la dirección')
+    } finally {
+      setSavingAddress(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -224,6 +399,15 @@ export default function MyOrderDetailCustomer() {
     ? `/mis-pedidos/sesion?token=${encodeURIComponent(session.token)}`
     : '/mis-pedidos'
 
+  // Visibilidad acciones cliente.
+  const canCancel = order.status === 'authorized'
+  const canEditAddress =
+    order.delivery_method === 'shipping' &&
+    (order.status === 'pending' || order.status === 'authorized' || order.status === 'accepted') &&
+    !order.cancelled_by_customer
+  const showActions = canCancel || canEditAddress
+  const wasModified = !!order.client_modified_at
+
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 py-12">
       <SEO title={`Pedido ${order.order_number}`} noIndex />
@@ -246,6 +430,12 @@ export default function MyOrderDetailCustomer() {
               <p className="mt-1 text-sm text-[var(--color-mid)] font-[var(--font-body)]">
                 {formatDate(order.created_at)}
               </p>
+              {wasModified && order.client_modified_at && (
+                <span className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full text-[11px] font-[var(--font-cond)] tracking-wide bg-orange-500/10 text-orange-200 border border-orange-500/30">
+                  <History size={11} />
+                  Modificado el {formatDateTime(order.client_modified_at)}
+                </span>
+              )}
             </div>
             <OrderStatusBadge status={order.status} size="md" />
           </div>
@@ -450,7 +640,187 @@ export default function MyOrderDetailCustomer() {
             </button>
           </section>
         )}
+
+        {/* Acciones del cliente (cancelar / modificar dirección) */}
+        {showActions && (
+          <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-5">
+            <h2 className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-3">
+              Acciones disponibles
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {canEditAddress && (
+                <button
+                  type="button"
+                  onClick={openEditModal}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-[var(--font-cond)] font-semibold tracking-wide bg-[var(--color-card-hover)] text-[var(--color-cream)] border border-[var(--color-mid)]/30 hover:border-[var(--color-lavender)]/50 hover:text-[var(--color-lavender)] transition-colors"
+                >
+                  <Pencil size={14} />
+                  Modificar dirección
+                </button>
+              )}
+              {canCancel && (
+                <button
+                  type="button"
+                  onClick={() => setCancelOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-[var(--font-cond)] font-semibold tracking-wide bg-red-900/15 text-red-300 border border-red-700/40 hover:bg-red-900/25 hover:border-red-600/60 transition-colors"
+                >
+                  <XCircle size={14} />
+                  Cancelar pedido
+                </button>
+              )}
+            </div>
+            {canCancel && (
+              <p className="text-[11px] text-[var(--color-mid)] mt-3 leading-relaxed font-[var(--font-body)]">
+                Mientras tu pedido esté pendiente de aprobación puedes cancelarlo sin coste:
+                liberaremos la reserva de pago de tu tarjeta automáticamente.
+              </p>
+            )}
+          </section>
+        )}
       </div>
+
+      {/* Modal Cancelar */}
+      <Modal
+        open={cancelOpen}
+        onClose={() => { if (!cancelling) { setCancelOpen(false); setCancelReason('') } }}
+        title="¿Cancelar este pedido?"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed">
+            Se liberará la reserva de pago de tu tarjeta automáticamente. No se cargará
+            ningún importe. Esta acción no se puede deshacer.
+          </p>
+          <div>
+            <label
+              htmlFor="cancel-reason"
+              className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-1 block"
+            >
+              Motivo (opcional)
+            </label>
+            <textarea
+              id="cancel-reason"
+              value={cancelReason}
+              onChange={e => setCancelReason(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder="Cuéntanos por qué cancelas…"
+              className="w-full text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-ink)] px-3 py-2 rounded-lg border border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50 focus:outline-none transition-colors resize-y"
+            />
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setCancelOpen(false); setCancelReason('') }}
+              disabled={cancelling}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleCancelOrder}
+              disabled={cancelling}
+            >
+              {cancelling ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
+              Sí, cancelar pedido
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal Modificar dirección */}
+      <Modal
+        open={editOpen}
+        onClose={() => { if (!savingAddress) setEditOpen(false) }}
+        title="Modificar dirección de envío"
+        size="md"
+      >
+        <form onSubmit={handleSubmitAddress(onSubmitAddress)} className="space-y-4">
+          <Field
+            label="Dirección"
+            required
+            placeholder="Calle, número, piso, puerta…"
+            error={addressErrors.address?.message}
+            {...registerAddress('address')}
+          />
+          <div className="grid sm:grid-cols-2 gap-3">
+            <Field
+              label="Código postal"
+              required
+              placeholder="28001"
+              inputMode="numeric"
+              maxLength={5}
+              error={addressErrors.postal_code?.message}
+              {...registerAddress('postal_code')}
+            />
+            <Field
+              label="Ciudad"
+              required
+              placeholder="Madrid"
+              error={addressErrors.city?.message}
+              {...registerAddress('city')}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="edit-province"
+              className="text-sm font-[var(--font-cond)] font-medium text-[var(--color-cream-dim)] tracking-wide"
+            >
+              Provincia
+              <span className="text-[var(--color-brand-red)] ml-0.5">*</span>
+            </label>
+            <select
+              id="edit-province"
+              className={clsx(
+                'w-full bg-[var(--color-ink)] border rounded-lg px-4 py-2.5 text-[var(--color-cream)]',
+                'font-[var(--font-body)] text-sm transition-colors duration-200',
+                'focus:outline-none focus:ring-2 focus:ring-[var(--color-lavender)]/50 focus:border-[var(--color-lavender)]',
+                addressErrors.province
+                  ? 'border-[var(--color-brand-red)]'
+                  : 'border-[var(--color-card)] hover:border-[var(--color-mid)]/60',
+              )}
+              {...registerAddress('province')}
+            >
+              <option value="">Selecciona provincia…</option>
+              {PROVINCIAS_PENINSULA.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            {addressErrors.province && (
+              <p className="text-xs text-[var(--color-brand-red)] font-[var(--font-body)]">
+                {addressErrors.province.message}
+              </p>
+            )}
+          </div>
+          <Field
+            label="Notas para la entrega (opcional)"
+            as="textarea"
+            rows={3}
+            placeholder="Indicaciones para el repartidor…"
+            error={addressErrors.notes?.message}
+            {...registerAddress('notes')}
+          />
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => setEditOpen(false)}
+              disabled={savingAddress}
+            >
+              Cancelar
+            </Button>
+            <Button variant="primary" size="sm" type="submit" disabled={savingAddress}>
+              {savingAddress ? <Loader2 size={13} className="animate-spin" /> : <Pencil size={13} />}
+              Guardar dirección
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   )
 }

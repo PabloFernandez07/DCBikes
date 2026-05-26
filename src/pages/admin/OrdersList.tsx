@@ -413,6 +413,22 @@ export default function OrdersList() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <OrderStatusBadge status={o.status as OrderStatus} />
+                          {o.cancelled_by_customer && (
+                            <span
+                              title="El cliente canceló este pedido"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-[var(--font-cond)] tracking-wide border bg-red-900/20 text-red-300 border-red-700/40 uppercase"
+                            >
+                              Cliente canceló
+                            </span>
+                          )}
+                          {o.client_modified_at && !o.cancelled_by_customer && (
+                            <span
+                              title={`Modificado por el cliente el ${formatDate(o.client_modified_at)}`}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-[var(--font-cond)] tracking-wide border bg-orange-500/15 text-orange-200 border-orange-500/40 uppercase"
+                            >
+                              Modificado
+                            </span>
+                          )}
                           {isDeleted && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-[var(--font-cond)] tracking-wide border bg-[var(--color-card-hover)] text-[var(--color-mid)] border-[var(--color-mid)]/30 uppercase">
                               Eliminado
@@ -465,6 +481,16 @@ export default function OrdersList() {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <OrderStatusBadge status={o.status as OrderStatus} />
+                      {o.cancelled_by_customer && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-[var(--font-cond)] tracking-wide border bg-red-900/20 text-red-300 border-red-700/40 uppercase">
+                          Cliente canceló
+                        </span>
+                      )}
+                      {o.client_modified_at && !o.cancelled_by_customer && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-[var(--font-cond)] tracking-wide border bg-orange-500/15 text-orange-200 border-orange-500/40 uppercase">
+                          Modificado
+                        </span>
+                      )}
                       {isDeleted && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-[var(--font-cond)] tracking-wide border bg-[var(--color-card-hover)] text-[var(--color-mid)] border-[var(--color-mid)]/30 uppercase">
                           Eliminado

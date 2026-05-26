@@ -299,6 +299,8 @@ export interface Database {
           accepted_privacy_at: string
           marketing_opt_in: boolean
           deleted_at: string | null
+          client_modified_at: string | null
+          cancelled_by_customer: boolean
           created_at: string
           updated_at: string
         }
@@ -342,6 +344,8 @@ export interface Database {
           accepted_privacy_at: string
           marketing_opt_in?: boolean
           deleted_at?: string | null
+          client_modified_at?: string | null
+          cancelled_by_customer?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -385,6 +389,8 @@ export interface Database {
           accepted_privacy_at?: string
           marketing_opt_in?: boolean
           deleted_at?: string | null
+          client_modified_at?: string | null
+          cancelled_by_customer?: boolean
           created_at?: string
           updated_at?: string
         }
