@@ -74,8 +74,21 @@ async function parsePayload(
   supabase: SupabaseClient,
 ): Promise<NotificationOutcome | null> {
   // Mock: JSON con {__mock: true, order_id, authorized: bool}.
+  // CRÍTICO: solo se acepta si el modo Redsys configurado es 'mock'. En
+  // producción (test/prod), un atacante podría marcar pedidos como
+  // 'authorized' sin pagar si esta verificación no existe → fraude.
   if (contentType.includes('application/json')) {
     if (!mockBody?.__mock || !mockBody.order_id) return null
+    const config = await loadRedsysConfig(supabase)
+    if (config.mode !== 'mock') {
+      console.warn(
+        '[redsys-notification] payload __mock RECHAZADO porque el modo Redsys actual es:',
+        config.mode,
+        '· order_id:',
+        mockBody.order_id,
+      )
+      return null
+    }
     return {
       authorized: !!mockBody.authorized,
       responseCode: mockBody.authorized ? '0000' : '0190',
