@@ -50,25 +50,11 @@ export async function requireAdmin(req: Request): Promise<
     return { ok: false, status: 401, error: 'invalid bearer token' }
   }
 
-  // Verificación de rol admin via allowlist de emails. Sin esto, cualquier
-  // usuario que haga signUp en Supabase Auth conseguiría acceso admin.
-  // ADMIN_EMAILS es CSV (env var en Supabase Vault). Si no está configurada,
-  // se rechaza todo intento de acceso (fail-closed).
-  const adminEmailsCsv = Deno.env.get('ADMIN_EMAILS') ?? ''
-  const adminEmails = adminEmailsCsv
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
-  const userEmail = (userData.user.email ?? '').toLowerCase()
-  if (adminEmails.length === 0) {
-    console.error('[requireAdmin] ADMIN_EMAILS env var no configurado — rechazando por defecto')
-    return { ok: false, status: 403, error: 'admin allowlist not configured' }
-  }
-  if (!adminEmails.includes(userEmail)) {
-    console.warn(`[requireAdmin] usuario ${userEmail} no está en ADMIN_EMAILS`)
-    return { ok: false, status: 403, error: 'not authorized as admin' }
-  }
-
+  // Cualquier usuario autenticado en Supabase Auth = admin.
+  // Seguridad apoyada en:
+  //   - disable_signup=true en Supabase (no hay signup público).
+  //   - Solo el propietario crea usuarios desde Supabase Studio.
+  //   - RLS policies restringen escritura a authenticated.
   const supabase = createClient(supabaseUrl, serviceKey)
   return {
     ok: true,

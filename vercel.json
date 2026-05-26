@@ -1,9 +1,17 @@
 {
   "rewrites": [
-    { "source": "/producto/(.*)", "destination": "/index.html" },
-    { "source": "/admin/(.*)", "destination": "/index.html" },
+    { "source": "/producto/:path*", "destination": "/index.html" },
     { "source": "/admin", "destination": "/index.html" },
-    { "source": "/(.*)", "destination": "/404.html", "statusCode": 404 }
+    { "source": "/admin/:path*", "destination": "/index.html" },
+    { "source": "/pedido/:path*", "destination": "/index.html" },
+    { "source": "/mock-redsys-pago/:path*", "destination": "/index.html" },
+    { "source": "/mis-pedidos", "destination": "/index.html" },
+    { "source": "/mis-pedidos/:path*", "destination": "/index.html" },
+    { "source": "/checkout", "destination": "/index.html" },
+    { "source": "/carrito", "destination": "/index.html" },
+    { "source": "/devoluciones", "destination": "/index.html" },
+    { "source": "/terminos-venta", "destination": "/index.html" },
+    { "source": "/:path*", "destination": "/404.html", "statusCode": 404 }
   ],
   "headers": [
     {
