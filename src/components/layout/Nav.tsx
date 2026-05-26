@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Menu, X, Settings } from 'lucide-react'
+import { Menu, X, Settings, ShoppingCart } from 'lucide-react'
 import { clsx } from 'clsx'
+import { useCartStore } from '@/stores/cartStore'
+import { useUiStore } from '@/stores/uiStore'
 
 const links = [
   { to: '/catalogo', label: 'Catálogo' },
@@ -11,6 +13,8 @@ const links = [
 
 export function Nav() {
   const [open, setOpen] = useState(false)
+  const itemCount = useCartStore(s => s.items.reduce((a, i) => a + i.quantity, 0))
+  const toggleCart = useUiStore(s => s.toggleCart)
 
   return (
     <header
@@ -43,6 +47,22 @@ export function Nav() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleCart}
+            className="relative p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[rgba(196,162,207,0.1)] transition-all duration-200"
+            aria-label={`Abrir carrito${itemCount > 0 ? ` (${itemCount} ${itemCount === 1 ? 'artículo' : 'artículos'})` : ''}`}
+          >
+            <ShoppingCart size={20} />
+            {itemCount > 0 && (
+              <span
+                className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-brand-red)] text-white text-[10px] font-bold leading-[18px] text-center font-[var(--font-cond)] tabular-nums"
+                aria-hidden="true"
+              >
+                {itemCount > 99 ? '99+' : itemCount}
+              </span>
+            )}
+          </button>
           <Link
             to="/admin"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-[var(--font-cond)] text-sm font-medium tracking-wide text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[rgba(196,162,207,0.1)] transition-all duration-200"

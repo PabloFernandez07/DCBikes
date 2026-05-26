@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button'
 import { QuoteModal } from '@/components/public/QuoteModal'
 import { SizeSelector } from '@/components/public/SizeSelector'
 import { useProductGroup } from '@/hooks/useProductGroup'
+import { useCartStore } from '@/stores/cartStore'
+import { useUiStore } from '@/stores/uiStore'
 import type { ProductImage, Category } from '@/lib/database.types'
 import { SEO } from '@/components/layout/SEO'
 
@@ -144,18 +146,26 @@ export default function ProductDetail() {
   const isPurchasable = selectedVariant.is_purchasable
   const inStock = selectedVariant.stock > 0
 
+  const addItem = useCartStore(s => s.addItem)
+  const openCart = useUiStore(s => s.openCart)
+
   const handleAddToCart = () => {
-    // Carrito real se implementa en Fase C (Zustand + persist + drawer).
-    // Por ahora dejamos el hook listo para la integración.
-    // eslint-disable-next-line no-console
-    console.log('Añadir al carrito (Fase C):', selectedVariant.id, {
-      product_id: selectedVariant.id,
-      name: selectedVariant.name,
-      size_label: selectedVariant.size_label,
-      unit_price_cents: Math.round(finalPrice * 100),
-    })
-    // eslint-disable-next-line no-alert
-    alert('Carrito en desarrollo')
+    // Selecciona la primera imagen disponible para el snapshot.
+    const firstImage = carouselImages[0]
+    addItem(
+      selectedVariant.id,
+      {
+        name: selectedVariant.name,
+        size_label: selectedVariant.size_label,
+        unit_price_cents: Math.round(finalPrice * 100),
+        image_url: firstImage?.url ?? null,
+        sku: selectedVariant.sku,
+        slug: selectedVariant.slug,
+        stock_at_add: selectedVariant.stock,
+      },
+      1,
+    )
+    openCart()
   }
 
   return (

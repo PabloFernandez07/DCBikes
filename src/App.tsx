@@ -4,12 +4,16 @@ import { useTheme } from "@/hooks/useTheme";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { CookieBanner } from "@/components/layout/CookieBanner";
+import { CartDrawer } from "@/components/layout/CartDrawer";
 
 const Home         = lazy(() => import("@/pages/public/Home"));
 const Catalog      = lazy(() => import("@/pages/public/Catalog"));
 const ProductDetail = lazy(() => import("@/pages/public/ProductDetail"));
 const Workshop     = lazy(() => import("@/pages/public/Workshop"));
 const Contact      = lazy(() => import("@/pages/public/Contact"));
+const Cart         = lazy(() => import("@/pages/public/Cart"));
+const Checkout     = lazy(() => import("@/pages/public/Checkout"));
+const PendingRedsys = lazy(() => import("@/pages/public/PendingRedsys"));
 const CookiePolicy = lazy(() => import("@/pages/public/CookiePolicy"));
 const PrivacyPolicy = lazy(() => import("@/pages/public/PrivacyPolicy"));
 const LegalNotice  = lazy(() => import("@/pages/public/LegalNotice"));
@@ -209,6 +213,30 @@ export default function App() {
           }
         />
         <Route
+          path="/carrito"
+          element={
+            <PublicLayout>
+              <Cart />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/checkout"
+          element={
+            <PublicLayout>
+              <Checkout />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/pedido/pendiente-redsys"
+          element={
+            <PublicLayout>
+              <PendingRedsys />
+            </PublicLayout>
+          }
+        />
+        <Route
           path="/cookies"
           element={
             <PublicLayout>
@@ -236,6 +264,7 @@ export default function App() {
         <Route path="*" element={<PublicLayout><NotFound /></PublicLayout>} />
       </Routes>
       </Suspense>
+      <CartDrawer />
       <CookieBanner />
     </BrowserRouter>
   );
