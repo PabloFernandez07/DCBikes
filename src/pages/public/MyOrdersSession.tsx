@@ -173,14 +173,26 @@ export default function MyOrdersSession() {
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)]/40 transition-colors"
-          >
-            <LogOut size={13} />
-            Cerrar sesión
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => token && fetchOrders(token)}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)]/40 transition-colors disabled:opacity-50"
+              title="Refrescar mis pedidos"
+            >
+              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+              Refrescar
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)]/40 transition-colors"
+            >
+              <LogOut size={13} />
+              Cerrar sesión
+            </button>
+          </div>
         </header>
 
         {/* Orders list */}

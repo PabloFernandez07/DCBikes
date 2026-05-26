@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Mail, Phone, FileText, Download, Save, Loader2, Package as PackageIcon, Store, MapPin, Receipt, Trash2, History, XCircle } from 'lucide-react'
+import { ArrowLeft, Mail, Phone, FileText, Download, Save, Loader2, Package as PackageIcon, Store, MapPin, Receipt, Trash2, History, XCircle, RefreshCw } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { OrderStatusBadge, ORDER_STATUS_META, type OrderStatus } from '@/components/admin/OrderStatusBadge'
@@ -277,6 +277,16 @@ export default function OrderDetail() {
               Creado el {formatDate(order.created_at)}
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => fetchAll(true)}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-cream-dim)] border border-[var(--color-card-hover)] hover:border-[var(--color-lavender)]/40 hover:text-[var(--color-cream)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refrescar datos del pedido"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            Refrescar
+          </button>
         </div>
 
         {/* Banners de cambios del cliente */}

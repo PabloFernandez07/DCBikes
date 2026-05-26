@@ -15,6 +15,7 @@ import {
   Pencil,
   Loader2,
   History,
+  RefreshCw,
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -448,7 +449,22 @@ export default function MyOrderDetailCustomer() {
                 </span>
               )}
             </div>
-            <OrderStatusBadge status={order.status} size="md" />
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const s = readSession()
+                  if (s && order) fetchDetail(order.id, s.token)
+                }}
+                disabled={loading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)]/40 transition-colors disabled:opacity-50"
+                title="Refrescar pedido"
+              >
+                <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+                Refrescar
+              </button>
+              <OrderStatusBadge status={order.status} size="md" />
+            </div>
           </div>
         </header>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, Eye, FileDown } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Eye, FileDown, RefreshCw } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { OrderStatusBadge, ORDER_STATUS_META, type OrderStatus } from '@/components/admin/OrderStatusBadge'
@@ -363,13 +363,25 @@ export default function OrdersList() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
-          PEDIDOS
-        </h1>
-        <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
-          {counters.total} pedidos en total
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
+            PEDIDOS
+          </h1>
+          <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
+            {counters.total} pedidos en total
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => { fetchOrders(); fetchCounters() }}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-cream-dim)] border border-[var(--color-card-hover)] hover:border-[var(--color-lavender)]/40 hover:text-[var(--color-cream)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Refrescar lista de pedidos"
+        >
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          Refrescar
+        </button>
       </div>
 
       {/* Counter cards */}
