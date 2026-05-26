@@ -7,15 +7,27 @@ import { Button } from '@/components/ui/Button'
 
 type Step = 'drop' | 'map' | 'validate' | 'import'
 
+// Todas las columnas mapeables (alineadas con el Excel productos-importar.xlsx
+// generado por scripts/generate-import-excel.mjs, pero también admiten nombres
+// alternativos vía autoMap).
 type ColumnKey =
   | 'nombre'
-  | 'sku'
+  | 'familia'
+  | 'tipo'
   | 'marca'
-  | 'descripcion'
+  | 'descripcion_corta'
+  | 'descripcion_completa'
+  | 'sku'
+  | 'ean'
   | 'pvp'
+  | 'coste'
   | 'stock'
-  | 'categoria_slug'
+  | 'talla'
+  | 'grupo_modelo'
+  | 'color'
+  | 'peso_gramos'
   | 'activo'
+  | 'comprar_online'
   | 'ignorar'
 
 interface ColumnMap {
@@ -28,40 +40,78 @@ interface RawRow {
 
 interface MappedRow {
   nombre: string
-  sku: string
+  familia: string                // se resuelve a category_id
+  tipo: string                   // Tienda/Taller (controla activo si no se sobrescribe)
   marca: string
-  descripcion: string
+  descripcion_corta: string
+  descripcion_completa: string
+  sku: string
+  ean: string
   pvp: number | null
+  coste: number | null
   stock: number
-  categoria_slug: string
+  talla: string
+  grupo_modelo: string
+  color: string
+  peso_gramos: number | null
   activo: boolean
+  comprar_online: boolean
   _errors: string[]
   _rowIdx: number
 }
 
 const COLUMN_LABELS: Record<ColumnKey, string> = {
   nombre: 'Nombre',
-  sku: 'Referencia',
+  familia: 'Familia / Categoría',
+  tipo: 'Tipo (Tienda/Taller)',
   marca: 'Marca',
-  descripcion: 'Descripción',
-  pvp: 'PVP',
+  descripcion_corta: 'Descripción corta',
+  descripcion_completa: 'Descripción completa',
+  sku: 'Referencia (SKU)',
+  ean: 'EAN',
+  pvp: 'PVP c/IVA',
+  coste: 'Coste s/IVA',
   stock: 'Stock',
-  categoria_slug: 'Categoría slug',
-  activo: 'Activo',
+  talla: 'Talla',
+  grupo_modelo: 'Grupo modelo',
+  color: 'Color',
+  peso_gramos: 'Peso (g)',
+  activo: 'Activo (visible web)',
+  comprar_online: 'Comprar online',
   ignorar: 'Ignorar',
 }
 
+const COLUMN_OPTIONS: ColumnKey[] = [
+  'nombre', 'familia', 'tipo', 'marca',
+  'descripcion_corta', 'descripcion_completa',
+  'sku', 'ean',
+  'pvp', 'coste', 'stock',
+  'talla', 'grupo_modelo', 'color', 'peso_gramos',
+  'activo', 'comprar_online',
+  'ignorar',
+]
+
 function autoMap(headers: string[]): ColumnMap {
   const map: ColumnMap = {}
+  // El orden importa: patrones más específicos primero.
   const matches: Array<[RegExp, ColumnKey]> = [
-    [/nombre|name|product/i, 'nombre'],
-    [/sku|ref/i, 'sku'],
-    [/marca|brand/i, 'marca'],
-    [/desc/i, 'descripcion'],
+    [/comprar\s*online|online|purchasable/i, 'comprar_online'],
+    [/desc.*(corta|breve|short)/i, 'descripcion_corta'],
+    [/desc.*(completa|larga|long)|^descripcion$|^descripción$/i, 'descripcion_completa'],
+    [/grupo\s*modelo|model.?group/i, 'grupo_modelo'],
+    [/peso|weight/i, 'peso_gramos'],
+    [/coste|cost/i, 'coste'],
     [/pvp|price|precio/i, 'pvp'],
+    [/^talla$|^size$/i, 'talla'],
+    [/^color$|colour/i, 'color'],
+    [/sku|ref|referencia/i, 'sku'],
+    [/ean|barcode|barras/i, 'ean'],
+    [/marca|brand/i, 'marca'],
+    [/familia|family|categor/i, 'familia'],
+    [/^tipo$|type/i, 'tipo'],
     [/stock|cantidad|qty/i, 'stock'],
-    [/categ|slug/i, 'categoria_slug'],
     [/activo|active|enabled/i, 'activo'],
+    [/nombre|name|articulo|artículo|product/i, 'nombre'],
   ]
   for (const h of headers) {
     const found = matches.find(([re]) => re.test(h))
@@ -70,32 +120,136 @@ function autoMap(headers: string[]): ColumnMap {
   return map
 }
 
+// ─── Parsers ──────────────────────────────────────────────────────────────
+function toStr(v: unknown): string {
+  if (v == null) return ''
+  return String(v).trim()
+}
+function toNum(v: unknown): number | null {
+  if (v == null || v === '') return null
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null
+  const cleaned = String(v).replace(/[€\s]/g, '').replace(',', '.')
+  const n = parseFloat(cleaned)
+  return Number.isFinite(n) ? n : null
+}
+function toBool(v: unknown, fallback = false): boolean {
+  if (v == null || v === '') return fallback
+  const s = String(v).trim().toLowerCase()
+  if (['1', 'true', 'si', 'sí', 'yes', 'y', 'verdadero'].includes(s)) return true
+  if (['0', 'false', 'no', 'n', 'falso'].includes(s)) return false
+  return fallback
+}
+
 function parseRows(rawRows: RawRow[], colMap: ColumnMap): MappedRow[] {
   return rawRows.map((raw, idx) => {
-    const get = (key: ColumnKey): string => {
+    const get = (key: ColumnKey): unknown => {
       const col = Object.entries(colMap).find(([, v]) => v === key)?.[0]
-      return col != null && raw[col] != null ? String(raw[col]).trim() : ''
+      return col != null ? raw[col] : null
     }
     const errors: string[] = []
-    const pvpRaw = get('pvp')
-    const pvp = pvpRaw ? Number(pvpRaw) : null
-    if (!pvp || isNaN(pvp)) errors.push('PVP vacío o inválido')
-    if (!get('nombre')) errors.push('Nombre vacío')
+
+    const nombre = toStr(get('nombre'))
+    const tipo = toStr(get('tipo'))
+    const familia = toStr(get('familia'))
+    const pvp = toNum(get('pvp'))
+
+    if (!nombre) errors.push('Nombre vacío')
+    if (pvp == null || pvp <= 0) errors.push('PVP vacío o ≤ 0')
+
+    // Activo: si no se mapea columna explícita, derivar de Tipo/Familia.
+    let activo: boolean
+    const activoCol = Object.entries(colMap).find(([, v]) => v === 'activo')
+    if (activoCol) {
+      activo = toBool(raw[activoCol[0]], false)
+    } else {
+      const isTaller = tipo.toUpperCase() === 'TALLER'
+      const isAlquiler = familia.toUpperCase() === 'ALQUILER'
+      const isTienda = tipo.toUpperCase() === 'TIENDA'
+      activo = isTienda && !isAlquiler && !isTaller
+    }
+
+    // Comprar online: default false. Admin lo activa producto a producto desde admin.
+    const comprarOnline = toBool(get('comprar_online'), false)
+
     return {
-      nombre: get('nombre'),
-      sku: get('sku'),
-      marca: get('marca'),
-      descripcion: get('descripcion'),
+      nombre,
+      familia,
+      tipo,
+      marca: toStr(get('marca')),
+      descripcion_corta: toStr(get('descripcion_corta')),
+      descripcion_completa: toStr(get('descripcion_completa')),
+      sku: toStr(get('sku')),
+      ean: toStr(get('ean')),
       pvp,
-      stock: Number(get('stock')) || 0,
-      categoria_slug: get('categoria_slug'),
-      activo: ['1', 'true', 'si', 'yes'].includes(get('activo').toLowerCase()),
+      coste: toNum(get('coste')),
+      stock: Math.max(0, Math.trunc(toNum(get('stock')) ?? 0)),
+      talla: toStr(get('talla')),
+      grupo_modelo: toStr(get('grupo_modelo')),
+      color: toStr(get('color')),
+      peso_gramos: toNum(get('peso_gramos')),
+      activo,
+      comprar_online: comprarOnline,
       _errors: errors,
       _rowIdx: idx + 1,
     }
   })
 }
 
+// ─── Helper: categoría auto-crear ────────────────────────────────────────
+async function resolveCategoryId(familia: string, cache: Map<string, string>): Promise<string | null> {
+  if (!familia) return null
+  const key = familia.toLowerCase().trim()
+  if (cache.has(key)) return cache.get(key)!
+
+  const slug = familia
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+
+  // Lookup por slug primero
+  const { data: existing } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle()
+  if (existing?.id) {
+    cache.set(key, existing.id)
+    return existing.id
+  }
+
+  // Crear nueva
+  const { data: max } = await supabase
+    .from('categories')
+    .select('sort_order')
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const sortOrder = (max?.sort_order ?? 0) + 1
+
+  const { data: created } = await supabase
+    .from('categories')
+    .insert({ slug, name: familia, sort_order: sortOrder })
+    .select('id')
+    .single()
+  if (created?.id) {
+    cache.set(key, created.id)
+    return created.id
+  }
+  return null
+}
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
+// ─── Componente ──────────────────────────────────────────────────────────
 export function ExcelImporter() {
   const [step, setStep] = useState<Step>('drop')
   const [headers, setHeaders] = useState<string[]>([])
@@ -104,6 +258,7 @@ export function ExcelImporter() {
   const [mappedRows, setMappedRows] = useState<MappedRow[]>([])
   const [importing, setImporting] = useState(false)
   const [imported, setImported] = useState(0)
+  const [importErrors, setImportErrors] = useState<Array<{ name: string; error: string }>>([])
   const [dragging, setDragging] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -111,7 +266,11 @@ export function ExcelImporter() {
     const reader = new FileReader()
     reader.onload = e => {
       const wb = xlsxRead(e.target?.result, { type: 'binary' })
-      const ws = wb.Sheets[wb.SheetNames[0]]
+      // Buscar hoja "Productos" (generada por nuestro script) o caer a la primera.
+      const sheetName = wb.SheetNames.includes('Productos')
+        ? 'Productos'
+        : wb.SheetNames[0]
+      const ws = wb.Sheets[sheetName]
       const data = utils.sheet_to_json<RawRow>(ws, { defval: '' })
       if (data.length === 0) return
       const hdrs = Object.keys(data[0])
@@ -138,63 +297,65 @@ export function ExcelImporter() {
   const handleImport = async () => {
     setImporting(true)
     setStep('import')
+    setImportErrors([])
     const valid = mappedRows.filter(r => r._errors.length === 0)
     let count = 0
+    const categoryCache = new Map<string, string>()
+    const errors: Array<{ name: string; error: string }> = []
 
     for (const row of valid) {
-      let categoryId: string | null = null
+      try {
+        const categoryId = await resolveCategoryId(row.familia, categoryCache)
+        if (!categoryId) {
+          errors.push({ name: row.nombre, error: 'No se pudo crear/asociar categoría' })
+          continue
+        }
 
-      if (row.categoria_slug) {
-        const { data } = await supabase
-          .from('categories')
-          .select('id')
-          .eq('slug', row.categoria_slug)
-          .maybeSingle()
-        categoryId = data?.id ?? null
+        const slug = slugify(row.nombre) || `producto-${row._rowIdx}`
+
+        const payload = {
+          name: row.nombre,
+          slug,
+          sku: row.sku || null,
+          brand: row.marca || null,
+          short_description: row.descripcion_corta || null,
+          description: row.descripcion_completa || null,
+          retail_price: row.pvp ?? 0,
+          stock: row.stock,
+          category_id: categoryId,
+          active: row.activo,
+          featured: false,
+          // Campos Fase A:
+          ean: row.ean || null,
+          size_label: row.talla || null,
+          model_group: row.grupo_modelo || null,
+          weight_grams: row.peso_gramos,
+          is_purchasable: row.comprar_online,
+          // discount_percent y cost_price se dejan a null (cost_price podría
+          // mapearse si la BD tiene esa columna; el TS actual la tiene como
+          // discount_percent — TODO sincronizar tras supabase gen types):
+          discount_percent: null,
+        }
+
+        if (row.sku) {
+          const { error } = await supabase
+            .from('products')
+            .upsert(payload, { onConflict: 'sku' })
+          if (error) throw error
+        } else {
+          const { error } = await supabase.from('products').insert(payload)
+          if (error) throw error
+        }
+
+        count++
+        setImported(count)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        errors.push({ name: row.nombre, error: msg })
       }
-
-      if (!categoryId) {
-        const { data: cats } = await supabase
-          .from('categories')
-          .select('id')
-          .order('sort_order')
-          .limit(1)
-        categoryId = cats?.[0]?.id ?? ''
-      }
-
-      const slug = row.nombre
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
-
-      const payload = {
-        name: row.nombre,
-        slug,
-        sku: row.sku || null,
-        brand: row.marca || null,
-        description: row.descripcion || null,
-        short_description: null as string | null,
-        retail_price: row.pvp!,
-        stock: row.stock,
-        category_id: categoryId,
-        active: row.activo,
-        featured: false,
-      }
-
-      if (row.sku) {
-        await supabase
-          .from('products')
-          .upsert(payload, { onConflict: 'sku' })
-      } else {
-        await supabase.from('products').insert(payload)
-      }
-
-      count++
-      setImported(count)
     }
 
+    setImportErrors(errors)
     setImporting(false)
   }
 
@@ -205,8 +366,10 @@ export function ExcelImporter() {
     setColMap({})
     setMappedRows([])
     setImported(0)
+    setImportErrors([])
   }
 
+  // ── Step 1: drop ───────────────────────────────────────────────────────
   if (step === 'drop') {
     return (
       <div
@@ -233,15 +396,17 @@ export function ExcelImporter() {
           Arrastra tu archivo Excel o CSV
         </p>
         <p className="text-sm text-[var(--color-mid)] mt-2">XLS, XLSX, CSV admitidos</p>
+        <p className="text-xs text-[var(--color-mid)]/70 mt-4 font-[var(--font-body)]">
+          El importador autodetecta las columnas. Soporta el formato
+          productos-importar.xlsx generado por el script o cualquier Excel
+          con cabeceras claras.
+        </p>
       </div>
     )
   }
 
+  // ── Step 2: map columns ────────────────────────────────────────────────
   if (step === 'map') {
-    const colOptions: ColumnKey[] = [
-      'nombre', 'sku', 'marca', 'descripcion',
-      'pvp', 'stock', 'categoria_slug', 'activo', 'ignorar',
-    ]
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -252,6 +417,13 @@ export function ExcelImporter() {
             <X size={15} /> Cancelar
           </Button>
         </div>
+
+        <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)]">
+          Detectamos {headers.length} columnas en {rawRows.length} filas. Revisa
+          el mapeo automático y ajusta si hace falta. Marca como
+          <span className="mx-1 px-1.5 py-0.5 rounded bg-[var(--color-card-hover)] text-[var(--color-cream-dim)]">Ignorar</span>
+          las que no quieras importar.
+        </p>
 
         <div className="bg-[var(--color-card)] rounded-xl overflow-auto">
           <table className="w-full text-sm">
@@ -278,14 +450,16 @@ export function ExcelImporter() {
                       onChange={e => setColMap(prev => ({ ...prev, [h]: e.target.value as ColumnKey }))}
                       className="bg-[var(--color-ink)] border border-[var(--color-card-hover)] rounded-lg px-3 py-1.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)]"
                     >
-                      {colOptions.map(k => (
+                      {COLUMN_OPTIONS.map(k => (
                         <option key={k} value={k}>{COLUMN_LABELS[k]}</option>
                       ))}
                     </select>
                   </td>
                   <td className="px-4 py-3 text-[var(--color-mid)] font-[var(--font-body)] text-xs">
                     {rawRows.slice(0, 3).map((r, i) => (
-                      <span key={i} className="mr-2 opacity-70">{String(r[h] ?? '')}</span>
+                      <span key={i} className="mr-2 opacity-70 max-w-[160px] inline-block truncate align-middle">
+                        {String(r[h] ?? '')}
+                      </span>
                     ))}
                   </td>
                 </tr>
@@ -304,9 +478,14 @@ export function ExcelImporter() {
     )
   }
 
+  // ── Step 3: validate ───────────────────────────────────────────────────
   if (step === 'validate') {
     const valid = mappedRows.filter(r => r._errors.length === 0)
     const invalid = mappedRows.filter(r => r._errors.length > 0)
+    const withShortDesc = valid.filter(r => r.descripcion_corta).length
+    const withSize = valid.filter(r => r.talla).length
+    const withGroup = valid.filter(r => r.grupo_modelo).length
+    const onlineCount = valid.filter(r => r.comprar_online).length
 
     return (
       <div className="space-y-6">
@@ -319,7 +498,7 @@ export function ExcelImporter() {
           </Button>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-lavender)]/10 border border-[var(--color-lavender)]/20">
             <CheckCircle size={16} className="text-[var(--color-lavender)]" />
             <span className="text-sm font-[var(--font-cond)] text-[var(--color-cream)]">
@@ -334,21 +513,29 @@ export function ExcelImporter() {
               </span>
             </div>
           )}
+          <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-card-hover)]/40">
+            <span className="text-xs text-[var(--color-mid)] font-[var(--font-cond)]">
+              {withShortDesc} con descripción · {withSize} con talla · {withGroup} agrupados · {onlineCount} online
+            </span>
+          </div>
         </div>
 
         <div className="bg-[var(--color-card)] rounded-xl overflow-auto max-h-96">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-[var(--color-card)]">
               <tr className="border-b border-[var(--color-card-hover)]">
-                <th className="px-4 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">#</th>
-                <th className="px-4 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">Nombre</th>
-                <th className="px-4 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">Referencia</th>
-                <th className="px-4 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">PVP</th>
-                <th className="px-4 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">Estado</th>
+                <th className="px-3 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">#</th>
+                <th className="px-3 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">Nombre</th>
+                <th className="px-3 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">Familia</th>
+                <th className="px-3 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">SKU</th>
+                <th className="px-3 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">PVP</th>
+                <th className="px-3 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">Talla</th>
+                <th className="px-3 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">Stock</th>
+                <th className="px-3 py-3 text-left text-[var(--color-mid)] font-[var(--font-cond)]">Estado</th>
               </tr>
             </thead>
             <tbody>
-              {mappedRows.map(row => (
+              {mappedRows.slice(0, 200).map(row => (
                 <tr
                   key={row._rowIdx}
                   className={clsx(
@@ -356,13 +543,18 @@ export function ExcelImporter() {
                     row._errors.length > 0 && 'bg-[var(--color-brand-red)]/5',
                   )}
                 >
-                  <td className="px-4 py-3 text-[var(--color-mid)]">{row._rowIdx}</td>
-                  <td className="px-4 py-3 text-[var(--color-cream-dim)]">{row.nombre || '—'}</td>
-                  <td className="px-4 py-3 text-[var(--color-mid)]">{row.sku || '—'}</td>
-                  <td className="px-4 py-3 text-[var(--color-cream-dim)]">
-                    {row.pvp != null ? `${row.pvp} €` : '—'}
+                  <td className="px-3 py-3 text-[var(--color-mid)]">{row._rowIdx}</td>
+                  <td className="px-3 py-3 text-[var(--color-cream-dim)] truncate max-w-[260px]" title={row.nombre}>
+                    {row.nombre || '—'}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-3 text-[var(--color-mid)] text-xs">{row.familia || '—'}</td>
+                  <td className="px-3 py-3 text-[var(--color-mid)] text-xs">{row.sku || '—'}</td>
+                  <td className="px-3 py-3 text-[var(--color-cream-dim)] tabular-nums">
+                    {row.pvp != null ? `${row.pvp.toFixed(2)} €` : '—'}
+                  </td>
+                  <td className="px-3 py-3 text-[var(--color-cream-dim)] text-xs">{row.talla || '—'}</td>
+                  <td className="px-3 py-3 text-[var(--color-cream-dim)] tabular-nums">{row.stock}</td>
+                  <td className="px-3 py-3">
                     {row._errors.length > 0 ? (
                       <span className="text-xs text-[var(--color-brand-red)]">
                         {row._errors.join(', ')}
@@ -375,6 +567,11 @@ export function ExcelImporter() {
               ))}
             </tbody>
           </table>
+          {mappedRows.length > 200 && (
+            <p className="px-3 py-2 text-xs text-[var(--color-mid)] border-t border-[var(--color-card-hover)] bg-[var(--color-card)]">
+              Mostrando 200 de {mappedRows.length} filas en preview. El import procesará todas.
+            </p>
+          )}
         </div>
 
         <div className="flex justify-end gap-3">
@@ -387,39 +584,52 @@ export function ExcelImporter() {
     )
   }
 
+  // ── Step 4: import (running / done) ────────────────────────────────────
   const valid = mappedRows.filter(r => r._errors.length === 0)
 
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
-        Paso 4: Importando...
+        {importing ? 'Paso 4: Importando…' : 'Importación completada'}
       </h3>
 
       <div className="space-y-3">
         <div className="flex justify-between text-sm text-[var(--color-cream-dim)] font-[var(--font-body)]">
-          <span>{imported} de {valid.length} productos importados</span>
-          <span>{Math.round((imported / valid.length) * 100)}%</span>
+          <span>{imported} / {valid.length} importados</span>
+          {importErrors.length > 0 && (
+            <span className="text-[var(--color-brand-red)]">{importErrors.length} con error</span>
+          )}
         </div>
-        <div className="h-2.5 w-full bg-[var(--color-card)] rounded-full overflow-hidden">
+        <div className="h-2 bg-[var(--color-card)] rounded-full overflow-hidden">
           <div
-            className="h-full bg-[var(--color-lavender)] rounded-full transition-all duration-300"
-            style={{ width: `${(imported / valid.length) * 100}%` }}
+            className="h-full bg-[var(--color-lavender)] transition-all"
+            style={{ width: `${valid.length ? (imported / valid.length) * 100 : 0}%` }}
           />
         </div>
       </div>
 
-      {!importing && imported > 0 && (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-[var(--color-lavender)]/10 border border-[var(--color-lavender)]/20">
-          <CheckCircle size={20} className="text-[var(--color-lavender)]" />
-          <p className="text-sm font-[var(--font-cond)] text-[var(--color-cream)]">
-            Importación completada: {imported} productos procesados
+      {importErrors.length > 0 && (
+        <div className="bg-[var(--color-brand-red)]/5 border border-[var(--color-brand-red)]/20 rounded-xl p-4 max-h-60 overflow-auto">
+          <p className="text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-brand-red)] mb-2">
+            ERRORES DURANTE EL IMPORT
           </p>
+          <ul className="space-y-1.5 text-xs font-[var(--font-body)]">
+            {importErrors.slice(0, 50).map((e, i) => (
+              <li key={i} className="text-[var(--color-cream-dim)]">
+                <span className="text-[var(--color-cream)]">{e.name}:</span>{' '}
+                <span className="text-[var(--color-mid)]">{e.error}</span>
+              </li>
+            ))}
+            {importErrors.length > 50 && (
+              <li className="text-[var(--color-mid)]">… y {importErrors.length - 50} más</li>
+            )}
+          </ul>
         </div>
       )}
 
       {!importing && (
-        <div className="flex justify-end">
-          <Button variant="primary" onClick={reset}>Nueva importación</Button>
+        <div className="flex justify-end gap-3">
+          <Button variant="primary" onClick={reset}>Importar otro archivo</Button>
         </div>
       )}
     </div>
