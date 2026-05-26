@@ -62,6 +62,7 @@ export default function OrdersList() {
   const [dateTo, setDateTo] = useState<string>('')
   const [deliveryFilter, setDeliveryFilter] = useState<DeliveryFilter>('all')
   const [search, setSearch] = useState('')
+  const [showDeleted, setShowDeleted] = useState(false)
 
   // Counters
   const [counters, setCounters] = useState({
@@ -94,6 +95,9 @@ export default function OrdersList() {
       .order('created_at', { ascending: false })
       .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 
+    if (!showDeleted) {
+      query = query.is('deleted_at', null)
+    }
     if (statusFilter && statusFilter !== 'all') {
       query = query.eq('status', statusFilter as OrderStatus)
     }
@@ -128,7 +132,7 @@ export default function OrdersList() {
       setTotal(count ?? 0)
     }
     setLoading(false)
-  }, [page, statusFilter, deliveryFilter, dateFrom, dateTo, search])
+  }, [page, statusFilter, deliveryFilter, dateFrom, dateTo, search, showDeleted])
 
   useEffect(() => { fetchOrders() }, [fetchOrders])
   useEffect(() => { fetchCounters() }, [fetchCounters])
@@ -150,7 +154,7 @@ export default function OrdersList() {
   // Reset page on filter change
   useEffect(() => {
     setPage(0)
-  }, [statusFilter, deliveryFilter, dateFrom, dateTo, search])
+  }, [statusFilter, deliveryFilter, dateFrom, dateTo, search, showDeleted])
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -308,6 +312,33 @@ export default function OrdersList() {
               />
             </div>
           </div>
+
+          <label className="flex items-center gap-2 pb-1.5 cursor-pointer select-none">
+            <span
+              className={clsx(
+                'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
+                showDeleted ? 'bg-[var(--color-lavender)]/60' : 'bg-[var(--color-card-hover)]',
+              )}
+              aria-hidden="true"
+            >
+              <span
+                className={clsx(
+                  'inline-block h-3.5 w-3.5 transform rounded-full bg-[var(--color-cream)] transition-transform',
+                  showDeleted ? 'translate-x-4.5' : 'translate-x-0.5',
+                )}
+                style={{ transform: showDeleted ? 'translateX(1.125rem)' : 'translateX(0.125rem)' }}
+              />
+            </span>
+            <input
+              type="checkbox"
+              checked={showDeleted}
+              onChange={e => setShowDeleted(e.target.checked)}
+              className="sr-only"
+            />
+            <span className="text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-cream-dim)] whitespace-nowrap">
+              Mostrar eliminados
+            </span>
+          </label>
         </div>
       </div>
 
@@ -341,18 +372,25 @@ export default function OrdersList() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map(o => (
+                  {orders.map(o => {
+                    const isDeleted = !!o.deleted_at
+                    return (
                     <tr
                       key={o.id}
                       onClick={() => navigate(`/admin/pedidos/${o.id}`)}
                       className={clsx(
                         'border-b border-[var(--color-card-hover)]/40 last:border-0 cursor-pointer transition-colors',
-                        o.status === 'authorized'
-                          ? 'bg-yellow-500/5 hover:bg-yellow-500/10'
-                          : 'hover:bg-[var(--color-card-hover)]/30',
+                        isDeleted
+                          ? 'opacity-60 bg-[var(--color-ink)]/40 hover:bg-[var(--color-card-hover)]/40'
+                          : o.status === 'authorized'
+                            ? 'bg-yellow-500/5 hover:bg-yellow-500/10'
+                            : 'hover:bg-[var(--color-card-hover)]/30',
                       )}
                     >
-                      <td className="px-4 py-3 font-[var(--font-cond)] text-[var(--color-lavender)] tracking-wide whitespace-nowrap">
+                      <td className={clsx(
+                        'px-4 py-3 font-[var(--font-cond)] text-[var(--color-lavender)] tracking-wide whitespace-nowrap',
+                        isDeleted && 'line-through',
+                      )}>
                         {o.order_number}
                       </td>
                       <td className="px-4 py-3 text-[var(--color-cream-dim)] font-[var(--font-body)] whitespace-nowrap">
@@ -373,7 +411,14 @@ export default function OrdersList() {
                         {o.delivery_method === 'shipping' ? 'Envío' : 'Recogida'}
                       </td>
                       <td className="px-4 py-3">
-                        <OrderStatusBadge status={o.status as OrderStatus} />
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <OrderStatusBadge status={o.status as OrderStatus} />
+                          {isDeleted && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-[var(--font-cond)] tracking-wide border bg-[var(--color-card-hover)] text-[var(--color-mid)] border-[var(--color-mid)]/30 uppercase">
+                              Eliminado
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <button
@@ -386,32 +431,46 @@ export default function OrdersList() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile cards */}
             <ul className="md:hidden divide-y divide-[var(--color-card-hover)]/40">
-              {orders.map(o => (
+              {orders.map(o => {
+                const isDeleted = !!o.deleted_at
+                return (
                 <li
                   key={o.id}
                   onClick={() => navigate(`/admin/pedidos/${o.id}`)}
                   className={clsx(
                     'px-4 py-4 cursor-pointer transition-colors',
-                    o.status === 'authorized'
-                      ? 'bg-yellow-500/5 hover:bg-yellow-500/10'
-                      : 'hover:bg-[var(--color-card-hover)]/30',
+                    isDeleted
+                      ? 'opacity-60 bg-[var(--color-ink)]/40 hover:bg-[var(--color-card-hover)]/40'
+                      : o.status === 'authorized'
+                        ? 'bg-yellow-500/5 hover:bg-yellow-500/10'
+                        : 'hover:bg-[var(--color-card-hover)]/30',
                   )}
                 >
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div>
-                      <p className="font-[var(--font-cond)] text-[var(--color-lavender)] tracking-wide">
+                      <p className={clsx(
+                        'font-[var(--font-cond)] text-[var(--color-lavender)] tracking-wide',
+                        isDeleted && 'line-through',
+                      )}>
                         {o.order_number}
                       </p>
                       <p className="text-xs text-[var(--color-mid)] mt-0.5">{formatDate(o.created_at)}</p>
                     </div>
-                    <OrderStatusBadge status={o.status as OrderStatus} />
+                    <div className="flex flex-col items-end gap-1">
+                      <OrderStatusBadge status={o.status as OrderStatus} />
+                      {isDeleted && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-[var(--font-cond)] tracking-wide border bg-[var(--color-card-hover)] text-[var(--color-mid)] border-[var(--color-mid)]/30 uppercase">
+                          Eliminado
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm text-[var(--color-cream)] font-[var(--font-body)]">
                     {o.customer_first_name} {o.customer_last_name}
@@ -426,7 +485,7 @@ export default function OrdersList() {
                     </span>
                   </div>
                 </li>
-              ))}
+              )})}
             </ul>
           </>
         )}

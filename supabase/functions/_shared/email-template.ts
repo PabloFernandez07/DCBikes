@@ -43,6 +43,12 @@ export interface EmailContext {
   storeEmail?: string
   /** Links legales en footer (cookies, privacidad, etc.) */
   footerLinks?: EmailFooterLink[]
+  /**
+   * URL al área "Mis pedidos" del cliente. Si se pasa, se renderiza en el
+   * footer como link "Ver mis pedidos" junto a los footerLinks legales.
+   * Útil para cualquier email transaccional relacionado con pedidos.
+   */
+  myOrdersUrl?: string
 }
 
 const COLORS = {
@@ -114,9 +120,20 @@ export function renderEmail(ctx: EmailContext): string {
       `<a href="mailto:${escapeHtml(ctx.storeEmail)}" style="color:${COLORS.lavenderDark};text-decoration:none">${escapeHtml(ctx.storeEmail)}</a>`,
     )
 
+  // Combinamos el link "Ver mis pedidos" (si viene) con los footerLinks legales.
+  // Se renderiza siempre primero para que el cliente lo vea como acción
+  // principal del footer, antes de los legales.
+  const combinedFooterLinks: EmailFooterLink[] = []
+  if (ctx.myOrdersUrl && ctx.myOrdersUrl.length > 0) {
+    combinedFooterLinks.push({ label: 'Ver mis pedidos', url: ctx.myOrdersUrl })
+  }
+  if (ctx.footerLinks && ctx.footerLinks.length > 0) {
+    combinedFooterLinks.push(...ctx.footerLinks)
+  }
+
   const footerLinksHtml =
-    ctx.footerLinks && ctx.footerLinks.length > 0
-      ? ctx.footerLinks
+    combinedFooterLinks.length > 0
+      ? combinedFooterLinks
           .map(
             (l) =>
               `<a href="${escapeHtml(l.url)}" style="color:${COLORS.textMuted};text-decoration:underline;margin:0 6px">${escapeHtml(l.label)}</a>`,

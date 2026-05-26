@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Mail, Phone, FileText, Download, Save, Loader2, Package as PackageIcon, Store, MapPin, Receipt } from 'lucide-react'
+import { ArrowLeft, Mail, Phone, FileText, Download, Save, Loader2, Package as PackageIcon, Store, MapPin, Receipt, Trash2 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { OrderStatusBadge, ORDER_STATUS_META, type OrderStatus } from '@/components/admin/OrderStatusBadge'
 import { OrderActionsBar } from '@/components/admin/OrderActionsBar'
 import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
 import { useSchedule } from '@/hooks/useSchedule'
@@ -54,6 +55,11 @@ export default function OrderDetail() {
 
   // Invoice download
   const [downloadingInvoice, setDownloadingInvoice] = useState(false)
+
+  // Delete order modal
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteReason, setDeleteReason] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   const fetchAll = useCallback(async () => {
     if (!id) return
@@ -184,6 +190,26 @@ export default function OrderDetail() {
         .then(({ data }) => setHistory((data as StatusHistoryRow[]) ?? []))
     }
   }, [id])
+
+  const handleDeleteOrder = async () => {
+    if (!order || deleting) return
+    setDeleting(true)
+    try {
+      const trimmed = deleteReason.trim()
+      const { data, error } = await supabase.functions.invoke('order-delete', {
+        body: { order_id: order.id, ...(trimmed ? { reason: trimmed } : {}) },
+      })
+      if (error) throw new Error(error.message)
+      if (!data?.ok) throw new Error(data?.error ?? 'No se pudo eliminar el pedido')
+      toast.success('Pedido eliminado')
+      setDeleteOpen(false)
+      navigate('/admin/pedidos')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al eliminar')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   const handleDownloadInvoice = async () => {
     if (!invoice || downloadingInvoice) return
@@ -443,6 +469,18 @@ export default function OrderDetail() {
                   else toast.info(msg)
                 }}
               />
+              {(order.status === 'pending' || order.status === 'payment_failed') && (
+                <div className="mt-3 pt-3 border-t border-[var(--color-card-hover)]/60">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteOpen(true)}
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-[var(--font-cond)] font-medium tracking-wide text-red-300/80 border border-red-700/30 bg-red-900/10 hover:bg-red-900/20 hover:text-red-300 hover:border-red-700/50 transition-colors"
+                  >
+                    <Trash2 size={13} />
+                    Eliminar pedido
+                  </button>
+                </div>
+              )}
             </Section>
 
             {/* Timeline */}
@@ -573,6 +611,50 @@ export default function OrderDetail() {
           </aside>
         </div>
       </div>
+
+      <Modal
+        open={deleteOpen}
+        onClose={() => { if (!deleting) { setDeleteOpen(false); setDeleteReason('') } }}
+        title="¿Eliminar este pedido?"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed">
+            Esta acción ocultará el pedido de la lista. Los datos quedan en BD para auditoría pero no se mostrarán. Solo se permite para pedidos pendientes de pago o con pago fallido.
+          </p>
+          <div>
+            <label className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-1 block">
+              Razón (opcional)
+            </label>
+            <textarea
+              value={deleteReason}
+              onChange={e => setDeleteReason(e.target.value)}
+              rows={3}
+              placeholder="Motivo del borrado…"
+              className="w-full text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-ink)] px-3 py-2 rounded-lg border border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50 focus:outline-none transition-colors resize-y"
+            />
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setDeleteOpen(false); setDeleteReason('') }}
+              disabled={deleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleDeleteOrder}
+              disabled={deleting}
+            >
+              {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+              Sí, eliminar
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </>

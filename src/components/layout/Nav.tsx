@@ -1,14 +1,21 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Menu, X, Settings, ShoppingCart } from 'lucide-react'
+import { Menu, X, Settings, ShoppingCart, Package } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useCartStore } from '@/stores/cartStore'
 import { useUiStore } from '@/stores/uiStore'
 
-const links = [
+interface NavLinkItem {
+  to: string
+  label: string
+  icon?: React.ComponentType<{ size?: number; className?: string }>
+}
+
+const links: NavLinkItem[] = [
   { to: '/catalogo', label: 'Catálogo' },
   { to: '/taller', label: 'Taller' },
   { to: '/contacto', label: 'Contacto' },
+  { to: '/mis-pedidos', label: 'Mis pedidos', icon: Package },
 ]
 
 export function Nav() {
@@ -28,19 +35,20 @@ export function Nav() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1" aria-label="Navegación principal">
-          {links.map(({ to, label }) => (
+          {links.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
                 clsx(
-                  'px-4 py-2 rounded-lg font-[var(--font-cond)] text-base font-medium tracking-wide transition-all duration-200',
+                  'inline-flex items-center gap-1.5 px-4 py-2 rounded-lg font-[var(--font-cond)] text-base font-medium tracking-wide transition-all duration-200',
                   isActive
                     ? 'text-[var(--color-lavender)] bg-[rgba(196,162,207,0.12)]'
                     : 'text-[var(--color-cream-dim)] hover:text-[var(--color-cream)] hover:bg-[rgba(255,255,255,0.06)]',
                 )
               }
             >
+              {Icon && <Icon size={15} />}
               {label}
             </NavLink>
           ))}
@@ -87,19 +95,20 @@ export function Nav() {
           className="md:hidden border-t border-[var(--color-card)] bg-[var(--color-ink-deep)] px-4 py-3 flex flex-col gap-1"
           onClick={() => setOpen(false)}
         >
-          {links.map(({ to, label }) => (
+          {links.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
                 clsx(
-                  'px-4 py-3 rounded-xl font-[var(--font-cond)] text-lg font-medium tracking-wide transition-all duration-200',
+                  'inline-flex items-center gap-2 px-4 py-3 rounded-xl font-[var(--font-cond)] text-lg font-medium tracking-wide transition-all duration-200',
                   isActive
                     ? 'text-[var(--color-lavender)] bg-[rgba(196,162,207,0.12)]'
                     : 'text-[var(--color-cream-dim)] hover:text-[var(--color-cream)] hover:bg-[rgba(255,255,255,0.06)]',
                 )
               }
             >
+              {Icon && <Icon size={18} />}
               {label}
             </NavLink>
           ))}

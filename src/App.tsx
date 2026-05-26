@@ -22,6 +22,9 @@ const PrivacyPolicy = lazy(() => import("@/pages/public/PrivacyPolicy"));
 const LegalNotice  = lazy(() => import("@/pages/public/LegalNotice"));
 const Returns      = lazy(() => import("@/pages/public/Returns"));
 const TermsOfSale  = lazy(() => import("@/pages/public/TermsOfSale"));
+const MyOrdersRequestAccess = lazy(() => import("@/pages/public/MyOrdersRequestAccess"));
+const MyOrdersSession = lazy(() => import("@/pages/public/MyOrdersSession"));
+const MyOrderDetailCustomer = lazy(() => import("@/pages/public/MyOrderDetailCustomer"));
 const NotFound     = lazy(() => import("@/pages/public/NotFound"));
 const AdminRoutes  = lazy(() =>
   import("@/routes/AdminRoutes").then((m) => ({ default: m.AdminRoutes }))
@@ -302,6 +305,30 @@ export default function App() {
           element={
             <PublicLayout>
               <TermsOfSale />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/mis-pedidos"
+          element={
+            <PublicLayout>
+              <MyOrdersRequestAccess />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/mis-pedidos/sesion"
+          element={
+            <PublicLayout>
+              <MyOrdersSession />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/mis-pedidos/pedido/:id"
+          element={
+            <PublicLayout>
+              <MyOrderDetailCustomer />
             </PublicLayout>
           }
         />

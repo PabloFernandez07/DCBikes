@@ -160,6 +160,7 @@ export function Footer() {
                 { to: '/catalogo', label: 'Catálogo' },
                 { to: '/taller', label: 'Taller & Servicio' },
                 { to: '/contacto', label: 'Contacto' },
+                { to: '/mis-pedidos', label: 'Mis pedidos' },
               ].map(({ to, label }) => (
                 <Link
                   key={to}

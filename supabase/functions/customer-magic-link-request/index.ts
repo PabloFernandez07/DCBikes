@@ -1,0 +1,128 @@
+// supabase/functions/customer-magic-link-request/index.ts
+//
+// Feature N — Cliente pide un magic link para ver "Mis pedidos".
+//
+// Flujo:
+//   1. POST { email }. Sin auth (público).
+//   2. Valida formato email + rate-limit (max 5/hora por email).
+//   3. Comprueba SILENCIOSAMENTE si existe al menos un pedido vivo con ese
+//      email. Si NO existe → devuelve igual { ok:true, message:... } para
+//      evitar enumeración (un atacante no puede saber si el email tiene
+//      cuenta o no).
+//   4. Si existe → crea customer_session y envía email vía
+//      send-customer-magic-link.
+//
+// Respuesta siempre 200 (excepto rate limit 429 y formato 400) para no
+// dar señales al atacante.
+
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+import { CORS_HEADERS, jsonError, jsonOk } from '../_shared/email-utils.ts'
+import {
+  countRecentSessionsForEmail,
+  createCustomerSession,
+} from '../_shared/customer-session.ts'
+
+const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+const RATE_LIMIT_MAX = 5
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000 // 1h
+const PUBLIC_MESSAGE =
+  'Si existe un pedido asociado a ese email, recibirás un enlace en breve.'
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS })
+  const ts = () => new Date().toISOString()
+
+  try {
+    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+
+    const body = (await req.json().catch(() => ({}))) as { email?: string }
+    const email = (body.email ?? '').toString().trim().toLowerCase()
+    if (!email || !EMAIL_RE.test(email)) {
+      return jsonError('Email inválido', 400)
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
+
+    // Rate limit: 5 solicitudes / hora / email.
+    const recent = await countRecentSessionsForEmail(
+      supabase,
+      email,
+      RATE_LIMIT_WINDOW_MS,
+    )
+    if (recent >= RATE_LIMIT_MAX) {
+      console.warn(
+        `[${ts()}] rate-limit hit · email=${email} · count=${recent}`,
+      )
+      return jsonError(
+        'Demasiadas solicitudes. Inténtalo de nuevo en una hora.',
+        429,
+      )
+    }
+
+    // ¿Hay algún pedido vivo asociado a este email?
+    const { count: orderCount, error: cErr } = await supabase
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('customer_email', email)
+      .is('deleted_at', null)
+
+    if (cErr) {
+      console.error(`[${ts()}] orders count error:`, cErr.message)
+      // Aun así devolvemos OK público para no revelar nada. Pero NO creamos
+      // sesión ni email (no hay datos válidos).
+      return jsonOk({ message: PUBLIC_MESSAGE })
+    }
+
+    if (!orderCount || orderCount === 0) {
+      // Anti-enumeración: respuesta idéntica al caso "sí existe".
+      console.log(
+        `[${ts()}] magic-link request · email=${email} · no-orders (silent ok)`,
+      )
+      return jsonOk({ message: PUBLIC_MESSAGE })
+    }
+
+    // Crear sesión.
+    const ipHeader =
+      req.headers.get('x-forwarded-for') ?? req.headers.get('cf-connecting-ip')
+    const ip = ipHeader ? ipHeader.split(',')[0].trim() : null
+    const ua = req.headers.get('user-agent')
+
+    let token: string
+    try {
+      const session = await createCustomerSession(supabase, email, ip, ua)
+      token = session.token
+    } catch (err) {
+      console.error(`[${ts()}] createCustomerSession failed:`, String(err))
+      // Devolvemos OK público igualmente — no revelamos errores internos.
+      return jsonOk({ message: PUBLIC_MESSAGE })
+    }
+
+    // Invocar send-customer-magic-link (fire-and-forget — no bloqueamos al cliente).
+    supabase.functions
+      .invoke('send-customer-magic-link', { body: { email, token } })
+      .then((res) => {
+        if (res.error) {
+          console.warn(
+            `[${ts()}] send-customer-magic-link invoke error:`,
+            res.error.message,
+          )
+        }
+      })
+      .catch((err) =>
+        console.warn(`[${ts()}] send-customer-magic-link exception:`, String(err)),
+      )
+
+    console.log(
+      `[${ts()}] ✓ magic-link request · email=${email} · orders=${orderCount}`,
+    )
+    return jsonOk({ message: PUBLIC_MESSAGE })
+  } catch (err) {
+    console.error(`[${ts()}] ✗ customer-magic-link-request:`, String(err))
+    return jsonError(String(err))
+  }
+})
