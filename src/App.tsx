@@ -13,7 +13,10 @@ const Workshop     = lazy(() => import("@/pages/public/Workshop"));
 const Contact      = lazy(() => import("@/pages/public/Contact"));
 const Cart         = lazy(() => import("@/pages/public/Cart"));
 const Checkout     = lazy(() => import("@/pages/public/Checkout"));
-const PendingRedsys = lazy(() => import("@/pages/public/PendingRedsys"));
+const RedsysRedirecting = lazy(() => import("@/pages/public/RedsysRedirecting"));
+const MockRedsysPayment = lazy(() => import("@/pages/public/MockRedsysPayment"));
+const OrderConfirmation = lazy(() => import("@/pages/public/OrderConfirmation"));
+const PaymentError = lazy(() => import("@/pages/public/PaymentError"));
 const CookiePolicy = lazy(() => import("@/pages/public/CookiePolicy"));
 const PrivacyPolicy = lazy(() => import("@/pages/public/PrivacyPolicy"));
 const LegalNotice  = lazy(() => import("@/pages/public/LegalNotice"));
@@ -231,10 +234,34 @@ export default function App() {
           }
         />
         <Route
-          path="/pedido/pendiente-redsys"
+          path="/pedido/redirigiendo"
           element={
             <PublicLayout>
-              <PendingRedsys />
+              <RedsysRedirecting />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/mock-redsys-pago/:order_id"
+          element={
+            <PublicLayout>
+              <MockRedsysPayment />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/pedido/confirmacion/:order_id"
+          element={
+            <PublicLayout>
+              <OrderConfirmation />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/pedido/error"
+          element={
+            <PublicLayout>
+              <PaymentError />
             </PublicLayout>
           }
         />

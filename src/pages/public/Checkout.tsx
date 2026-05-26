@@ -6,9 +6,13 @@ import { ChevronLeft, Truck, Store, Receipt, Clock, Bike } from 'lucide-react'
 import { useCartStore } from '@/stores/cartStore'
 import { useSchedule } from '@/hooks/useSchedule'
 import { useShopSettings } from '@/hooks/useShopSettings'
+import { useToast } from '@/hooks/useToast'
+import { ToastContainer } from '@/components/ui/Toast'
 import { Field } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
+import { supabase } from '@/lib/supabase'
+import type { RedsysFormData } from '@/components/public/RedsysAutoSubmitForm'
 import {
   checkoutSchema,
   checkoutDefaults,
@@ -23,11 +27,23 @@ function fmtEuros(cents: number): string {
   })
 }
 
+interface OrderPlaceResponse {
+  ok: boolean
+  error?: string
+  order_number: string
+  order_id: string
+  public_token: string
+  payment:
+    | { mode: 'mock'; mock_url: string }
+    | { mode: 'redsys'; form_data: RedsysFormData }
+}
+
 export default function Checkout() {
   const navigate = useNavigate()
   const items = useCartStore(s => s.items)
   const getSubtotalCents = useCartStore(s => s.getSubtotalCents)
   const { schedule } = useSchedule()
+  const { toasts, toast, dismiss } = useToast()
 
   // Settings tienda (envío, umbral, IVA, auto-cancel). Defaults se usan
   // mientras carga para no bloquear el render del formulario.
@@ -77,74 +93,100 @@ export default function Checkout() {
   const baseCents = Math.round(totalCents / (1 + taxRate / 100))
   const taxCents = totalCents - baseCents
 
-  const onSubmit = (data: CheckoutFormValues) => {
-    const now = new Date().toISOString()
-    const payload = {
-      // Datos cliente
-      customer_first_name: data.first_name.trim(),
-      customer_last_name: data.last_name.trim(),
-      customer_email: data.email.trim().toLowerCase(),
-      customer_phone: data.phone.trim(),
-      // Entrega
-      delivery_method: data.delivery_method,
-      shipping_address:
-        data.delivery_method === 'shipping'
-          ? data.shipping_address?.trim() ?? null
-          : null,
-      shipping_city:
-        data.delivery_method === 'shipping'
-          ? data.shipping_city?.trim() ?? null
-          : null,
-      shipping_postal_code:
-        data.delivery_method === 'shipping'
-          ? data.shipping_postal_code?.trim() ?? null
-          : null,
-      shipping_province:
-        data.delivery_method === 'shipping' ? data.shipping_province : null,
-      shipping_notes:
-        data.delivery_method === 'shipping'
-          ? data.shipping_notes?.trim() || null
-          : null,
-      // Facturación
-      needs_invoice: data.needs_invoice,
-      invoice_business_name: data.needs_invoice
-        ? data.invoice_business_name?.trim() ?? null
-        : null,
-      invoice_cif: data.needs_invoice
-        ? data.invoice_cif?.trim().toUpperCase() ?? null
-        : null,
-      invoice_address: data.needs_invoice
-        ? data.invoice_address?.trim() ?? null
-        : null,
-      // Items snapshot (lo que el backend va a confirmar en Fase E)
+  const onSubmit = async (data: CheckoutFormValues) => {
+    // Construimos el body que `order-place` espera (ver contrato Fase E).
+    // OJO: NO enviamos snapshot ni totales — el backend recalcula precios
+    // y stock para evitar manipulación del cliente.
+    const body = {
       items: items.map(i => ({
         product_id: i.product_id,
         quantity: i.quantity,
-        snapshot: i.snapshot,
       })),
-      // Totales (orientativos — el backend recalcula)
-      subtotal_cents: subtotalCents,
-      shipping_cents: shippingCents,
-      total_cents: totalCents,
-      tax_rate: taxRate,
-      // Consentimientos
-      accepted_terms_at: data.accepted_terms ? now : null,
-      accepted_privacy_at: data.accepted_privacy ? now : null,
-      accepted_approval_flow_at: data.accepted_approval_flow ? now : null,
-      marketing_opt_in: data.marketing_opt_in,
-      // Meta
-      created_at: now,
+      customer: {
+        first_name: data.first_name.trim(),
+        last_name: data.last_name.trim(),
+        email: data.email.trim().toLowerCase(),
+        phone: data.phone.trim(),
+      },
+      delivery_method: data.delivery_method,
+      shipping_address:
+        data.delivery_method === 'shipping'
+          ? {
+              address: data.shipping_address?.trim() ?? '',
+              city: data.shipping_city?.trim() ?? '',
+              postal_code: data.shipping_postal_code?.trim() ?? '',
+              province: data.shipping_province ?? '',
+              notes: data.shipping_notes?.trim() || null,
+            }
+          : null,
+      needs_invoice: data.needs_invoice,
+      invoice_b2b: data.needs_invoice
+        ? {
+            business_name: data.invoice_business_name?.trim() ?? '',
+            cif: (data.invoice_cif?.trim() ?? '').toUpperCase(),
+            address: data.invoice_address?.trim() ?? '',
+          }
+        : null,
+      consents: {
+        accepted_terms: data.accepted_terms,
+        accepted_privacy: data.accepted_privacy,
+        marketing_opt_in: data.marketing_opt_in,
+      },
     }
 
-    // eslint-disable-next-line no-console
-    console.log('[CHECKOUT] Payload listo para Fase E:', payload)
     try {
-      localStorage.setItem('dcbikes_pending_order', JSON.stringify(payload))
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('[CHECKOUT] No se pudo guardar el pedido pendiente:', err)
+      const { data: result, error } = await supabase.functions.invoke<
+        OrderPlaceResponse
+      >('order-place', { body })
+
+      if (error) throw error
+      if (!result?.ok) {
+        throw new Error(result?.error || 'No se pudo procesar el pedido')
+      }
+
+      // Persistimos referencia ligera del último pedido para que la página
+      // de confirmación pueda leerla aunque pierda el state de navegación
+      // (refresh, click directo desde email, etc.).
+      try {
+        localStorage.setItem(
+          'dcbikes_last_order',
+          JSON.stringify({
+            order_id: result.order_id,
+            order_number: result.order_number,
+            token: result.public_token,
+          }),
+        )
+      } catch {
+        // localStorage saturado o bloqueado — no crítico.
+      }
+
+      // NO vaciamos el carrito todavía: el usuario podría cancelar en
+      // Redsys y querer reintentar con los mismos items. El clear se
+      // hace en `OrderConfirmation` cuando el pago está autorizado.
+
+      if (result.payment.mode === 'mock') {
+        // Sandbox local: vamos directos al simulador.
+        navigate(result.payment.mock_url, { replace: true })
+        return
+      }
+
+      // Redsys real: pasamos el form_data por location.state para que
+      // la página puente lo auto-submita.
+      navigate('/pedido/redirigiendo', {
+        replace: true,
+        state: {
+          form_data: result.payment.form_data,
+          order_id: result.order_id,
+          public_token: result.public_token,
+        },
+      })
+    } catch (e: unknown) {
+      const message =
+        e instanceof Error
+          ? e.message
+          : 'Error procesando el pedido. Inténtalo de nuevo.'
+      toast.error(message)
     }
-    navigate('/pedido/pendiente-redsys')
   }
 
   if (isEmpty) {
@@ -689,6 +731,8 @@ export default function Checkout() {
           </p>
         </aside>
       </form>
+
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   )
 }
