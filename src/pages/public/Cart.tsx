@@ -11,6 +11,7 @@ import {
   Store,
 } from 'lucide-react'
 import { useCartStore } from '@/stores/cartStore'
+import { useShopSettings } from '@/hooks/useShopSettings'
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
 
@@ -21,11 +22,6 @@ function fmtEuros(cents: number): string {
   })
 }
 
-// Constantes provisionales hasta Fase J (settings UI admin).
-// TODO: leer de settings (Fase J añadirá keys shipping_flat_rate_cents y shipping_free_threshold_cents).
-const SHIPPING_FLAT_RATE_CENTS = 690
-const SHIPPING_FREE_THRESHOLD_CENTS = 5000
-
 type DeliveryPreview = 'shipping' | 'pickup'
 
 export default function Cart() {
@@ -34,6 +30,12 @@ export default function Cart() {
   const removeItem = useCartStore(s => s.removeItem)
   const updateQuantity = useCartStore(s => s.updateQuantity)
   const getSubtotalCents = useCartStore(s => s.getSubtotalCents)
+
+  // Settings tienda (envío, umbral free). Mientras carga usa defaults — no
+  // bloqueamos UX porque son cálculos orientativos hasta el checkout real.
+  const { settings } = useShopSettings()
+  const shippingFlatRateCents = settings.shippingFlatRateCents
+  const shippingFreeThresholdCents = settings.shippingFreeThresholdCents
 
   const [deliveryPreview, setDeliveryPreview] =
     useState<DeliveryPreview>('shipping')
@@ -44,8 +46,8 @@ export default function Cart() {
   // Cálculo envío previsualizado (orientativo — el real se calcula en checkout).
   const shippingPreviewCents = (() => {
     if (deliveryPreview === 'pickup') return 0
-    if (subtotalCents >= SHIPPING_FREE_THRESHOLD_CENTS) return 0
-    return SHIPPING_FLAT_RATE_CENTS
+    if (subtotalCents >= shippingFreeThresholdCents) return 0
+    return shippingFlatRateCents
   })()
   const totalCents = subtotalCents + shippingPreviewCents
 
@@ -327,14 +329,11 @@ export default function Cart() {
               </span>
             </div>
             {deliveryPreview === 'shipping' &&
-              subtotalCents < SHIPPING_FREE_THRESHOLD_CENTS && (
+              subtotalCents < shippingFreeThresholdCents && (
                 <p className="text-[11px] text-[var(--color-mid)] font-[var(--font-cond)]">
                   Te faltan{' '}
                   <strong className="text-[var(--color-lavender)]">
-                    {fmtEuros(
-                      SHIPPING_FREE_THRESHOLD_CENTS - subtotalCents,
-                    )}{' '}
-                    €
+                    {fmtEuros(shippingFreeThresholdCents - subtotalCents)} €
                   </strong>{' '}
                   para envío gratis.
                 </p>

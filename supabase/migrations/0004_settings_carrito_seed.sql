@@ -1,0 +1,29 @@
+-- DC Bikes Cantabria — Seed de settings para el carrito de compra (Fase J).
+--
+-- Inserta las 13 keys del plan de carrito con valores por defecto sensatos.
+-- Idempotente: si la admin ya las personalizó desde el panel, NO se sobrescriben.
+--
+-- Convención de tipos en `settings.value` (jsonb):
+--   - Números enteros / decimales → almacenados como número JSON (`690`, `21.00`).
+--   - Strings                     → almacenados como string JSON (`'"FAC"'`).
+
+insert into settings (key, value) values
+  -- ─── E-commerce ──────────────────────────────────────────────
+  ('shipping_flat_rate_cents',      '690'::jsonb),         -- 6,90 €
+  ('shipping_free_threshold_cents', '5000'::jsonb),        -- 50 €
+  ('order_auto_cancel_hours',       '48'::jsonb),          -- 48 h (max 144 por límite Redsys 7d)
+  ('order_notification_emails',     '""'::jsonb),          -- CSV de emails admin (vacío por defecto)
+  ('pickup_deadline_days',          '15'::jsonb),          -- 15 días para recoger en tienda
+
+  -- ─── Facturación ─────────────────────────────────────────────
+  ('tax_rate_default',              '21.00'::jsonb),       -- IVA 21 %
+  ('invoice_series_prefix',         '"FAC"'::jsonb),
+  ('order_series_prefix',           '"ORD"'::jsonb),
+  ('legal_company_name',            '""'::jsonb),
+  ('legal_company_cif',             '""'::jsonb),
+  ('legal_company_address',         '""'::jsonb),
+
+  -- ─── Pasarela Redsys (no credenciales) ───────────────────────
+  ('redsys_environment',            '"test"'::jsonb),      -- 'test' | 'prod'
+  ('redsys_merchant_name',          '"DC Bikes Cantabria"'::jsonb)
+on conflict (key) do nothing;

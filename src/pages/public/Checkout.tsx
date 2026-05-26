@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronLeft, Truck, Store, Receipt, Clock, Bike } from 'lucide-react'
 import { useCartStore } from '@/stores/cartStore'
 import { useSchedule } from '@/hooks/useSchedule'
+import { useShopSettings } from '@/hooks/useShopSettings'
 import { Field } from '@/components/ui/Field'
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
@@ -22,17 +23,19 @@ function fmtEuros(cents: number): string {
   })
 }
 
-// Constantes provisionales hasta Fase J (settings UI admin).
-// TODO: leer de settings (Fase J añadirá keys shipping_flat_rate_cents y shipping_free_threshold_cents).
-const SHIPPING_FLAT_RATE_CENTS = 690
-const SHIPPING_FREE_THRESHOLD_CENTS = 5000
-const TAX_RATE = 21 // %
-
 export default function Checkout() {
   const navigate = useNavigate()
   const items = useCartStore(s => s.items)
   const getSubtotalCents = useCartStore(s => s.getSubtotalCents)
   const { schedule } = useSchedule()
+
+  // Settings tienda (envío, umbral, IVA, auto-cancel). Defaults se usan
+  // mientras carga para no bloquear el render del formulario.
+  const { settings } = useShopSettings()
+  const shippingFlatRateCents = settings.shippingFlatRateCents
+  const shippingFreeThresholdCents = settings.shippingFreeThresholdCents
+  const taxRate = settings.taxRateDefault
+  const autoCancelHours = settings.orderAutoCancelHours
 
   const subtotalCents = getSubtotalCents()
   const isEmpty = items.length === 0
@@ -66,12 +69,12 @@ export default function Checkout() {
   // Cálculo envío y totales.
   const shippingCents = (() => {
     if (deliveryMethod === 'pickup') return 0
-    if (subtotalCents >= SHIPPING_FREE_THRESHOLD_CENTS) return 0
-    return SHIPPING_FLAT_RATE_CENTS
+    if (subtotalCents >= shippingFreeThresholdCents) return 0
+    return shippingFlatRateCents
   })()
   const totalCents = subtotalCents + shippingCents
   // Desglose IVA: precios son con IVA incluido.
-  const baseCents = Math.round(totalCents / (1 + TAX_RATE / 100))
+  const baseCents = Math.round(totalCents / (1 + taxRate / 100))
   const taxCents = totalCents - baseCents
 
   const onSubmit = (data: CheckoutFormValues) => {
@@ -123,7 +126,7 @@ export default function Checkout() {
       subtotal_cents: subtotalCents,
       shipping_cents: shippingCents,
       total_cents: totalCents,
-      tax_rate: TAX_RATE,
+      tax_rate: taxRate,
       // Consentimientos
       accepted_terms_at: data.accepted_terms ? now : null,
       accepted_privacy_at: data.accepted_privacy ? now : null,
@@ -253,7 +256,7 @@ export default function Checkout() {
                         value: 'shipping' as const,
                         icon: Truck,
                         title: 'Envío a dirección',
-                        subtitle: `${fmtEuros(SHIPPING_FLAT_RATE_CENTS)} € · Gratis desde ${fmtEuros(SHIPPING_FREE_THRESHOLD_CENTS)} €`,
+                        subtitle: `${fmtEuros(shippingFlatRateCents)} € · Gratis desde ${fmtEuros(shippingFreeThresholdCents)} €`,
                       },
                       {
                         value: 'pickup' as const,
@@ -581,8 +584,9 @@ export default function Checkout() {
                   className="mt-1 accent-[var(--color-lavender)] w-4 h-4 shrink-0"
                 />
                 <span className="text-sm font-[var(--font-body)] text-[var(--color-cream-dim)] leading-relaxed">
-                  Acepto que la tienda tiene <strong>48&nbsp;horas</strong>{' '}
-                  para confirmar mi pedido. Si lo rechazan, mi reserva se libera
+                  Acepto que la tienda tiene{' '}
+                  <strong>{autoCancelHours}&nbsp;horas</strong> para confirmar
+                  mi pedido. Si lo rechazan, mi reserva se libera
                   automáticamente sin coste para mí.
                 </span>
               </label>
@@ -663,7 +667,7 @@ export default function Checkout() {
               </span>
             </div>
             <p className="text-[10px] font-[var(--font-cond)] text-[var(--color-mid)] leading-relaxed tabular-nums">
-              Base imponible {fmtEuros(baseCents)} € + IVA {TAX_RATE}%{' '}
+              Base imponible {fmtEuros(baseCents)} € + IVA {taxRate}%{' '}
               {fmtEuros(taxCents)} € = Total {fmtEuros(totalCents)} €
             </p>
           </div>
@@ -680,7 +684,8 @@ export default function Checkout() {
 
           <p className="text-[10px] text-[var(--color-mid)] font-[var(--font-cond)] leading-relaxed">
             Al tramitar el pedido se reservará el importe en tu tarjeta. No se
-            cobrará hasta que la tienda confirme la disponibilidad (máx. 48 h).
+            cobrará hasta que la tienda confirme la disponibilidad (máx.{' '}
+            {autoCancelHours} h).
           </p>
         </aside>
       </form>
