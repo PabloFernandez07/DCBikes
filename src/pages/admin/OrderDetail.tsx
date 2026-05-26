@@ -61,9 +61,9 @@ export default function OrderDetail() {
   const [deleteReason, setDeleteReason] = useState('')
   const [deleting, setDeleting] = useState(false)
 
-  const fetchAll = useCallback(async () => {
+  const fetchAll = useCallback(async (silent = false) => {
     if (!id) return
-    setLoading(true)
+    if (!silent) setLoading(true)
 
     // 1) Order
     const { data: orderRow, error: orderErr } = await supabase
@@ -495,6 +495,7 @@ export default function OrderDetail() {
                 order={order}
                 currentUserId={user?.id ?? null}
                 onChanged={handleOrderChanged}
+                onRefresh={() => fetchAll(true)}
                 onToast={(type, msg) => {
                   if (type === 'success') toast.success(msg)
                   else if (type === 'error') toast.error(msg)

@@ -13,6 +13,10 @@ export interface OrderActionsBarProps {
   order: Order
   currentUserId: string | null
   onChanged: (updated: Partial<Order>) => void
+  /** Refetch completo desde BD tras una acción exitosa. Garantiza
+   *  que la UI muestre los datos reales del backend (timestamps, factura,
+   *  payment_pre_auth_id, etc.) sin necesidad de F5. */
+  onRefresh?: () => Promise<void> | void
   onToast: (type: 'success' | 'error' | 'info', message: string) => void
 }
 
@@ -76,7 +80,7 @@ async function appendHistory(
   })
 }
 
-export function OrderActionsBar({ order, currentUserId, onChanged, onToast }: OrderActionsBarProps) {
+export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, onToast }: OrderActionsBarProps) {
   const status = order.status as OrderStatus
 
   // Modal states
@@ -129,6 +133,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onToast }: Or
       }
       setAcceptOpen(false)
       setAcceptNotes('')
+      await onRefresh?.()
     } catch (err) {
       onToast('error', err instanceof Error ? err.message : 'Error al aceptar')
     } finally {
@@ -163,6 +168,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onToast }: Or
       }
       setRejectOpen(false)
       setRejectCustom('')
+      await onRefresh?.()
     } catch (err) {
       onToast('error', err instanceof Error ? err.message : 'Error al rechazar')
     } finally {
@@ -214,6 +220,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onToast }: Or
       }
       setShipOpen(false)
       setShipTracking('')
+      await onRefresh?.()
     } catch (err) {
       onToast('error', err instanceof Error ? err.message : 'Error')
     } finally {
@@ -244,6 +251,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onToast }: Or
         throw new Error(res.errorMessage ?? 'Error desconocido')
       }
       setReadyOpen(false)
+      await onRefresh?.()
     } catch (err) {
       onToast('error', err instanceof Error ? err.message : 'Error')
     } finally {
@@ -265,6 +273,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onToast }: Or
       onChanged({ status: 'delivered' })
       onToast('success', 'Pedido marcado como entregado')
       setDeliveredOpen(false)
+      await onRefresh?.()
     } catch (err) {
       onToast('error', err instanceof Error ? err.message : 'Error')
     } finally {
