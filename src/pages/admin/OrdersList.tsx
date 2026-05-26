@@ -1,12 +1,26 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Eye, FileDown } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { OrderStatusBadge, ORDER_STATUS_META, type OrderStatus } from '@/components/admin/OrderStatusBadge'
+import { BulkShipBar } from '@/components/admin/BulkShipBar'
+import { BulkShipModal, type BulkShipOrder } from '@/components/admin/BulkShipModal'
+import { useToast } from '@/hooks/useToast'
+import { ToastContainer } from '@/components/ui/Toast'
+import { buildOrdersCsv, downloadCsv, defaultCsvFilename, type CsvOrderItem } from '@/lib/csvExport'
 import type { Database } from '@/lib/database.types'
 
 type Order = Database['public']['Tables']['orders']['Row']
+
+/**
+ * Un pedido es "seleccionable" para acciones en lote sólo si está aceptado,
+ * con método de envío, y no eliminado. Esto centraliza la regla para que
+ * el header y la lógica de "seleccionar todos" estén sincronizados.
+ */
+function isOrderBulkEligible(o: Order): boolean {
+  return o.status === 'accepted' && o.delivery_method === 'shipping' && !o.deleted_at
+}
 
 const PAGE_SIZE = 30
 
@@ -48,6 +62,7 @@ function todayIso() {
 export default function OrdersList() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  const { toasts, toast, dismiss } = useToast()
 
   const initialStatus = searchParams.get('status') ?? 'all'
   const initialDate = searchParams.get('date')
@@ -63,6 +78,11 @@ export default function OrdersList() {
   const [deliveryFilter, setDeliveryFilter] = useState<DeliveryFilter>('all')
   const [search, setSearch] = useState('')
   const [showDeleted, setShowDeleted] = useState(false)
+
+  // ── Bulk selection ────────────────────────────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkModalOpen, setBulkModalOpen] = useState(false)
+  const [exportingCsv, setExportingCsv] = useState(false)
 
   // Counters
   const [counters, setCounters] = useState({
@@ -155,6 +175,155 @@ export default function OrdersList() {
   useEffect(() => {
     setPage(0)
   }, [statusFilter, deliveryFilter, dateFrom, dateTo, search, showDeleted])
+
+  // Reset selection cuando cambian filtros / página / búsqueda. Mantenerla
+  // sería confuso porque los pedidos visibles cambian.
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [page, statusFilter, deliveryFilter, dateFrom, dateTo, search, showDeleted])
+
+  // ── Selection helpers ──────────────────────────────────────────
+  const bulkEligibleOnPage = useMemo(
+    () => orders.filter(isOrderBulkEligible),
+    [orders],
+  )
+  const allOnPageSelected =
+    bulkEligibleOnPage.length > 0 &&
+    bulkEligibleOnPage.every(o => selectedIds.has(o.id))
+  const someOnPageSelected =
+    bulkEligibleOnPage.some(o => selectedIds.has(o.id)) && !allOnPageSelected
+
+  const toggleOne = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const toggleAllOnPage = useCallback(() => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (allOnPageSelected) {
+        // Quita los de esta página, conserva el resto (improbable pero por si).
+        for (const o of bulkEligibleOnPage) next.delete(o.id)
+      } else {
+        for (const o of bulkEligibleOnPage) next.add(o.id)
+      }
+      return next
+    })
+  }, [allOnPageSelected, bulkEligibleOnPage])
+
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), [])
+
+  // Pedidos seleccionados en la página actual (los únicos que están cargados
+  // en memoria). El bulk modal sólo opera sobre ellos.
+  const selectedOrders = useMemo(
+    () => orders.filter(o => selectedIds.has(o.id)),
+    [orders, selectedIds],
+  )
+
+  const bulkShipOrders: BulkShipOrder[] = useMemo(
+    () => selectedOrders.map(o => ({
+      id: o.id,
+      order_number: o.order_number,
+      customer_first_name: o.customer_first_name,
+      customer_last_name: o.customer_last_name,
+    })),
+    [selectedOrders],
+  )
+
+  // ── CSV export ────────────────────────────────────────────────
+  /**
+   * Exporta a CSV. Si `useSelection` es true, exporta los pedidos seleccionados
+   * actualmente. Si es false, descarga TODOS los pedidos accepted+shipping no
+   * eliminados (consulta independiente a la lista actual, sin paginar).
+   */
+  const handleExportCsv = useCallback(async (useSelection: boolean) => {
+    if (exportingCsv) return
+    setExportingCsv(true)
+    try {
+      let ordersToExport: Order[] = []
+
+      if (useSelection) {
+        if (selectedOrders.length === 0) {
+          toast.error('No hay pedidos seleccionados.')
+          return
+        }
+        ordersToExport = selectedOrders
+      } else {
+        // Sin selección: trae TODOS los pedidos pendientes de envío.
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('status', 'accepted')
+          .eq('delivery_method', 'shipping')
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+        if (error) {
+          console.error('[OrdersList] export csv', error)
+          toast.error('Error al cargar pedidos para exportar.')
+          return
+        }
+        ordersToExport = (data as Order[]) ?? []
+      }
+
+      if (ordersToExport.length === 0) {
+        toast.info('No hay pedidos pendientes de envío para exportar.')
+        return
+      }
+
+      // Trae items + producto (para weight_grams). Una sola query con join.
+      const ids = ordersToExport.map(o => o.id)
+      const { data: itemsData, error: itemsErr } = await supabase
+        .from('order_items')
+        .select('order_id, product_name, product_size_label, quantity, product_id, products:product_id ( weight_grams )')
+        .in('order_id', ids)
+
+      if (itemsErr) {
+        console.error('[OrdersList] export csv items', itemsErr)
+        toast.error('Error al cargar items para exportar.')
+        return
+      }
+
+      // Agrupa items por order_id.
+      type JoinedItem = {
+        order_id: string
+        product_name: string
+        product_size_label: string | null
+        quantity: number
+        product_id: string | null
+        // Supabase tipa la relación como array o single dependiendo del FK. Aceptamos ambos.
+        products: { weight_grams: number | null } | { weight_grams: number | null }[] | null
+      }
+      const itemsByOrder = new Map<string, CsvOrderItem[]>()
+      for (const raw of (itemsData as JoinedItem[] | null) ?? []) {
+        const productRel = Array.isArray(raw.products) ? raw.products[0] : raw.products
+        const weight = productRel?.weight_grams ?? null
+        const item: CsvOrderItem = {
+          product_name: raw.product_name,
+          product_size_label: raw.product_size_label,
+          quantity: raw.quantity,
+          weight_grams: weight,
+        }
+        const list = itemsByOrder.get(raw.order_id) ?? []
+        list.push(item)
+        itemsByOrder.set(raw.order_id, list)
+      }
+
+      const rows = ordersToExport.map(o => ({
+        order: o,
+        items: itemsByOrder.get(o.id) ?? [],
+      }))
+
+      const csv = buildOrdersCsv(rows)
+      downloadCsv(defaultCsvFilename(), csv)
+      toast.success(`Exportados ${ordersToExport.length} ${ordersToExport.length === 1 ? 'pedido' : 'pedidos'}`)
+    } finally {
+      setExportingCsv(false)
+    }
+  }, [exportingCsv, selectedOrders, toast])
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -339,6 +508,17 @@ export default function OrdersList() {
               Mostrar eliminados
             </span>
           </label>
+
+          <button
+            type="button"
+            onClick={() => handleExportCsv(false)}
+            disabled={exportingCsv}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-0.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-lavender)] border border-[var(--color-lavender)]/40 hover:bg-[var(--color-lavender)]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Exportar pedidos aceptados de envío como CSV (formato transportistas)"
+          >
+            <FileDown size={13} />
+            {exportingCsv ? 'Exportando…' : 'Exportar pendientes envío (CSV)'}
+          </button>
         </div>
       </div>
 
@@ -362,6 +542,21 @@ export default function OrdersList() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-[var(--color-card-hover)]">
+                    <th className="px-3 py-3.5 w-10 text-left">
+                      {/* Checkbox "seleccionar todos los de esta página". Sólo
+                          activa los pedidos elegibles (accepted+shipping+!deleted). */}
+                      <input
+                        type="checkbox"
+                        aria-label="Seleccionar todos los pedidos elegibles de esta página"
+                        checked={allOnPageSelected}
+                        ref={el => {
+                          if (el) el.indeterminate = someOnPageSelected
+                        }}
+                        onChange={toggleAllOnPage}
+                        disabled={bulkEligibleOnPage.length === 0}
+                        className="accent-[var(--color-lavender)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+                      />
+                    </th>
                     <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Nº</th>
                     <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Fecha</th>
                     <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Cliente</th>
@@ -374,12 +569,15 @@ export default function OrdersList() {
                 <tbody>
                   {orders.map(o => {
                     const isDeleted = !!o.deleted_at
+                    const eligible = isOrderBulkEligible(o)
+                    const checked = selectedIds.has(o.id)
                     return (
                     <tr
                       key={o.id}
                       onClick={() => navigate(`/admin/pedidos/${o.id}`)}
                       className={clsx(
                         'border-b border-[var(--color-card-hover)]/40 last:border-0 cursor-pointer transition-colors',
+                        checked && 'bg-[var(--color-lavender)]/10',
                         isDeleted
                           ? 'opacity-60 bg-[var(--color-ink)]/40 hover:bg-[var(--color-card-hover)]/40'
                           : o.status === 'authorized'
@@ -387,6 +585,20 @@ export default function OrdersList() {
                             : 'hover:bg-[var(--color-card-hover)]/30',
                       )}
                     >
+                      <td
+                        className="px-3 py-3 w-10"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        {eligible ? (
+                          <input
+                            type="checkbox"
+                            aria-label={`Seleccionar pedido ${o.order_number}`}
+                            checked={checked}
+                            onChange={() => toggleOne(o.id)}
+                            className="accent-[var(--color-lavender)] cursor-pointer"
+                          />
+                        ) : null}
+                      </td>
                       <td className={clsx(
                         'px-4 py-3 font-[var(--font-cond)] text-[var(--color-lavender)] tracking-wide whitespace-nowrap',
                         isDeleted && 'line-through',
@@ -456,12 +668,15 @@ export default function OrdersList() {
             <ul className="md:hidden divide-y divide-[var(--color-card-hover)]/40">
               {orders.map(o => {
                 const isDeleted = !!o.deleted_at
+                const eligible = isOrderBulkEligible(o)
+                const checked = selectedIds.has(o.id)
                 return (
                 <li
                   key={o.id}
                   onClick={() => navigate(`/admin/pedidos/${o.id}`)}
                   className={clsx(
                     'px-4 py-4 cursor-pointer transition-colors',
+                    checked && 'bg-[var(--color-lavender)]/10',
                     isDeleted
                       ? 'opacity-60 bg-[var(--color-ink)]/40 hover:bg-[var(--color-card-hover)]/40'
                       : o.status === 'authorized'
@@ -469,6 +684,25 @@ export default function OrdersList() {
                         : 'hover:bg-[var(--color-card-hover)]/30',
                   )}
                 >
+                  {eligible && (
+                    <div
+                      className="mb-2"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          aria-label={`Seleccionar pedido ${o.order_number}`}
+                          checked={checked}
+                          onChange={() => toggleOne(o.id)}
+                          className="accent-[var(--color-lavender)]"
+                        />
+                        <span className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)]">
+                          {checked ? 'Seleccionado' : 'Seleccionar'}
+                        </span>
+                      </label>
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div>
                       <p className={clsx(
@@ -519,6 +753,40 @@ export default function OrdersList() {
 
       {/* Bottom pagination */}
       <div className="px-1">{Pagination}</div>
+
+      {/* Padding extra para que el bottom bar flotante no tape contenido */}
+      {selectedIds.size > 0 && <div aria-hidden="true" className="h-20" />}
+
+      {/* Barra de acciones en lote (sticky bottom) */}
+      {selectedIds.size > 0 && (
+        <BulkShipBar
+          count={selectedIds.size}
+          onMarkShipped={() => setBulkModalOpen(true)}
+          onExportSelected={() => handleExportCsv(true)}
+          onClear={clearSelection}
+          disabled={exportingCsv}
+        />
+      )}
+
+      {/* Modal "marcar como enviados (bulk)" */}
+      <BulkShipModal
+        open={bulkModalOpen}
+        onClose={() => setBulkModalOpen(false)}
+        orders={bulkShipOrders}
+        toast={toast}
+        onAnySuccess={() => {
+          // Refresca lista y contadores para que pedidos enviados desaparezcan
+          // del filtro "accepted" actual sin esperar a cerrar el modal.
+          fetchOrders()
+          fetchCounters()
+        }}
+        onAllSuccess={() => {
+          setBulkModalOpen(false)
+          clearSelection()
+        }}
+      />
+
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>
   )
 }
