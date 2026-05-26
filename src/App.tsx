@@ -17,6 +17,8 @@ const PendingRedsys = lazy(() => import("@/pages/public/PendingRedsys"));
 const CookiePolicy = lazy(() => import("@/pages/public/CookiePolicy"));
 const PrivacyPolicy = lazy(() => import("@/pages/public/PrivacyPolicy"));
 const LegalNotice  = lazy(() => import("@/pages/public/LegalNotice"));
+const Returns      = lazy(() => import("@/pages/public/Returns"));
+const TermsOfSale  = lazy(() => import("@/pages/public/TermsOfSale"));
 const NotFound     = lazy(() => import("@/pages/public/NotFound"));
 const AdminRoutes  = lazy(() =>
   import("@/routes/AdminRoutes").then((m) => ({ default: m.AdminRoutes }))
@@ -257,6 +259,22 @@ export default function App() {
           element={
             <PublicLayout>
               <LegalNotice />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/devoluciones"
+          element={
+            <PublicLayout>
+              <Returns />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/terminos-venta"
+          element={
+            <PublicLayout>
+              <TermsOfSale />
             </PublicLayout>
           }
         />

@@ -532,9 +532,8 @@ export default function Checkout() {
                 />
                 <span className="text-sm font-[var(--font-body)] text-[var(--color-cream-dim)] leading-relaxed">
                   He leído y acepto los{' '}
-                  {/* TODO: cambiar a /terminos-venta cuando Fase I */}
                   <Link
-                    to="/aviso-legal"
+                    to="/terminos-venta"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[var(--color-lavender)] underline hover:text-[var(--color-cream)]"

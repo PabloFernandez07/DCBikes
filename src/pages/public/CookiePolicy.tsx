@@ -164,6 +164,37 @@ export default function CookiePolicy() {
                 </p>
               </div>
             </div>
+
+            {/* Redsys */}
+            <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+              <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
+                <Shield size={18} className="text-green-400" />
+              </div>
+              <div>
+                <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1">
+                  Cookies de terceros — Redsys (pasarela de pago)
+                </p>
+                <p>
+                  Durante el proceso de pago, la pasarela <strong className="text-[var(--color-cream)]">Redsys</strong>{' '}
+                  (sis.redsys.es) puede depositar en tu navegador cookies técnicas de sesión necesarias para
+                  completar la transacción de forma segura. Estas cookies son colocadas y gestionadas por Redsys
+                  desde su propio dominio, no por DC Bikes Cantabria.
+                </p>
+                <p className="mt-2 text-xs">
+                  Al tratarse de cookies estrictamente necesarias para la prestación del servicio expresamente
+                  solicitado por el usuario (el pago), están <strong className="text-[var(--color-cream)]">exentas de
+                  consentimiento previo</strong> conforme al art. 22.2 de la Ley 34/2002 (LSSI-CE). Más información en la{' '}
+                  <a
+                    href="https://www.redsys.es/politica-de-privacidad.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[var(--color-lavender)] underline underline-offset-2"
+                  >
+                    política de privacidad de Redsys
+                  </a>.
+                </p>
+              </div>
+            </div>
           </div>
         </Section>
 

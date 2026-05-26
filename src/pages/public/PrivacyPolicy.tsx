@@ -77,8 +77,10 @@ export default function PrivacyPolicy() {
           {/* 2. Datos recogidos */}
           <Section title="2. Datos personales que recogemos">
             <p>
-              A través del <strong className="text-[var(--color-cream)]">formulario de presupuesto</strong> de nuestra web,
-              recogemos únicamente los datos que tú nos facilitas voluntariamente:
+              Recogemos únicamente los datos que tú nos facilitas voluntariamente al utilizar el sitio:
+            </p>
+            <p>
+              <strong className="text-[var(--color-cream)]">A través del formulario de presupuesto:</strong>
             </p>
             <ul className="list-disc list-inside space-y-1 pl-2">
               <li><strong className="text-[var(--color-cream)]">Nombre</strong> — para personalizar la comunicación.</li>
@@ -86,19 +88,34 @@ export default function PrivacyPolicy() {
               <li><strong className="text-[var(--color-cream)]">Número de teléfono</strong> (opcional) — para contacto directo si lo solicitas.</li>
             </ul>
             <p>
-              No recogemos datos especialmente protegidos ni información de pago. Los datos se transmiten mediante
-              conexión cifrada (HTTPS).
+              <strong className="text-[var(--color-cream)]">A través de la tienda online (al realizar un pedido):</strong>
+            </p>
+            <ul className="list-disc list-inside space-y-1 pl-2">
+              <li><strong className="text-[var(--color-cream)]">Nombre y apellidos</strong>, dirección postal completa y teléfono — para preparar y enviar el pedido y emitir la factura.</li>
+              <li><strong className="text-[var(--color-cream)]">Correo electrónico</strong> — para enviarte la confirmación, el estado del pedido y la factura.</li>
+              <li><strong className="text-[var(--color-cream)]">DNI/NIF</strong> (cuando sea exigible para la facturación).</li>
+              <li><strong className="text-[var(--color-cream)]">Datos del pedido</strong> (productos, importe, fecha).</li>
+            </ul>
+            <p>
+              No almacenamos en ningún momento los datos completos de tu tarjeta bancaria: el pago se procesa
+              íntegramente en el entorno cifrado de la pasarela <strong className="text-[var(--color-cream)]">Redsys</strong>{' '}
+              (véase sección 7). Todas las comunicaciones se transmiten mediante conexión cifrada (HTTPS).
             </p>
           </Section>
 
           {/* 3. Finalidad */}
           <Section title="3. Finalidad del tratamiento">
             <p>
-              Tus datos se utilizan exclusivamente para:
+              Tus datos se utilizan exclusivamente para las siguientes finalidades:
             </p>
             <ul className="list-disc list-inside space-y-1 pl-2">
               <li>Gestionar y responder tu consulta o solicitud de presupuesto.</li>
               <li>Facilitarte información sobre los productos o servicios por los que preguntas.</li>
+              <li>
+                <strong className="text-[var(--color-cream)]">Gestionar tus pedidos online</strong>: preparación,
+                envío, facturación, atención posventa y devoluciones.
+              </li>
+              <li>Cumplir las obligaciones legales contables, fiscales y mercantiles derivadas de la venta.</li>
             </ul>
             <p>
               No utilizamos tus datos para elaborar perfiles comerciales ni para enviarte comunicaciones no solicitadas.
@@ -108,12 +125,28 @@ export default function PrivacyPolicy() {
           {/* 4. Base legal */}
           <Section title="4. Base legal del tratamiento">
             <p>
-              El tratamiento de tus datos se basa en tu{' '}
-              <strong className="text-[var(--color-cream)]">consentimiento expreso</strong> (art. 6.1.a RGPD), que otorgas
-              al marcar la casilla de aceptación de esta política antes de enviar el formulario.
+              Las bases legales que legitiman cada tratamiento son:
             </p>
+            <ul className="list-disc list-inside space-y-2 pl-2">
+              <li>
+                <strong className="text-[var(--color-cream)]">Solicitudes de presupuesto / formulario de contacto</strong>:{' '}
+                tu <strong className="text-[var(--color-cream)]">consentimiento expreso</strong> (art. 6.1.a RGPD),
+                que otorgas al marcar la casilla de aceptación antes de enviar el formulario.
+              </li>
+              <li>
+                <strong className="text-[var(--color-cream)]">Gestión de pedidos online</strong>:{' '}
+                <strong className="text-[var(--color-cream)]">ejecución de un contrato</strong> en el que el cliente
+                es parte (art. 6.1.b RGPD). Sin estos datos no es posible procesar, enviar ni facturar el pedido.
+              </li>
+              <li>
+                <strong className="text-[var(--color-cream)]">Conservación de facturas y registros contables</strong>:{' '}
+                <strong className="text-[var(--color-cream)]">cumplimiento de obligación legal</strong> (art. 6.1.c RGPD), conforme al
+                art. 30 del Código de Comercio y al art. 29 de la Ley General Tributaria.
+              </li>
+            </ul>
             <p>
-              Puedes retirar tu consentimiento en cualquier momento enviándonos un correo a{' '}
+              Puedes retirar tu consentimiento (cuando éste sea la base legal aplicable) en cualquier momento
+              enviándonos un correo a{' '}
               <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
                 info@dcbikescantabria.es
               </a>.
@@ -124,12 +157,36 @@ export default function PrivacyPolicy() {
           {/* 5. Conservación */}
           <Section title="5. Plazo de conservación">
             <p>
-              Tus datos se conservarán durante el tiempo necesario para gestionar tu consulta o presupuesto y, en
-              todo caso, por un <strong className="text-[var(--color-cream)]">máximo de 3 años</strong> desde la
-              última comunicación contigo, salvo que ejercites tu derecho de supresión antes.
+              Los plazos de conservación varían en función de la finalidad y la base legal aplicable:
             </p>
-            <p>
-              Transcurrido dicho plazo, los datos serán suprimidos o anonimizados de forma irreversible.
+            <div className="overflow-x-auto rounded-xl border border-[var(--color-card-hover)]">
+              <table className="w-full text-xs font-[var(--font-body)]">
+                <thead>
+                  <tr className="bg-[var(--color-card)] border-b border-[var(--color-card-hover)]">
+                    <th className="px-4 py-2.5 text-left text-[var(--color-cream)] font-[var(--font-cond)] tracking-wide">Datos</th>
+                    <th className="px-4 py-2.5 text-left text-[var(--color-cream)] font-[var(--font-cond)] tracking-wide">Plazo de conservación</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-card-hover)]">
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Solicitudes de presupuesto / contacto</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Hasta la finalización de la consulta + 1 año (atención al cliente)</td>
+                  </tr>
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Datos de pedido y facturación</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]"><strong className="text-[var(--color-cream)]">6 años</strong> (art. 30 Código de Comercio y art. 29 LGT)</td>
+                  </tr>
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Comunicaciones comerciales (opt-in)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Hasta revocación del consentimiento</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs">
+              Transcurridos los plazos indicados, los datos serán suprimidos o anonimizados de forma irreversible,
+              o en su caso bloqueados conforme al art. 32 LOPDGDD durante el tiempo en que pudieran derivarse
+              responsabilidades legales.
             </p>
           </Section>
 
@@ -199,9 +256,32 @@ export default function PrivacyPolicy() {
                     <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU.</td>
                     <td className="px-4 py-3 text-[var(--color-mid)]">Cláusulas contractuales tipo (CCT)</td>
                   </tr>
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Redsys Servicios de Procesamiento, S.L.</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Procesamiento del pago con tarjeta y Bizum (pasarela TPV)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">España (UE)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Sin transferencia internacional · PCI-DSS</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
+            <p>
+              <strong className="text-[var(--color-cream)]">Redsys</strong> (CIF B85955367) actúa como entidad
+              procesadora de los pagos en su condición de encargado del tratamiento (art. 28 RGPD). La base legal
+              de este tratamiento es la <strong className="text-[var(--color-cream)]">ejecución del contrato de
+              compraventa</strong> (art. 6.1.b RGPD). Los datos tratados se limitan al nombre del titular, el
+              importe del pedido y los datos de la tarjeta, que se procesan íntegramente en el entorno seguro de
+              Redsys: <strong className="text-[var(--color-cream)]">en ningún momento {' '}
+              DC Bikes Cantabria almacena los datos completos de tu tarjeta</strong>. Más información en la{' '}
+              <a
+                href="https://www.redsys.es/politica-de-privacidad.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[var(--color-lavender)] underline underline-offset-2"
+              >
+                política de privacidad de Redsys
+              </a>.
+            </p>
             <p>
               Las transferencias internacionales a EE.&nbsp;UU. están amparadas por las Cláusulas Contractuales Tipo
               aprobadas por la Comisión Europea (Decisión 2021/914), que garantizan un nivel de protección equivalente

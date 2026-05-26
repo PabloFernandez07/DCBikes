@@ -177,7 +177,7 @@ export function Footer() {
           <p className="text-[var(--color-mid)] text-xs font-[var(--font-body)]">
             © {year} DC Bikes Cantabria. Todos los derechos reservados.
           </p>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center sm:justify-end">
             <Link to="/aviso-legal" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
               Aviso legal
             </Link>
@@ -186,6 +186,12 @@ export function Footer() {
             </Link>
             <Link to="/privacidad" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
               Privacidad
+            </Link>
+            <Link to="/terminos-venta" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
+              Términos de venta
+            </Link>
+            <Link to="/devoluciones" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
+              Devoluciones
             </Link>
           </div>
         </div>

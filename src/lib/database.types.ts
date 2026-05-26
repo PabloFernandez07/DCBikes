@@ -162,7 +162,15 @@ export interface Database {
           session_id?: string | null
           viewed_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'product_views_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'products'
+            referencedColumns: ['id']
+          }
+        ]
       }
       search_queries: {
         Row: {
@@ -211,7 +219,15 @@ export interface Database {
           status?: string
           created_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'quote_requests_product_id_fkey'
+            columns: ['product_id']
+            isOneToOne: false
+            referencedRelation: 'products'
+            referencedColumns: ['id']
+          }
+        ]
       }
       settings: {
         Row: {
@@ -231,9 +247,385 @@ export interface Database {
         }
         Relationships: []
       }
+      // ── 0003_orders_schema ────────────────────────────────────
+      orders: {
+        Row: {
+          id: string
+          order_number: string
+          status:
+            | 'pending'
+            | 'authorized'
+            | 'accepted'
+            | 'rejected'
+            | 'cancelled'
+            | 'ready_pickup'
+            | 'shipped'
+            | 'delivered'
+            | 'returned'
+            | 'payment_failed'
+          delivery_method: 'shipping' | 'pickup'
+          customer_email: string
+          customer_phone: string
+          customer_first_name: string
+          customer_last_name: string
+          shipping_address: string | null
+          shipping_city: string | null
+          shipping_postal_code: string | null
+          shipping_province: string | null
+          shipping_notes: string | null
+          needs_invoice: boolean
+          invoice_business_name: string | null
+          invoice_cif: string | null
+          invoice_address: string | null
+          subtotal_cents: number
+          shipping_cents: number
+          total_cents: number
+          tax_rate: number
+          payment_provider: string | null
+          payment_method: 'card' | 'bizum' | null
+          payment_pre_auth_id: string | null
+          payment_pre_auth_at: string | null
+          payment_captured_at: string | null
+          payment_cancelled_at: string | null
+          notes_internal: string | null
+          rejection_reason: string | null
+          accepted_by: string | null
+          accepted_at: string | null
+          ready_pickup_at: string | null
+          shipped_at: string | null
+          tracking_number: string | null
+          tracking_carrier: string | null
+          accepted_terms_at: string
+          accepted_privacy_at: string
+          marketing_opt_in: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_number: string
+          status: Database['public']['Tables']['orders']['Row']['status']
+          delivery_method: 'shipping' | 'pickup'
+          customer_email: string
+          customer_phone: string
+          customer_first_name: string
+          customer_last_name: string
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_postal_code?: string | null
+          shipping_province?: string | null
+          shipping_notes?: string | null
+          needs_invoice?: boolean
+          invoice_business_name?: string | null
+          invoice_cif?: string | null
+          invoice_address?: string | null
+          subtotal_cents: number
+          shipping_cents: number
+          total_cents: number
+          tax_rate: number
+          payment_provider?: string | null
+          payment_method?: 'card' | 'bizum' | null
+          payment_pre_auth_id?: string | null
+          payment_pre_auth_at?: string | null
+          payment_captured_at?: string | null
+          payment_cancelled_at?: string | null
+          notes_internal?: string | null
+          rejection_reason?: string | null
+          accepted_by?: string | null
+          accepted_at?: string | null
+          ready_pickup_at?: string | null
+          shipped_at?: string | null
+          tracking_number?: string | null
+          tracking_carrier?: string | null
+          accepted_terms_at: string
+          accepted_privacy_at: string
+          marketing_opt_in?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_number?: string
+          status?: Database['public']['Tables']['orders']['Row']['status']
+          delivery_method?: 'shipping' | 'pickup'
+          customer_email?: string
+          customer_phone?: string
+          customer_first_name?: string
+          customer_last_name?: string
+          shipping_address?: string | null
+          shipping_city?: string | null
+          shipping_postal_code?: string | null
+          shipping_province?: string | null
+          shipping_notes?: string | null
+          needs_invoice?: boolean
+          invoice_business_name?: string | null
+          invoice_cif?: string | null
+          invoice_address?: string | null
+          subtotal_cents?: number
+          shipping_cents?: number
+          total_cents?: number
+          tax_rate?: number
+          payment_provider?: string | null
+          payment_method?: 'card' | 'bizum' | null
+          payment_pre_auth_id?: string | null
+          payment_pre_auth_at?: string | null
+          payment_captured_at?: string | null
+          payment_cancelled_at?: string | null
+          notes_internal?: string | null
+          rejection_reason?: string | null
+          accepted_by?: string | null
+          accepted_at?: string | null
+          ready_pickup_at?: string | null
+          shipped_at?: string | null
+          tracking_number?: string | null
+          tracking_carrier?: string | null
+          accepted_terms_at?: string
+          accepted_privacy_at?: string
+          marketing_opt_in?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_accepted_by_fkey"
+            columns: ["accepted_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      order_items: {
+        Row: {
+          id: string
+          order_id: string
+          product_id: string | null
+          product_name: string
+          product_sku: string | null
+          product_size_label: string | null
+          unit_price_cents: number
+          quantity: number
+          line_total_cents: number
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          product_id?: string | null
+          product_name: string
+          product_sku?: string | null
+          product_size_label?: string | null
+          unit_price_cents: number
+          quantity: number
+          line_total_cents: number
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          product_id?: string | null
+          product_name?: string
+          product_sku?: string | null
+          product_size_label?: string | null
+          unit_price_cents?: number
+          quantity?: number
+          line_total_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      order_status_history: {
+        Row: {
+          id: string
+          order_id: string
+          from_status: string | null
+          to_status: string
+          changed_by: string | null
+          reason: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          from_status?: string | null
+          to_status: string
+          changed_by?: string | null
+          reason?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          from_status?: string | null
+          to_status?: string
+          changed_by?: string | null
+          reason?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      payments_log: {
+        Row: {
+          id: string
+          order_id: string | null
+          payment_provider: string
+          operation_type: 'preauth' | 'capture' | 'cancel' | 'refund' | 'notification'
+          redsys_response_code: string | null
+          redsys_authorization_code: string | null
+          redsys_transaction_type: string | null
+          raw_payload: Json
+          signature_valid: boolean | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id?: string | null
+          payment_provider?: string
+          operation_type: 'preauth' | 'capture' | 'cancel' | 'refund' | 'notification'
+          redsys_response_code?: string | null
+          redsys_authorization_code?: string | null
+          redsys_transaction_type?: string | null
+          raw_payload: Json
+          signature_valid?: boolean | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string | null
+          payment_provider?: string
+          operation_type?: 'preauth' | 'capture' | 'cancel' | 'refund' | 'notification'
+          redsys_response_code?: string | null
+          redsys_authorization_code?: string | null
+          redsys_transaction_type?: string | null
+          raw_payload?: Json
+          signature_valid?: boolean | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_log_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      invoices: {
+        Row: {
+          id: string
+          order_id: string
+          invoice_number: string
+          invoice_type: 'b2c' | 'b2b'
+          pdf_storage_path: string
+          issued_at: string
+          issuer_company_name: string
+          issuer_cif: string
+          issuer_address: string
+          base_cents: number
+          tax_cents: number
+          total_cents: number
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          invoice_number: string
+          invoice_type: 'b2c' | 'b2b'
+          pdf_storage_path: string
+          issued_at?: string
+          issuer_company_name: string
+          issuer_cif: string
+          issuer_address: string
+          base_cents: number
+          tax_cents: number
+          total_cents: number
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          invoice_number?: string
+          invoice_type?: 'b2c' | 'b2b'
+          pdf_storage_path?: string
+          issued_at?: string
+          issuer_company_name?: string
+          issuer_cif?: string
+          issuer_address?: string
+          base_cents?: number
+          tax_cents?: number
+          total_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      order_counter: {
+        Row: {
+          year: number
+          last_number: number
+        }
+        Insert: {
+          year: number
+          last_number?: number
+        }
+        Update: {
+          year?: number
+          last_number?: number
+        }
+        Relationships: []
+      }
+      invoice_counter: {
+        Row: {
+          year: number
+          last_number: number
+        }
+        Insert: {
+          year: number
+          last_number?: number
+        }
+        Update: {
+          year?: number
+          last_number?: number
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      next_order_number: {
+        Args: { p_year: number }
+        Returns: number
+      }
+      next_invoice_number: {
+        Args: { p_year: number }
+        Returns: number
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }
@@ -244,3 +636,14 @@ export type Product = Database['public']['Tables']['products']['Row']
 export type ProductImage = Database['public']['Tables']['product_images']['Row']
 export type QuoteRequest = Database['public']['Tables']['quote_requests']['Row']
 export type Setting = Database['public']['Tables']['settings']['Row']
+// ── 0003_orders_schema ──────────────────────────────────────────
+export type Order = Database['public']['Tables']['orders']['Row']
+export type OrderInsert = Database['public']['Tables']['orders']['Insert']
+export type OrderUpdate = Database['public']['Tables']['orders']['Update']
+export type OrderStatus = Order['status']
+export type OrderItem = Database['public']['Tables']['order_items']['Row']
+export type OrderStatusHistory = Database['public']['Tables']['order_status_history']['Row']
+export type PaymentLog = Database['public']['Tables']['payments_log']['Row']
+export type Invoice = Database['public']['Tables']['invoices']['Row']
+export type OrderCounter = Database['public']['Tables']['order_counter']['Row']
+export type InvoiceCounter = Database['public']['Tables']['invoice_counter']['Row']
