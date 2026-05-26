@@ -323,9 +323,9 @@ export function ExcelImporter() {
           continue
         }
 
-        const slug = slugify(row.nombre) || `producto-${row._rowIdx}`
+        const baseSlug = slugify(row.nombre) || `producto-${row._rowIdx}`
 
-        const payload = {
+        const buildPayload = (slug: string) => ({
           name: row.nombre,
           slug,
           sku: row.sku || null,
@@ -343,20 +343,55 @@ export function ExcelImporter() {
           model_group: row.grupo_modelo || null,
           weight_grams: row.peso_gramos,
           is_purchasable: row.comprar_online,
-          // discount_percent y cost_price se dejan a null (cost_price podría
-          // mapearse si la BD tiene esa columna; el TS actual la tiene como
-          // discount_percent — TODO sincronizar tras supabase gen types):
           discount_percent: null,
+        })
+
+        // Buscar existente por SKU primero (si tiene). Si no, por slug.
+        // `products.sku` NO tiene UNIQUE constraint en BD, por eso no usamos
+        // upsert(onConflict:'sku') — devuelve error 42P10.
+        let existingId: string | null = null
+        if (row.sku) {
+          const { data: bySku } = await supabase
+            .from('products')
+            .select('id')
+            .eq('sku', row.sku)
+            .maybeSingle()
+          if (bySku?.id) existingId = bySku.id
+        }
+        if (!existingId) {
+          const { data: bySlug } = await supabase
+            .from('products')
+            .select('id')
+            .eq('slug', baseSlug)
+            .maybeSingle()
+          if (bySlug?.id) existingId = bySlug.id
         }
 
-        if (row.sku) {
+        if (existingId) {
+          // UPDATE — conservamos el slug existente para no romper enlaces.
+          const { slug: _ignoredSlug, ...updatePayload } = buildPayload(baseSlug)
+          void _ignoredSlug
           const { error } = await supabase
             .from('products')
-            .upsert(payload, { onConflict: 'sku' })
+            .update(updatePayload)
+            .eq('id', existingId)
           if (error) throw error
         } else {
-          const { error } = await supabase.from('products').insert(payload)
-          if (error) throw error
+          // INSERT — slug puede colisionar con otro producto que tenga el mismo
+          // nombre normalizado. Reintentamos con sufijo -2, -3, etc.
+          let attemptSlug = baseSlug
+          let attempt = 1
+          while (true) {
+            const { error } = await supabase
+              .from('products')
+              .insert(buildPayload(attemptSlug))
+            if (!error) break
+            const isSlugConflict = (error as { code?: string }).code === '23505'
+              && /slug/i.test((error as { message?: string }).message ?? '')
+            if (!isSlugConflict || attempt >= 10) throw error
+            attempt++
+            attemptSlug = `${baseSlug}-${attempt}`
+          }
         }
 
         count++
