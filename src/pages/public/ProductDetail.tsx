@@ -92,10 +92,19 @@ export default function ProductDetail() {
       .then(({ data }) => setCategory(data))
   }, [parentProduct?.category_id])
 
-  // Galería: primero imágenes del padre, después fallback a otras variantes.
-  // Si no hay imágenes del padre, usar las del primer producto del grupo que las tenga.
+  // Galería sincronizada con la variante seleccionada:
+  //   1. Si la variante seleccionada tiene fotos propias → esas.
+  //   2. Si no, fotos del padre del grupo.
+  //   3. Si no, primera variante con fotos.
+  //   4. Si nadie tiene fotos → array vacío (placeholder en el carousel).
+  // Esto permite que al cambiar de talla/color (variante) la galería refleje
+  // el aspecto real de esa unidad concreta cuando difiere visualmente.
   const galleryImages = (() => {
     if (!parentProduct) return []
+    if (selectedVariant) {
+      const variantImgs = images.filter(img => img.product_id === selectedVariant.id)
+      if (variantImgs.length > 0) return variantImgs
+    }
     const parentImgs = images.filter(img => img.product_id === parentProduct.id)
     if (parentImgs.length > 0) return parentImgs
     for (const v of variants) {
@@ -200,9 +209,10 @@ export default function ProductDetail() {
       </nav>
 
       <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
-        {/* Images */}
+        {/* Images — key cambia al seleccionar otra variante para que el
+            carousel se remonte y vuelva al primer slide automáticamente. */}
         <div className="rv">
-          <ImageCarousel images={carouselImages} />
+          <ImageCarousel key={selectedVariant.id} images={carouselImages} />
         </div>
 
         {/* Info */}
