@@ -513,9 +513,11 @@ serve(async (req) => {
     const publicToken = await generateOrderToken(orderId, body.customer.email)
 
     // 10. Payload según modo.
-    const siteUrl = config.paymentOkUrl.replace(/\/pedido\/confirmacion$/, '')
     if (config.mode === 'mock') {
-      const mockUrl = `${siteUrl}/mock-redsys-pago/${encodeURIComponent(orderId)}?token=${encodeURIComponent(
+      // mock_url debe ser RELATIVO (path-only) para que React Router lo trate
+      // como ruta interna. Si fuera absoluto (https://dominio/...), navigate()
+      // lo concatenaría al pathname actual y daría 404.
+      const mockUrl = `/mock-redsys-pago/${encodeURIComponent(orderId)}?token=${encodeURIComponent(
         publicToken,
       )}`
       console.log(`[${ts()}] ✓ order-place mock · ${orderNumber} · total=${totals.total_cents}c`)
