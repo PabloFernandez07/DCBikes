@@ -40,3 +40,6 @@ Docs/*.doc
 
 # S-15: runbook real con mapeo UUID→persona (PII). Solo el .template se commitea.
 Docs/runbooks/admin-users-seed.md
+
+# Secretos generados localmente — NO COMMITEAR
+Docs/runbooks/secretos-generados-RECUPERAR.txt
