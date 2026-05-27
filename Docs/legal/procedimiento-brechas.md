@@ -116,21 +116,68 @@ Modelo orientativo basado en la metodología de la CNIL francesa y compatible co
 
 ---
 
-## 4. Plantilla email a usuarios afectados
+## 4. Plantilla — Notificación a la AEPD (sede electrónica)
+
+Conforme al **art. 33 RGPD**, usar el **Formulario 040** en https://sedeagpd.gob.es. El texto siguiente sirve como borrador para cubrir los campos del formulario.
+
+```
+NOTIFICACIÓN DE BRECHA DE SEGURIDAD — art. 33 RGPD
+
+Naturaleza de la brecha:
+  [Descripción técnica: qué sistema, tipo de incidente — acceso no autorizado / pérdida /
+   alteración / filtración. Origen detectado. Duración estimada de la exposición.]
+
+Categorías de datos personales afectados:
+  [p.ej: nombre completo, dirección de email, dirección postal, historial de pedidos]
+
+Número aproximado de interesados afectados:
+  [número estimado]
+
+Número aproximado de registros de datos afectados:
+  [número estimado]
+
+Consecuencias probables:
+  [Riesgo evaluado para los interesados: suplantación de identidad, phishing, acceso a
+   historial de compras, impacto económico, etc.]
+
+Medidas adoptadas o propuestas:
+  - Contención técnica: [descripción]
+  - Mitigación: [descripción]
+  - Medidas organizativas adicionales: [descripción]
+
+Datos de contacto del responsable / DPO:
+  Nombre: [PENDIENTE — designar DPO o responsable; añadir nombre]
+  Email:  [PENDIENTE — añadir email de contacto]
+  Teléfono: [PENDIENTE — añadir teléfono]
+```
+
+> **DPO / Responsable de privacidad:** `[PENDIENTE — designar DPO o responsable del tratamiento; añadir nombre, email y teléfono antes de la primera notificación real a la AEPD]`
+
+---
+
+## 4b. Plantilla email a usuarios afectados (art. 34 — solo alto riesgo)
 
 ```
 Asunto: [Importante] Incidente de seguridad relacionado con tus datos personales
 
-Hola {nombre},
+Estimado/a {nombre}:
 
 Te informamos de un incidente de seguridad detectado el {fecha} que ha podido
-afectar a {datos_categorías}. {descripción_breve}.
+afectar a los siguientes datos personales tuyos: {datos_categorías}.
 
-Medidas tomadas: {medidas}
-Recomendaciones: {recomendaciones — p.ej. cambiar contraseña}
-Contacto: info@dcbikescantabria.es
+{descripción_breve}.
 
-Has sido notificado conforme al art. 34 del RGPD.
+Medidas que hemos adoptado:
+  {medidas}
+
+Te recomendamos:
+  {recomendaciones — p.ej. estar atento/a a posibles intentos de phishing y no reutilizar contraseñas}
+
+Si tienes preguntas, contacta con nuestro responsable de privacidad en {email_dpo}.
+Tienes derecho a presentar reclamación ante la AEPD (https://www.aepd.es).
+
+Atentamente,
+{Responsable} — DC Bikes Cantabria
 ```
 
 **Variables a sustituir:**
@@ -141,6 +188,7 @@ Has sido notificado conforme al art. 34 del RGPD.
 - `{descripción_breve}`: una o dos frases neutras y claras sobre qué ha pasado.
 - `{medidas}`: ej. "Hemos cambiado todas las contraseñas, revocado todas las sesiones activas y notificado a la AEPD".
 - `{recomendaciones}`: ej. "Te recomendamos estar atento/a a posibles intentos de phishing en los próximos días y no reutilizar contraseñas".
+- `{email_dpo}`: email del responsable o DPO (ver designación en la sección anterior).
 
 **Buenas prácticas para el envío:**
 
@@ -201,7 +249,28 @@ El registro de brechas se conserva durante todo el periodo en que la documentaci
 
 ---
 
-## 8. Revisión del procedimiento
+## 8. Alertas técnicas a configurar (TODO operativo del cliente)
+
+Las siguientes actividades deben monitorizarse y generar una alerta automática al email del DPO / responsable. **Esto es un TODO operativo pendiente de implementar por el titular del proyecto.** Hasta que estén configuradas, la detección es manual.
+
+| Señal a monitorizar | Sistema | Umbral sugerido |
+|---|---|---|
+| Tasa de error elevada en Edge Functions (Supabase) | Supabase logs | > 5% de 5xx en 10 min |
+| Fallos de firma Redsys (posible manipulación de parámetros) | Vercel logs / Edge Fn | > 3 fallos en 5 min |
+| Cron de retención devuelve `unauthorized` o falla | Supabase cron | Cualquier fallo |
+| Accesos fallidos al panel `/admin/login` | Supabase auth logs | > 10 intentos en 5 min |
+| Queries lentas o inusuales en `data_breaches` / `orders` | Supabase advisors | Revisar semanalmente |
+| Cambios masivos en tablas críticas (DELETE / UPDATE sin WHERE) | Supabase logs | Cualquier evento |
+
+**Implementación recomendada:**
+
+1. Activar las **alertas de Supabase** (Dashboard → Settings → Alerts) para error rate de Edge Functions.
+2. Configurar un webhook o integración de Vercel con un canal de notificaciones (email, Slack, PagerDuty).
+3. Añadir un health-check del cron de retención que envíe email al DPO si falla tres ejecuciones consecutivas.
+
+---
+
+## 9. Revisión del procedimiento
 
 Este procedimiento se revisa:
 

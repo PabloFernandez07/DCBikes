@@ -12,6 +12,7 @@ import { Categories } from '@/pages/admin/Categories'
 import Groupings from '@/pages/admin/Groupings'
 import OrdersList from '@/pages/admin/OrdersList'
 import OrderDetail from '@/pages/admin/OrderDetail'
+import { Brechas } from '@/pages/admin/Brechas'
 
 export function AdminRoutes() {
   return (
@@ -29,6 +30,7 @@ export function AdminRoutes() {
           <Route path="importar" element={<Import />} />
           <Route path="consultas" element={<Quotes />} />
           <Route path="configuracion" element={<Settings />} />
+          <Route path="brechas" element={<Brechas />} />
         </Route>
       </Route>
     </Routes>

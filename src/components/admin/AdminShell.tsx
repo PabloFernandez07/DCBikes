@@ -14,6 +14,7 @@ import {
   LogOut,
   Bike,
   ArrowLeft,
+  ShieldAlert,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useAuth } from '@/hooks/useAuth'
@@ -79,6 +80,7 @@ const navItems: NavItem[] = [
   { to: '/admin/importar', label: 'Importar Excel', icon: Upload, end: false },
   { to: '/admin/consultas', label: 'Consultas', icon: MessageSquare, end: false, badge: 'quotes' },
   { to: '/admin/configuracion', label: 'Configuración', icon: Settings, end: false },
+  { to: '/admin/brechas', label: 'Brechas RGPD', icon: ShieldAlert, end: false },
 ]
 
 export function AdminShell() {
