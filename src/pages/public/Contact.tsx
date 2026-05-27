@@ -5,7 +5,7 @@ import { QuoteModal } from '@/components/public/QuoteModal'
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
 import { useSchedule } from '@/hooks/useSchedule'
-import { useCookieConsent } from '@/components/layout/CookieBanner'
+import { useCookieConsent, setThirdPartyConsent } from '@/components/layout/CookieBanner'
 import { STORE_ADDRESS_FALLBACK } from '@/hooks/useStoreAddress'
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
@@ -273,7 +273,7 @@ export default function Contact() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setMapsEnabled(true)}
+                  onClick={() => { setThirdPartyConsent(true); setMapsEnabled(true) }}
                   className="px-5 py-2 rounded-xl bg-[var(--color-lavender)]/15 hover:bg-[var(--color-lavender)]/25 border border-[var(--color-lavender)]/30 text-[var(--color-lavender)] font-[var(--font-cond)] text-sm tracking-wide transition-colors"
                 >
                   Cargar mapa

@@ -59,6 +59,13 @@ export function hasThirdPartyConsent(): boolean {
   return readStored()?.thirdParty === true
 }
 
+export function setThirdPartyConsent(value: boolean): void {
+  const current = readStored() ?? { essential: true, analytics: false, marketing: false, thirdParty: false, savedAt: new Date().toISOString() }
+  const next: StoredConsent = { ...current, thirdParty: value, savedAt: new Date().toISOString() }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+  window.dispatchEvent(new CustomEvent('cookie-consent-change', { detail: next }))
+}
+
 export function CookieBanner() {
   const [visible, setVisible] = useState(false)
   const [expanded, setExpanded] = useState(false)
