@@ -26,5 +26,12 @@ insert into settings (key, value) values
 
   -- ─── Pasarela Redsys (no credenciales) ───────────────────────
   ('redsys_environment',            '"test"'::jsonb),      -- 'test' | 'prod'
-  ('redsys_merchant_name',          '"DC Bikes Cantabria"'::jsonb)
+  ('redsys_merchant_name',          '"DC Bikes Cantabria"'::jsonb),
+
+  -- ─── Verifactu (RD 1007/2023) ────────────────────────────────
+  -- verifactu_mode debe rellenarlo el administrador antes de emitir facturas.
+  -- Se siembra como null para forzar decisión consciente:
+  --   'verifactu'    → envío real-time a AEAT + QR + leyenda
+  --   'no_verifactu' → registro firmado local + remisión a requerimiento
+  ('verifactu_mode',                'null'::jsonb)
 on conflict (key) do nothing;

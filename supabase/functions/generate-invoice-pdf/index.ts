@@ -21,6 +21,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1'
+import QRCode from 'https://esm.sh/qrcode@1.5.3'
 
 import {
   buildCorsHeaders,
@@ -125,7 +126,7 @@ serve(async (req) => {
       })
     }
 
-    /* ─── 3. Settings legales emisor + prefijo ─── */
+    /* ─── 3. Settings legales emisor + prefijo + verifactu_mode ─── */
     const settings = await getSettings(supabase, [
       'legal_company_name',
       'legal_company_cif',
@@ -133,6 +134,7 @@ serve(async (req) => {
       'invoice_series_prefix',
       'store_phone',
       'quote_destination_email',
+      'verifactu_mode',
     ])
 
     const companyName = asString(settings.legal_company_name).trim()
@@ -146,6 +148,16 @@ serve(async (req) => {
       return jsonError(
         'Falta configurar datos fiscales en /admin/settings → Facturación (razón social, CIF, dirección).',
         400,
+      )
+    }
+
+    /* ─── 3b. Gate Verifactu: la modalidad debe estar decidida ─── */
+    // RD 1007/2023: no se puede emitir factura sin saber si aplica Verifactu o no.
+    const verifactuMode = settings.verifactu_mode as 'verifactu' | 'no_verifactu' | null | undefined
+    if (verifactuMode !== 'verifactu' && verifactuMode !== 'no_verifactu') {
+      return jsonError(
+        'Modo Verifactu no configurado. El administrador debe definir settings.verifactu_mode antes de emitir facturas.',
+        503,
       )
     }
 
@@ -186,7 +198,47 @@ serve(async (req) => {
       breakdown.total_cents = order.total_cents
     }
 
-    /* ─── 6. Generar PDF ─── */
+    /* ─── 6. Hash chain Verifactu (RD 1007/2023) ─── */
+    // 6a) Recupera hash de la última factura emitida (cualquier serie B2C/B2B).
+    const { data: prevInvoice } = await supabase
+      .from('invoices')
+      .select('hash')
+      .order('issued_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    const previousHash = (prevInvoice?.hash as string | null) ?? null
+
+    // 6b) Payload determinista: número|fecha|NIF-emisor|NIF-receptor|total-céntimos|hash-anterior
+    const issuedIso = new Date().toISOString()
+    const buyerNif = (order.invoice_cif as string | null) ?? ''
+    const payload = [
+      invoiceNumber,
+      issuedIso,
+      companyCif,
+      buyerNif,
+      breakdown.total_cents.toString(),
+      previousHash ?? '',
+    ].join('|')
+
+    // 6c) SHA-256 (Web Crypto — disponible en Deno Deploy)
+    const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload))
+    const hash = Array.from(new Uint8Array(hashBuf))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+
+    // 6d) QR payload (formato validación AEAT)
+    const issuedDateDMY = issuedIso.slice(0, 10).split('-').reverse().join('-') // DD-MM-YYYY
+    const qrPayload =
+      `https://www2.agenciatributaria.gob.es/wlpl/TIKE-CONT/ValidarQR?` +
+      `nif=${encodeURIComponent(companyCif)}` +
+      `&numserie=${encodeURIComponent(invoiceNumber)}` +
+      `&fecha=${encodeURIComponent(issuedDateDMY)}` +
+      `&importe=${(breakdown.total_cents / 100).toFixed(2)}`
+
+    // TODO: firma XAdES (RD 1007/2023 art. 8) — queda pendiente para fase posterior.
+    // signature se deja null en esta fase.
+
+    /* ─── 7. Generar PDF ─── */
     const pdfBytes = await renderInvoicePdf({
       order,
       invoiceNumber,
@@ -195,9 +247,11 @@ serve(async (req) => {
       taxRatePct,
       storePhone,
       storeEmail,
+      verifactuMode,
+      qrPayload,
     })
 
-    /* ─── 7. Upload a Storage ─── */
+    /* ─── 8. Upload a Storage ─── */
     const uploadRes = await supabase.storage.from('invoices').upload(
       storagePath,
       pdfBytes,
@@ -208,8 +262,10 @@ serve(async (req) => {
       return jsonError(`fallo al subir PDF: ${uploadRes.error.message}`)
     }
 
-    /* ─── 8. INSERT en tabla invoices (rollback storage si falla) ─── */
+    /* ─── 9. INSERT en tabla invoices (rollback storage si falla) ─── */
     const invoiceType: 'b2b' | 'b2c' = isB2B ? 'b2b' : 'b2c'
+    // TODO: invocar AEAT SOAP/REST endpoint (modo verifactu real-time) — fase posterior.
+    const aeatStatus = verifactuMode === 'verifactu' ? 'pending_send' : 'not_applicable'
     const { error: insErr } = await supabase.from('invoices').insert({
       order_id: order.id,
       invoice_number: invoiceNumber,
@@ -221,6 +277,13 @@ serve(async (req) => {
       base_cents: breakdown.base_cents,
       tax_cents: breakdown.tax_cents,
       total_cents: breakdown.total_cents,
+      // ─── Verifactu (RD 1007/2023) ───
+      hash,
+      previous_hash: previousHash,
+      qr_payload: qrPayload,
+      verifactu_mode: verifactuMode,
+      aeat_status: aeatStatus,
+      // signature y aeat_csv quedan null en esta fase (XAdES pendiente)
     })
 
     if (insErr) {
@@ -258,10 +321,22 @@ interface RenderArgs {
   taxRatePct: number
   storePhone: string
   storeEmail: string
+  verifactuMode: 'verifactu' | 'no_verifactu'
+  qrPayload: string
 }
 
 async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
-  const { order, invoiceNumber, issuer, breakdown, taxRatePct, storePhone, storeEmail } = args
+  const {
+    order,
+    invoiceNumber,
+    issuer,
+    breakdown,
+    taxRatePct,
+    storePhone,
+    storeEmail,
+    verifactuMode,
+    qrPayload,
+  } = args
 
   const pdfDoc = await PDFDocument.create()
   pdfDoc.setTitle(`Factura ${invoiceNumber}`)
@@ -669,6 +744,37 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
     { font, size: 9, color: COLOR_DARK },
   )
   y -= 20
+
+  /* ─── VERIFACTU: QR + leyenda (solo si verifactu_mode === 'verifactu') ─── */
+  if (verifactuMode === 'verifactu') {
+    // Generar QR como data URL PNG y embeber en esquina inferior derecha sobre el pie.
+    const qrDataUrl: string = await QRCode.toDataURL(qrPayload, { width: 96, margin: 1 })
+    // Extraer bytes PNG desde data URL base64
+    const base64 = qrDataUrl.replace(/^data:image\/png;base64,/, '')
+    const pngBytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+    const qrImage = await pdfDoc.embedPng(pngBytes)
+
+    // Posición: esquina inferior derecha, encima del pie legal
+    const qrSize = 72 // 72pt ≈ 1 inch
+    const qrX = PAGE_W - MARGIN_X - qrSize
+    const qrY = MARGIN_BOTTOM + 42
+
+    page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize })
+
+    // Leyenda AEAT obligatoria bajo el QR
+    drawText(page, 'VERI*FACTU', qrX + qrSize / 2, qrY - 10, {
+      font: fontBold,
+      size: 7,
+      color: COLOR_DARK,
+      align: 'center',
+    })
+    drawText(page, 'Factura verificable en sede.agenciatributaria.gob.es', qrX + qrSize / 2, qrY - 20, {
+      font,
+      size: 6,
+      color: COLOR_GRAY,
+      align: 'center',
+    })
+  }
 
   /* ─── PIE LEGAL ─── */
   drawHLine(page, MARGIN_X, PAGE_W - MARGIN_X, MARGIN_BOTTOM + 38, COLOR_LIGHT, 0.5)
