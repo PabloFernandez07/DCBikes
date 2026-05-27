@@ -21,6 +21,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { buildCorsHeaders, asInt, getSettings, jsonError, jsonOk,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
+import { internalSecretHeader } from '../_shared/security.ts'
 import {
   loadConfig,
   logPayment,
@@ -131,7 +132,10 @@ serve(async (req) => {
         )
 
         supabase.functions
-          .invoke('send-order-auto-cancelled', { body: { order_id: order.id } })
+          .invoke('send-order-auto-cancelled', {
+            body: { order_id: order.id },
+            headers: internalSecretHeader(),
+          })
           .catch((err) =>
             console.warn(`[${ts()}] send-order-auto-cancelled fail:`, String(err)),
           )

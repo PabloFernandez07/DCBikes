@@ -17,6 +17,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { buildCorsHeaders, jsonError, jsonOk,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
+import { internalSecretHeader } from '../_shared/security.ts'
 import {
   loadConfig,
   loadOrder,
@@ -102,7 +103,10 @@ serve(async (req) => {
 
     // Email cliente.
     supabase.functions
-      .invoke('send-order-rejected-customer', { body: { order_id: orderId } })
+      .invoke('send-order-rejected-customer', {
+        body: { order_id: orderId },
+        headers: internalSecretHeader(),
+      })
       .catch((err) => console.warn(`[${ts()}] send-order-rejected-customer:`, String(err)))
 
     console.log(`[${ts()}] ✓ order-reject · ${order.order_number}`)

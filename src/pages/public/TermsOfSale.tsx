@@ -4,6 +4,7 @@ import { SEO } from '@/components/layout/SEO'
 import { supabase } from '@/lib/supabase'
 import { useSchedule } from '@/hooks/useSchedule'
 import { STORE_ADDRESS_FALLBACK } from '@/hooks/useStoreAddress'
+import { useLegalIdentity } from '@/hooks/useLegalIdentity'
 import { TERMS_VERSION } from '@/lib/legal-versions'
 
 function useReveal() {
@@ -56,12 +57,9 @@ function Value({
 }
 
 /**
- * Lee los settings legales/comerciales relevantes para los términos de venta.
- * Si la key no existe o está vacía, devuelve null para que la UI muestre <Pending>.
- *
- * Nota: las keys `legal_company_name`, `legal_company_cif`, `legal_company_address`
- * se añadirán en Fase J. Por ahora caemos al fallback con las keys existentes
- * (`legal_nif`, `store_address`).
+ * Lee los settings comerciales relevantes para los términos de venta.
+ * Los datos legales (denominación, CIF, dirección fiscal, forma jurídica,
+ * inscripción) se leen del hook único `useLegalIdentity`.
  */
 function useSaleSettings() {
   const [s, setS] = useState<Record<string, string | null>>({})
@@ -71,12 +69,6 @@ function useSaleSettings() {
       .from('settings')
       .select('key, value')
       .in('key', [
-        'legal_company_name',
-        'legal_company_cif',
-        'legal_company_address',
-        'legal_nif',
-        'legal_forma_juridica',
-        'legal_inscripcion',
         'store_address',
         'store_phone',
         'quote_destination_email',
@@ -105,12 +97,13 @@ function useSaleSettings() {
 export default function TermsOfSale() {
   const pageRef = useReveal()
   const s = useSaleSettings()
+  const legal = useLegalIdentity()
   const { schedule } = useSchedule()
 
-  const companyName = s.legal_company_name ?? 'DC Bikes Cantabria'
-  const cif = s.legal_company_cif ?? s.legal_nif ?? null
+  const companyName = legal?.companyName ?? 'DC Bikes Cantabria'
+  const cif = legal?.cif ?? null
   const address =
-    s.legal_company_address ?? s.store_address ?? STORE_ADDRESS_FALLBACK
+    legal?.address ?? s.store_address ?? STORE_ADDRESS_FALLBACK
   const phone = s.store_phone ?? null
   const email = s.quote_destination_email ?? 'info@dcbikescantabria.es'
   const pickupDays = s.pickup_retention_days ?? '15'
@@ -157,7 +150,7 @@ export default function TermsOfSale() {
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Forma jurídica:</strong>{' '}
-                <Value value={s.legal_forma_juridica} pendingLabel="pendiente — p. ej. Autónomo / S.L." />
+                <Value value={legal?.formaJuridica ?? null} pendingLabel="pendiente — p. ej. Autónomo / S.L." />
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Domicilio fiscal:</strong>{' '}
@@ -181,7 +174,7 @@ export default function TermsOfSale() {
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Inscripción registral:</strong>{' '}
-                <Value value={s.legal_inscripcion} pendingLabel="pendiente — Registro Mercantil, o 'No aplica' si autónomo" />
+                <Value value={legal?.inscripcion ?? null} pendingLabel="pendiente — Registro Mercantil, o 'No aplica' si autónomo" />
               </p>
             </div>
           </Section>
@@ -253,6 +246,19 @@ export default function TermsOfSale() {
               <li>Una vez aceptado, se enviará por correo electrónico la <strong className="text-[var(--color-cream)]">factura en PDF</strong>.</li>
               <li>Se procederá a preparar y enviar el pedido (o a notificar que está listo para recoger en tienda).</li>
             </ol>
+            <div className="p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+              <p className="font-[var(--font-cond)] text-[var(--color-cream)] tracking-wide mb-1">
+                4.5. Cancelación automática por falta de confirmación
+              </p>
+              <p>
+                Si, transcurridas <strong className="text-[var(--color-cream)]">48 horas</strong> desde la
+                realización del pedido, {companyName} no ha confirmado la disponibilidad, el pedido se{' '}
+                <strong className="text-[var(--color-cream)]">cancela automáticamente</strong> y se
+                reintegra la totalidad de la preautorización del pago, sin coste alguno para el cliente
+                ni necesidad de gestión adicional por su parte. Esta cláusula opera de pleno derecho y
+                refuerza la protección del consumidor frente a retrasos en la confirmación.
+              </p>
+            </div>
           </Section>
 
           {/* 5. Medios de pago */}

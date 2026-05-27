@@ -106,12 +106,6 @@ export const checkoutSchema = z
     accepted_privacy: z
       .boolean()
       .refine(v => v === true, 'Debes aceptar la Política de Privacidad'),
-    accepted_approval_flow: z
-      .boolean()
-      .refine(
-        v => v === true,
-        'Debes aceptar el plazo de confirmación de 48h',
-      ),
   })
   .superRefine((data, ctx) => {
     // Si shipping → exigir todos los campos de dirección.
@@ -230,5 +224,4 @@ export const checkoutDefaults: CheckoutFormValues = {
   invoice_address: '',
   accepted_terms: false,
   accepted_privacy: false,
-  accepted_approval_flow: false,
 }

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { SEO } from '@/components/layout/SEO'
-import { supabase } from '@/lib/supabase'
-import { STORE_ADDRESS_FALLBACK } from '@/hooks/useStoreAddress'
+import { useLegalIdentity } from '@/hooks/useLegalIdentity'
+import { useStoreAddress } from '@/hooks/useStoreAddress'
 import { LAST_AUDIT_DATE } from '@/lib/legal-versions'
 
 function useReveal() {
@@ -20,9 +20,17 @@ function useReveal() {
   return ref
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  id,
+  children,
+}: {
+  title: string
+  id?: string
+  children: React.ReactNode
+}) {
   return (
-    <section className="rv">
+    <section className="rv" id={id}>
       <h2 className="font-[var(--font-display)] text-2xl text-[var(--color-cream)] tracking-widest mb-4">
         {title}
       </h2>
@@ -33,46 +41,24 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-/**
- * Lee los settings legales desde Supabase. Si una key no tiene valor o no
- * existe todavía, la entrada queda como `null`.
- */
-function useLegalSettings() {
-  const [legal, setLegal] = useState<Record<string, string | null>>({})
-
-  useEffect(() => {
-    supabase
-      .from('settings')
-      .select('key, value')
-      .in('key', [
-        'legal_nif',
-        'legal_company_cif',
-        'legal_forma_juridica',
-        'legal_inscripcion',
-        'store_address',
-        'store_phone',
-      ])
-      .then(({ data }) => {
-        const obj: Record<string, string | null> = {}
-        for (const row of data ?? []) {
-          try {
-            const v = typeof row.value === 'string' ? JSON.parse(row.value) : row.value
-            obj[row.key] = v && String(v).trim() ? String(v) : null
-          } catch {
-            const v = row.value as unknown
-            obj[row.key] = v && String(v).trim() ? String(v) : null
-          }
-        }
-        setLegal(obj)
-      })
-  }, [])
-
-  return legal
+function PendingValue({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-[var(--font-cond)] tracking-wide">
+      {label}
+    </span>
+  )
 }
 
 export default function LegalNotice() {
   const pageRef = useReveal()
-  const legal = useLegalSettings()
+  const legal = useLegalIdentity()
+  const storeAddress = useStoreAddress()
+
+  const cif = legal?.cif ?? null
+  const formaJuridica = legal?.formaJuridica ?? null
+  const inscripcion = legal?.inscripcion ?? null
+  const address = legal?.address ?? storeAddress
+  const companyName = legal?.companyName ?? 'DC Bikes Cantabria'
 
   return (
     <>
@@ -108,31 +94,27 @@ export default function LegalNotice() {
             <div className="p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)] space-y-2">
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Denominación / Nombre comercial:</strong>{' '}
-                DC Bikes Cantabria
+                <span className="text-[var(--color-cream)]">{companyName}</span>
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">NIF / CIF:</strong>{' '}
-                {legal.legal_company_cif || legal.legal_nif ? (
-                  <span className="text-[var(--color-cream)]">{legal.legal_company_cif || legal.legal_nif}</span>
+                {cif ? (
+                  <span className="text-[var(--color-cream)]">{cif}</span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-[var(--font-cond)] tracking-wide">
-                    ⚠ Pendiente de configuración — rellena en Admin → Configuración → Facturación
-                  </span>
+                  <PendingValue label="Pendiente de configuración — rellena en Admin → Configuración → Facturación" />
                 )}
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Forma jurídica:</strong>{' '}
-                {legal.legal_forma_juridica ? (
-                  <span className="text-[var(--color-cream)]">{legal.legal_forma_juridica}</span>
+                {formaJuridica ? (
+                  <span className="text-[var(--color-cream)]">{formaJuridica}</span>
                 ) : (
-                  <span className="text-red-600 font-bold">[Pendiente de cumplimentar por el titular]</span>
+                  <PendingValue label="Pendiente — p. ej. Empresario individual (autónomo)" />
                 )}
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Domicilio:</strong>{' '}
-                <span className="text-[var(--color-cream)]">
-                  {legal.store_address || STORE_ADDRESS_FALLBACK}
-                </span>
+                <span className="text-[var(--color-cream)]">{address}</span>
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Correo electrónico:</strong>{' '}
@@ -140,24 +122,12 @@ export default function LegalNotice() {
                   info@dcbikescantabria.es
                 </a>
               </p>
-              <p>
-                <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Teléfono:</strong>{' '}
-                {legal.store_phone ? (
-                  <a href={`tel:${legal.store_phone.replace(/\s/g, '')}`} className="text-[var(--color-lavender)] underline underline-offset-2">
-                    {legal.store_phone}
-                  </a>
-                ) : (
-                  <a href="tel:+34942054501" className="text-[var(--color-lavender)] underline underline-offset-2">
-                    +34 942 054 501
-                  </a>
-                )}
-              </p>
               <p className="flex flex-wrap items-center gap-2">
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Inscripción registral:</strong>{' '}
-                {legal.legal_inscripcion ? (
-                  <span className="text-[var(--color-cream)]">{legal.legal_inscripcion}</span>
+                {inscripcion ? (
+                  <span className="text-[var(--color-cream)]">{inscripcion}</span>
                 ) : (
-                  <span className="text-red-600 font-bold">[Pendiente de cumplimentar por el titular]</span>
+                  <PendingValue label="Pendiente — Registro Mercantil, o 'No aplica' si autónomo" />
                 )}
               </p>
             </div>
@@ -168,7 +138,7 @@ export default function LegalNotice() {
             <p>
               El presente Aviso Legal regula el acceso y uso del sitio web{' '}
               <strong className="text-[var(--color-cream)]">dcbikescantabria.es</strong> (en adelante, «el sitio web»),
-              del que es titular DC Bikes Cantabria. El sitio web ofrece información sobre los servicios de
+              del que es titular {companyName}. El sitio web ofrece información sobre los servicios de
               taller y, además, permite la <strong className="text-[var(--color-cream)]">contratación y venta
               online</strong> de los productos descritos en la sección 3.
             </p>
@@ -179,14 +149,14 @@ export default function LegalNotice() {
               <Link to="/terminos-venta" className="text-[var(--color-lavender)] underline underline-offset-2">
                 Términos y condiciones de venta
               </Link>
-              . DC Bikes Cantabria se reserva el derecho a modificar este aviso legal en cualquier momento.
+              . {companyName} se reserva el derecho a modificar este aviso legal en cualquier momento.
             </p>
           </Section>
 
           {/* 3. Actividad */}
           <Section title="3. Actividad">
             <p>
-              DC Bikes Cantabria es una tienda especializada en bicicletas, accesorios y servicios de taller
+              {companyName} es una tienda especializada en bicicletas, accesorios y servicios de taller
               con sede en El Astillero, Cantabria. La actividad principal del titular se desarrolla a través
               de los siguientes canales:
             </p>
@@ -221,26 +191,26 @@ export default function LegalNotice() {
           <Section title="4. Propiedad intelectual e industrial">
             <p>
               Todos los contenidos del sitio web (textos, fotografías, logotipos, diseño, código fuente,
-              vídeos, etc.) son propiedad de DC Bikes Cantabria o de terceros que han autorizado su uso,
+              vídeos, etc.) son propiedad de {companyName} o de terceros que han autorizado su uso,
               y están protegidos por la legislación española e internacional en materia de propiedad
               intelectual e industrial.
             </p>
             <p>
               Queda prohibida la reproducción total o parcial, distribución, transformación o comunicación
-              pública de los contenidos sin autorización escrita de DC Bikes Cantabria.
+              pública de los contenidos sin autorización escrita de {companyName}.
             </p>
           </Section>
 
           {/* 5. Responsabilidad */}
           <Section title="5. Limitación de responsabilidad">
             <p>
-              DC Bikes Cantabria no se responsabiliza de los daños derivados de la imposibilidad de acceder
+              {companyName} no se responsabiliza de los daños derivados de la imposibilidad de acceder
               al sitio web, de fallos de seguridad ajenos a su control, ni de los contenidos de sitios web
               de terceros enlazados desde este sitio.
             </p>
             <p>
               La información publicada en el sitio web tiene carácter orientativo y puede estar sujeta a
-              cambios sin previo aviso. DC Bikes Cantabria hará todo lo posible por mantenerla actualizada
+              cambios sin previo aviso. {companyName} hará todo lo posible por mantenerla actualizada
               y veraz.
             </p>
           </Section>
@@ -271,22 +241,35 @@ export default function LegalNotice() {
           </Section>
 
           {/* 8. Declaración de accesibilidad */}
-          <Section title="8. Declaración de accesibilidad">
+          <Section title="8. Declaración de accesibilidad" id="accesibilidad">
             <p>
-              DC Bikes Cantabria se acoge a la exención prevista en el artículo 4.1 de la Ley 11/2023, de
-              8 de mayo, de transposición de la Directiva (UE) 2019/882 (Acta Europea de Accesibilidad),
-              por tratarse de una <strong className="text-[var(--color-cream)]">microempresa</strong>{' '}
-              (empresario individual sin trabajadores asalariados). La obligación de cumplir con los
-              requisitos de accesibilidad WCAG 2.1 AA establecidos por dicha ley no resulta de aplicación
-              al presente sitio web.
+              {companyName} trabaja para cumplir progresivamente los requisitos de accesibilidad WCAG 2.1 AA
+              exigidos por el Reglamento (UE) 2019/882 (European Accessibility Act) y la Ley 11/2023 de
+              accesibilidad universal, que entran en vigor para servicios de comercio electrónico desde el
+              28 de junio de 2025. Esta web está actualmente en proceso de adaptación.
             </p>
             <p>
-              No obstante, el titular se compromete a atender de forma diligente cualquier solicitud
-              razonable de adaptación que reciba a través del email de contacto{' '}
+              Si encuentras una barrera de accesibilidad, escríbenos a{' '}
               <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
                 info@dcbikescantabria.es
               </a>
-              .
+              ; responderemos en un plazo máximo de 14 días naturales. También puedes presentar una
+              reclamación ante la{' '}
+              <a
+                href="https://www.defensordelpueblo.es"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[var(--color-lavender)] underline underline-offset-2"
+              >
+                Defensoría del Pueblo
+              </a>{' '}
+              o ante la Agencia Española de Supervisión de la Inteligencia Artificial (AESIA) cuando aplique.
+            </p>
+            <p>
+              <strong className="text-[var(--color-cream)]">Plan de remediación:</strong>{' '}
+              estamos auditando contraste, navegación por teclado, ARIA, foco visible y{' '}
+              <code className="text-[var(--color-cream)]">prefers-reduced-motion</code>. Las mejoras se
+              publican progresivamente en cada despliegue.
             </p>
           </Section>
 

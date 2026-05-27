@@ -678,24 +678,25 @@ export default function Checkout() {
                 </p>
               )}
 
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  {...register('accepted_approval_flow')}
-                  className="mt-1 accent-[var(--color-lavender)] w-4 h-4 shrink-0"
-                />
-                <span className="text-sm font-[var(--font-body)] text-[var(--color-cream-dim)] leading-relaxed">
-                  Acepto que la tienda tiene{' '}
-                  <strong>{autoCancelHours}&nbsp;horas</strong> para confirmar
-                  mi pedido. Si lo rechazan, mi reserva se libera
-                  automáticamente sin coste para mí.
-                </span>
-              </label>
-              {errors.accepted_approval_flow && (
-                <p className="text-xs text-[var(--color-brand-red)] ml-7">
-                  {errors.accepted_approval_flow.message}
-                </p>
-              )}
+              <p className="text-xs font-[var(--font-body)] text-[var(--color-mid)] leading-relaxed pl-7">
+                Al realizar el pedido, la tienda tiene un plazo de{' '}
+                <strong className="text-[var(--color-cream-dim)]">
+                  {autoCancelHours}&nbsp;horas
+                </strong>{' '}
+                para confirmar la disponibilidad. Si transcurrido ese plazo no
+                recibimos confirmación, tu pedido se cancela automáticamente y
+                se reintegra cualquier preautorización de pago. Detalles
+                completos en la cláusula 4.5 de los{' '}
+                <Link
+                  to="/terminos-venta"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--color-lavender)] underline hover:text-[var(--color-cream)]"
+                >
+                  Términos y Condiciones
+                </Link>
+                .
+              </p>
             </div>
           </section>
 

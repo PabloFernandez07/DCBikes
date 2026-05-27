@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { MapPin, Phone, Clock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useSchedule } from '@/hooks/useSchedule'
+import { useLegalIdentity } from '@/hooks/useLegalIdentity'
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return (
@@ -27,20 +28,18 @@ interface SiteSettings {
   phone?: string
   instagram?: string
   facebook?: string
-  legalName?: string
-  legalCif?: string
-  legalAddress?: string
 }
 
 export function Footer() {
   const [settings, setSettings] = useState<SiteSettings>({})
+  const legal = useLegalIdentity()
   const { schedule, isOpen, today } = useSchedule()
 
   useEffect(() => {
     supabase
       .from('settings')
       .select('key, value')
-      .in('key', ['store_address', 'store_phone', 'social_instagram', 'social_facebook', 'legal_company_name', 'legal_company_cif', 'legal_company_address'])
+      .in('key', ['store_address', 'store_phone', 'social_instagram', 'social_facebook'])
       .then(({ data }) => {
         if (!data) return
         const obj: SiteSettings = {}
@@ -50,9 +49,6 @@ export function Footer() {
             store_phone: 'phone',
             social_instagram: 'instagram',
             social_facebook: 'facebook',
-            legal_company_name: 'legalName',
-            legal_company_cif: 'legalCif',
-            legal_company_address: 'legalAddress',
           }
           const key = map[row.key]
           if (key) {
@@ -195,9 +191,9 @@ export function Footer() {
             <p className="text-[var(--color-mid)] text-xs font-[var(--font-body)]">
               © {year} DC Bikes Cantabria. Todos los derechos reservados.
             </p>
-            {(settings.legalName || settings.legalCif || settings.legalAddress) && (
+            {(legal?.companyName || legal?.cif || legal?.address) && (
               <p className="text-[var(--color-mid)] text-xs font-[var(--font-body)] opacity-70">
-                {[settings.legalName, settings.legalCif && `CIF: ${settings.legalCif}`, settings.legalAddress].filter(Boolean).join(' · ')}
+                {[legal?.companyName, legal?.cif && `CIF: ${legal.cif}`, legal?.address].filter(Boolean).join(' · ')}
               </p>
             )}
           </div>

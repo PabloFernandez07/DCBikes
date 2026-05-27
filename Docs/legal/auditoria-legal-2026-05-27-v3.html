@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Auditoría Legal V3 — DC Bikes Cantabria</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --bg: #fafaf9;
+    --panel: #ffffff;
+    --ink: #0f0f12;
+    --ink-soft: #444;
+    --muted: #777;
+    --line: #e5e3df;
+    --accent: #A788B5;
+    --accent-deep: #6d4f86;
+    --crit: #b91c1c;
+    --crit-bg: #fef2f2;
+    --high: #c2410c;
+    --high-bg: #fff7ed;
+    --med: #a16207;
+    --med-bg: #fefce8;
+    --low: #166534;
+    --low-bg: #f0fdf4;
+    --code-bg: #f4f3f0;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    line-height: 1.55;
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 28px 80px; }
+  header.hero {
+    background: linear-gradient(135deg, #1f1d22 0%, #2c2530 100%);
+    color: #fff;
+    border-radius: 16px;
+    padding: 36px 40px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow);
+  }
+  header.hero .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(167, 136, 181, .25);
+    color: #e8d5f0;
+    border: 1px solid rgba(167, 136, 181, .5);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  header.hero h1 {
+    font-size: 30px;
+    line-height: 1.15;
+    margin: 0 0 8px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  header.hero p.sub {
+    margin: 0;
+    color: #c5bfca;
+    font-size: 15px;
+  }
+  header.hero .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,.12);
+    font-size: 13px;
+    color: #d5cfd9;
+  }
+  header.hero .meta b { color: #fff; font-weight: 600; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  h2 {
+    font-size: 22px;
+    margin: 0 0 16px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 17px;
+    margin: 28px 0 10px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  h4 {
+    font-size: 14px;
+    margin: 12px 0 6px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-weight: 600;
+  }
+  p { margin: 0 0 12px; color: var(--ink-soft); }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; color: var(--ink-soft); }
+  li { margin-bottom: 4px; }
+  code, pre {
+    font-family: "JetBrains Mono", Consolas, ui-monospace, monospace;
+    font-size: 13px;
+  }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; color: var(--ink); }
+  pre {
+    background: #1f1d22;
+    color: #f1eef4;
+    padding: 14px 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 8px 0 14px;
+    line-height: 1.5;
+  }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin: 18px 0 8px;
+  }
+  .summary-card {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .summary-card .n { font-size: 30px; font-weight: 700; line-height: 1; }
+  .summary-card .l { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 6px; }
+  .summary-card.crit { background: var(--crit-bg); border-color: #fecaca; }
+  .summary-card.crit .n { color: var(--crit); }
+  .summary-card.high { background: var(--high-bg); border-color: #fed7aa; }
+  .summary-card.high .n { color: var(--high); }
+  .summary-card.med  { background: var(--med-bg); border-color: #fde68a; }
+  .summary-card.med  .n { color: var(--med); }
+  .summary-card.low  { background: var(--low-bg); border-color: #bbf7d0; }
+  .summary-card.low  .n { color: var(--low); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 20px;
+    font-size: 14px;
+  }
+  th, td {
+    border-bottom: 1px solid var(--line);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--bg); font-weight: 600; color: var(--ink); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-soft); }
+
+  .sev {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .sev.crit { background: var(--crit-bg); color: var(--crit); border: 1px solid #fecaca; }
+  .sev.high { background: var(--high-bg); color: var(--high); border: 1px solid #fed7aa; }
+  .sev.med  { background: var(--med-bg); color: var(--med); border: 1px solid #fde68a; }
+  .sev.low  { background: var(--low-bg); color: var(--low); border: 1px solid #bbf7d0; }
+
+  .finding {
+    border-left: 4px solid var(--line);
+    padding: 14px 18px 14px 18px;
+    margin: 18px 0;
+    background: var(--bg);
+    border-radius: 0 8px 8px 0;
+  }
+  .finding.crit { border-left-color: var(--crit); }
+  .finding.high { border-left-color: var(--high); }
+  .finding.med  { border-left-color: var(--med); }
+  .finding.low  { border-left-color: var(--low); }
+  .finding .head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .finding .id {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    background: #fff;
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 6px;
+    color: var(--ink-soft);
+  }
+  .finding .title { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .finding dl { margin: 8px 0 0; font-size: 14px; }
+  .finding dt { font-weight: 600; color: var(--ink-soft); margin-top: 8px; text-transform: uppercase; font-size: 11px; letter-spacing: .05em; }
+  .finding dd { margin: 2px 0 0; color: var(--ink-soft); padding-left: 0; }
+
+  .verdict {
+    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+    border: 2px solid #fecaca;
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin: 20px 0;
+  }
+  .verdict h2 { color: var(--crit); }
+  .verdict .stamp {
+    display: inline-block;
+    padding: 8px 18px;
+    background: var(--crit);
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .toc {
+    columns: 2;
+    column-gap: 32px;
+    list-style: none;
+    padding: 0;
+    font-size: 13px;
+  }
+  .toc li { margin-bottom: 4px; break-inside: avoid; }
+  .toc a { color: var(--accent-deep); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+
+  .footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 40px;
+  }
+  @media (max-width: 760px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .toc { columns: 1; }
+    header.hero { padding: 24px; }
+    .panel { padding: 22px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="badge">Auditoría jurídica V3 · 3.ª ronda</div>
+  <h1>Auditoría legal exhaustiva — DC Bikes Cantabria</h1>
+  <p class="sub">RGPD · LOPDGDD · LSSI-CE · RDL 1/2007 · RD 1619/2012 · RD 1007/2023 Verifactu · Directiva Omnibus · Guía AEPD Cookies (julio 2023)</p>
+  <div class="meta">
+    <div><b>Fecha:</b> 27 de mayo de 2026</div>
+    <div><b>Ronda:</b> V3 (post-correcciones de v1 + v2)</div>
+    <div><b>Metodología:</b> 4 agentes especializados en paralelo</div>
+    <div><b>Veredicto:</b> NO APTO — bloqueante para apertura</div>
+  </div>
+</header>
+
+<section class="panel">
+  <h2>1 · Resumen ejecutivo</h2>
+  <p>
+    El sistema ha progresado de forma sustantiva respecto a las dos rondas previas (45 hallazgos cerrados al ~70%): se ha eliminado Google Fonts y autohospedado tipografía, el banner de cookies aplica consentimiento granular real con gating analítico verificado, la captura de IP/UA y versiones de consentimiento se persiste en órdenes y presupuestos, el botón final del checkout incorpora la fórmula inequívoca <em>"Realizar pedido con obligación de pago"</em> exigida por STJUE C-249/21, se ha publicado el RAT, el procedimiento de supresión, los términos en versión 2026-05-26-v1, la separación de series correlativas B2B/B2C, el captcha Turnstile, el adjunto de factura PDF, la tabla <code>admin_users</code> con función <code>is_admin()</code>, el cron de retención a 6 años, y el HSTS con preload.
+  </p>
+  <p>
+    No obstante, esta auditoría V3 identifica <strong>48 hallazgos nuevos o residuales</strong>, de los cuales <strong>11 son críticos y bloqueantes</strong>. La causa raíz dominante es de dos tipos:
+  </p>
+  <ol>
+    <li><strong>Datos fiscales del titular sin rellenar en producción</strong> — la propia memoria del proyecto admite que <code>legal_company_*</code> sigue pendiente. Esto degrada en cascada el aviso legal, los términos de venta, los emails transaccionales, el RAT y la facturación.</li>
+    <li><strong>Defensa en profundidad incompleta en la capa de Edge Functions</strong> — el wildcard CORS subsiste en <code>jsonOk</code>/<code>jsonError</code>, las migraciones <code>pg_cron</code> contienen secretos/placeholders, el CSP mantiene <code>'unsafe-inline'</code>, y existe un nuevo riesgo crítico de doble RPC de numeración de facturas.</li>
+  </ol>
+  <p>
+    Además emergen incumplimientos no detectados en rondas previas: trackers de imagen de Google en el Home (avatares de reseñas) sin consentimiento que reproducen exactamente el patrón del caso Google Fonts (LG München I, 3 O 17493/20), incumplimiento del Reglamento Verifactu (RD 1007/2023) en vigor desde 1-ene-2026 para sociedades, descuentos sin precio de referencia de 30 días (Directiva Omnibus), y la <em>cláusula de plazos orientativos</em> del art. 85.5 RDL 1/2007.
+  </p>
+
+  <div class="summary-grid">
+    <div class="summary-card crit"><div class="n">11</div><div class="l">Críticos</div></div>
+    <div class="summary-card high"><div class="n">17</div><div class="l">Altos</div></div>
+    <div class="summary-card med"><div class="n">13</div><div class="l">Medios</div></div>
+    <div class="summary-card low"><div class="n">7</div><div class="l">Bajos</div></div>
+  </div>
+
+  <h3>Veredicto</h3>
+  <p><strong>NO APTO</strong> para apertura comercial al público. Bloqueantes absolutos: <strong>L-01, L-02, C-01, C-02, C-03, C-04, P-01, P-02, P-03, S-01, S-02</strong>. Rango sancionador acumulado realista: <strong>80.000 € – 300.000 €</strong>; peor escenario (Verifactu + brecha + reincidencia): hasta <strong>600.000 €</strong>.</p>
+</section>
+
+<section class="panel">
+  <h2>2 · Índice de hallazgos</h2>
+  <ul class="toc">
+    <li><a href="#P-01">P-01 · Avatares Google sin consent (CRÍTICO)</a></li>
+    <li><a href="#P-02">P-02 · "Cargar mapa" bypassa banner (CRÍTICO)</a></li>
+    <li><a href="#P-03">P-03 · NIF/razón social ausentes en RAT (CRÍTICO)</a></li>
+    <li><a href="#P-04">P-04 · Turnstile sin documentar (ALTO)</a></li>
+    <li><a href="#P-05">P-05 · Toggle "marketing" sin uso real (ALTO)</a></li>
+    <li><a href="#P-06">P-06 · Banner: texto inconsistente (ALTO)</a></li>
+    <li><a href="#P-07">P-07 · Cookies Maps obsoletas + falta Cloudflare (ALTO)</a></li>
+    <li><a href="#P-08">P-08 · Almacenamiento técnico sin justificar plazo (MEDIO)</a></li>
+    <li><a href="#P-09">P-09 · Discrepancia plazo dcb_session (MEDIO)</a></li>
+    <li><a href="#P-10">P-10 · Marketing inexistente en política privacidad (MEDIO)</a></li>
+    <li><a href="#P-11">P-11 · Fecha actualización no unificada (BAJO)</a></li>
+    <li><a href="#P-12">P-12 · Sin versionado de consent cookies (BAJO)</a></li>
+
+    <li><a href="#L-01">L-01 · Identificación prestador vacía (CRÍTICO)</a></li>
+    <li><a href="#L-02">L-02 · Factura imposible sin datos fiscales (CRÍTICO)</a></li>
+    <li><a href="#L-03">L-03 · Forma jurídica asumida por defecto (ALTO)</a></li>
+    <li><a href="#L-04">L-04 · Email fallback dominio incorrecto (ALTO)</a></li>
+    <li><a href="#L-05">L-05 · Soporte duradero no estable (ALTO)</a></li>
+    <li><a href="#L-06">L-06 · Pre-contractual ficha producto débil (MEDIO)</a></li>
+    <li><a href="#L-07">L-07 · Confirmación solo por email (MEDIO)</a></li>
+    <li><a href="#L-08">L-08 · Idioma del contrato no declarado (BAJO)</a></li>
+
+    <li><a href="#C-01">C-01 · Sistema no cumple Verifactu (CRÍTICO)</a></li>
+    <li><a href="#C-02">C-02 · Datos fiscales vacíos en producción (CRÍTICO)</a></li>
+    <li><a href="#C-03">C-03 · Doble RPC numeración factura (CRÍTICO)</a></li>
+    <li><a href="#C-04">C-04 · Descuentos sin precio 30d (CRÍTICO)</a></li>
+    <li><a href="#C-05">C-05 · Plazos "orientativos" abusivos (ALTO)</a></li>
+    <li><a href="#C-06">C-06 · Excepción personalización opaca (ALTO)</a></li>
+    <li><a href="#C-07">C-07 · No info penalización art. 105 (ALTO)</a></li>
+    <li><a href="#C-08">C-08 · Soporte duradero modificable (ALTO)</a></li>
+    <li><a href="#C-09">C-09 · Factura simplificada >400€ sin NIF (ALTO)</a></li>
+    <li><a href="#C-10">C-10 · ODR URL inconsistente (MEDIO)</a></li>
+    <li><a href="#C-11">C-11 · Coste envío no fijado techo (MEDIO)</a></li>
+    <li><a href="#C-12">C-12 · IVA mono-tipo en breakdown (MEDIO)</a></li>
+    <li><a href="#C-13">C-13 · Inscripción registral pendiente (BAJO)</a></li>
+
+    <li><a href="#S-01">S-01 · CORS wildcard en todas las respuestas (CRÍTICO)</a></li>
+    <li><a href="#S-02">S-02 · pg_cron con placeholders/secretos (CRÍTICO)</a></li>
+    <li><a href="#S-03">S-03 · CSP unsafe-inline persiste (ALTO)</a></li>
+    <li><a href="#S-04">S-04 · Token pedido 30 días + secreto débil (ALTO)</a></li>
+    <li><a href="#S-05">S-05 · Signed URL factura en email 7d (ALTO)</a></li>
+    <li><a href="#S-06">S-06 · RLS data_breaches verificable (ALTO)</a></li>
+    <li><a href="#S-07">S-07 · Procedimiento brechas no operativo (ALTO)</a></li>
+    <li><a href="#S-08">S-08 · Magic link token en URL (MEDIO)</a></li>
+    <li><a href="#S-09">S-09 · Rate-limit magic link sin IP (MEDIO)</a></li>
+    <li><a href="#S-10">S-10 · Logs con PII (MEDIO)</a></li>
+    <li><a href="#S-11">S-11 · CORS wildcard endpoints públicos (MEDIO)</a></li>
+    <li><a href="#S-12">S-12 · redsys-notification silencia errores (MEDIO)</a></li>
+    <li><a href="#S-13">S-13 · Permissions-Policy parcial (BAJO)</a></li>
+    <li><a href="#S-14">S-14 · Falta COEP (BAJO)</a></li>
+    <li><a href="#S-15">S-15 · UUIDs admin en migración (BAJO)</a></li>
+  </ul>
+</section>
+
+<section class="panel">
+  <h2>3 · Hallazgos detallados — Bloque P · Privacidad y cookies (RGPD + AEPD)</h2>
+
+  <article class="finding crit" id="P-01">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">P-01</span><span class="title">Avatares de reseñas de Google cargados sin consentimiento</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 6.1 y 5.1.a · LSSI art. 22.2 · Guía AEPD Cookies §3.3 · STJUE C-582/14 <em>Breyer</em> · LG München I 3 O 17493/20 (caso Google Fonts)</dd>
+      <dt>Evidencia</dt><dd><code>src/pages/public/Home.tsx:179-185</code> renderiza <code>&lt;img src={review.profile_photo_url} /&gt;</code> apuntando a <code>lh3.googleusercontent.com</code>. <code>src/hooks/useGoogleReviews.ts:24-26</code> invoca la Edge Function en <code>useEffect</code> antes de cualquier consentimiento.</dd>
+      <dt>Riesgo</dt><dd>30.000 € – 100.000 € (AEPD PS/00010/2024 y similares). Reputacional: réplica exacta del patrón Google Fonts ya sancionado.</dd>
+      <dt>Corrección</dt><dd>Proxy de imágenes vía Edge Function que devuelva el binario o cacheo en Supabase Storage; alternativa: gatear con <code>hasThirdPartyConsent()</code> y mostrar placeholder con CTA.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="P-02">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">P-02</span><span class="title">"Cargar mapa" bypassa el banner sin persistir consentimiento</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 7 · Guía AEPD Cookies §3.4 y §3.6 (consentimiento demostrable y revocable)</dd>
+      <dt>Evidencia</dt><dd><code>src/pages/public/Contact.tsx:58, 274-280</code> — <code>setMapsEnabled(true)</code> activa el iframe a maps.google.com sin escribir nada en <code>dcbikes_cookie_consent</code>.</dd>
+      <dt>Riesgo</dt><dd>10.000 € – 60.000 €. Agravante: corrección incompleta tras v2.</dd>
+      <dt>Corrección</dt><dd>El click debe llamar a <code>setThirdPartyConsent(true)</code> expuesta por <code>CookieBanner.tsx</code> que actualice el localStorage con <code>thirdParty: true</code> y <code>savedAt: now</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="P-03">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">P-03</span><span class="title">NIF/razón social ausentes en RAT, Aviso Legal y política de privacidad</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 30.1.a · LOPDGDD art. 31 · LSSI art. 10.1.a · RGPD art. 13.1.a</dd>
+      <dt>Evidencia</dt><dd><code>Docs/legal/rat-2026.md:12-17</code> — campos como <em>"[Pendiente de cumplimentar por el titular]"</em>. <code>LegalNotice.tsx:113-121</code> muestra al usuario final un badge "⚠ Pendiente de configuración". <code>PrivacyPolicy.tsx:67-76</code> no declara NIF.</dd>
+      <dt>Riesgo</dt><dd>LSSI hasta 30.000 € (leve) · RGPD 10.000 € – 100.000 € (RAT incompleto, art. 83.4.a).</dd>
+      <dt>Corrección</dt><dd>Rellenar settings reales, bloquear deploy si null, actualizar RAT con firma y fecha. NIF también en footer y privacidad.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="P-04">
+    <div class="head"><span class="sev high">Alto</span><span class="id">P-04</span><span class="title">Cloudflare Turnstile sin gating y sin declarar en privacidad/cookies/RAT</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 13.1.e/f · Guía AEPD Cookies §3.3</dd>
+      <dt>Evidencia</dt><dd><code>QuoteModal.tsx:6</code> importa <code>@marsidev/react-turnstile</code>. CSP en <code>vercel.json:28</code> lo whitelista. Cloudflare LLC (EE.UU.) procesa IP/UA/idioma del visitante.</dd>
+      <dt>Análisis</dt><dd>Puede acogerse al art. 22.2 LSSI (anti-fraude solicitado por el usuario), pero <strong>debe declararse</strong>.</dd>
+      <dt>Corrección</dt><dd>Añadir Cloudflare Inc. a tabla de encargados en privacidad §7 + RAT 2.3 con base legal art. 6.1.b/f RGPD + DPF · Añadir a Política de Cookies categoría A con justificación.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="P-05">
+    <div class="head"><span class="sev high">Alto</span><span class="id">P-05</span><span class="title">Toggle "marketing" en banner sin tratamiento real</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 5.1.b/c · Guía AEPD Cookies §4 (información veraz)</dd>
+      <dt>Evidencia</dt><dd><code>CookieBanner.tsx:199-205</code> ofrece toggle "Marketing"; <code>CookiePolicy.tsx:228-237</code> declara que no se usan cookies de marketing; el flag <code>marketing</code> nunca se lee en código.</dd>
+      <dt>Riesgo</dt><dd>5.000 € – 20.000 € por patrón oscuro / consentimiento engañoso.</dd>
+      <dt>Corrección</dt><dd>Eliminar el toggle "Marketing" del banner hasta que exista tratamiento real declarado.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="P-06">
+    <div class="head"><span class="sev high">Alto</span><span class="id">P-06</span><span class="title">Banner afirma "cookies de terceros" antes de que sea cierto</span></div>
+    <dl>
+      <dt>Norma</dt><dd>Guía AEPD Cookies §4 · RGPD art. 5.1.a</dd>
+      <dt>Evidencia</dt><dd><code>CookieBanner.tsx:121-122</code>: <em>"Utilizamos cookies propias y de terceros para analizar el uso de la web…"</em>. La Política de Cookies declara lo contrario.</dd>
+      <dt>Corrección</dt><dd>Reescribir: <em>"Esta web usa cookies y almacenamiento técnicos imprescindibles. En /contacto cargamos opcionalmente el mapa de Google si das consentimiento. No usamos cookies de marketing ni analítica de terceros."</em></dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="P-07">
+    <div class="head"><span class="sev high">Alto</span><span class="id">P-07</span><span class="title">CookiePolicy lista cookies Maps obsoletas y omite Cloudflare</span></div>
+    <dl>
+      <dt>Norma</dt><dd>Guía AEPD Cookies §4 (información actualizada)</dd>
+      <dt>Evidencia</dt><dd><code>CookiePolicy.tsx:167-180</code> lista <code>NID</code>, <code>1P_JAR</code>, <code>CONSENT</code> con "hasta 24 meses"; Google ha cambiado a <code>SOCS</code>, <code>AEC</code>, <code>__Secure-1PSID</code>. No aparece <code>__cf_bm</code> ni <code>cf_clearance</code>.</dd>
+      <dt>Corrección</dt><dd>Inventariar cookies reales con navegador limpio, añadir fila Cloudflare, revisión trimestral.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="P-08">
+    <div class="head"><span class="sev med">Medio</span><span class="id">P-08</span><span class="title">Almacenamientos técnicos con plazo no justificado</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 5.1.c · Guía AEPD §3.1</dd>
+      <dt>Evidencia</dt><dd><code>dcbikes_last_order</code> 30 días con token HMAC; aceptable por art. 22.2 LSSI pero no justificado en la política.</dd>
+      <dt>Corrección</dt><dd>Añadir nota en categoría A: justificación expresa y caducidad del token (30 días).</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="P-09">
+    <div class="head"><span class="sev med">Medio</span><span class="id">P-09</span><span class="title">Plazo dcb_session declarado vs comportamiento real</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 13.2.a</dd>
+      <dt>Evidencia</dt><dd>RAT 2.4:92 declara "13 meses" para eventos agregados; no existe cron de purga real de <code>product_views</code>/<code>search_queries</code>.</dd>
+      <dt>Corrección</dt><dd>Cron Supabase que purgue/anonimice >13 meses · o ajustar RAT al plazo real.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="P-10">
+    <div class="head"><span class="sev med">Medio</span><span class="id">P-10</span><span class="title">Política privacidad menciona "marketing opt-in" inexistente</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 5.1.b + art. 13 (veracidad)</dd>
+      <dt>Evidencia</dt><dd><code>PrivacyPolicy.tsx:182-185</code> incluye fila marketing; RAT 2.6:121 declara "no activo"; <code>orders.marketing_opt_in</code> eliminado en <code>0018_drop_marketing_opt_in.sql</code>.</dd>
+      <dt>Corrección</dt><dd>Eliminar fila o reintroducir cuando se active newsletter con doble opt-in.</dd>
+    </dl>
+  </article>
+
+  <article class="finding low" id="P-11">
+    <div class="head"><span class="sev low">Bajo</span><span class="id">P-11</span><span class="title">Fechas "última actualización" desalineadas</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd>CookiePolicy "abril de 2026", PrivacyPolicy "mayo de 2026", <code>legal-versions.ts</code> 2026-05-26-v1.</dd>
+      <dt>Corrección</dt><dd>Unificar leyendo de <code>legal-versions.ts</code>; crear <code>COOKIES_VERSION</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding low" id="P-12">
+    <div class="head"><span class="sev low">Bajo</span><span class="id">P-12</span><span class="title">Sin versionado del consentimiento de cookies</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>StoredConsent</code> no incluye <code>cookies_version</code>; no es posible invalidar selectivamente.</dd>
+      <dt>Corrección</dt><dd>Añadir <code>cookies_version</code>; al cambiar, <code>readStored()</code> devuelve null.</dd>
+    </dl>
+  </article>
+</section>
+
+<section class="panel">
+  <h2>4 · Hallazgos detallados — Bloque L · LSSI-CE, Aviso Legal y Contratación electrónica</h2>
+
+  <article class="finding crit" id="L-01">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">L-01</span><span class="title">Identificación del prestador incompleta en producción</span></div>
+    <dl>
+      <dt>Norma</dt><dd>LSSI-CE art. 10.1.a/b/c · RDL 1/2007 art. 97.1.b</dd>
+      <dt>Evidencia</dt><dd><code>supabase/migrations/0004_settings_carrito_seed.sql:22-24</code> siembra <code>legal_company_name|cif|address</code> como string vacío. <code>LegalNotice.tsx:114-121</code> renderiza al público "⚠ Pendiente de configuración". <code>email-template.ts:227-229</code> muestra "NIF: pendiente de configuración" en footer de emails.</dd>
+      <dt>Riesgo</dt><dd>Infracción leve LSSI hasta 30.000 €, escalable a grave hasta 150.000 €.</dd>
+      <dt>Corrección</dt><dd>(1) No sembrar como vacío. (2) CI/CD gate que rechaza despliegue si settings null. (3) Si null, sitio no público o texto neutro.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="L-02">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">L-02</span><span class="title">Factura electrónica imposible sin datos fiscales</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RD 1619/2012 art. 6 · LIVA art. 164.Uno.3 · LSSI art. 27 · RDL 1/2007 art. 49.1.k</dd>
+      <dt>Evidencia</dt><dd><code>generate-invoice-pdf/index.ts:138-150</code> rechaza si faltan datos, pero <code>order-place</code> no valida → se aceptan pedidos imposibles de facturar.</dd>
+      <dt>Riesgo</dt><dd>LGT 201 + Consumo grave hasta 150.000 € + publicidad engañosa.</dd>
+      <dt>Corrección</dt><dd>Gate en <code>order-place</code>: 503 si <code>legal_company_*</code> nulo.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="L-03">
+    <div class="head"><span class="sev high">Alto</span><span class="id">L-03</span><span class="title">Forma jurídica asumida por defecto como autónomo</span></div>
+    <dl>
+      <dt>Norma</dt><dd>LSSI art. 10.1.a/c</dd>
+      <dt>Evidencia</dt><dd><code>LegalNotice.tsx:122-131, 156-165</code>: si vacío, muestra <em>"Empresario individual no sujeto a inscripción (art. 19 CCom)"</em>. Si la titularidad real fuera S.L., es falso.</dd>
+      <dt>Corrección</dt><dd>Eliminar defaults cosméticos; obligar configuración consciente.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="L-04">
+    <div class="head"><span class="sev high">Alto</span><span class="id">L-04</span><span class="title">Email de fallback con dominio incorrecto</span></div>
+    <dl>
+      <dt>Norma</dt><dd>LSSI art. 10.1.b (comunicación efectiva)</dd>
+      <dt>Evidencia</dt><dd><code>TermsOfSale.tsx:114</code>: fallback <code>info@dcbikes.es</code> (sin "cantabria"). Resto del sistema usa <code>dcbikescantabria.es</code>.</dd>
+      <dt>Riesgo</dt><dd>Grave LSSI hasta 150.000 € si se prueba que cliente no pudo contactar.</dd>
+      <dt>Corrección</dt><dd>Cambiar fallback a <code>info@dcbikescantabria.es</code> o eliminarlo. Verificar buzón operativo.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="L-05">
+    <div class="head"><span class="sev high">Alto</span><span class="id">L-05</span><span class="title">Documento contractual sin soporte duradero estable</span></div>
+    <dl>
+      <dt>Norma</dt><dd>LSSI art. 29 · RDL 1/2007 art. 98.7 · STJUE C-49/11 <em>Content Services</em></dd>
+      <dt>Evidencia</dt><dd>Email enlaza a <code>/terminos-venta</code> genérico (modificable), no a la versión exacta aceptada. <code>terms_version</code> se persiste internamente pero no se entrega al cliente.</dd>
+      <dt>Corrección</dt><dd>Adjuntar PDF inmutable de términos al email O publicar versiones en URLs persistentes (<code>/legal/terms/2026-05-26-v1</code>).</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="L-06">
+    <div class="head"><span class="sev med">Medio</span><span class="id">L-06</span><span class="title">Pre-contractual débil en ficha de producto</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RDL 1/2007 art. 97.1.c/e/g</dd>
+      <dt>Evidencia</dt><dd><code>ProductDetail.tsx:240-262</code> no menciona "IVA incluido" ni plazo de entrega.</dd>
+      <dt>Corrección</dt><dd>Añadir bajo precio: "IVA incluido · Plazo 2-5 días laborables (Península)".</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="L-07">
+    <div class="head"><span class="sev med">Medio</span><span class="id">L-07</span><span class="title">Confirmación dependiente exclusivamente del email</span></div>
+    <dl>
+      <dt>Norma</dt><dd>LSSI-CE art. 28.1.a y b</dd>
+      <dt>Evidencia</dt><dd><code>OrderConfirmation.tsx</code> no contiene detalle archivable; Resend puede fallar/SPAM.</dd>
+      <dt>Corrección</dt><dd>Página de confirmación con detalle completo + botón "Descargar PDF"; monitorizar webhook Resend.</dd>
+    </dl>
+  </article>
+
+  <article class="finding low" id="L-08">
+    <div class="head"><span class="sev low">Bajo</span><span class="id">L-08</span><span class="title">Idioma del contrato no declarado</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RDL 1/2007 art. 97.1.r</dd>
+      <dt>Corrección</dt><dd>Añadir cláusula 12 en TermsOfSale: "El contrato se celebra en español, lengua única para formalización y atención."</dd>
+    </dl>
+  </article>
+</section>
+
+<section class="panel">
+  <h2>5 · Hallazgos detallados — Bloque C · Consumo, facturación y desistimiento</h2>
+
+  <article class="finding crit" id="C-01">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">C-01</span><span class="title">Sistema de facturación no cumple RD 1007/2023 (Verifactu)</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RD 1007/2023 (vigente desde 1-ene-2026 sociedades, 1-jul-2026 autónomos) · Art. 201 bis LGT</dd>
+      <dt>Evidencia</dt><dd><code>0003_orders_schema.sql:133-148</code>: <code>invoices</code> sin <code>hash</code>, <code>previous_hash</code>, <code>signature</code>, <code>qr_payload</code>, <code>aeat_response</code>. <code>generate-invoice-pdf</code> no genera QR ni leyenda VERI*FACTU.</dd>
+      <dt>Riesgo</dt><dd>Sanción 50.000 €/ejercicio, hasta 150.000 € agravado.</dd>
+      <dt>Corrección</dt><dd>Migración <code>0020_verifactu.sql</code> + función <code>verifactu-send</code>; SHA-256 encadenado, QR AEAT, decidir modo Verifactu vs no Verifactu.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="C-02">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">C-02</span><span class="title">Datos fiscales del vendedor vacíos en producción</span></div>
+    <dl>
+      <dt>Norma</dt><dd>Art. 97 RDL 1/2007 · RD 1619/2012 art. 6.1.c</dd>
+      <dt>Evidencia</dt><dd>Memoria proyecto: "DC Bikes — datos fiscales pendientes". <code>send-order-confirmation-customer:73-74</code> inyecta <em>"[pendiente de configuración]"</em> al email.</dd>
+      <dt>Riesgo</dt><dd>Hasta 100.000 € (consumo grave) + sanción tributaria 1-2%.</dd>
+      <dt>Corrección</dt><dd>Bloquear <code>order-place</code> mientras settings legales no estén configurados.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="C-03">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">C-03</span><span class="title">Doble función RPC de correlativo activa simultáneamente</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RD 1619/2012 art. 6.1.f · Reglamento Verifactu art. 8</dd>
+      <dt>Evidencia</dt><dd>Migración <code>0003</code> creó <code>next_invoice_number()</code> y <code>0011</code> añadió <code>next_b2c/b2b_invoice_number()</code> sin revocar la primera. Riesgo de duplicidad si se invoca la antigua por accidente.</dd>
+      <dt>Corrección</dt><dd><code>revoke execute on function next_invoice_number(int) from service_role; drop function if exists next_invoice_number(int);</code></dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="C-04">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">C-04</span><span class="title">Descuentos sin precio anterior mínimo de 30 días (Omnibus)</span></div>
+    <dl>
+      <dt>Norma</dt><dd>Art. 20.1.b RDL 1/2007 (reformado por RDL 5/2023 Omnibus, vigente desde 28-05-2022)</dd>
+      <dt>Evidencia</dt><dd><code>ProductDetail.tsx:153-258</code> tacha el <code>retail_price</code> actual del catálogo, no el mínimo de los últimos 30 días. No existe tabla <code>product_price_history</code>.</dd>
+      <dt>Riesgo</dt><dd>Hasta 100.000 € + cuádruple del beneficio ilícito.</dd>
+      <dt>Corrección</dt><dd>Tabla <code>product_price_history</code> + trigger; función <code>get_min_price_last_30d</code>; UI muestra dos líneas (precio actual y mínimo 30d).</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="C-05">
+    <div class="head"><span class="sev high">Alto</span><span class="id">C-05</span><span class="title">Plazos de entrega calificados como "orientativos" (cláusula abusiva)</span></div>
+    <dl>
+      <dt>Norma</dt><dd>Art. 66 bis + art. 85.5 RDL 1/2007</dd>
+      <dt>Evidencia</dt><dd><code>TermsOfSale.tsx:293-296</code>: "plazos orientativos … pueden variar".</dd>
+      <dt>Corrección</dt><dd>Literal: "El plazo máximo de entrega es de 30 días naturales… Si no se cumple, derecho a resolución con reembolso íntegro (art. 109)".</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="C-06">
+    <div class="head"><span class="sev high">Alto</span><span class="id">C-06</span><span class="title">Excepción de "personalización" opaca para bicis a medida</span></div>
+    <dl>
+      <dt>Norma</dt><dd>Art. 103.c + art. 80.1.a RDL 1/2007</dd>
+      <dt>Evidencia</dt><dd><code>Returns.tsx:213-214</code> copia literal del precepto sin concretar qué productos quedan fuera del desistimiento.</dd>
+      <dt>Corrección</dt><dd>Especificar productos personalizados (bicis montadas a medida, etc.) o aclarar que online solo se vende ropa/accesorios.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="C-07">
+    <div class="head"><span class="sev high">Alto</span><span class="id">C-07</span><span class="title">No se entrega el modelo de formulario de desistimiento como adjunto</span></div>
+    <dl>
+      <dt>Norma</dt><dd>Art. 97.1.k.2º + art. 105 RDL 1/2007</dd>
+      <dt>Evidencia</dt><dd><code>send-order-confirmation-customer:132-143</code> enlaza al PDF pero no lo adjunta.</dd>
+      <dt>Riesgo</dt><dd>Ampliación automática del plazo de desistimiento a 12 meses + 14 días.</dd>
+      <dt>Corrección</dt><dd>Adjuntar <code>/devoluciones-formulario.pdf</code> al email (igual que la factura en <code>send-order-accepted-customer</code>).</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="C-08">
+    <div class="head"><span class="sev high">Alto</span><span class="id">C-08</span><span class="title">Confirmación del contrato no en soporte duradero estable</span></div>
+    <dl>
+      <dt>Norma</dt><dd>Art. 98.2 RDL 1/2007 · STJUE C-49/11</dd>
+      <dt>Evidencia</dt><dd>Email enlaza a páginas modificables; no se adjunta PDF de términos versionados.</dd>
+      <dt>Corrección</dt><dd>Generar y persistir PDF de términos versionados en <code>order-contracts/{order_id}.pdf</code> y adjuntar al email.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="C-09">
+    <div class="head"><span class="sev high">Alto</span><span class="id">C-09</span><span class="title">Factura simplificada B2C >400€ sin NIF del comprador</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RD 1619/2012 art. 7.1 y 8.2</dd>
+      <dt>Evidencia</dt><dd><code>generate-invoice-pdf:152-167</code> emite simplificada si <code>!isB2B</code>, sin capturar DNI/NIF cuando importe >400 €.</dd>
+      <dt>Corrección</dt><dd>Checkout: si <code>total_cents > 40000</code>, forzar <code>customer_dni</code> obligatorio y emitir factura completa.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="C-10">
+    <div class="head"><span class="sev med">Medio</span><span class="id">C-10</span><span class="title">URL ODR inconsistente entre páginas</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>TermsOfSale</code> y <code>send-order-confirmation-customer</code> usan <code>https://ec.europa.eu/odr</code> (antigua); <code>Returns</code> usa la canónica <code>/consumers/odr/</code>.</dd>
+      <dt>Corrección</dt><dd>Unificar a <code>https://ec.europa.eu/consumers/odr/</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="C-11">
+    <div class="head"><span class="sev med">Medio</span><span class="id">C-11</span><span class="title">Coste envío sin techo declarado</span></div>
+    <dl>
+      <dt>Corrección</dt><dd>Declarar en TermsOfSale §6: límite peso 30kg y dimensiones 120x80x60cm sin sobrecostes adicionales.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="C-12">
+    <div class="head"><span class="sev med">Medio</span><span class="id">C-12</span><span class="title">Desglose IVA asume tipo único por factura</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RD 1619/2012 art. 6.1.j</dd>
+      <dt>Corrección</dt><dd>Refactor <code>computeTaxBreakdown</code> para aceptar tipo por línea; resumen agrupado por tipo en el PDF.</dd>
+    </dl>
+  </article>
+
+  <article class="finding low" id="C-13">
+    <div class="head"><span class="sev low">Bajo</span><span class="id">C-13</span><span class="title">Inscripción registral marcada "pendiente"</span></div>
+    <dl>
+      <dt>Corrección</dt><dd>Rellenar <code>legal_inscripcion</code>: si S.L. → tomo/folio/hoja; si autónomo → "Empresario individual — alta Censo".</dd>
+    </dl>
+  </article>
+</section>
+
+<section class="panel">
+  <h2>6 · Hallazgos detallados — Bloque S · Seguridad técnica (RGPD art. 32)</h2>
+
+  <article class="finding crit" id="S-01">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">S-01</span><span class="title">Access-Control-Allow-Origin: * en todas las respuestas (allowlist anulado)</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 32.1.b · OWASP A05/A01</dd>
+      <dt>Evidencia</dt><dd><code>_shared/email-utils.ts:34-38</code> define <code>CORS_HEADERS</code> con wildcard; <code>jsonOk</code>/<code>jsonError</code> siempre lo concatenan, ignorando <code>buildCorsHeaders(req)</code> que sí es usado en preflight.</dd>
+      <dt>Corrección</dt><dd>Refactorizar <code>jsonOk(data, req)</code>/<code>jsonError(msg, status, req)</code> para emitir CORS dinámico. Actualizar ~40 sites.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="S-02">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">S-02</span><span class="title">Migraciones pg_cron con placeholders / secretos en SQL</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 32.1.a · CWE-798</dd>
+      <dt>Evidencia</dt><dd><code>0005_pg_cron_auto_cancel.sql:50-58</code> y <code>0012_data_retention_cron.sql:40-44</code> contienen literales <code>&lt;SERVICE_ROLE_KEY&gt;</code>, <code>&lt;CRON_SECRET&gt;</code>, <code>&lt;PROJECT_REF&gt;</code>.</dd>
+      <dt>Riesgo</dt><dd>Si no se sustituyen, retención RGPD art. 5.1.e no se ejecuta. Si se sustituyen en el archivo, secretos commiteados.</dd>
+      <dt>Corrección</dt><dd>Usar <code>vault.create_secret</code> de Supabase fuera de la migración; runbook en <code>.template.sql</code>. Verificar HOY <code>cron.job_run_details</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="S-03">
+    <div class="head"><span class="sev high">Alto</span><span class="id">S-03</span><span class="title">CSP mantiene script-src 'unsafe-inline' (hallazgo v2 no cerrado)</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>vercel.json:28</code>: <code>script-src 'self' 'unsafe-inline' …</code>.</dd>
+      <dt>Corrección</dt><dd>Migrar a nonces o hashes; eliminar <code>'unsafe-inline'</code> de <code>style-src</code> ya. Subir CSP en <code>Report-Only</code> primero.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="S-04">
+    <div class="head"><span class="sev high">Alto</span><span class="id">S-04</span><span class="title">Token público de pedido 30 días, fallback de secreto derivado del SERVICE_ROLE</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>_shared/order-token.ts:25, 40-46, 117-122</code>: TTL 30d, fallback determinista, rama legacy sin TTL hasta 2026-07-25.</dd>
+      <dt>Corrección</dt><dd>TTL 7 días, eliminar rama legacy ya, obligar <code>ORDER_TOKEN_SECRET</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="S-05">
+    <div class="head"><span class="sev high">Alto</span><span class="id">S-05</span><span class="title">Signed URL factura 7 días embebida en email</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>email-utils.ts:193</code> default 7 días; <code>send-order-accepted-customer:81</code> embebe la URL en el cuerpo además de adjuntar el PDF.</dd>
+      <dt>Corrección</dt><dd>Eliminar signed URL del cuerpo del email (el adjunto basta); TTL por defecto 1h; forzar TTL explícito.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="S-06">
+    <div class="head"><span class="sev high">Alto</span><span class="id">S-06</span><span class="title">RLS data_breaches: verificación obligatoria</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>0010_data_breaches.sql:50-57</code> creaba policies <code>using (true)</code>; reescritas en <code>0013_admin_users.sql</code>. Posible policy residual.</dd>
+      <dt>Corrección</dt><dd>Auditar <code>pg_policy where polrelid='data_breaches'</code>; <code>revoke all … grant select,insert,update on data_breaches to authenticated;</code> explícito.</dd>
+    </dl>
+  </article>
+
+  <article class="finding high" id="S-07">
+    <div class="head"><span class="sev high">Alto</span><span class="id">S-07</span><span class="title">Procedimiento de notificación de brechas no operativo</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD arts. 33-34</dd>
+      <dt>Evidencia</dt><dd>Tabla <code>data_breaches</code> existe pero no hay UI admin (<code>grep data_breaches src/</code> = 0) ni alertas; <code>Docs/legal/procedimiento-brechas.md</code> existe pero debe verificarse operativa.</dd>
+      <dt>Corrección</dt><dd>UI <code>/admin/brechas</code>, alertas (error rate, fallos firma Redsys, cron unauthorized); revisar runbook con DPO designado.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="S-08">
+    <div class="head"><span class="sev med">Medio</span><span class="id">S-08</span><span class="title">Magic link envía token plano en URL (Referer leak)</span></div>
+    <dl>
+      <dt>Corrección</dt><dd>Tras validar, intercambiar por cookie HttpOnly y redirigir sin token en URL (PRG); endurecer Referrer-Policy a <code>no-referrer</code> en esa ruta.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="S-09">
+    <div class="head"><span class="sev med">Medio</span><span class="id">S-09</span><span class="title">Rate-limit magic link solo por email, no por IP</span></div>
+    <dl>
+      <dt>Corrección</dt><dd>Añadir rate-limit por IP (20 req/h); considerar Turnstile en el formulario <code>/mis-pedidos</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="S-10">
+    <div class="head"><span class="sev med">Medio</span><span class="id">S-10</span><span class="title">Logs con PII (email completo, IP)</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 5.1.c (minimización)</dd>
+      <dt>Corrección</dt><dd>Helper <code>maskEmail()</code>; truncar último octeto de IP o hash con sal rotada.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="S-11">
+    <div class="head"><span class="sev med">Medio</span><span class="id">S-11</span><span class="title">CORS wildcard también en endpoints públicos</span></div>
+    <dl>
+      <dt>Corrección</dt><dd>Aplicar S-01 (refactor CORS dinámico).</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="S-12">
+    <div class="head"><span class="sev med">Medio</span><span class="id">S-12</span><span class="title">redsys-notification devuelve 200 al silenciar errores fatales</span></div>
+    <dl>
+      <dt>Norma</dt><dd>PCI-DSS Req 10 · OWASP A09</dd>
+      <dt>Corrección</dt><dd>Antes de responder 200, persistir en <code>payments_log</code> con <code>operation_type='fatal_error'</code> y disparar alerta.</dd>
+    </dl>
+  </article>
+
+  <article class="finding low" id="S-13">
+    <div class="head"><span class="sev low">Bajo</span><span class="id">S-13</span><span class="title">Permissions-Policy parcial</span></div>
+    <dl>
+      <dt>Corrección</dt><dd>Añadir <code>payment=(), usb=(), serial=(), gyroscope=(), accelerometer=(), magnetometer=(), fullscreen=(self), autoplay=(self)</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding low" id="S-14">
+    <div class="head"><span class="sev low">Bajo</span><span class="id">S-14</span><span class="title">Falta Cross-Origin-Embedder-Policy</span></div>
+    <dl>
+      <dt>Corrección</dt><dd>Añadir <code>COEP: credentialless</code> (compatible con iframe Google Maps).</dd>
+    </dl>
+  </article>
+
+  <article class="finding low" id="S-15">
+    <div class="head"><span class="sev low">Bajo</span><span class="id">S-15</span><span class="title">UUIDs de admin en migración versionada</span></div>
+    <dl>
+      <dt>Corrección</dt><dd>Mover seed a runbook post-migración o sustituir por iniciales en comentarios.</dd>
+    </dl>
+  </article>
+</section>
+
+<section class="verdict">
+  <h2>7 · Veredicto final y rango sancionador</h2>
+  <div class="stamp">NO APTO — Bloqueante para apertura comercial</div>
+  <p>
+    Once hallazgos críticos bloquean la apertura del sitio al público. Cuatro de ellos (<strong>L-01, L-02, C-02 y P-03</strong>) están enraizados en la misma causa: <em>los datos fiscales del titular no se han confirmado y la web los expone como "pendiente de configuración"</em>. La resolución de esa única acción cierra cuatro hallazgos críticos simultáneamente y desbloquea el resto del Sprint 1.
+  </p>
+  <h3>Rango sancionador acumulado realista</h3>
+  <table>
+    <thead><tr><th>Escenario</th><th>Rango</th><th>Justificación</th></tr></thead>
+    <tbody>
+      <tr><td>Denuncia individual + apercibimiento</td><td>15.000 € – 45.000 €</td><td>Microempresa, primera inspección, atenuante subsanación</td></tr>
+      <tr><td>Inspección formal AEPD + Consumo + AEAT</td><td>80.000 € – 200.000 €</td><td>Acumulación de hallazgos LSSI + Verifactu + cookies + Omnibus</td></tr>
+      <tr><td>Brecha + procedimiento ausente + reincidencia</td><td>200.000 € – 600.000 €</td><td>Worst case con todas las agravantes</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Plan de remediación priorizado</h3>
+  <table>
+    <thead><tr><th>Sprint</th><th>Plazo</th><th>Hallazgos</th><th>Esfuerzo</th></tr></thead>
+    <tbody>
+      <tr><td><b>Sprint 0 — Bloqueante</b></td><td>24–48 h</td><td>L-01, L-02, C-02, P-03, P-02, C-03, S-02 (verificar cron), L-04</td><td>~6 h</td></tr>
+      <tr><td><b>Sprint 1 — Críticos restantes</b></td><td>7 días</td><td>P-01, C-01 (Verifactu spike), C-04, S-01 (refactor CORS), S-03 (CSP)</td><td>~24 h</td></tr>
+      <tr><td><b>Sprint 2 — Altos</b></td><td>14–21 días</td><td>P-04, P-05, P-06, P-07, L-03, L-05, C-05, C-06, C-07, C-08, C-09, S-04, S-05, S-06, S-07</td><td>~30 h</td></tr>
+      <tr><td><b>Sprint 3 — Medios/bajos</b></td><td>30 días</td><td>P-08 a P-12, L-06 a L-08, C-10 a C-13, S-08 a S-15</td><td>~20 h</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:18px"><strong>Recomendación final:</strong> mantener Redsys en modo <em>mock</em> hasta cerrar Sprint 0 + Sprint 1. La operativa con datos personales reales en estas condiciones expone al titular a sanciones desproporcionadas para una microempresa.</p>
+</section>
+
+<div class="footer">
+  Auditoría V3 generada el 2026-05-27 · 4 agentes especializados (privacidad · LSSI · consumo · seguridad) en paralelo · 48 hallazgos · cita normativa verificable contra código fuente
+</div>
+
+</div>
+</body>
+</html>

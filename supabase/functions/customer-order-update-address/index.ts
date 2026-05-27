@@ -32,6 +32,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { buildCorsHeaders, jsonError, jsonOk,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
+import { internalSecretHeader } from '../_shared/security.ts'
 import { verifyCustomerSession } from '../_shared/customer-session.ts'
 
 /* ─────────────────── Validación ─────────────────── */
@@ -268,6 +269,7 @@ serve(async (req) => {
     supabase.functions
       .invoke('send-order-address-changed-admin', {
         body: { order_id: order.id, diff },
+        headers: internalSecretHeader(),
       })
       .catch((err) =>
         console.warn(

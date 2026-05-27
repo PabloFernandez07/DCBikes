@@ -9,6 +9,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { buildCorsHeaders, jsonError, jsonOk,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
+import { internalSecretHeader } from '../_shared/security.ts'
 import { loadOrder, logStatusChange, requireAdmin } from '../_shared/order-admin.ts'
 
 serve(async (req) => {
@@ -74,7 +75,10 @@ serve(async (req) => {
     )
 
     supabase.functions
-      .invoke('send-order-shipped', { body: { order_id: orderId } })
+      .invoke('send-order-shipped', {
+        body: { order_id: orderId },
+        headers: internalSecretHeader(),
+      })
       .catch((err) => console.warn(`[${ts()}] send-order-shipped:`, String(err)))
 
     console.log(`[${ts()}] ✓ order-mark-shipped · ${order.order_number} · ${trackingCarrier} ${trackingNumber}`)

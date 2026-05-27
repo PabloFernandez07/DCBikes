@@ -25,6 +25,7 @@ import {
   countRecentSessionsForEmail,
   createCustomerSession,
 } from '../_shared/customer-session.ts'
+import { internalSecretHeader } from '../_shared/security.ts'
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const RATE_LIMIT_MAX = 5
@@ -127,7 +128,10 @@ serve(async (req) => {
 
     // Invocar send-customer-magic-link (fire-and-forget — no bloqueamos al cliente).
     supabase.functions
-      .invoke('send-customer-magic-link', { body: { email, token } })
+      .invoke('send-customer-magic-link', {
+        body: { email, token },
+        headers: internalSecretHeader(),
+      })
       .then((res) => {
         if (res.error) {
           console.warn(

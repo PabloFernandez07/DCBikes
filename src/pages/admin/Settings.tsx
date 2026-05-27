@@ -39,7 +39,6 @@ const SETTINGS_KEYS = [
   'reply_from_email',
   'social_instagram',
   'social_facebook',
-  'legal_nif',
   'legal_forma_juridica',
   'legal_inscripcion',
 ] as const
@@ -652,14 +651,13 @@ export function Settings() {
                 </p>
               </div>
 
+              <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)]">
+                El NIF/CIF se configura en la sección{' '}
+                <strong className="text-[var(--color-cream-dim)]">Facturación</strong>{' '}
+                (clave <code className="text-[var(--color-cream-dim)]">legal_company_cif</code>) para
+                evitar duplicación. Aquí solo se gestiona la forma jurídica y la inscripción registral.
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field
-                  label="NIF / CIF"
-                  placeholder="Ej: 12345678X o B12345678"
-                  helpText="Documento de identidad fiscal. Obligatorio en el aviso legal (LSSI-CE art. 10)."
-                  value={v('legal_nif')}
-                  onChange={e => set('legal_nif', (e.target as HTMLInputElement).value)}
-                />
                 <Field
                   label="Forma jurídica"
                   placeholder="Ej: Autónomo / S.L. / S.A."

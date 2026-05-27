@@ -9,6 +9,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { buildCorsHeaders, jsonError, jsonOk,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
+import { internalSecretHeader } from '../_shared/security.ts'
 import { loadOrder, logStatusChange, requireAdmin } from '../_shared/order-admin.ts'
 
 serve(async (req) => {
@@ -54,7 +55,10 @@ serve(async (req) => {
     await logStatusChange(supabase, orderId, 'accepted', 'ready_pickup', userId, 'Listo para recoger')
 
     supabase.functions
-      .invoke('send-order-ready-pickup', { body: { order_id: orderId } })
+      .invoke('send-order-ready-pickup', {
+        body: { order_id: orderId },
+        headers: internalSecretHeader(),
+      })
       .catch((err) => console.warn(`[${ts()}] send-order-ready-pickup:`, String(err)))
 
     console.log(`[${ts()}] ✓ order-mark-ready · ${order.order_number}`)

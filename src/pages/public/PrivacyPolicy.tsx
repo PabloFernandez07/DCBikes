@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { SEO } from '@/components/layout/SEO'
 import { useStoreAddress } from '@/hooks/useStoreAddress'
-import { supabase } from '@/lib/supabase'
+import { useLegalIdentity } from '@/hooks/useLegalIdentity'
 import { PRIVACY_VERSION } from '@/lib/legal-versions'
 
 function useReveal() {
@@ -18,32 +18,6 @@ function useReveal() {
     return () => obs.disconnect()
   }, [])
   return ref
-}
-
-function useLegalSettings() {
-  const [legal, setLegal] = useState<Record<string, string | null>>({})
-
-  useEffect(() => {
-    supabase
-      .from('settings')
-      .select('key, value')
-      .in('key', ['legal_company_name', 'legal_company_cif', 'legal_company_address', 'legal_forma_juridica'])
-      .then(({ data }) => {
-        const obj: Record<string, string | null> = {}
-        for (const row of data ?? []) {
-          try {
-            const v = typeof row.value === 'string' ? JSON.parse(row.value) : row.value
-            obj[row.key] = v && String(v).trim() ? String(v) : null
-          } catch {
-            const v = row.value as unknown
-            obj[row.key] = v && String(v).trim() ? String(v) : null
-          }
-        }
-        setLegal(obj)
-      })
-  }, [])
-
-  return legal
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -62,7 +36,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function PrivacyPolicy() {
   const pageRef = useReveal()
   const storeAddress = useStoreAddress()
-  const legal = useLegalSettings()
+  const legal = useLegalIdentity()
 
   return (
     <>
@@ -96,32 +70,32 @@ export default function PrivacyPolicy() {
             <div className="p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)] space-y-1.5">
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Denominación:</strong>{' '}
-                {legal.legal_company_name ? (
-                  <span className="text-[var(--color-cream)]">{legal.legal_company_name}</span>
+                {legal?.companyName ? (
+                  <span className="text-[var(--color-cream)]">{legal.companyName}</span>
                 ) : (
                   <span className="text-[var(--color-cream)]">DC Bikes Cantabria</span>
                 )}
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">NIF / CIF:</strong>{' '}
-                {legal.legal_company_cif ? (
-                  <span className="text-[var(--color-cream)]">{legal.legal_company_cif}</span>
+                {legal?.cif ? (
+                  <span className="text-[var(--color-cream)]">{legal.cif}</span>
                 ) : (
                   <span className="text-red-600 font-bold">[Pendiente]</span>
                 )}
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Forma jurídica:</strong>{' '}
-                {legal.legal_forma_juridica ? (
-                  <span className="text-[var(--color-cream)]">{legal.legal_forma_juridica}</span>
+                {legal?.formaJuridica ? (
+                  <span className="text-[var(--color-cream)]">{legal.formaJuridica}</span>
                 ) : (
                   <span className="text-red-600 font-bold">[Pendiente]</span>
                 )}
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Dirección:</strong>{' '}
-                {legal.legal_company_address ? (
-                  <span className="text-[var(--color-cream)]">{legal.legal_company_address}</span>
+                {legal?.address ? (
+                  <span className="text-[var(--color-cream)]">{legal.address}</span>
                 ) : (
                   <span className="text-[var(--color-cream)]">{storeAddress}</span>
                 )}

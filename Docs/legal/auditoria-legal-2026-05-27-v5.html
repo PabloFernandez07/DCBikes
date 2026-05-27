@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Auditoría Legal V5 (Definitiva) — DC Bikes Cantabria</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --bg: #fafaf9; --panel: #ffffff; --ink: #0f0f12; --ink-soft: #444; --muted: #777;
+    --line: #e5e3df; --accent: #A788B5; --accent-deep: #6d4f86;
+    --crit: #b91c1c; --crit-bg: #fef2f2;
+    --high: #c2410c; --high-bg: #fff7ed;
+    --med: #a16207;  --med-bg: #fefce8;
+    --low: #166534;  --low-bg: #f0fdf4;
+    --ok: #15803d; --ok-bg: #ecfdf5;
+    --persist: #991b1b; --persist-bg: #fee2e2;
+    --code-bg: #f4f3f0;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    line-height: 1.55; margin: 0; padding: 0; font-size: 15px;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 40px 28px 80px; }
+
+  header.hero {
+    background: linear-gradient(135deg, #1f1d22 0%, #2c2530 100%);
+    color: #fff; border-radius: 16px; padding: 40px 44px; margin-bottom: 28px; box-shadow: var(--shadow);
+  }
+  header.hero .badge {
+    display: inline-block; padding: 4px 10px;
+    background: rgba(167, 136, 181, .25); color: #e8d5f0;
+    border: 1px solid rgba(167, 136, 181, .5); border-radius: 999px;
+    font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  header.hero h1 { font-size: 32px; line-height: 1.15; margin: 0 0 8px; font-weight: 700; letter-spacing: -0.01em; }
+  header.hero p.sub { margin: 0; color: #c5bfca; font-size: 15px; max-width: 80%; }
+  header.hero .meta {
+    display: flex; flex-wrap: wrap; gap: 28px; margin-top: 26px; padding-top: 22px;
+    border-top: 1px solid rgba(255,255,255,.12); font-size: 13px; color: #d5cfd9;
+  }
+  header.hero .meta b { color: #fff; font-weight: 600; }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 14px; padding: 28px 32px; margin-bottom: 22px; box-shadow: var(--shadow);
+  }
+  h2 { font-size: 22px; margin: 0 0 16px; color: var(--ink); letter-spacing: -0.01em; font-weight: 700; }
+  h3 { font-size: 17px; margin: 28px 0 10px; color: var(--ink); font-weight: 600; }
+  h4 { font-size: 14px; margin: 12px 0 6px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  p { margin: 0 0 12px; color: var(--ink-soft); }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; color: var(--ink-soft); }
+  li { margin-bottom: 4px; }
+  code { font-family: "JetBrains Mono", Consolas, ui-monospace, monospace; font-size: 13px; background: var(--code-bg); padding: 1px 6px; border-radius: 4px; color: var(--ink); }
+  pre { font-family: "JetBrains Mono", monospace; background: #1f1d22; color: #f1eef4; padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 8px 0 14px; font-size: 13px; line-height: 1.5; }
+  pre code { background: transparent; color: inherit; padding: 0; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 18px 0 8px; }
+  .summary-card { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 18px; text-align: center; }
+  .summary-card .n { font-size: 32px; font-weight: 700; line-height: 1; }
+  .summary-card .l { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 6px; }
+  .summary-card.crit { background: var(--crit-bg); border-color: #fecaca; }
+  .summary-card.crit .n { color: var(--crit); }
+  .summary-card.high { background: var(--high-bg); border-color: #fed7aa; }
+  .summary-card.high .n { color: var(--high); }
+  .summary-card.med  { background: var(--med-bg); border-color: #fde68a; }
+  .summary-card.med  .n { color: var(--med); }
+  .summary-card.low  { background: var(--low-bg); border-color: #bbf7d0; }
+  .summary-card.low  .n { color: var(--low); }
+  .summary-card.total { background: #f5f3ff; border-color: #c4b5fd; }
+  .summary-card.total .n { color: var(--accent-deep); }
+
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 20px; font-size: 13.5px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 9px 11px; text-align: left; vertical-align: top; }
+  th { background: var(--bg); font-weight: 600; color: var(--ink); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-soft); }
+  table.compact td, table.compact th { padding: 6px 8px; font-size: 12.5px; }
+
+  .sev {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+  }
+  .sev.crit { background: var(--crit-bg); color: var(--crit); border: 1px solid #fecaca; }
+  .sev.high { background: var(--high-bg); color: var(--high); border: 1px solid #fed7aa; }
+  .sev.med  { background: var(--med-bg); color: var(--med); border: 1px solid #fde68a; }
+  .sev.low  { background: var(--low-bg); color: var(--low); border: 1px solid #bbf7d0; }
+  .sev.ok   { background: var(--ok-bg); color: var(--ok); border: 1px solid #a7f3d0; }
+  .sev.persist { background: var(--persist-bg); color: var(--persist); border: 1px solid #fecaca; }
+
+  .finding {
+    border-left: 4px solid var(--line); padding: 14px 18px; margin: 18px 0;
+    background: var(--bg); border-radius: 0 8px 8px 0;
+  }
+  .finding.crit { border-left-color: var(--crit); }
+  .finding.high { border-left-color: var(--high); }
+  .finding.med  { border-left-color: var(--med); }
+  .finding.low  { border-left-color: var(--low); }
+  .finding .head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .finding .id {
+    font-family: "JetBrains Mono", monospace; font-size: 12px;
+    background: #fff; border: 1px solid var(--line); padding: 2px 8px;
+    border-radius: 6px; color: var(--ink-soft);
+  }
+  .finding .title { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .finding dl { margin: 8px 0 0; font-size: 14px; }
+  .finding dt { font-weight: 600; color: var(--ink-soft); margin-top: 8px; text-transform: uppercase; font-size: 11px; letter-spacing: .05em; }
+  .finding dd { margin: 2px 0 0; color: var(--ink-soft); padding-left: 0; }
+
+  .verdict {
+    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+    border: 2px solid #fecaca; border-radius: 14px;
+    padding: 30px 34px; margin: 20px 0;
+  }
+  .verdict h2 { color: var(--crit); font-size: 24px; }
+  .verdict .stamp {
+    display: inline-block; padding: 10px 22px; background: var(--crit); color: #fff;
+    border-radius: 8px; font-weight: 700; font-size: 15px;
+    letter-spacing: .04em; text-transform: uppercase; margin-bottom: 14px;
+  }
+
+  .block-tag { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .block-tag.F { background: #dbeafe; color: #1e40af; }
+  .block-tag.B { background: #fce7f3; color: #9d174d; }
+  .block-tag.Q { background: #fef3c7; color: #92400e; }
+  .block-tag.X { background: #ede9fe; color: #5b21b6; }
+
+  .progress-bar { background: var(--line); border-radius: 999px; height: 26px; overflow: hidden; display: flex; margin: 10px 0 20px; }
+  .progress-bar .seg { height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 600; }
+  .progress-bar .seg.ok { background: var(--ok); }
+  .progress-bar .seg.persist { background: var(--crit); }
+
+  hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+  .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 40px; }
+  @media (max-width: 760px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    header.hero { padding: 24px; }
+    .panel { padding: 22px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="badge">Auditoría jurídica V5 · 5.ª ronda · definitiva · multiagente</div>
+  <h1>Auditoría legal exhaustiva V5 — DC Bikes Cantabria</h1>
+  <p class="sub">
+    Frontend + Backend + Schema/Migraciones + Documentación legal + Verificación V4 + áreas ciegas.
+    Cobertura: RGPD · LOPDGDD · LSSI-CE · RDL 1/2007 · RD 1619/2012 · RD 1007/2023 Verifactu · Directiva Omnibus · Guía AEPD Cookies · DSA (UE 2022/2065) · Ley Crea y Crece · Ley 11/2023 · WCAG 2.1 AA · PCI-DSS SAQ A · OWASP API Top 10 2023 · Reg. UE 2023/988 Seguridad General Productos · Ley 7/2022 Residuos.
+  </p>
+  <div class="meta">
+    <div><b>Fecha:</b> 27 de mayo de 2026</div>
+    <div><b>Metodología:</b> 4 agentes especializados en paralelo</div>
+    <div><b>V4 sin aplicar:</b> 65/66 persisten</div>
+    <div><b>Nuevos V5:</b> 122 hallazgos</div>
+    <div><b>Veredicto:</b> NO APTO — 23 críticos</div>
+  </div>
+</header>
+
+<section class="panel">
+  <h2>1 · Resumen ejecutivo V5</h2>
+  <p>
+    Esta es la auditoría más exhaustiva realizada hasta la fecha sobre DC Bikes Cantabria. Cuatro agentes especializados en paralelo cubrieron frontend (30 hallazgos), backend (34), schema SQL + migraciones + documentación (31) y áreas ciegas + verificación de regresión V4 (27). Total: <strong>122 hallazgos nuevos no detectados en V1–V4</strong>, además de la constatación de que <strong>65 de los 66 hallazgos V4 persisten</strong> porque el cliente confirmó no haber aplicado aún esos cambios.
+  </p>
+  <p>
+    El cliente confirmó haber rellenado los settings fiscales (<code>legal_company_*</code>, <code>verifactu_mode</code>, etc.). Esto cierra parcialmente <strong>P-03 / L-01 / C-13 / C-02</strong> del V3 — único progreso material desde V4. Sin embargo, V5 revela nuevos vectores críticos no analizados antes:
+  </p>
+  <ul>
+    <li><strong>Backend</strong>: HTML injection en email admin (B-01), <code>send-customer-magic-link</code> abierto como motor de phishing (B-02), Turnstile <em>fail-open</em> si secret falta (B-03), race conditions Redsys con doble cobro posible (B-05/B-06/B-07), <code>google-reviews</code> roto en runtime (B-08).</li>
+    <li><strong>Schema</strong>: <strong>SERVICE_ROLE_KEY y CRON_SECRET en texto plano</strong> en <code>Docs/runbooks/secretos-generados-RECUPERAR.txt</code> (Q-01), cron analytics que falla por columna inexistente (Q-02), <code>payments_log</code>/<code>invoices</code>/<code>order_status_history</code> <em>mutables y borrables</em> por admin (Q-03), tabla <code>consent_audit</code> que no existe pese a ser referenciada (Q-04), <code>settings</code> editable por cualquier <code>authenticated</code> (Q-06).</li>
+    <li><strong>Frontend</strong>: dark pattern checkbox <code>accepted_approval_flow</code> (F-04), declaración de accesibilidad <em>incorrecta</em> — la microempresa NO está exenta de la Ley 11/2023 para comercio electrónico B2C desde 28-jun-2025 (F-05), inconsistencia entre <code>legal_nif</code> y <code>legal_company_cif</code> en distintas páginas (F-03).</li>
+    <li><strong>Áreas ciegas</strong>: ausencia de punto de contacto DSA (X-01), sin endpoint para ejercer derecho RGPD art. 15 (X-10, precedente Spotify 5 M€), cascos sin marcado CE / EN 1078 en ficha (X-04), sin alta SCRAP envases Ecoembes (X-05), <code>legal-versions.ts</code> aún en V3 (X-20), RAT con literales <code>[PENDIENTE]</code> (X-21).</li>
+  </ul>
+
+  <h3>Distribución 122 hallazgos V5</h3>
+  <div class="summary-grid">
+    <div class="summary-card crit"><div class="n">23</div><div class="l">Críticos</div></div>
+    <div class="summary-card high"><div class="n">44</div><div class="l">Altos</div></div>
+    <div class="summary-card med"><div class="n">37</div><div class="l">Medios</div></div>
+    <div class="summary-card low"><div class="n">18</div><div class="l">Bajos</div></div>
+    <div class="summary-card total"><div class="n">122</div><div class="l">Total</div></div>
+  </div>
+
+  <h3>Distribución por bloque</h3>
+  <table class="compact">
+    <thead><tr><th>Bloque</th><th>Ámbito</th><th>Críticos</th><th>Altos</th><th>Medios</th><th>Bajos</th><th>Total</th></tr></thead>
+    <tbody>
+      <tr><td><span class="block-tag F">F</span></td><td>Frontend (páginas, componentes, hooks, schemas)</td><td>6</td><td>11</td><td>9</td><td>4</td><td><b>30</b></td></tr>
+      <tr><td><span class="block-tag B">B</span></td><td>Backend (36 Edge Functions + 8 shared helpers)</td><td>7</td><td>11</td><td>10</td><td>6</td><td><b>34</b></td></tr>
+      <tr><td><span class="block-tag Q">Q</span></td><td>Schema SQL, migraciones, documentación legal</td><td>7</td><td>11</td><td>9</td><td>4</td><td><b>31</b></td></tr>
+      <tr><td><span class="block-tag X">X</span></td><td>Áreas ciegas (DSA, Crea y Crece, Verifactu fiscal, etc.)</td><td>3</td><td>11</td><td>9</td><td>4</td><td><b>27</b></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Estado de V4 (no aplicada)</h3>
+  <div class="progress-bar">
+    <div class="seg ok" style="width: 1.5%">1</div>
+    <div class="seg persist" style="width: 98.5%">65/66 persisten</div>
+  </div>
+  <p style="font-size:13px;color:var(--muted)">Solo P-03/L-01/C-13/C-02 (datos fiscales) parcialmente cerrados con el SQL ejecutado por el cliente. Verifactu (C-01), audit_log central (O-03), CORS wildcard residual (S-01/V4-06), procedimiento brechas con placeholders (V4-10), accesibilidad (A-01 a A-17), cadena subencargados (D-01 a D-14), race conditions operativos (O-01 a O-16) — TODO persiste.</p>
+</section>
+
+<section class="panel">
+  <h2>2 · Top 23 Críticos — bloqueantes absolutos</h2>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">Q-01</span><span class="block-tag Q">Schema</span><span class="title">SERVICE_ROLE_KEY y CRON_SECRET en texto plano en disco</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>Docs/runbooks/secretos-generados-RECUPERAR.txt</code> contiene en plano <code>SERVICE_ROLE_KEY</code> (JWT firmado expira 2036), <code>ORDER_CRON_SECRET</code> (64 hex) y <code>PROJECT_REF</code> del proyecto productivo. Gitignored, pero sigue en disco/backups del desarrollador.</dd>
+      <dt>Riesgo</dt><dd>Cualquier compromiso del equipo (malware, robo dispositivo, sync cloud personal) → control total de la BD productiva. Sanción AEPD 20–300 k€ (LOPDGDD art. 73.f).</dd>
+      <dt>Corrección</dt><dd><strong>HOY</strong>: rotar service_role_key (Supabase Dashboard → Reset), rotar ORDER_CRON_SECRET y DATA_RETENTION_CRON_SECRET, <code>shred -u</code> del archivo, crear <code>Docs/runbooks/secret-rotation.md</code> con periodicidad trimestral.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">Q-02</span><span class="block-tag Q">Schema</span><span class="title">Cron purge-analytics-13m falla por columna inexistente</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 5.1.e (limitación plazo)</dd>
+      <dt>Evidencia</dt><dd><code>0025_purge_analytics_cron.sql:25</code> hace <code>DELETE FROM product_views WHERE created_at &lt; cutoff</code>. Las columnas reales son <code>viewed_at</code> y <code>searched_at</code> — no <code>created_at</code>. <strong>El cron lanza error SQL y nada se purga JAMÁS</strong>.</dd>
+      <dt>Riesgo</dt><dd>Plazo declarado al RAT NUNCA se cumple. <code>SELECT min(viewed_at)</code> probará datos &gt;13 meses → infracción material del plazo.</dd>
+      <dt>Corrección</dt><dd>Reescribir la función usando <code>viewed_at</code> / <code>searched_at</code>. Añadir test que invoque la función tras crearla.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">Q-03</span><span class="block-tag Q">Schema</span><span class="title">payments_log / invoices / order_status_history MUTABLES (RLS for all)</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RD 1619/2012 art. 9 (inalterabilidad facturas) · RD 1007/2023 Verifactu art. 7 · PCI-DSS Req. 10.5 · Código Comercio art. 29</dd>
+      <dt>Evidencia</dt><dd><code>0013_admin_users.sql:62-66</code> reescribe las 3 tablas con <code>FOR ALL TO authenticated USING (is_admin())</code>. <code>FOR ALL</code> incluye UPDATE y DELETE → un admin malicioso puede alterar el <code>hash</code> de una factura Verifactu, rompiendo la cadena.</dd>
+      <dt>Corrección</dt><dd>Drop policies y crear separadas SELECT + INSERT con <code>is_admin()</code>. <strong>No crear UPDATE ni DELETE</strong>. Cadena Verifactu queda inmutable.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">Q-04</span><span class="block-tag Q">Schema</span><span class="title">Tabla consent_audit referenciada en docs NO EXISTE</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 7.1 (capacidad de demostrar consentimiento)</dd>
+      <dt>Evidencia</dt><dd>La migración <code>0009_consent_audit.sql</code> sólo añade columnas a <code>orders</code> (<code>consent_ip</code>, <code>consent_user_agent</code>, etc.). No hay tabla independiente. Cuando <code>orders</code> se anonimiza a 6 años con <code>consent_ip = NULL</code>, <strong>la prueba probatoria del consentimiento se destruye junto con el dato</strong>.</dd>
+      <dt>Corrección</dt><dd>Crear tabla <code>consent_audit</code> inmutable separada (solo INSERT policy). Copiar <code>consent_ip/user_agent/versiones</code> en cada checkout + cada revocación.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">Q-05</span><span class="block-tag Q">Schema</span><span class="title">No existe audit_log central (V4 O-03 prometido)</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd>Ninguna migración crea <code>audit_log</code>. Cambios a <code>settings</code>, <code>admin_users</code>, <code>data_breaches</code> y precio de productos no quedan trazados con actor.</dd>
+      <dt>Corrección</dt><dd>Migración <code>0028_audit_log.sql</code> con triggers en <code>settings</code>, <code>admin_users</code>, <code>data_breaches</code>, <code>products.retail_price</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">Q-06</span><span class="block-tag Q">Schema</span><span class="title">settings editable por cualquier authenticated</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>0001_initial.sql:111</code> crea policy <code>"auth_settings" FOR ALL USING (auth.role() = 'authenticated')</code>. La migración 0013 olvidó reescribirla con <code>is_admin()</code>. Cualquier usuario logueado puede modificar <code>verifactu_mode</code>, <code>redsys_environment</code>, <code>legal_company_cif</code> o <code>dpo_contact_email</code>.</dd>
+      <dt>Corrección</dt><dd>Drop policy y recrear con <code>is_admin()</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">Q-07</span><span class="block-tag Q">Schema</span><span class="title">payments_log + invoices con policy FOR ALL (consolidación de Q-03)</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd>Cubierto por Q-03. Reseñado como crítico independiente por su impacto fiscal (Verifactu) y PCI-DSS.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">B-01</span><span class="block-tag B">Backend</span><span class="title">HTML/Email Injection en correo admin desde formulario público</span></div>
+    <dl>
+      <dt>Norma</dt><dd>OWASP API3 · RGPD art. 32.1.a</dd>
+      <dt>Evidencia</dt><dd><code>send-quote-email/index.ts:93-102</code> inserta <code>quote.email</code>, <code>quote.phone</code> y <code>quote.message</code> en HTML del email <strong>sin escape</strong>. Un atacante envía <code>message</code> con <code>&lt;img src=x onerror=fetch(...)&gt;</code> → ejecuta JS en webmail del admin (Outlook desktop).</dd>
+      <dt>Corrección</dt><dd>Usar <code>escapeHtml()</code> de <code>_shared/email-utils.ts</code> en TODOS los campos. Saner <code>tel:</code> a solo dígitos.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">B-02</span><span class="block-tag B">Backend</span><span class="title">send-customer-magic-link: endpoint abierto sin auth interna</span></div>
+    <dl>
+      <dt>Norma</dt><dd>OWASP API5/API6</dd>
+      <dt>Evidencia</dt><dd><code>send-customer-magic-link/index.ts:26-44</code> acepta <code>{email, token}</code> arbitrarios sin bearer ni firma interna. Cualquiera puede convertir el endpoint en motor de spam/phishing desde el dominio DC Bikes.</dd>
+      <dt>Corrección</dt><dd>Aplicar <code>INTERNAL_INVOKE_SECRET</code> en header <code>x-internal-secret</code> y validar antes de procesar. Aplicar a TODOS los <code>send-*</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">B-03</span><span class="block-tag B">Backend</span><span class="title">Turnstile fail-open: si TURNSTILE_SECRET no está, captcha se omite</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>quote-submit/index.ts:38-44</code>: <code>if (!secret) { console.warn(...); return true }</code>. Cualquier despliegue mal configurado deja el endpoint abierto a bots.</dd>
+      <dt>Corrección</dt><dd>Fail-closed: <code>return false</code> si el secret falta. Alertar al DPO con email.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">B-04</span><span class="block-tag B">Backend</span><span class="title">send-customer-magic-link no valida token contra BD</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd>Solo valida regex hex 64 chars; acepta tokens NO presentes en <code>customer_sessions</code>. Combinado con B-02, permite phishing con tokens elegidos por el atacante.</dd>
+      <dt>Corrección</dt><dd>Verificar <code>SELECT id FROM customer_sessions WHERE token_hash = sha256(token) AND email = ? AND expires_at &gt; now()</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">B-05</span><span class="block-tag B">Backend</span><span class="title">Race condition: doble captura Redsys en transiciones sin optimistic locking</span></div>
+    <dl>
+      <dt>Norma</dt><dd>PCI-DSS · OWASP API8</dd>
+      <dt>Evidencia</dt><dd><code>order-accept/index.ts:108</code>, <code>order-reject:82-89</code>, <code>customer-order-cancel:152-161</code>, <code>order-mark-shipped:56-64</code>: UPDATE sin <code>.eq('status', 'authorized')</code>. Dos admins pulsan "Aceptar" simultáneamente → dos capturas a Redsys (doble cobro).</dd>
+      <dt>Corrección</dt><dd>En todas las transiciones: añadir filtro <code>.eq('status', expectedStatus)</code> y comprobar <code>updRows.length === 1</code>. Si falla, NO llamar a Redsys.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">B-06</span><span class="block-tag B">Backend</span><span class="title">order-accept: captura Redsys precede al lock → dinero cargado con pedido pisado</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>order-accept:81-114</code> hace <code>runRedsysOperation(capture)</code> ANTES del UPDATE order. Con auto-cancel concurrente → Redsys puede cobrar y pedido quedar inconsistente.</dd>
+      <dt>Corrección</dt><dd>RPC PL/pgSQL <code>accept_order(id, admin)</code> con <code>SELECT FOR UPDATE</code>. Captura Redsys solo si la transición SQL fue exitosa.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">B-07</span><span class="block-tag B">Backend</span><span class="title">Stock: SELECT-then-UPDATE no atómico → overselling concurrente</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>order-place:233-267</code> y <code>rollbackReserved:287-296</code>: lectura + UPDATE en bucle por item sin transacción global. Permite oversell entre pedidos concurrentes.</dd>
+      <dt>Corrección</dt><dd>RPC PL/pgSQL <code>reserve_stock(items jsonb)</code> atómica. Rollback nativo si raise.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">F-01</span><span class="block-tag F">Frontend</span><span class="title">Consentimientos checkout sin granularidad correcta</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 7 · LSSI art. 27 · Guía CEPD 03/2022</dd>
+      <dt>Evidencia</dt><dd><code>Checkout.tsx:630-699</code>: 3 checkboxes obligatorios — <code>accepted_terms</code>, <code>accepted_privacy</code>, <code>accepted_approval_flow</code>. La aceptación de privacidad debe ser INFORMATIVA (base legal: contrato art. 6.1.b), no requerirse como consentimiento.</dd>
+      <dt>Corrección</dt><dd>Cambiar <code>accepted_privacy</code> por declaración informativa "He leído la Política de Privacidad". Fusionar <code>accepted_approval_flow</code> dentro de <code>accepted_terms</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">F-02</span><span class="block-tag F">Frontend</span><span class="title">Política de privacidad incompleta para Resend y subencargados</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>PrivacyPolicy.tsx:368-373</code> cita Resend pero omite que procesa el PDF de factura (con NIF y dirección). No menciona DPF UE-EE.UU. ni TIA documentada. Resend NO está en lista activa DPF.</dd>
+      <dt>Corrección</dt><dd>Añadir tabla detallada (qué datos recibe cada encargado). Verificar certificación DPF y mantener solo CCT 2021/914 si no aplica.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">F-03</span><span class="block-tag F">Frontend</span><span class="title">legal_nif vs legal_company_cif: distintas keys en distintas páginas</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>LegalNotice</code> lee ambas; <code>PrivacyPolicy</code> solo <code>legal_company_cif</code>; <code>TermsOfSale</code> con fallback; <code>Settings.tsx</code> editor define <code>legal_nif</code> (legacy). Si el titular rellena solo una key, distintas páginas mostrarán datos distintos.</dd>
+      <dt>Corrección</dt><dd>Eliminar key legacy <code>legal_nif</code>. Centralizar en hook <code>useLegalIdentity()</code> con única fuente.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">F-04</span><span class="block-tag F">Frontend</span><span class="title">Dark pattern: accepted_approval_flow como sham consent</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 7.2-7.4 · Guía CEPD 03/2022 · RDL 1/2007 art. 65 · Directiva Omnibus</dd>
+      <dt>Evidencia</dt><dd><code>Checkout.tsx:681-698</code> + <code>schemas/checkout.ts:103-114</code>: el checkbox NO es opcional pero se presenta como si fuera consentimiento. Es una cláusula contractual disfrazada de consentimiento.</dd>
+      <dt>Riesgo</dt><dd>Hasta 100.000 € (Consumo Cantabria, art. 47 RDL 1/2007 reformado).</dd>
+      <dt>Corrección</dt><dd>Eliminar checkbox separado. Mover texto al cuerpo de Términos cláusula 3.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">F-05</span><span class="block-tag F">Frontend</span><span class="title">Declaración de accesibilidad incorrecta — microempresa NO exenta en B2C</span></div>
+    <dl>
+      <dt>Norma</dt><dd>Ley 11/2023 art. 4 · Directiva UE 2019/882 anexo I</dd>
+      <dt>Evidencia</dt><dd><code>LegalNotice.tsx:274-291</code> declara exención art. 4.1 Ley 11/2023 por microempresa. Pero el art. 4.1 exime microempresas que prestan SERVICIOS, no productos. El e-commerce B2C entra en ámbito desde 28-jun-2025 sin distinguir tamaño cuando hay venta directa al consumidor.</dd>
+      <dt>Riesgo</dt><dd>Hasta 1.000.000 € (AESIA, art. 22 Ley 11/2023). Denuncia OCU/CERMI probable.</dd>
+      <dt>Corrección</dt><dd>Reemplazar texto por compromiso voluntario de adaptación + mecanismo de reclamación con plazo 14 días + planificar auditoría WCAG 2.1 AA.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">F-06</span><span class="block-tag F">Frontend</span><span class="title">QuoteModal: consentimiento no granular + Turnstile carga sin consent</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd>Un solo checkbox de privacidad sin desglosar tratamientos. Turnstile se monta al abrir el modal, antes de que el usuario interactúe con el formulario.</dd>
+      <dt>Corrección</dt><dd>Texto explicativo de qué proveedores procesan datos. Cargar Turnstile diferido (al primer foco en input).</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">X-01</span><span class="block-tag X">Áreas</span><span class="title">Sin punto de contacto único DSA (Reglamento UE 2022/2065)</span></div>
+    <dl>
+      <dt>Norma</dt><dd>DSA arts. 11-12, vigente desde 17-feb-2024 para todos los servicios de alojamiento</dd>
+      <dt>Evidencia</dt><dd>No hay sección DSA en <code>LegalNotice.tsx</code> ni email <code>dsa@</code>. <code>quote_requests.message</code> libre + reseñas reembebidas = servicio de alojamiento art. 3.g.i DSA.</dd>
+      <dt>Riesgo</dt><dd>Hasta 6% facturación mundial anual (art. 52 DSA). Competente CNMC en España.</dd>
+      <dt>Corrección</dt><dd>Sección 9 nueva en LegalNotice: punto de contacto <code>dsa@dcbikescantabria.es</code> + idiomas comunicación + mecanismo notice-and-action.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">X-10</span><span class="block-tag X">Áreas</span><span class="title">Sin endpoint para ejercer derecho RGPD art. 15 (acceso/portabilidad)</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 12.3 + 15 + 20</dd>
+      <dt>Evidencia</dt><dd><code>PrivacyPolicy.tsx:300-313</code> describe el derecho pero solo ofrece email. No hay UI en <code>/mis-pedidos</code> ni endpoint. <strong>Precedente Spotify 5 M€ (2024)</strong>: AEPD/EDPB sanciona ausencia de cauces estructurados.</dd>
+      <dt>Corrección</dt><dd>Edge Function <code>customer-data-export</code> + botón "Descargar mis datos" + audit en <code>data_subject_requests</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">X-20</span><span class="block-tag X">Áreas</span><span class="title">legal-versions.ts aún en V3 — incumple art. 5.2 RGPD accountability</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>src/lib/legal-versions.ts:11</code> declara <code>LAST_AUDIT_DATE = '2026-05-27' // V3</code>. Si la versión publicada cambia y no se incrementa, no hay prueba documental.</dd>
+      <dt>Corrección</dt><dd>Bump de las 4 constantes + añadir changelog histórico V1→V5.</dd>
+    </dl>
+  </article>
+</section>
+
+<section class="panel">
+  <h2>3 · Hallazgos por bloque (resumen estructurado)</h2>
+
+  <h3>3.1 · Bloque F — Frontend (30 hallazgos)</h3>
+  <table class="compact">
+    <thead><tr><th>ID</th><th>Sev</th><th>Resumen</th><th>Archivo</th></tr></thead>
+    <tbody>
+      <tr><td>F-07</td><td><span class="sev high">Alto</span></td><td>Magic link sin checkbox privacidad</td><td>MyOrdersRequestAccess.tsx</td></tr>
+      <tr><td>F-08</td><td><span class="sev high">Alto</span></td><td>Vídeos autoplay sin controls</td><td>Contact.tsx:421-433</td></tr>
+      <tr><td>F-09</td><td><span class="sev high">Alto</span></td><td>CSP permite img-src lh3.googleusercontent.com (contradice proxy)</td><td>vercel.json:29</td></tr>
+      <tr><td>F-10</td><td><span class="sev high">Alto</span></td><td>Banner cookies aparece tras 800 ms (tracking previo)</td><td>CookieBanner.tsx:87-93</td></tr>
+      <tr><td>F-11</td><td><span class="sev high">Alto</span></td><td>Botón "Configurar" con variant=ghost (jerarquía)</td><td>CookieBanner.tsx</td></tr>
+      <tr><td>F-12</td><td><span class="sev high">Alto</span></td><td>Contradicción bicis online: Returns.tsx vs TermsOfSale</td><td>Returns.tsx:220-226</td></tr>
+      <tr><td>F-13</td><td><span class="sev high">Alto</span></td><td>CIF en settings.ts solo regex, no letra control</td><td>schemas/settings.ts:65-75</td></tr>
+      <tr><td>F-14</td><td><span class="sev high">Alto</span></td><td>OrderConfirmation cita art. 120 (impreciso)</td><td>OrderConfirmation.tsx:350</td></tr>
+      <tr><td>F-15</td><td><span class="sev high">Alto</span></td><td>Restablecer preferencias hace reload sin confirmar</td><td>CookiePolicy.tsx:87-90</td></tr>
+      <tr><td>F-16</td><td><span class="sev high">Alto</span></td><td>Sin enlace footer "Accesibilidad"</td><td>Footer.tsx</td></tr>
+      <tr><td>F-17</td><td><span class="sev high">Alto</span></td><td>Total no visible en mobile junto al botón pago</td><td>Checkout.tsx:629-711</td></tr>
+      <tr><td>F-18</td><td><span class="sev med">Medio</span></td><td>setThirdPartyConsent sin aria-describedby</td><td>Contact.tsx:274</td></tr>
+      <tr><td>F-19</td><td><span class="sev med">Medio</span></td><td>Cookies Maps obsoletas en inventario</td><td>CookiePolicy.tsx:170</td></tr>
+      <tr><td>F-20</td><td><span class="sev med">Medio</span></td><td>Sin JSON-LD Product/Offer en ficha</td><td>ProductDetail.tsx</td></tr>
+      <tr><td>F-21</td><td><span class="sev med">Medio</span></td><td>Returns.tsx con fecha hardcoded</td><td>Returns.tsx:82</td></tr>
+      <tr><td>F-22</td><td><span class="sev med">Medio</span></td><td>Reseñas Google sin LIA documentado</td><td>PrivacyPolicy.tsx:428</td></tr>
+      <tr><td>F-23</td><td><span class="sev med">Medio</span></td><td>Licencias Bebas Neue/Barlow sin documentar</td><td>main.tsx</td></tr>
+      <tr><td>F-24</td><td><span class="sev med">Medio</span></td><td>Splash 2.5 s sin saltar / reduced-motion</td><td>App.tsx:33-148</td></tr>
+      <tr><td>F-25</td><td><span class="sev med">Medio</span></td><td>Field sin aria-required</td><td>components/ui/Field.tsx</td></tr>
+      <tr><td>F-26</td><td><span class="sev med">Medio</span></td><td>Footer sin fecha "última revisión legal"</td><td>Footer.tsx</td></tr>
+      <tr><td>F-27</td><td><span class="sev low">Bajo</span></td><td>Iconos lucide sin aria-hidden</td><td>varios</td></tr>
+      <tr><td>F-28</td><td><span class="sev low">Bajo</span></td><td>Emoji 🎉 sin aria-hidden</td><td>OrderConfirmation.tsx:167</td></tr>
+      <tr><td>F-29</td><td><span class="sev low">Bajo</span></td><td>Emojis 🔧⚙️⭐ sin aria-hidden</td><td>Home.tsx:686-689</td></tr>
+      <tr><td>F-30</td><td><span class="sev low">Bajo</span></td><td>Emoji 📊 vs icono SVG (consistency)</td><td>CookieBanner.tsx:213</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.2 · Bloque B — Backend (34 hallazgos)</h3>
+  <table class="compact">
+    <thead><tr><th>ID</th><th>Sev</th><th>Resumen</th><th>Archivo</th></tr></thead>
+    <tbody>
+      <tr><td>B-08</td><td><span class="sev high">Alto</span></td><td>google-reviews ReferenceError corsPreflightResponse</td><td>google-reviews/index.ts</td></tr>
+      <tr><td>B-09</td><td><span class="sev high">Alto</span></td><td>CORS wildcard residual en 3+ funciones (V3 S-01 no cerrado)</td><td>cron-healthcheck, quote-submit, google-avatar-proxy</td></tr>
+      <tr><td>B-10</td><td><span class="sev high">Alto</span></td><td>customer_email/session.email en logs sin maskEmail</td><td>customer-order-detail, customer-orders-list, etc.</td></tr>
+      <tr><td>B-11</td><td><span class="sev high">Alto</span></td><td>RESEND_API_KEY primeros 8 chars logueados</td><td>send-quote-email:37</td></tr>
+      <tr><td>B-12</td><td><span class="sev high">Alto</span></td><td>Comparación service_role_key con !== (no timing-safe)</td><td>order-auto-cancel, cron-healthcheck</td></tr>
+      <tr><td>B-13</td><td><span class="sev high">Alto</span></td><td>redsys-notification no valida Ds_Amount == total_cents</td><td>redsys-notification/index.ts:299</td></tr>
+      <tr><td>B-14</td><td><span class="sev high">Alto</span></td><td>Sin anti-replay timestamp + dedup webhook Redsys</td><td>redsys-notification</td></tr>
+      <tr><td>B-15</td><td><span class="sev high">Alto</span></td><td>order-public-get sin rate-limit (token bruteforce)</td><td>order-public-get</td></tr>
+      <tr><td>B-16</td><td><span class="sev high">Alto</span></td><td>order-public-get expone shipping_city + postal_code</td><td>order-public-get:115</td></tr>
+      <tr><td>B-17</td><td><span class="sev high">Alto</span></td><td>Imports remotos sin pin/integrity (supply chain en node-forge HMAC)</td><td>varios</td></tr>
+      <tr><td>B-18</td><td><span class="sev high">Alto</span></td><td>customer_email lowercase frágil (BOLA contingente)</td><td>customer-order-detail</td></tr>
+      <tr><td>B-19</td><td><span class="sev med">Medio</span></td><td>generate-order-contract llamado vía fetch con service_role en header</td><td>order-place:554</td></tr>
+      <tr><td>B-20</td><td><span class="sev med">Medio</span></td><td>Redsys __mock loguea order_id completo</td><td>redsys-notification:125</td></tr>
+      <tr><td>B-21</td><td><span class="sev med">Medio</span></td><td>restoreStockFor no atómico</td><td>_shared/order-admin.ts:188</td></tr>
+      <tr><td>B-22</td><td><span class="sev med">Medio</span></td><td>generate-invoice-pdf XAdES TODO + cola AEAT sin procesador</td><td>generate-invoice-pdf:261</td></tr>
+      <tr><td>B-23</td><td><span class="sev med">Medio</span></td><td>data-retention-cron no purga order_items, history.reason, order_status_history</td><td>data-retention-cron</td></tr>
+      <tr><td>B-24</td><td><span class="sev med">Medio</span></td><td>customer-order-update-address guarda diff con dirección en claro en history.reason</td><td>customer-order-update-address:259</td></tr>
+      <tr><td>B-25</td><td><span class="sev med">Medio</span></td><td>getSettings JSON.parse sin tamaño/proto pollution</td><td>_shared/email-utils.ts:306</td></tr>
+      <tr><td>B-26</td><td><span class="sev med">Medio</span></td><td>generate-order-contract upsert:true → sobreescritura contrato (soporte duradero)</td><td>generate-order-contract:108</td></tr>
+      <tr><td>B-27</td><td><span class="sev med">Medio</span></td><td>order-place sin content-length cap</td><td>order-place:395</td></tr>
+      <tr><td>B-28</td><td><span class="sev med">Medio</span></td><td>generate-invoice-pdf hash chain sin lock (race numeración)</td><td>generate-invoice-pdf:226-244</td></tr>
+      <tr><td>B-29</td><td><span class="sev low">Bajo</span></td><td>jsonError(String(err)) expone stack SQL</td><td>varios</td></tr>
+      <tr><td>B-30</td><td><span class="sev low">Bajo</span></td><td>getSiteUrl() fallback a vercel.app</td><td>email-utils.ts:426</td></tr>
+      <tr><td>B-31</td><td><span class="sev low">Bajo</span></td><td>google-avatar-proxy sin content-length cap</td><td>google-avatar-proxy:47</td></tr>
+      <tr><td>B-32</td><td><span class="sev low">Bajo</span></td><td>formatItemsTable sin escape de quantity numérico (defensa)</td><td>email-utils.ts:181</td></tr>
+      <tr><td>B-33</td><td><span class="sev low">Bajo</span></td><td>redsys-notification 403 sin CORS headers</td><td>redsys-notification:244</td></tr>
+      <tr><td>B-34</td><td><span class="sev low">Bajo</span></td><td>parseEmailCsv admite ; permitiendo CSV injection</td><td>email-utils.ts:354</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.3 · Bloque Q — Schema + migraciones + documentación (31 hallazgos)</h3>
+  <table class="compact">
+    <thead><tr><th>ID</th><th>Sev</th><th>Resumen</th><th>Archivo</th></tr></thead>
+    <tbody>
+      <tr><td>Q-08</td><td><span class="sev high">Alto</span></td><td>categories/products/product_images con policy authenticated legacy</td><td>0001_initial.sql</td></tr>
+      <tr><td>Q-09</td><td><span class="sev high">Alto</span></td><td>order_counter / invoice_counter abiertos a authenticated</td><td>0003:296-302</td></tr>
+      <tr><td>Q-10</td><td><span class="sev high">Alto</span></td><td>next_*_invoice_number no concurrent-safe (sin advisory_lock)</td><td>0003, 0011</td></tr>
+      <tr><td>Q-11</td><td><span class="sev high">Alto</span></td><td>Cron jobs sin job-lock (data-retention-cron)</td><td>data-retention-cron</td></tr>
+      <tr><td>Q-12</td><td><span class="sev high">Alto</span></td><td>customer_sessions IP+UA sin purga garantizada</td><td>0007</td></tr>
+      <tr><td>Q-13</td><td><span class="sev high">Alto</span></td><td>Migraciones .template.sql con placeholders permanecen en repo</td><td>0005, 0012</td></tr>
+      <tr><td>Q-14</td><td><span class="sev high">Alto</span></td><td>quote_requests sin revoked_at/purged_at</td><td>0014</td></tr>
+      <tr><td>Q-15</td><td><span class="sev high">Alto</span></td><td>Storage invoices/order-contracts/legal-templates policies débiles o no declarativas</td><td>0003:317-336</td></tr>
+      <tr><td>Q-16</td><td><span class="sev high">Alto</span></td><td>RAT con [PENDIENTE] literal</td><td>rat-2026.md:14-19</td></tr>
+      <tr><td>Q-17</td><td><span class="sev high">Alto</span></td><td>Plazos conservación RAT incompletos (falta LGT, art. 70, Ley 7/2012)</td><td>rat-2026.md</td></tr>
+      <tr><td>Q-18</td><td><span class="sev high">Alto</span></td><td>procedimiento-brechas con [PENDIENTE] literal en plantilla AEPD</td><td>procedimiento-brechas.md:148</td></tr>
+      <tr><td>Q-19</td><td><span class="sev high">Alto</span></td><td>"Anonimización irreversible" falsa con backups PITR</td><td>procedimiento-supresion.md:154</td></tr>
+      <tr><td>Q-20</td><td><span class="sev med">Medio</span></td><td>consent_audit columns en orders se anonimizan junto con resto PII</td><td>procedimiento-supresion.md:103</td></tr>
+      <tr><td>Q-21</td><td><span class="sev med">Medio</span></td><td>set_updated_at() sin SECURITY DEFINER + search_path fijo</td><td>0001, 0003</td></tr>
+      <tr><td>Q-22</td><td><span class="sev med">Medio</span></td><td>data_breaches sin dpo_notified_at separado</td><td>0010</td></tr>
+      <tr><td>Q-23</td><td><span class="sev med">Medio</span></td><td>admin_users chicken-and-egg sin fallback recovery</td><td>0013</td></tr>
+      <tr><td>Q-24</td><td><span class="sev med">Medio</span></td><td>Funciones SECURITY DEFINER sin revoke from public</td><td>varias</td></tr>
+      <tr><td>Q-25</td><td><span class="sev med">Medio</span></td><td>product_price_history sin changed_by / change_reason</td><td>0022</td></tr>
+      <tr><td>Q-26</td><td><span class="sev med">Medio</span></td><td>11 documentos legales faltantes (DPIA, TIAs, sub-encargados, etc.)</td><td>Docs/legal/</td></tr>
+      <tr><td>Q-27</td><td><span class="sev med">Medio</span></td><td>Plantilla supresión sin mención AEPD detallada</td><td>procedimiento-supresion.md:166</td></tr>
+      <tr><td>Q-28</td><td><span class="sev med">Medio</span></td><td>quote_requests sin CHECK estados</td><td>0001:73</td></tr>
+      <tr><td>Q-29</td><td><span class="sev low">Bajo</span></td><td>Sin CHECK email/teléfono formato</td><td>orders, quote_requests</td></tr>
+      <tr><td>Q-30</td><td><span class="sev low">Bajo</span></td><td>0026 migración no-op cosmética</td><td>0026</td></tr>
+      <tr><td>Q-31</td><td><span class="sev low">Bajo</span></td><td>0027 cabecera SQL con número incorrecto (0026)</td><td>0027:1</td></tr>
+    </tbody>
+  </table>
+
+  <h3>3.4 · Bloque X — Áreas ciegas (27 hallazgos)</h3>
+  <table class="compact">
+    <thead><tr><th>ID</th><th>Sev</th><th>Resumen</th><th>Norma</th></tr></thead>
+    <tbody>
+      <tr><td>X-02</td><td><span class="sev high">Alto</span></td><td>Sin notice-and-action en reseñas/quote</td><td>DSA art. 16</td></tr>
+      <tr><td>X-03</td><td><span class="sev high">Alto</span></td><td>Sin preparación Facturae B2B</td><td>Ley 18/2022 Crea y Crece</td></tr>
+      <tr><td>X-04</td><td><span class="sev high">Alto</span></td><td>Cascos sin EN 1078 / CE en ficha</td><td>RD 1801/2003 + Reg. UE 2023/988</td></tr>
+      <tr><td>X-05</td><td><span class="sev high">Alto</span></td><td>Sin alta SCRAP envases (Ecoembes)</td><td>Ley 7/2022 art. 8-9</td></tr>
+      <tr><td>X-11</td><td><span class="sev high">Alto</span></td><td>Reseñas Google sin etiquetado verificadas</td><td>Directiva Omnibus / LCD</td></tr>
+      <tr><td>X-12</td><td><span class="sev high">Alto</span></td><td>quote_requests.message sin moderación ni purga</td><td>RGPD art. 5.1.c + DSA art. 9</td></tr>
+      <tr><td>X-16</td><td><span class="sev high">Alto</span></td><td>Sin protocolo respuesta requerimientos autoridades</td><td>LECrim 588 ter</td></tr>
+      <tr><td>X-17</td><td><span class="sev high">Alto</span></td><td>Sin verificación email checkout (doble opt-in / OTP)</td><td>RGPD art. 5.1.d</td></tr>
+      <tr><td>X-21</td><td><span class="sev high">Alto</span></td><td>RAT con [PENDIENTE] (cubierto por Q-16)</td><td>RGPD art. 30</td></tr>
+      <tr><td>X-22</td><td><span class="sev high">Alto</span></td><td>Sin análisis DPIA documentado (V4 D-05)</td><td>RGPD art. 35</td></tr>
+      <tr><td>X-25</td><td><span class="sev high">Alto</span></td><td>Sin protocolo cese / sucesión</td><td>RGPD art. 30</td></tr>
+      <tr><td>X-06</td><td><span class="sev med">Medio</span></td><td>IVA reducido (nutrición, accesibilidad) no aplicado</td><td>Ley 37/1992 art. 91</td></tr>
+      <tr><td>X-07</td><td><span class="sev med">Medio</span></td><td>Sin restricción Península (OSS UE)</td><td>Reg. UE 2019/2026</td></tr>
+      <tr><td>X-08</td><td><span class="sev med">Medio</span></td><td>Sin validación VIES B2B intracomunitario</td><td>Ley 37/1992 art. 25</td></tr>
+      <tr><td>X-13</td><td><span class="sev med">Medio</span></td><td>UI ProductDetail no muestra precio mín 30d (Omnibus)</td><td>RDL 1/2007 art. 20.1</td></tr>
+      <tr><td>X-14</td><td><span class="sev med">Medio</span></td><td>Footer redes sociales sin advertencia tracking</td><td>LSSI art. 5.3</td></tr>
+      <tr><td>X-18</td><td><span class="sev med">Medio</span></td><td>Magic-link sin Turnstile</td><td>RGPD art. 32</td></tr>
+      <tr><td>X-23</td><td><span class="sev med">Medio</span></td><td>Coherencia plazos PolPriv vs RAT (consent_audit no descrito)</td><td>RGPD art. 5.1.e + 13.2.a</td></tr>
+      <tr><td>X-26</td><td><span class="sev med">Medio</span></td><td>Procedimiento supresión sin matriz anonimización vs conservación</td><td>RGPD art. 17 + LOPDGDD art. 32</td></tr>
+      <tr><td>X-27</td><td><span class="sev med">Medio</span></td><td>Workshop sin condiciones específicas servicios</td><td>RDL 1/2007 art. 60</td></tr>
+      <tr><td>X-09</td><td><span class="sev low">Bajo</span></td><td>Idioma contrato no declarado (V3 L-08)</td><td>RDL 1/2007 art. 60.2.a</td></tr>
+      <tr><td>X-15</td><td><span class="sev low">Bajo</span></td><td>Bizum anunciado pero no implementado</td><td>RDL 1/2007 art. 60.2</td></tr>
+      <tr><td>X-19</td><td><span class="sev low">Bajo</span></td><td>Política revisión sub-encargados (V4 D-02 pendiente)</td><td>CCT 2021/914</td></tr>
+      <tr><td>X-24</td><td><span class="sev low">Bajo</span></td><td>SVG sociales sin aria-label</td><td>EN 301 549</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="verdict">
+  <h2>4 · Veredicto final y plan integrado</h2>
+  <div class="stamp">NO APTO — 23 críticos, V4 sin aplicar</div>
+
+  <p>
+    El proyecto NO PUEDE abrir al público hasta resolver los 23 hallazgos críticos. La causa raíz es triple:
+  </p>
+  <ol>
+    <li><strong>Secretos comprometidos en disco</strong> (Q-01): rotación inmediata y limpieza.</li>
+    <li><strong>RLS con FOR ALL en tablas inmutables</strong> (Q-03/Q-06/Q-08): un admin malicioso o cuenta comprometida puede romper la cadena Verifactu y modificar settings críticos.</li>
+    <li><strong>Endpoints públicos abiertos como motor de phishing y XSS</strong> (B-01/B-02/B-03/B-04): un atacante externo no necesita credenciales para causar daño reputacional masivo.</li>
+  </ol>
+
+  <h3>Rango sancionador acumulado realista (escenario inspección actual)</h3>
+  <table>
+    <thead><tr><th>Concepto</th><th>Rango sanción</th></tr></thead>
+    <tbody>
+      <tr><td>RGPD acumulado (art. 32, 5.2, 13.1.f, 28.2, 30, 35)</td><td>50.000 € – 600.000 €</td></tr>
+      <tr><td>LSSI-CE + LOPDGDD cookies/aviso</td><td>10.000 € – 150.000 €</td></tr>
+      <tr><td>DSA (Reglamento UE 2022/2065)</td><td>3.000 € – 200.000 € (hasta 6% facturación)</td></tr>
+      <tr><td>Ley 11/2023 Accesibilidad (microempresa NO exenta en B2C)</td><td>30.000 € – 1.000.000 €</td></tr>
+      <tr><td>RDL 1/2007 Consumo + Omnibus + dark patterns</td><td>10.000 € – 150.000 €</td></tr>
+      <tr><td>RD 1619/2012 + RD 1007/2023 Verifactu + LGT 201</td><td>5.000 € – 150.000 €</td></tr>
+      <tr><td>Ley 7/2022 Residuos (SCRAP envases)</td><td>2.000 € – 100.000 €</td></tr>
+      <tr><td>PCI-DSS (incidente con doble cobro)</td><td>Chargebacks + posible cancelación TPV</td></tr>
+      <tr><td><strong>Rango realista microempresa</strong></td><td><strong>150.000 € – 800.000 €</strong></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Plan de remediación priorizado</h3>
+  <table>
+    <thead><tr><th>Sprint</th><th>Plazo</th><th>Hallazgos clave</th><th>Esfuerzo</th></tr></thead>
+    <tbody>
+      <tr><td><b>Sprint 0 — Emergencia</b></td><td>24–48 h</td><td>Q-01 (rotar secretos), Q-02 (fix cron), Q-03+Q-06+Q-07 (RLS inmutabilidad), Q-08+Q-09 (settings/categories/counters), B-01 (escape HTML), B-02+B-04 (auth send-*), B-03 (Turnstile fail-closed), F-03 (unificar CIF key), F-04 (eliminar dark pattern), F-05 (reescribir accesibilidad), X-20 (bump versions), X-21 (rellenar RAT)</td><td>~10 h</td></tr>
+      <tr><td><b>Sprint 1 — Críticos restantes</b></td><td>2 semanas</td><td>B-05/B-06/B-07 (optimistic locking + RPC), Q-04 (consent_audit table), Q-05 (audit_log), F-01 (rediseñar consentimientos checkout), F-02 (Resend en PolPriv), F-06 (QuoteModal granular), B-08 (fix google-reviews), X-01 (punto contacto DSA), X-10 (data-export)</td><td>~35 h</td></tr>
+      <tr><td><b>Sprint 2 — Altos</b></td><td>3 semanas</td><td>44 hallazgos altos (B-09 a B-18, Q-08 a Q-19, F-07 a F-17, X-02 a X-25)</td><td>~50 h</td></tr>
+      <tr><td><b>Sprint 3 — Medios y bajos</b></td><td>3-4 semanas</td><td>37 medios + 18 bajos</td><td>~35 h</td></tr>
+      <tr><td><b>V4 retomado en paralelo</b></td><td>4-6 semanas</td><td>Los 65/66 hallazgos V4 pendientes (CORS S-01, audit_log central, accesibilidad WCAG, cadena DPA, DPIA, etc.)</td><td>~100 h</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Bloqueantes que requieren acción humana del titular (no son código)</h3>
+  <ul>
+    <li><strong>Q-01</strong>: rotar secretos en Supabase Dashboard.</li>
+    <li><strong>S-07 / X-21 (V4)</strong>: designar formalmente responsable de privacidad y firmar documento.</li>
+    <li><strong>X-05</strong>: alta SCRAP en Ecoembes (gestoría).</li>
+    <li><strong>X-04</strong>: certificación CE/EN 1078 del catálogo (proveedores).</li>
+    <li><strong>X-06 / X-03</strong>: asesoría fiscal para categorización IVA + roadmap Crea y Crece.</li>
+    <li><strong>C-01 (V3/V4)</strong>: decisión titular + asesoría sobre Verifactu (envío AEAT real-time vs no_verifactu con XAdES).</li>
+  </ul>
+
+  <p style="margin-top:20px"><strong>Recomendación final:</strong> mantener Redsys en modo <em>mock</em> hasta cerrar Sprint 0 + Sprint 1 V5 + Sprint 0+1 V4. Con Sprint 0 completado (~10 h código + acciones del titular), el sistema pasa a <strong>APTO CON SALVEDADES FUERTES</strong> y puede abrirse a un grupo reducido de pedidos beta. Estimación total hasta APTO PLENO: <strong>~140–150 h de código + 12 h de gestiones administrativas</strong>.</p>
+</section>
+
+<div class="footer">
+  Auditoría V5 (definitiva) generada el 2026-05-27 · 4 agentes especializados en paralelo (frontend · backend · schema/docs · áreas ciegas + verificación V4) · 122 hallazgos nuevos · 65/66 V4 persisten · cita normativa verificable contra código fuente
+</div>
+
+</div>
+</body>
+</html>

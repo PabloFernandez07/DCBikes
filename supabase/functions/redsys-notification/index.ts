@@ -35,6 +35,7 @@ import { buildCorsHeaders, escapeHtml, getSettings, asString, jsonError, jsonOk,
 } from '../_shared/email-utils.ts'
 import { loadRedsysConfig } from '../_shared/redsys-config.ts'
 import { verifyRedsysSignature } from '../_shared/redsys-sign.ts'
+import { internalSecretHeader } from '../_shared/security.ts'
 
 interface NotificationOutcome {
   authorized: boolean
@@ -343,9 +344,11 @@ serve(async (req) => {
       const emailJobs = [
         supabase.functions.invoke('send-order-confirmation-customer', {
           body: { order_id: order.id },
+          headers: internalSecretHeader(),
         }),
         supabase.functions.invoke('send-order-new-admin', {
           body: { order_id: order.id },
+          headers: internalSecretHeader(),
         }),
       ]
       const results = await Promise.allSettled(emailJobs)

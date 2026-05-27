@@ -22,11 +22,28 @@ import {
   sendViaResend,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
+import { verifyInternalSecret } from '../_shared/security.ts'
+
+/** sha256(hex) — usado para validar token recibido contra customer_sessions.token_hash. */
+async function sha256Hex(input: string): Promise<string> {
+  const buf = new TextEncoder().encode(input)
+  const digest = await crypto.subtle.digest('SHA-256', buf)
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
   if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
+
+  // B-02: auth interna obligatoria. Sin header válido → 403, sin filtrar
+  // detalle adicional al cliente.
+  if (!verifyInternalSecret(req)) {
+    console.warn(`[${ts()}] ✗ send-customer-magic-link: x-internal-secret inválido o ausente`)
+    return jsonError('forbidden', 403, req)
+  }
 
   try {
     if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
@@ -47,6 +64,28 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
+
+    // B-04: el token debe existir en customer_sessions, no haber caducado y
+    // pertenecer al email recibido (en minúsculas). Esto evita que un caller
+    // legítimo con el secret reutilice esta función para enviar magic-links
+    // arbitrarios o re-enviar tokens que el cliente ya revocó.
+    const tokenHash = await sha256Hex(token)
+    const { data: session, error: sessErr } = await supabase
+      .from('customer_sessions')
+      .select('id, email, expires_at')
+      .eq('token_hash', tokenHash)
+      .eq('email', email)
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle()
+
+    if (sessErr) {
+      console.error(`[${ts()}] ✗ customer_sessions lookup error:`, sessErr.message)
+      return jsonError('session lookup failed', 500, req)
+    }
+    if (!session) {
+      console.warn(`[${ts()}] ✗ token/email no encontrado o expirado · email=${maskEmail(email)}`)
+      return jsonError('invalid or expired token', 400, req)
+    }
 
     const settings = await getSettings(supabase, [
       'store_name',

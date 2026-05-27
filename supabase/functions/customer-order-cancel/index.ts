@@ -26,6 +26,7 @@ import { buildCorsHeaders, jsonError, jsonOk,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
 import { verifyCustomerSession } from '../_shared/customer-session.ts'
+import { internalSecretHeader } from '../_shared/security.ts'
 import {
   loadConfig,
   loadOrder,
@@ -175,6 +176,7 @@ serve(async (req) => {
     supabase.functions
       .invoke('send-order-cancelled-by-customer-confirmation', {
         body: { order_id: order.id },
+        headers: internalSecretHeader(),
       })
       .catch((err) =>
         console.warn(
@@ -186,6 +188,7 @@ serve(async (req) => {
     supabase.functions
       .invoke('send-order-cancelled-by-customer-admin', {
         body: { order_id: order.id },
+        headers: internalSecretHeader(),
       })
       .catch((err) =>
         console.warn(

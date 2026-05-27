@@ -3,7 +3,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { maskEmail,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
-
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const FROM_EMAIL     = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev'
 const FROM_NAME      = 'DC Bikes Cantabria'
@@ -14,10 +13,57 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// send-reply-email NO es una función interna (la invoca el frontend admin
+// con su JWT). El guard `x-internal-secret` no aplica aquí porque expondría
+// el secreto en el browser. La auth se hace verificando que el JWT del caller
+// pertenece a un admin_users vivo (auth admin clásica, no inter-function).
 serve(async (req) => {
   if (req.method === 'OPTIONS') return corsPreflightResponse(req)
 
   const ts = () => new Date().toISOString()
+
+  // Auth admin: el frontend invoca con su sesión Supabase activa. Verificamos
+  // que el JWT del caller corresponde a un admin_users válido (no revoked).
+  try {
+    const authHeader = req.headers.get('authorization') ?? ''
+    if (!authHeader.toLowerCase().startsWith('bearer ')) {
+      return new Response(JSON.stringify({ error: 'missing bearer token' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...CORS },
+      })
+    }
+    const jwt = authHeader.slice(7).trim()
+    const supabaseAuth = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
+    const { data: userData, error: userErr } = await supabaseAuth.auth.getUser(jwt)
+    if (userErr || !userData?.user) {
+      console.warn(`[${ts()}] ✗ send-reply-email: JWT inválido`, userErr?.message)
+      return new Response(JSON.stringify({ error: 'unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json', ...CORS },
+      })
+    }
+    const { data: adminRow } = await supabaseAuth
+      .from('admin_users')
+      .select('id')
+      .eq('id', userData.user.id)
+      .maybeSingle()
+    if (!adminRow) {
+      console.warn(`[${ts()}] ✗ send-reply-email: user ${userData.user.id} no es admin`)
+      return new Response(JSON.stringify({ error: 'forbidden' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', ...CORS },
+      })
+    }
+  } catch (err) {
+    console.error(`[${ts()}] ✗ send-reply-email auth check exception:`, String(err))
+    return new Response(JSON.stringify({ error: 'auth check failed' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', ...CORS },
+    })
+  }
 
   try {
     const { quote_id, subject, body } = await req.json()

@@ -23,6 +23,7 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { buildCorsHeaders, jsonError, jsonOk,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
+import { internalSecretHeader } from '../_shared/security.ts'
 import {
   loadConfig,
   loadOrder,
@@ -143,7 +144,10 @@ serve(async (req) => {
 
     // Email cliente (fire-and-forget — no bloqueamos respuesta).
     supabase.functions
-      .invoke('send-order-accepted-customer', { body: { order_id: orderId } })
+      .invoke('send-order-accepted-customer', {
+        body: { order_id: orderId },
+        headers: internalSecretHeader(),
+      })
       .catch((err) => console.warn(`[${ts()}] send-order-accepted-customer:`, String(err)))
 
     console.log(`[${ts()}] ✓ order-accept · ${order.order_number} · invoice=${invoiceNumber ?? 'pending'}`)

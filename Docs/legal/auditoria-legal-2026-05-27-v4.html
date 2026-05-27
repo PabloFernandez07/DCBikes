@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Auditoría Legal V4 — DC Bikes Cantabria</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    --bg: #fafaf9;
+    --panel: #ffffff;
+    --ink: #0f0f12;
+    --ink-soft: #444;
+    --muted: #777;
+    --line: #e5e3df;
+    --accent: #A788B5;
+    --accent-deep: #6d4f86;
+    --crit: #b91c1c; --crit-bg: #fef2f2;
+    --high: #c2410c; --high-bg: #fff7ed;
+    --med:  #a16207; --med-bg:  #fefce8;
+    --low:  #166534; --low-bg:  #f0fdf4;
+    --ok:   #15803d; --ok-bg:   #ecfdf5;
+    --partial: #b45309; --partial-bg: #fefce8;
+    --code-bg: #f4f3f0;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.04);
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--ink); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    line-height: 1.55; margin: 0; padding: 0; font-size: 15px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 28px 80px; }
+  header.hero {
+    background: linear-gradient(135deg, #1f1d22 0%, #2c2530 100%);
+    color: #fff; border-radius: 16px; padding: 36px 40px; margin-bottom: 28px;
+    box-shadow: var(--shadow);
+  }
+  header.hero .badge {
+    display: inline-block; padding: 4px 10px;
+    background: rgba(167, 136, 181, .25); color: #e8d5f0;
+    border: 1px solid rgba(167, 136, 181, .5); border-radius: 999px;
+    font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  header.hero h1 { font-size: 30px; line-height: 1.15; margin: 0 0 8px; font-weight: 700; letter-spacing: -0.01em; }
+  header.hero p.sub { margin: 0; color: #c5bfca; font-size: 15px; }
+  header.hero .meta {
+    display: flex; flex-wrap: wrap; gap: 24px;
+    margin-top: 24px; padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,.12);
+    font-size: 13px; color: #d5cfd9;
+  }
+  header.hero .meta b { color: #fff; font-weight: 600; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 14px; padding: 28px 32px; margin-bottom: 22px;
+    box-shadow: var(--shadow);
+  }
+  h2 { font-size: 22px; margin: 0 0 16px; color: var(--ink); letter-spacing: -0.01em; font-weight: 700; }
+  h3 { font-size: 17px; margin: 28px 0 10px; color: var(--ink); font-weight: 600; }
+  h4 { font-size: 14px; margin: 12px 0 6px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  p { margin: 0 0 12px; color: var(--ink-soft); }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; color: var(--ink-soft); }
+  li { margin-bottom: 4px; }
+  code, pre { font-family: "JetBrains Mono", Consolas, ui-monospace, monospace; font-size: 13px; }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; color: var(--ink); }
+  pre { background: #1f1d22; color: #f1eef4; padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 8px 0 14px; line-height: 1.5; }
+  pre code { background: transparent; color: inherit; padding: 0; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 18px 0 8px; }
+  .summary-card { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 16px; text-align: center; }
+  .summary-card .n { font-size: 30px; font-weight: 700; line-height: 1; }
+  .summary-card .l { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 6px; }
+  .summary-card.crit { background: var(--crit-bg); border-color: #fecaca; }
+  .summary-card.crit .n { color: var(--crit); }
+  .summary-card.high { background: var(--high-bg); border-color: #fed7aa; }
+  .summary-card.high .n { color: var(--high); }
+  .summary-card.med  { background: var(--med-bg); border-color: #fde68a; }
+  .summary-card.med  .n { color: var(--med); }
+  .summary-card.low  { background: var(--low-bg); border-color: #bbf7d0; }
+  .summary-card.low  .n { color: var(--low); }
+  .summary-card.ok   { background: var(--ok-bg); border-color: #a7f3d0; }
+  .summary-card.ok   .n { color: var(--ok); }
+  .summary-card.total { background: #f5f3ff; border-color: #c4b5fd; }
+  .summary-card.total .n { color: var(--accent-deep); }
+
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 20px; font-size: 13.5px; }
+  th, td { border-bottom: 1px solid var(--line); padding: 9px 11px; text-align: left; vertical-align: top; }
+  th { background: var(--bg); font-weight: 600; color: var(--ink); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td { color: var(--ink-soft); }
+  table.compact td, table.compact th { padding: 6px 8px; font-size: 12.5px; }
+
+  .sev { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+  .sev.crit { background: var(--crit-bg); color: var(--crit); border: 1px solid #fecaca; }
+  .sev.high { background: var(--high-bg); color: var(--high); border: 1px solid #fed7aa; }
+  .sev.med  { background: var(--med-bg); color: var(--med); border: 1px solid #fde68a; }
+  .sev.low  { background: var(--low-bg); color: var(--low); border: 1px solid #bbf7d0; }
+  .sev.ok   { background: var(--ok-bg); color: var(--ok); border: 1px solid #a7f3d0; }
+  .sev.partial { background: var(--partial-bg); color: var(--partial); border: 1px solid #fde68a; }
+
+  .finding { border-left: 4px solid var(--line); padding: 14px 18px; margin: 18px 0; background: var(--bg); border-radius: 0 8px 8px 0; }
+  .finding.crit { border-left-color: var(--crit); }
+  .finding.high { border-left-color: var(--high); }
+  .finding.med  { border-left-color: var(--med); }
+  .finding.low  { border-left-color: var(--low); }
+  .finding .head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap; }
+  .finding .id { font-family: "JetBrains Mono", monospace; font-size: 12px; background: #fff; border: 1px solid var(--line); padding: 2px 8px; border-radius: 6px; color: var(--ink-soft); }
+  .finding .title { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .finding dl { margin: 8px 0 0; font-size: 14px; }
+  .finding dt { font-weight: 600; color: var(--ink-soft); margin-top: 8px; text-transform: uppercase; font-size: 11px; letter-spacing: .05em; }
+  .finding dd { margin: 2px 0 0; color: var(--ink-soft); padding-left: 0; }
+
+  .progress-bar { background: var(--line); border-radius: 999px; height: 24px; overflow: hidden; display: flex; margin: 10px 0 20px; }
+  .progress-bar .seg { height: 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 600; }
+  .progress-bar .seg.ok { background: var(--ok); }
+  .progress-bar .seg.partial { background: var(--partial); }
+  .progress-bar .seg.persist { background: var(--crit); }
+
+  .verdict {
+    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+    border: 2px solid #fecaca; border-radius: 14px; padding: 28px 32px; margin: 20px 0;
+  }
+  .verdict h2 { color: var(--crit); }
+  .verdict .stamp { display: inline-block; padding: 8px 18px; background: var(--crit); color: #fff; border-radius: 8px; font-weight: 700; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 12px; }
+
+  .block-tag { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .block-tag.P { background: #ede9fe; color: #5b21b6; }
+  .block-tag.L { background: #dbeafe; color: #1e40af; }
+  .block-tag.C { background: #fef3c7; color: #92400e; }
+  .block-tag.S { background: #fce7f3; color: #9d174d; }
+  .block-tag.A { background: #d1fae5; color: #065f46; }
+  .block-tag.D { background: #fee2e2; color: #991b1b; }
+  .block-tag.O { background: #e0e7ff; color: #3730a3; }
+  .block-tag.V4 { background: #f3e8ff; color: #6b21a8; }
+
+  hr { border: 0; border-top: 1px solid var(--line); margin: 28px 0; }
+
+  .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 40px; }
+
+  @media (max-width: 760px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    header.hero { padding: 24px; }
+    .panel { padding: 22px 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="badge">Auditoría jurídica V4 · 4.ª ronda · multiagente</div>
+  <h1>Auditoría legal exhaustiva V4 — DC Bikes Cantabria</h1>
+  <p class="sub">Regresión V3 · RD 1112/2018 + Ley 11/2023 (accesibilidad) · Cadena de subencargados + DPIA + B2B · Integridad, disponibilidad y trazabilidad (RGPD art. 32.1.c + 5.2)</p>
+  <div class="meta">
+    <div><b>Fecha:</b> 27 de mayo de 2026</div>
+    <div><b>Metodología:</b> 4 agentes especializados en paralelo</div>
+    <div><b>Cierre V3:</b> 72,9 % (35/48 cerrados)</div>
+    <div><b>Nuevos V4:</b> 57 hallazgos</div>
+    <div><b>Veredicto:</b> NO APTO — 2 bloqueantes</div>
+  </div>
+</header>
+
+<section class="panel">
+  <h2>1 · Resumen ejecutivo V4</h2>
+  <p>
+    La V4 confirma un avance sustancial: <strong>35 de los 48 hallazgos V3 están cerrados (72,9 %)</strong> con código verificable, y los 9 restantes son cierres parciales o diferidos con <code>TODO</code> explícito en el código (no regresiones). No obstante, la auditoría con cuatro ángulos nuevos revela <strong>57 hallazgos no detectados en V1–V3</strong>, distribuidos en cuatro bloques temáticos antes no cubiertos: regresiones internas, accesibilidad (RD 1112/2018 + Ley 11/2023), profundidad documental RGPD (cadena de subencargados + DPIA + B2B) y operativa (race conditions, audit log, deliverability).
+  </p>
+  <p>
+    El veredicto sigue siendo <strong>NO APTO</strong>, pero por motivos distintos y mucho menos profundos que en V3. Los <strong>bloqueantes absolutos</strong> son ahora solo dos: (1) <strong>datos fiscales del titular sin rellenar</strong> en producción (afecta a P-03/L-01/C-13 y a V4-10 documental) y (2) <strong>integración Verifactu incompleta</strong> (C-01 con firma XAdES y envío AEAT pendientes). Ambos son acciones de 15 minutos (settings) y 2–4 semanas (Verifactu, requiere asesoría fiscal y SOAP AEAT) respectivamente.
+  </p>
+
+  <h3>Distribución de los 66 hallazgos V4</h3>
+  <div class="summary-grid">
+    <div class="summary-card crit"><div class="n">12</div><div class="l">Críticos</div></div>
+    <div class="summary-card high"><div class="n">19</div><div class="l">Altos</div></div>
+    <div class="summary-card med"><div class="n">22</div><div class="l">Medios</div></div>
+    <div class="summary-card low"><div class="n">13</div><div class="l">Bajos</div></div>
+    <div class="summary-card total"><div class="n">66</div><div class="l">Total</div></div>
+  </div>
+
+  <h3>Estado de cierre acumulado V1+V2+V3</h3>
+  <div class="progress-bar">
+    <div class="seg ok" style="width: 72.9%">35 cerrados (72,9%)</div>
+    <div class="seg partial" style="width: 18.8%">9 parciales</div>
+    <div class="seg persist" style="width: 8.3%">4 bloqueantes</div>
+  </div>
+
+  <h3>Veredicto</h3>
+  <p>
+    <strong>NO APTO</strong> para apertura comercial. Bloqueantes: rellenar settings <code>legal_company_*</code> (cierra 4 críticos a la vez) · completar Verifactu (C-01) · designar responsable de privacidad (S-07) · cerrar 3 funciones con CORS wildcard residual (S-01). Tras los bloqueantes, riesgo residual baja a <strong>3.000 – 15.000 €</strong> (apercibimiento AEPD habitual).
+  </p>
+</section>
+
+<section class="panel">
+  <h2>2 · Estado de los 48 hallazgos V3 (regresión)</h2>
+  <table class="compact">
+    <thead>
+      <tr><th>ID</th><th>Sev</th><th>Estado V4</th><th>Evidencia</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>P-01</td><td><span class="sev crit">Crit</span></td><td><span class="sev ok">Cerrado</span></td><td>Proxy <code>google-avatar-proxy</code> implementado</td></tr>
+      <tr><td>P-02</td><td><span class="sev crit">Crit</span></td><td><span class="sev ok">Cerrado</span></td><td><code>setThirdPartyConsent</code> en Contact.tsx:276</td></tr>
+      <tr><td>P-03</td><td><span class="sev crit">Crit</span></td><td><span class="sev partial">Parcial</span></td><td>Settings legales sin populated (admin)</td></tr>
+      <tr><td>P-04 → P-12</td><td>Alto/Medio/Bajo</td><td><span class="sev ok">Cerrado</span></td><td>Cloudflare DPA, banner reescrito, cron purga 13m, versionado, etc.</td></tr>
+      <tr><td>L-01</td><td><span class="sev crit">Crit</span></td><td><span class="sev partial">Parcial</span></td><td>Código OK, datos reales pendientes</td></tr>
+      <tr><td>L-02</td><td><span class="sev crit">Crit</span></td><td><span class="sev ok">Cerrado</span></td><td>Gate 503 en <code>order-place:434-440</code></td></tr>
+      <tr><td>L-03 → L-08</td><td>Alto/Medio/Bajo</td><td><span class="sev ok">Cerrado</span></td><td>Forma jurídica condicional, fallback email, contrato PDF, idioma</td></tr>
+      <tr><td>C-01</td><td><span class="sev crit">Crit</span></td><td><span class="sev partial">Parcial</span></td><td>Hash chain + QR OK, falta XAdES + envío AEAT (TODO líneas 261, 291)</td></tr>
+      <tr><td>C-02</td><td><span class="sev crit">Crit</span></td><td><span class="sev ok">Cerrado</span></td><td>Cubierto por L-02</td></tr>
+      <tr><td>C-03</td><td><span class="sev crit">Crit</span></td><td><span class="sev ok">Cerrado</span></td><td>Migración 0020 drop legacy RPC</td></tr>
+      <tr><td>C-04</td><td><span class="sev crit">Crit</span></td><td><span class="sev ok">Cerrado</span></td><td>Migración 0022 + UI dual line Omnibus</td></tr>
+      <tr><td>C-05 → C-11</td><td>Alto/Medio</td><td><span class="sev ok">Cerrado</span></td><td>Plazo 30d, personalización, formulario adjunto, NIF >400€, ODR, etc.</td></tr>
+      <tr><td>C-12</td><td><span class="sev med">Med</span></td><td><span class="sev partial">Parcial</span></td><td>Multi-IVA preparado, falta <code>tax_rate_pct</code> por línea</td></tr>
+      <tr><td>C-13</td><td><span class="sev low">Bajo</span></td><td><span class="sev partial">Parcial</span></td><td>Cubierto por L-01</td></tr>
+      <tr><td>S-01</td><td><span class="sev crit">Crit</span></td><td><span class="sev partial">Parcial</span></td><td>3 funciones (quote-submit, cron-healthcheck, google-avatar-proxy) aún wildcard</td></tr>
+      <tr><td>S-02</td><td><span class="sev crit">Crit</span></td><td><span class="sev ok">Cerrado</span></td><td>Migración 0021 Vault</td></tr>
+      <tr><td>S-03</td><td><span class="sev high">Alto</span></td><td><span class="sev partial">Parcial</span></td><td>CSP Report-Only sin endpoint receptor</td></tr>
+      <tr><td>S-04 → S-06</td><td>Alto</td><td><span class="sev ok">Cerrado</span></td><td>TTL 7d, signed URL fuera del email, RLS data_breaches</td></tr>
+      <tr><td>S-07</td><td><span class="sev high">Alto</span></td><td><span class="sev partial">Parcial</span></td><td>UI brechas OK, DPO sin designar</td></tr>
+      <tr><td>S-08</td><td><span class="sev med">Med</span></td><td><span class="sev partial">Parcial</span></td><td>Token sigue en localStorage (Fase 2 diferida)</td></tr>
+      <tr><td>S-09 → S-15</td><td>Med/Bajo</td><td><span class="sev ok">Cerrado</span></td><td>Rate-limit IP, maskEmail, COEP, Permissions-Policy</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>3 · Nuevos hallazgos V4 — Regresión + descubrimientos</h2>
+  <p>10 hallazgos emergidos al releer el código tras los cambios V3. Prefijo <code>V4-</code>.</p>
+
+  <article class="finding high" id="V4-04">
+    <div class="head"><span class="sev high">Alto</span><span class="id">V4-04</span><span class="block-tag V4">Regresión</span><span class="title">verifactu_mode='null' fuerza 503 silencioso al emitir factura</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>0004_settings_carrito_seed.sql:36</code> siembra <code>'null'::jsonb</code> · <code>generate-invoice-pdf:174-178</code> devuelve 500 si modo no es <code>verifactu</code>/<code>no_verifactu</code> · <code>order-place</code> NO valida modo antes de aceptar pedidos.</dd>
+      <dt>Riesgo</dt><dd>Pedido pagado autorizado sin posibilidad de emitir factura → conflicto cliente + RD 1619/2012 art. 2.1.</dd>
+      <dt>Corrección</dt><dd>Añadir <code>verifactu_mode in (verifactu, no_verifactu)</code> al gate fiscal de <code>order-place:434-440</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="V4-01">
+    <div class="head"><span class="sev med">Medio</span><span class="id">V4-01</span><span class="title">google-avatar-proxy sin rate-limit ni content-length cap</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>supabase/functions/google-avatar-proxy/index.ts</code>: sin auth, sin rate-limit, sin cap. Allowlist por host pero un atacante puede saturar cuota Edge.</dd>
+      <dt>Corrección</dt><dd><code>if (Number(upstream.headers.get('content-length')) > 2_000_000) return jsonError('too large', 413, req)</code> + tabla <code>avatar_proxy_log</code> con 60 req/min por IP.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="V4-03">
+    <div class="head"><span class="sev med">Medio</span><span class="id">V4-03</span><span class="title">data-retention-cron no anonimiza al retirar consentimiento</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 17 · art. 12.3 (1 mes para responder)</dd>
+      <dt>Evidencia</dt><dd><code>data-retention-cron:166-170</code> no cruza <code>consent_audit.revoked=true</code> con <code>quote_requests</code>; solo purga por antigüedad (1 año).</dd>
+      <dt>Corrección</dt><dd>Añadir <code>purgeRevokedConsents()</code> que elimine inmediatamente quotes con consent revocado.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="V4-06">
+    <div class="head"><span class="sev med">Medio</span><span class="id">V4-06</span><span class="title">CORS_HEADERS @deprecated pero aún importado por funciones activas</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>customer-order-detail:23</code>, <code>data-retention-cron:28</code>, <code>order-place:28</code>, <code>order-public-get:25</code> importan el símbolo aún. Refleja deuda S-01 sin completar.</dd>
+      <dt>Corrección</dt><dd>Eliminar el <code>export const CORS_HEADERS</code> y todos los imports inútiles.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="V4-07">
+    <div class="head"><span class="sev med">Medio</span><span class="id">V4-07</span><span class="title">Contrato PDF (soporte duradero) generado non-blocking puede no existir al enviar email</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RDL 1/2007 art. 98.7 (soporte duradero entregado al consumidor)</dd>
+      <dt>Evidencia</dt><dd><code>order-place:554-563</code>: <code>fetch().catch()</code> non-blocking → si tarda más que <code>send-order-confirmation-customer:225</code>, el email sale sin contrato.</dd>
+      <dt>Corrección</dt><dd>Hacer bloqueante el await (+500ms latencia) o regenerar contrato dentro del envío del email si falta.</dd>
+    </dl>
+  </article>
+
+  <article class="finding med" id="V4-10">
+    <div class="head"><span class="sev med">Medio</span><span class="id">V4-10</span><span class="title">procedimiento-brechas.md mantiene placeholders [PENDIENTE]</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 33-34</dd>
+      <dt>Evidencia</dt><dd><code>Docs/legal/procedimiento-brechas.md:148-191</code>: ocurrencias múltiples de <code>[PENDIENTE]</code> y <code>{email_dpo}</code> sin sustituir.</dd>
+      <dt>Corrección</dt><dd>Al designar el responsable (S-07), reemplazar todos los placeholders en 15 min.</dd>
+    </dl>
+  </article>
+
+  <article class="finding low" id="V4-02">
+    <div class="head"><span class="sev low">Bajo</span><span class="id">V4-02</span><span class="title">confirmationUrl del primer email sin token → CTA roto</span></div>
+    <dl>
+      <dt>Evidencia</dt><dd><code>send-order-confirmation-customer:87-89</code>: <em>"// TODO Fase E: signed token"</em>. El usuario que pulse el botón obtiene 403.</dd>
+      <dt>Corrección</dt><dd>Invocar <code>generateOrderToken()</code> e incluirlo en <code>confirmationUrl</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding low" id="V4-05">
+    <div class="head"><span class="sev low">Bajo</span><span class="id">V4-05</span><span class="title">Logs filtran order_number y metadatos en redsys-notification</span></div>
+    <dl>
+      <dt>Corrección</dt><dd>Replacer JSON que elimine email/phone del payload de error.</dd>
+    </dl>
+  </article>
+
+  <article class="finding low" id="V4-08">
+    <div class="head"><span class="sev low">Bajo</span><span class="id">V4-08</span><span class="title">UUIDs de admin aún commitados en 0013_admin_users.sql:38-41</span></div>
+    <dl>
+      <dt>Corrección</dt><dd>Completar el espíritu de S-15: mover inserción a runbook fuera del repo.</dd>
+    </dl>
+  </article>
+
+  <article class="finding low" id="V4-09">
+    <div class="head"><span class="sev low">Bajo</span><span class="id">V4-09</span><span class="title">quote-submit define jsonRes local ignorando refactor S-01</span></div>
+    <dl>
+      <dt>Corrección</dt><dd>Borrar <code>jsonRes</code>, importar <code>jsonOk/jsonError</code> con <code>req</code>.</dd>
+    </dl>
+  </article>
+</section>
+
+<section class="panel">
+  <h2>4 · Bloque A — Accesibilidad legal (RD 1112/2018 + Ley 11/2023)</h2>
+  <p>17 hallazgos accesibilidad. <strong>Análisis de exención microempresa</strong>: DC Bikes declara acogerse a art. 4.1 Ley 11/2023 (microempresa: &lt;10 empleados Y &lt;2 M€). Exención válida si se acredita; mantiene responsabilidad civil ante reclamaciones individuales. Igualmente recomendado implementar críticos y altos por riesgo reputacional, SEO y futuro crecimiento.</p>
+
+  <article class="finding crit" id="A-01">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">A-01</span><span class="block-tag A">A11y</span><span class="title">Ausencia de skip-link</span></div>
+    <dl>
+      <dt>WCAG</dt><dd>2.4.1 Evitar bloques (A)</dd>
+      <dt>Evidencia</dt><dd><code>src/App.tsx:162-170</code> — PublicLayout sin enlace de salto.</dd>
+      <dt>Corrección</dt><dd><code>&lt;a href="#main-content" className="sr-only focus:not-sr-only ..."&gt;Saltar al contenido&lt;/a&gt;</code> antes de Nav.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="A-02">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">A-02</span><span class="block-tag A">A11y</span><span class="title">Contraste insuficiente de --color-mid (#7E6E8A)</span></div>
+    <dl>
+      <dt>WCAG</dt><dd>1.4.3 Contraste mínimo (AA) — ratio ≈ 4.0:1 (FAIL 4.5:1 normal)</dd>
+      <dt>Evidencia</dt><dd>Uso en Footer.tsx:91, Cart.tsx:75, Home.tsx:91, MyOrdersRequestAccess.tsx:82,166 y otros.</dd>
+      <dt>Corrección</dt><dd>Aclarar a <code>#9587A0</code> (≈ 5.2:1) o crear token específico <code>--color-text-secondary: #ADA1B8</code> (6.5:1).</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="A-03">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">A-03</span><span class="block-tag A">A11y</span><span class="title">Vídeos autoplay sin controles ni captions</span></div>
+    <dl>
+      <dt>WCAG</dt><dd>1.4.2 (A) · 2.2.2 (A)</dd>
+      <dt>Evidencia</dt><dd><code>Contact.tsx:421-433</code>: 6 vídeos <code>autoPlay loop</code> sin <code>controls</code>, sin <code>&lt;track&gt;</code>.</dd>
+      <dt>Corrección</dt><dd>Añadir <code>controls</code> + respetar <code>prefers-reduced-motion</code>.</dd>
+    </dl>
+  </article>
+
+  <h3>Resto de hallazgos accesibilidad (resumen)</h3>
+  <table class="compact">
+    <thead><tr><th>ID</th><th>Sev</th><th>Hallazgo</th><th>WCAG</th></tr></thead>
+    <tbody>
+      <tr><td>A-04</td><td><span class="sev high">Alto</span></td><td>Modal sin focus-trap ni retorno de foco</td><td>2.4.3 · 2.1.2</td></tr>
+      <tr><td>A-05</td><td><span class="sev high">Alto</span></td><td>CartDrawer en DOM accesible cuando cerrado</td><td>4.1.2 · 2.4.3</td></tr>
+      <tr><td>A-06</td><td><span class="sev high">Alto</span></td><td>CookieBanner sin Escape, sin focus, switches sin labelledby</td><td>2.1.1 · 4.1.2 · 2.4.3</td></tr>
+      <tr><td>A-07</td><td><span class="sev high">Alto</span></td><td>ProductCard usa article role="button" (anti-patrón)</td><td>4.1.2 · 1.3.1 · 2.1.1</td></tr>
+      <tr><td>A-08</td><td><span class="sev high">Alto</span></td><td>Errores de formulario sin region live</td><td>4.1.3 (AA) · 3.3.1</td></tr>
+      <tr><td>A-09</td><td><span class="sev high">Alto</span></td><td>&lt;h1&gt; ausente en Home, jerarquía rota</td><td>1.3.1 · 2.4.6</td></tr>
+      <tr><td>A-10</td><td><span class="sev med">Medio</span></td><td>Campo obligatorio solo distinguido por color (asterisco rojo)</td><td>1.4.1 · 3.3.2</td></tr>
+      <tr><td>A-11</td><td><span class="sev med">Medio</span></td><td>Emojis decorativos sin aria-hidden</td><td>1.1.1</td></tr>
+      <tr><td>A-12</td><td><span class="sev med">Medio</span></td><td>prefers-reduced-motion parcial (useCountUp, splash, carrusel)</td><td>2.3.3 · 2.2.2</td></tr>
+      <tr><td>A-13</td><td><span class="sev med">Medio</span></td><td>Alt genérico en galería de tienda ("DC Bikes tienda 1...")</td><td>1.1.1</td></tr>
+      <tr><td>A-14</td><td><span class="sev med">Medio</span></td><td>Alt de producto fallback al cardName si null</td><td>1.1.1</td></tr>
+      <tr><td>A-15</td><td><span class="sev med">Medio</span></td><td>Targets pulsación &lt;24×24 px en stepper CartDrawer</td><td>2.5.8 (WCAG 2.2 AA)</td></tr>
+      <tr><td>A-16</td><td><span class="sev med">Medio</span></td><td>Mecanismo reclamación accesibilidad informal</td><td>RD 1112/2018 art. 16</td></tr>
+      <tr><td>A-17</td><td><span class="sev low">Bajo</span></td><td>Cart.tsx usa div en lugar de ul/li para lista items</td><td>1.3.1</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>5 · Bloque D — Cadena de subencargados, transferencias internacionales y DPIA</h2>
+  <p>14 hallazgos en aspectos avanzados RGPD (art. 28.2 sub-processors, art. 35 DPIA, art. 13.1.f, distinción B2C/B2B).</p>
+
+  <article class="finding crit" id="D-01">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">D-01</span><span class="block-tag D">DPA</span><span class="title">Incoherencia PolPriv ↔ RAT sobre residencia Supabase</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 13.1.f + art. 30.1.e + art. 5.1.a</dd>
+      <dt>Evidencia</dt><dd><code>PrivacyPolicy.tsx:353</code> declara almacenamiento en <code>eu-west-1</code> (Irlanda, EEE) · <code>rat-2026.md:43, 60, 91, 125, 142</code> habla genéricamente de "transferencia internacional a EE.UU." de forma plena.</dd>
+      <dt>Corrección</dt><dd>Armonizar RAT: la transferencia es por acceso remoto de soporte, no por almacenamiento. Citar CCT 2021/914 módulo 2+3 y conservar TIA.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="D-02">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">D-02</span><span class="block-tag D">DPA</span><span class="title">Sub-encargados (sub-processors) no declarados ni autorizados expresamente</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 28.2 (autorización previa) · art. 28.4 · art. 13.1.e</dd>
+      <dt>Evidencia</dt><dd>No se mencionan: AWS (Supabase + Resend), AWS SES (Resend), Fly.io (Supabase). No existe <code>politica-subencargados.md</code> ni <code>registro-dpas-firmados.md</code>.</dd>
+      <dt>Corrección</dt><dd>Crear ambos documentos + añadir párrafo en PolPriv §7 con lista de subprocesadores y derecho de oposición 15 días.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="D-09">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">D-09</span><span class="block-tag D">DPA</span><span class="title">Política de conservación detallada por categoría de dato ausente</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 5.1.e + art. 30.1.f + LOPDGDD art. 32 (bloqueo)</dd>
+      <dt>Evidencia</dt><dd>RAT indica plazos por tratamiento (6 años), no por campo. Ejemplo: <code>customer_phone</code> no requiere 6 años, 3 años basta.</dd>
+      <dt>Corrección</dt><dd>Crear <code>politica-conservacion-datos.md</code> con tabla campo a campo + ajustar <code>data-retention-cron</code> para anonimización diferenciada.</dd>
+    </dl>
+  </article>
+
+  <h3>Resto de hallazgos D (resumen)</h3>
+  <table class="compact">
+    <thead><tr><th>ID</th><th>Sev</th><th>Hallazgo</th><th>Norma</th></tr></thead>
+    <tbody>
+      <tr><td>D-03</td><td><span class="sev high">Alto</span></td><td>Resend probablemente NO en lista DPF activa → solo CCT 2021/914</td><td>RGPD art. 44-46</td></tr>
+      <tr><td>D-04</td><td><span class="sev high">Alto</span></td><td>Google Reviews + lh3.googleusercontent.com sin tratamiento RAT</td><td>RGPD art. 30, 13.1.e/f, 6.1.f</td></tr>
+      <tr><td>D-05</td><td><span class="sev high">Alto</span></td><td>Ausencia de análisis de procedencia DPIA documentado</td><td>RGPD art. 35.1 + WP248rev01</td></tr>
+      <tr><td>D-06</td><td><span class="sev high">Alto</span></td><td>Términos de venta no distinguen B2C/B2B (desistimiento erróneamente extendido)</td><td>RDL 1/2007 art. 59, 102 · Ley 7/1998</td></tr>
+      <tr><td>D-10</td><td><span class="sev high">Alto</span></td><td>Sin procedimiento documentado de respuesta a requerimientos administrativos/judiciales</td><td>RGPD art. 6.1.c + LECrim 588 bis</td></tr>
+      <tr><td>D-07</td><td><span class="sev med">Medio</span></td><td>Tratamiento de autónomo persona física no diferenciado en RAT</td><td>RGPD art. 4.1 + Cdo. 14</td></tr>
+      <tr><td>D-08</td><td><span class="sev med">Medio</span></td><td>Info art. 13.1.f sin "medios para obtener copia" de garantías</td><td>RGPD art. 13.1.f</td></tr>
+      <tr><td>D-11</td><td><span class="sev med">Medio</span></td><td>Vercel mal descrito: faltan logs runtime y edge cache con PII</td><td>RGPD art. 30.1.c</td></tr>
+      <tr><td>D-13</td><td><span class="sev med">Medio</span></td><td>Google Maps embed en Contact NO respeta opt-in cookies (carga siempre)</td><td>LSSI art. 22.2 + Guía AEPD</td></tr>
+      <tr><td>D-12</td><td><span class="sev low">Bajo</span></td><td>Reseñas Google: interés legítimo invocado sin LIA documentado</td><td>RGPD art. 6.1.f + CEPD 03/2022</td></tr>
+      <tr><td>D-14</td><td><span class="sev low">Bajo</span></td><td>Política de cookies interna (auditoría AEPD) no documentada</td><td>Guía AEPD §4</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>6 · Bloque O — Operativa, integridad, disponibilidad y trazabilidad admin</h2>
+  <p>16 hallazgos en aspectos no cubiertos por V1–V3: race conditions, idempotencia webhook, audit log central, backups/DR, deliverability email, retención logs proveedores.</p>
+
+  <article class="finding crit" id="O-01">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">O-01</span><span class="block-tag O">Operativa</span><span class="title">Race condition: doble UPDATE entre webhook Redsys y order-accept admin</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 32.1.b (integridad) · PCI-DSS 6.5.8 · OWASP API4</dd>
+      <dt>Vector</dt><dd>Window TOCTOU: cliente cancela → admin acepta → UPDATE order-accept sobrescribe cancelación. Sin <code>.eq('status', expected)</code> en los UPDATE.</dd>
+      <dt>Corrección</dt><dd>Optimistic locking en <code>order-accept</code>, <code>order-reject</code>, <code>customer-order-cancel</code>, <code>redsys-notification</code>, <code>order-delete</code>. Si <code>updated.length === 0</code> revertir Redsys.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="O-02">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">O-02</span><span class="block-tag O">Operativa</span><span class="title">Webhook Redsys sin protección anti-replay (timestamp + dedup)</span></div>
+    <dl>
+      <dt>Norma</dt><dd>PCI-DSS 6.5.10 · OWASP API8</dd>
+      <dt>Evidencia</dt><dd><code>redsys-notification:115-193</code> no compara <code>Ds_Date</code>/<code>Ds_Hour</code> con <code>now()</code> ni mantiene dedup table.</dd>
+      <dt>Corrección</dt><dd>Validar timestamp &lt; 30 min + tabla <code>redsys_notification_dedup(ds_order, ds_authorization_code)</code> con <code>on conflict do nothing</code>.</dd>
+    </dl>
+  </article>
+
+  <article class="finding crit" id="O-03">
+    <div class="head"><span class="sev crit">Crítico</span><span class="id">O-03</span><span class="block-tag O">Operativa</span><span class="title">No existe audit_log central de acciones admin</span></div>
+    <dl>
+      <dt>Norma</dt><dd>RGPD art. 5.2 (accountability) + art. 32.1.b (verificación)</dd>
+      <dt>Evidencia</dt><dd>Sólo existen <code>order_status_history</code>, <code>payments_log</code>, <code>consent_audit</code>. No se puede demostrar quién modificó settings, quién promovió admin, quién leyó PII.</dd>
+      <dt>Corrección</dt><dd>Migración <code>0028_audit_log.sql</code> con tabla central + triggers en <code>settings</code>, <code>admin_users</code>, <code>data_breaches</code>, <code>products</code>. RLS read-only para admin (sin UPDATE/DELETE → inmutable).</dd>
+    </dl>
+  </article>
+
+  <h3>Resto de hallazgos O (resumen)</h3>
+  <table class="compact">
+    <thead><tr><th>ID</th><th>Sev</th><th>Hallazgo</th><th>Riesgo principal</th></tr></thead>
+    <tbody>
+      <tr><td>O-04</td><td><span class="sev high">Alto</span></td><td>Lectura admin de PII de pedidos sin log (RLS directo desde React)</td><td>Insider threat invisible</td></tr>
+      <tr><td>O-05</td><td><span class="sev high">Alto</span></td><td>consent_audit permite DELETE/UPDATE retroactivo a admin</td><td>Manipulación huella consentimiento</td></tr>
+      <tr><td>O-06</td><td><span class="sev high">Alto</span></td><td>Sin documentación de backups/RTO/RPO (art. 32.1.c)</td><td>Pérdida facturas AEAT 5 años</td></tr>
+      <tr><td>O-07</td><td><span class="sev high">Alto</span></td><td>cron-healthcheck no monitorizado externamente</td><td>Crons pueden caer silenciosamente</td></tr>
+      <tr><td>O-08</td><td><span class="sev high">Alto</span></td><td>SPF/DKIM/DMARC no documentado ni evidenciado</td><td>Emails en SPAM + suplantación marca</td></tr>
+      <tr><td>O-09</td><td><span class="sev high">Alto</span></td><td>resend-bounce-handler documentado pero NO implementado</td><td>Degradación reputación SPF</td></tr>
+      <tr><td>O-10</td><td><span class="sev med">Medio</span></td><td>Errores con stack/SQL crudo expuesto al cliente</td><td>CWE-209 information exposure</td></tr>
+      <tr><td>O-11</td><td><span class="sev med">Medio</span></td><td>order-place sin rate-limit (stock + saltos correlativo)</td><td>Abuso + saltos factura</td></tr>
+      <tr><td>O-12</td><td><span class="sev med">Medio</span></td><td>customer-order-detail sin rate-limit (token bruteforce)</td><td>OWASP API2</td></tr>
+      <tr><td>O-13</td><td><span class="sev med">Medio</span></td><td>Retención logs proveedores (Vercel, Supabase, Resend) no documentada</td><td>RGPD art. 5.1.e</td></tr>
+      <tr><td>O-14</td><td><span class="sev med">Medio</span></td><td>rollbackReserved de stock no transaccional</td><td>Stock fantasma tras timeout</td></tr>
+      <tr><td>O-15</td><td><span class="sev low">Bajo</span></td><td>Emails sin List-Unsubscribe (RFC 8058)</td><td>Penalización Gmail/Yahoo</td></tr>
+      <tr><td>O-16</td><td><span class="sev low">Bajo</span></td><td>Endpoint __mock Redsys lee BD antes de validar mode</td><td>Coste innecesario en DoS</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="verdict">
+  <h2>7 · Veredicto final y rango sancionador</h2>
+  <div class="stamp">NO APTO — 2 bloqueantes administrativos, código aceptable</div>
+  <p>
+    El proyecto está <strong>muy cerca</strong> de apto. La arquitectura legal es sólida, las correcciones V1–V3 cerraron el 72,9 % de los hallazgos y los nuevos hallazgos V4 son en su mayoría profundidad documental, accesibilidad sub-AA y trazabilidad operativa — todos abordables sin reescribir nada esencial.
+  </p>
+
+  <h3>Bloqueantes absolutos (impiden abrir tienda)</h3>
+  <ol>
+    <li><strong>P-03 / L-01 / C-13 / V4-10</strong> — Rellenar <code>legal_company_*</code>, <code>legal_inscripcion</code> y placeholders del <code>procedimiento-brechas.md</code>. <strong>15–60 min</strong>.</li>
+    <li><strong>C-01</strong> — Completar Verifactu: firma XAdES + envío SOAP AEAT (o desactivar emisión hasta entonces). <strong>2–4 semanas con asesoría fiscal</strong>.</li>
+    <li><strong>S-07</strong> — Designar formalmente responsable de privacidad (microempresa, no DPO obligatorio). <strong>1 hora</strong>.</li>
+    <li><strong>S-01 (parcial)</strong> — Cerrar wildcards CORS en <code>quote-submit</code>, <code>cron-healthcheck</code>, <code>google-avatar-proxy</code>. <strong>1 hora</strong>.</li>
+    <li><strong>D-01 / D-02 / D-09</strong> — Armonizar PolPriv↔RAT (Supabase region), declarar subencargados, política de conservación por campo. <strong>4–6 h</strong>.</li>
+    <li><strong>O-01 / O-03</strong> — Optimistic locking + audit_log central. <strong>6–8 h</strong>.</li>
+  </ol>
+
+  <h3>Rango sancionador acumulado V4</h3>
+  <table>
+    <thead><tr><th>Escenario</th><th>Rango</th></tr></thead>
+    <tbody>
+      <tr><td>Apertura HOY sin cerrar bloqueantes</td><td><strong>150.000 – 600.000 €</strong> (LSSI + Verifactu + RGPD)</td></tr>
+      <tr><td>Tras cerrar bloqueantes (1 semana de trabajo)</td><td><strong>15.000 – 45.000 €</strong> (apercibimiento habitual)</td></tr>
+      <tr><td>Tras cerrar bloqueantes + altos V4 (1 mes)</td><td><strong>3.000 – 15.000 €</strong> (escenario inspector adverso)</td></tr>
+      <tr><td>Estado objetivo (todos los hallazgos cerrados, 8–10 semanas)</td><td><strong>0 – 5.000 €</strong> (apercibimiento sin sanción)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Plan de remediación V4 (sprints)</h3>
+  <table>
+    <thead><tr><th>Sprint</th><th>Plazo</th><th>Hallazgos</th><th>Esfuerzo</th></tr></thead>
+    <tbody>
+      <tr><td><b>Sprint 0 — Desbloqueo</b></td><td>1–2 días</td><td>P-03, L-01, C-13, V4-10, S-07, S-01 (3 funciones), V4-04, V4-02, V4-06</td><td>~3 h</td></tr>
+      <tr><td><b>Sprint 1 — Críticos V4</b></td><td>2 semanas</td><td>O-01, O-02, O-03, D-01, D-02, D-09, A-01, A-02, A-03, C-01 (Verifactu spike)</td><td>~30 h</td></tr>
+      <tr><td><b>Sprint 2 — Altos V4</b></td><td>3 semanas</td><td>14 altos (O-04 a O-09, D-03 a D-06, D-10, A-04 a A-09)</td><td>~35 h</td></tr>
+      <tr><td><b>Sprint 3 — Medios/Bajos</b></td><td>3 semanas</td><td>22 medios + 13 bajos</td><td>~30 h</td></tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:18px"><strong>Recomendación final:</strong> mantener Redsys en modo mock hasta cerrar Sprint 0 + Sprint 1. Con Sprint 0 completado (3 h trabajo), el proyecto pasa a <strong>APTO CON SALVEDADES</strong> y puede abrirse al público con el plan documentado para Sprints 1–3.</p>
+</section>
+
+<div class="footer">
+  Auditoría V4 generada el 2026-05-27 · 4 agentes especializados en paralelo (regresión V3 · accesibilidad RD 1112/2018 · cadena encargados + DPIA · operativa/integridad) · 66 hallazgos · cita normativa verificable contra código fuente
+</div>
+
+</div>
+</body>
+</html>

@@ -17,6 +17,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { maskIp,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
+import { internalSecretHeader } from '../_shared/security.ts'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -37,10 +38,11 @@ interface QuoteBody {
 async function verifyTurnstile(token: string, ip: string | null): Promise<boolean> {
   const secret = Deno.env.get('TURNSTILE_SECRET')
   if (!secret) {
-    // Modo desarrollo o secret no configurado: NO bloquear pero loguear advertencia.
-    // (El operador debe configurar el secret antes de producción.)
-    console.warn('[quote-submit] TURNSTILE_SECRET no configurado — verificación captcha omitida')
-    return true
+    // B-03: fail-closed. Si el secret no está configurado, NO podemos verificar
+    // el captcha y aceptar la solicitud abriría un vector de spam/abuso. La
+    // política es rechazar siempre hasta que el operador configure el secreto.
+    console.error('[quote-submit] TURNSTILE_SECRET MISSING — refusing all submissions (fail-closed)')
+    return false
   }
   const form = new FormData()
   form.append('secret', secret)
@@ -133,7 +135,10 @@ Deno.serve(async (req) => {
 
   // Dispara email admin (best-effort, no bloquea respuesta al cliente)
   try {
-    await supabase.functions.invoke('send-quote-email', { body: { quote_id: inserted.id } })
+    await supabase.functions.invoke('send-quote-email', {
+      body: { quote_id: inserted.id },
+      headers: internalSecretHeader(),
+    })
   } catch (err) {
     console.warn('[quote-submit] send-quote-email failed:', err)
   }

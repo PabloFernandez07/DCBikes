@@ -21,11 +21,17 @@ import {
   type OrderRow,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
+import { verifyInternalSecret } from '../_shared/security.ts'
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
   if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
+
+  if (!verifyInternalSecret(req)) {
+    console.warn(`[${ts()}] ✗ send-order-cancelled-by-customer-confirmation: x-internal-secret inválido o ausente`)
+    return jsonError('forbidden', 403, req)
+  }
 
   try {
     const { order_id } = await req.json().catch(() => ({}))

@@ -2,7 +2,9 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { maskEmail,
   corsPreflightResponse,
+  escapeHtml,
 } from '../_shared/email-utils.ts'
+import { verifyInternalSecret } from '../_shared/security.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const FROM_EMAIL     = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev'
@@ -11,13 +13,18 @@ const FROM_NAME      = 'DC Bikes Cantabria'
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-secret',
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return corsPreflightResponse(req)
 
   const ts = () => new Date().toISOString()
+
+  if (!verifyInternalSecret(req)) {
+    console.warn(`[${new Date().toISOString()}] ✗ send-quote-email: x-internal-secret inválido o ausente`)
+    return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: CORS })
+  }
 
   try {
     const body = await req.json()
@@ -34,7 +41,7 @@ serve(async (req) => {
       console.error(`[${ts()}] ✗ RESEND_API_KEY no está configurada en los secrets de la función`)
       throw new Error('RESEND_API_KEY no configurada')
     }
-    console.log(`[${ts()}] [1/5] RESEND_API_KEY presente: sí (${RESEND_API_KEY.slice(0, 8)}...)`)
+    console.log(`[${ts()}] [1/5] RESEND_API_KEY presente: sí`)
     console.log(`[${ts()}] [1/5] FROM_EMAIL:`, FROM_EMAIL)
 
     const supabase = createClient(
@@ -73,8 +80,18 @@ serve(async (req) => {
     console.log(`[${ts()}] [3/5] Email destino:`, maskEmail(destination))
 
     // PASO 4 — Construir y enviar email
-    const productName = (quote.products as { name: string } | null)?.name ?? 'Consulta general (taller)'
-    const receivedAt  = new Date(quote.created_at).toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })
+    const productNameRaw = (quote.products as { name: string } | null)?.name ?? 'Consulta general (taller)'
+    const productName = escapeHtml(productNameRaw)
+    const receivedAt  = escapeHtml(new Date(quote.created_at).toLocaleString('es-ES', { timeZone: 'Europe/Madrid' }))
+
+    // B-01: TODO valor controlado por usuario debe pasar por escapeHtml para
+    // mitigar HTML injection y stored-XSS en clientes de correo que renderizan HTML.
+    // Para teléfono: saneamos primero a [\d+\s\-()] y luego escapamos por defensa en
+    // profundidad (mailto/tel sólo permiten el subset, pero protegemos por si cambia).
+    const safeEmail = escapeHtml(String(quote.email ?? ''))
+    const phoneSanitized = String(quote.phone ?? '').replace(/[^\d+\s\-()]/g, '')
+    const safePhone = escapeHtml(phoneSanitized)
+    const safeMessage = escapeHtml(quote.message ?? '—').replace(/\n/g, '<br>')
 
     const html = `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8f8f8">
@@ -91,15 +108,15 @@ serve(async (req) => {
             </tr>
             <tr style="border-bottom:1px solid #f0f0f0">
               <td style="padding:12px 0;color:#999;font-size:12px;text-transform:uppercase;letter-spacing:1px">Email</td>
-              <td style="padding:12px 0"><a href="mailto:${quote.email}" style="color:#C4A2CF;text-decoration:none">${quote.email}</a></td>
+              <td style="padding:12px 0"><a href="mailto:${safeEmail}" style="color:#C4A2CF;text-decoration:none">${safeEmail}</a></td>
             </tr>
             <tr style="border-bottom:1px solid #f0f0f0">
               <td style="padding:12px 0;color:#999;font-size:12px;text-transform:uppercase;letter-spacing:1px">Teléfono</td>
-              <td style="padding:12px 0;color:#333">${quote.phone ? `<a href="tel:${quote.phone}" style="color:#C4A2CF;text-decoration:none">${quote.phone}</a>` : '—'}</td>
+              <td style="padding:12px 0;color:#333">${safePhone ? `<a href="tel:${safePhone}" style="color:#C4A2CF;text-decoration:none">${safePhone}</a>` : '—'}</td>
             </tr>
             <tr>
               <td style="padding:12px 0;color:#999;font-size:12px;text-transform:uppercase;letter-spacing:1px;vertical-align:top">Mensaje</td>
-              <td style="padding:12px 0;color:#333;line-height:1.6">${(quote.message ?? '—').replace(/\n/g, '<br>')}</td>
+              <td style="padding:12px 0;color:#333;line-height:1.6">${safeMessage}</td>
             </tr>
           </table>
         </div>
@@ -119,7 +136,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from:    `${FROM_NAME} <${FROM_EMAIL}>`,
         to:      [destination],
-        subject: `💬 Nueva consulta: ${productName}`,
+        subject: `💬 Nueva consulta: ${productNameRaw}`,
         html,
       }),
     })

@@ -1,8 +1,8 @@
 # Procedimiento de gestión de brechas de seguridad — DC Bikes Cantabria
 
-**Última actualización:** 2026-05-26
+**Última actualización:** 2026-05-27 (auditoría V5)
 **Base legal:** Artículos 33 y 34 del Reglamento (UE) 2016/679 (RGPD).
-**Responsable del tratamiento:** *[Titular DC Bikes Cantabria]*.
+**Responsable del tratamiento:** [Pendiente confirmación titular — `settings.legal_company_name` vacío; usar valor de `/admin/configuracion → Facturación` una vez relleno].
 **Ámbito:** todo incidente que afecte a datos personales tratados por DC Bikes Cantabria.
 
 ---
@@ -146,12 +146,12 @@ Medidas adoptadas o propuestas:
   - Medidas organizativas adicionales: [descripción]
 
 Datos de contacto del responsable / DPO:
-  Nombre: [PENDIENTE — designar DPO o responsable; añadir nombre]
-  Email:  [PENDIENTE — añadir email de contacto]
-  Teléfono: [PENDIENTE — añadir teléfono]
+  Nombre: [Pendiente confirmación titular — settings.legal_company_name vacío; ver designacion-responsable-privacidad.md]
+  Email:  info@dcbikescantabria.es
+  Teléfono: [Pendiente confirmación titular — settings.store_phone no consultado en esta auditoría]
 ```
 
-> **DPO / Responsable de privacidad:** `[PENDIENTE — designar DPO o responsable del tratamiento; añadir nombre, email y teléfono antes de la primera notificación real a la AEPD]`
+> **Responsable de privacidad designado:** no procede DPO formal del art. 37 RGPD (autónomo / microempresa sin tratamiento a gran escala ni datos especiales). El titular asume la función de responsable de privacidad por designación interna voluntaria (ver `Docs/legal/designacion-responsable-privacidad.md`). Datos de contacto: nombre [Pendiente confirmación titular — settings.legal_company_name vacío]; email info@dcbikescantabria.es; teléfono [Pendiente confirmación titular — settings.store_phone vacío].
 
 ---
 
@@ -173,7 +173,7 @@ Medidas que hemos adoptado:
 Te recomendamos:
   {recomendaciones — p.ej. estar atento/a a posibles intentos de phishing y no reutilizar contraseñas}
 
-Si tienes preguntas, contacta con nuestro responsable de privacidad en {email_dpo}.
+Si tienes preguntas, contacta con nuestro responsable de privacidad en info@dcbikescantabria.es.
 Tienes derecho a presentar reclamación ante la AEPD (https://www.aepd.es).
 
 Atentamente,
@@ -188,7 +188,7 @@ Atentamente,
 - `{descripción_breve}`: una o dos frases neutras y claras sobre qué ha pasado.
 - `{medidas}`: ej. "Hemos cambiado todas las contraseñas, revocado todas las sesiones activas y notificado a la AEPD".
 - `{recomendaciones}`: ej. "Te recomendamos estar atento/a a posibles intentos de phishing en los próximos días y no reutilizar contraseñas".
-- `{email_dpo}`: email del responsable o DPO (ver designación en la sección anterior).
+- `info@dcbikescantabria.es`: email del responsable de privacidad designado (`info@dcbikescantabria.es`). Ver `Docs/legal/designacion-responsable-privacidad.md`.
 
 **Buenas prácticas para el envío:**
 
@@ -281,4 +281,4 @@ Este procedimiento se revisa:
 
 ---
 
-**Última actualización:** 2026-05-26.
+**Última actualización:** 2026-05-27 (auditoría V5).
