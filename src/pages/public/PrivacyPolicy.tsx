@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SEO } from '@/components/layout/SEO'
 import { useStoreAddress } from '@/hooks/useStoreAddress'
+import { supabase } from '@/lib/supabase'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -16,6 +17,32 @@ function useReveal() {
     return () => obs.disconnect()
   }, [])
   return ref
+}
+
+function useLegalSettings() {
+  const [legal, setLegal] = useState<Record<string, string | null>>({})
+
+  useEffect(() => {
+    supabase
+      .from('settings')
+      .select('key, value')
+      .in('key', ['legal_company_name', 'legal_company_cif', 'legal_company_address', 'legal_forma_juridica'])
+      .then(({ data }) => {
+        const obj: Record<string, string | null> = {}
+        for (const row of data ?? []) {
+          try {
+            const v = typeof row.value === 'string' ? JSON.parse(row.value) : row.value
+            obj[row.key] = v && String(v).trim() ? String(v) : null
+          } catch {
+            const v = row.value as unknown
+            obj[row.key] = v && String(v).trim() ? String(v) : null
+          }
+        }
+        setLegal(obj)
+      })
+  }, [])
+
+  return legal
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -34,6 +61,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function PrivacyPolicy() {
   const pageRef = useReveal()
   const storeAddress = useStoreAddress()
+  const legal = useLegalSettings()
 
   return (
     <>
@@ -65,8 +93,38 @@ export default function PrivacyPolicy() {
               (LOPDGDD), te informamos de que el responsable del tratamiento de tus datos personales es:
             </p>
             <div className="p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)] space-y-1.5">
-              <p><strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Denominación:</strong> DC Bikes Cantabria</p>
-              <p><strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Dirección:</strong> {storeAddress}</p>
+              <p>
+                <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Denominación:</strong>{' '}
+                {legal.legal_company_name ? (
+                  <span className="text-[var(--color-cream)]">{legal.legal_company_name}</span>
+                ) : (
+                  <span className="text-[var(--color-cream)]">DC Bikes Cantabria</span>
+                )}
+              </p>
+              <p>
+                <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">NIF / CIF:</strong>{' '}
+                {legal.legal_company_cif ? (
+                  <span className="text-[var(--color-cream)]">{legal.legal_company_cif}</span>
+                ) : (
+                  <span className="text-red-600 font-bold">[Pendiente]</span>
+                )}
+              </p>
+              <p>
+                <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Forma jurídica:</strong>{' '}
+                {legal.legal_forma_juridica ? (
+                  <span className="text-[var(--color-cream)]">{legal.legal_forma_juridica}</span>
+                ) : (
+                  <span className="text-red-600 font-bold">[Pendiente]</span>
+                )}
+              </p>
+              <p>
+                <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Dirección:</strong>{' '}
+                {legal.legal_company_address ? (
+                  <span className="text-[var(--color-cream)]">{legal.legal_company_address}</span>
+                ) : (
+                  <span className="text-[var(--color-cream)]">{storeAddress}</span>
+                )}
+              </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Correo electrónico:</strong>{' '}
                 <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">

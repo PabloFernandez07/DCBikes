@@ -27,6 +27,9 @@ interface SiteSettings {
   phone?: string
   instagram?: string
   facebook?: string
+  legalName?: string
+  legalCif?: string
+  legalAddress?: string
 }
 
 export function Footer() {
@@ -37,7 +40,7 @@ export function Footer() {
     supabase
       .from('settings')
       .select('key, value')
-      .in('key', ['store_address', 'store_phone', 'social_instagram', 'social_facebook'])
+      .in('key', ['store_address', 'store_phone', 'social_instagram', 'social_facebook', 'legal_company_name', 'legal_company_cif', 'legal_company_address'])
       .then(({ data }) => {
         if (!data) return
         const obj: SiteSettings = {}
@@ -47,9 +50,22 @@ export function Footer() {
             store_phone: 'phone',
             social_instagram: 'instagram',
             social_facebook: 'facebook',
+            legal_company_name: 'legalName',
+            legal_company_cif: 'legalCif',
+            legal_company_address: 'legalAddress',
           }
           const key = map[row.key]
-          if (key) (obj as Record<string, unknown>)[key] = row.value
+          if (key) {
+            const raw = row.value
+            try {
+              const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+              const v = parsed && String(parsed).trim() ? String(parsed) : ''
+              if (v) (obj as Record<string, unknown>)[key] = v
+            } catch {
+              const v = raw && String(raw).trim() ? String(raw) : ''
+              if (v) (obj as Record<string, unknown>)[key] = v
+            }
+          }
         })
         setSettings(obj)
       })
@@ -175,9 +191,16 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-[var(--color-card)] flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[var(--color-mid)] text-xs font-[var(--font-body)]">
-            © {year} DC Bikes Cantabria. Todos los derechos reservados.
-          </p>
+          <div className="flex flex-col gap-0.5">
+            <p className="text-[var(--color-mid)] text-xs font-[var(--font-body)]">
+              © {year} DC Bikes Cantabria. Todos los derechos reservados.
+            </p>
+            {(settings.legalName || settings.legalCif || settings.legalAddress) && (
+              <p className="text-[var(--color-mid)] text-xs font-[var(--font-body)] opacity-70">
+                {[settings.legalName, settings.legalCif && `CIF: ${settings.legalCif}`, settings.legalAddress].filter(Boolean).join(' · ')}
+              </p>
+            )}
+          </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center sm:justify-end">
             <Link to="/aviso-legal" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
               Aviso legal

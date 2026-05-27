@@ -124,9 +124,7 @@ export default function LegalNotice() {
                 {legal.legal_forma_juridica ? (
                   <span className="text-[var(--color-cream)]">{legal.legal_forma_juridica}</span>
                 ) : (
-                  <span className="text-[var(--color-cream)]">
-                    Empresario individual no sujeto a inscripción en el Registro Mercantil conforme al artículo 19 del Código de Comercio
-                  </span>
+                  <span className="text-red-600 font-bold">[Pendiente de cumplimentar por el titular]</span>
                 )}
               </p>
               <p>
@@ -158,9 +156,7 @@ export default function LegalNotice() {
                 {legal.legal_inscripcion ? (
                   <span className="text-[var(--color-cream)]">{legal.legal_inscripcion}</span>
                 ) : (
-                  <span className="text-[var(--color-cream)]">
-                    No aplica (empresario individual, art. 19 del Código de Comercio)
-                  </span>
+                  <span className="text-red-600 font-bold">[Pendiente de cumplimentar por el titular]</span>
                 )}
               </p>
             </div>
