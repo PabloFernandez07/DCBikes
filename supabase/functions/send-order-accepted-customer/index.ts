@@ -18,7 +18,6 @@ import {
   formatPriceCents,
   formatTotalsBlock,
   getSettings,
-  getSignedInvoiceUrl,
   getSiteUrl,
   jsonError,
   jsonOk,
@@ -74,11 +73,11 @@ serve(async (req) => {
     const siteUrl = getSiteUrl()
 
     // Adjuntar factura si existe
+    // S-05 (auditoría legal V3): la signed URL ya NO se incluye en el cuerpo
+    // del email. El PDF se adjunta directamente; el CTA dirige a /mis-pedidos.
     let attachment = null
-    let invoiceUrl: string | null = null
     if (invoice) {
       attachment = await downloadInvoicePdf(supabase, invoice.pdf_storage_path)
-      invoiceUrl = await getSignedInvoiceUrl(supabase, invoice.pdf_storage_path)
       if (!attachment) {
         console.warn(
           `[${ts()}] ⚠ invoice file unreadable (path=${invoice.pdf_storage_path}) — enviando sin adjunto`,
@@ -121,7 +120,6 @@ serve(async (req) => {
               </p>
               <p style="margin:0;color:#1a4d1a;font-size:13px;line-height:1.6">
                 ${attachment ? 'Adjunta a este email en PDF.' : 'Disponible online (te haremos llegar el adjunto en breve).'}
-                ${invoiceUrl ? ` También puedes <a href="${escapeHtml(invoiceUrl)}" style="color:#A788B5;text-decoration:underline;font-weight:600">descargarla aquí</a> (válido 7 días).` : ''}
               </p>
             </div>`
           : ''
@@ -148,9 +146,7 @@ serve(async (req) => {
       title: 'Tu pedido ha sido aceptado',
       preheader: `Pedido #${order.order_number} confirmado · ${formatPriceCents(order.total_cents)}${invoice ? ` · Factura ${invoice.invoice_number}` : ''}.`,
       bodyHtml,
-      ctaButton: invoiceUrl
-        ? { label: 'Descargar factura', url: invoiceUrl }
-        : { label: 'Ver mi pedido', url: `${siteUrl}/pedido/confirmacion?id=${encodeURIComponent(order.id)}` },
+      ctaButton: { label: 'Ver mis pedidos', url: `${siteUrl}/mis-pedidos` },
       storeAddress,
       storePhone,
       storeEmail,

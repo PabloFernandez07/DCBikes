@@ -197,13 +197,17 @@ export function formatTotalsBlock(opts: {
 /* ─────────────────── Storage / Factura ─────────────────── */
 
 /**
- * Devuelve la signed URL (TTL 7 días) del PDF de factura asociado al pedido.
+ * Devuelve la signed URL del PDF de factura asociado al pedido.
  * Devuelve null si no existe factura todavía o el bucket falla.
+ *
+ * S-05 (auditoría legal V3): TTL default 1h (era 7d). Pasar TTL explícito en
+ * cada caller cuando se requiera más. Nunca usar en cuerpo de emails — el PDF
+ * se adjunta directamente; para navegador, redirigir a /mis-pedidos.
  */
 export async function getSignedInvoiceUrl(
   supabase: SupabaseClient,
   storagePath: string,
-  expiresInSeconds = 60 * 60 * 24 * 7,
+  expiresInSeconds = 3600,
 ): Promise<string | null> {
   try {
     const { data, error } = await supabase.storage
