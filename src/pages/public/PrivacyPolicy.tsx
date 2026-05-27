@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { SEO } from '@/components/layout/SEO'
 import { useStoreAddress } from '@/hooks/useStoreAddress'
 import { supabase } from '@/lib/supabase'
+import { PRIVACY_VERSION } from '@/lib/legal-versions'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -81,7 +82,7 @@ export default function PrivacyPolicy() {
             POLÍTICA DE PRIVACIDAD
           </h1>
           <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">
-            Última actualización: mayo de 2026
+            Última actualización: {PRIVACY_VERSION}
           </p>
         </section>
 
@@ -236,10 +237,7 @@ export default function PrivacyPolicy() {
                     <td className="px-4 py-3 text-[var(--color-cream)]">Datos de pedido y facturación</td>
                     <td className="px-4 py-3 text-[var(--color-mid)]"><strong className="text-[var(--color-cream)]">6 años</strong> (art. 30 Código de Comercio y art. 29 LGT)</td>
                   </tr>
-                  <tr className="bg-[var(--color-ink)]">
-                    <td className="px-4 py-3 text-[var(--color-cream)]">Comunicaciones comerciales (opt-in)</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">Hasta revocación del consentimiento</td>
-                  </tr>
+                  {/* P-10 auditoría V3: fila "Comunicaciones comerciales" eliminada porque no existe tratamiento real (sin newsletter activo). Reintroducir solo cuando haya doble opt-in declarado. */}
                 </tbody>
               </table>
             </div>

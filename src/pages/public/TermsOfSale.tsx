@@ -4,6 +4,7 @@ import { SEO } from '@/components/layout/SEO'
 import { supabase } from '@/lib/supabase'
 import { useSchedule } from '@/hooks/useSchedule'
 import { STORE_ADDRESS_FALLBACK } from '@/hooks/useStoreAddress'
+import { TERMS_VERSION } from '@/lib/legal-versions'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -132,7 +133,7 @@ export default function TermsOfSale() {
             TÉRMINOS DE VENTA
           </h1>
           <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">
-            Última actualización: mayo de 2026
+            Última actualización: {TERMS_VERSION}
           </p>
         </section>
 
@@ -290,6 +291,11 @@ export default function TermsOfSale() {
               )}
             </p>
             <p>
+              <strong className="text-[var(--color-cream)]">Tarifa plana de envío válida para paquetes hasta 30 kg y dimensiones máximas 120×80×60 cm (peso volumétrico).</strong>{' '}
+              Para envíos fuera de Península Ibérica (Baleares, Canarias, Ceuta, Melilla) o que excedan dimensiones, contacta antes de finalizar el pedido para presupuesto personalizado.
+              Sin sobrecostes adicionales no informados antes de la confirmación del pedido.
+            </p>
+            <p>
               <strong className="text-[var(--color-cream)]">Plazo máximo de entrega:</strong>{' '}
               30 días naturales desde la aceptación del pedido (art. 66 bis RDL 1/2007).
               El plazo habitual es de 2-5 días laborables en Península. Si transcurrido el plazo máximo no hemos entregado,
@@ -374,12 +380,12 @@ export default function TermsOfSale() {
               <strong className="text-[var(--color-cream)]">Plataforma europea de resolución de litigios en línea (ODR)</strong>{' '}
               de la Comisión Europea:{' '}
               <a
-                href="https://ec.europa.eu/odr"
+                href="https://ec.europa.eu/consumers/odr/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[var(--color-lavender)] underline underline-offset-2 break-all"
               >
-                https://ec.europa.eu/odr
+                https://ec.europa.eu/consumers/odr/
               </a>
             </p>
             <p>
@@ -415,8 +421,16 @@ export default function TermsOfSale() {
             </p>
           </Section>
 
-          {/* 12. Modificaciones */}
-          <Section title="12. Modificaciones">
+          {/* 12. Idioma del contrato */}
+          <Section title="12. Idioma del contrato">
+            <p>
+              El presente contrato se celebra en <strong className="text-[var(--color-cream)]">español</strong>, idioma único para la formalización del contrato y para la atención al cliente.
+              En caso de discrepancia entre traducciones a otros idiomas, prevalece la versión en español.
+            </p>
+          </Section>
+
+          {/* 13. Modificaciones */}
+          <Section title="13. Modificaciones">
             <p>
               {companyName} se reserva el derecho de modificar las presentes condiciones generales para adaptarlas
               a la normativa vigente o por motivos operativos. En cualquier caso, será de aplicación a cada pedido

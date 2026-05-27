@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Cookie, Shield, BarChart2, Target, Trash2, Image } from 'lucide-react'
 import { useStoreAddress } from '@/hooks/useStoreAddress'
+import { COOKIES_VERSION } from '@/lib/legal-versions'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -99,7 +100,7 @@ export default function CookiePolicy() {
           POLÍTICA DE COOKIES
         </h1>
         <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">
-          Última actualización: abril de 2026
+          Última actualización: {COOKIES_VERSION}
         </p>
       </section>
 
@@ -143,7 +144,7 @@ export default function CookiePolicy() {
                 <CookieTable rows={[
                   { nombre: 'dcbikes_cookie_consent', tipo: 'localStorage', titular: 'Propia', duracion: '12 meses', finalidad: 'Almacena tu elección sobre cookies' },
                   { nombre: 'dcbikes_pending_order', tipo: 'localStorage', titular: 'Propia', duracion: 'Sesión', finalidad: 'Persiste el pedido durante el proceso de checkout' },
-                  { nombre: 'dcbikes_last_order', tipo: 'localStorage', titular: 'Propia', duracion: '30 días', finalidad: 'Permite ver la confirmación del último pedido' },
+                  { nombre: 'dcbikes_last_order', tipo: 'localStorage', titular: 'Propia', duracion: '30 días', finalidad: 'Token técnico para recuperar tu último pedido sin tener que solicitar magic link cada vez. Duración 30 días: equilibra comodidad con minimización de datos (art. 5.1.c RGPD). Se borra al cerrar sesión o desde la configuración del navegador.' /* P-08 auditoría V3: justifica duración 30d */ },
                   { nombre: 'dcbikes_customer_session', tipo: 'localStorage', titular: 'Propia', duracion: '24 horas', finalidad: 'Token temporal de "Mis pedidos" (magic link)' },
                   { nombre: 'cart-store', tipo: 'localStorage', titular: 'Propia', duracion: 'Indefinida hasta vaciado', finalidad: 'Mantiene tu carrito de compra entre sesiones' },
                   { nombre: 'dcb_session', tipo: 'sessionStorage', titular: 'Propia', duracion: 'Sesión', finalidad: 'Identificador de sesión para analítica anónima' },

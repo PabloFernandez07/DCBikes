@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Cookie, ChevronDown, ChevronUp, Shield, Map } from 'lucide-react'
 import { clsx } from 'clsx'
 import { Button } from '@/components/ui/Button'
+import { COOKIES_VERSION } from '@/lib/legal-versions'
 
 type ConsentLevel = 'all' | 'reject' | null
 
@@ -15,6 +16,7 @@ interface CookiePreferences {
 
 interface StoredConsent extends CookiePreferences {
   savedAt: string
+  cookies_version: string  // P-12: versión de política de cookies; mismatch fuerza re-consent
 }
 
 const STORAGE_KEY = 'dcbikes_cookie_consent'
@@ -31,12 +33,15 @@ function readStored(): StoredConsent | null {
     if (!parsed.savedAt) return null
     const age = Date.now() - new Date(parsed.savedAt).getTime()
     if (Number.isNaN(age) || age > TTL_MS) return null
+    // P-12: si la versión guardada no coincide con la actual, descarta el consent y fuerza re-consent.
+    if (parsed.cookies_version !== COOKIES_VERSION) return null
     return {
       essential: true,
       analytics: !!parsed.analytics,
       marketing: !!parsed.marketing,
       thirdParty: !!parsed.thirdParty,
       savedAt: parsed.savedAt,
+      cookies_version: COOKIES_VERSION,
     }
   } catch {
     return null
@@ -63,8 +68,8 @@ export function hasThirdPartyConsent(): boolean {
 }
 
 export function setThirdPartyConsent(value: boolean): void {
-  const current = readStored() ?? { essential: true, analytics: false, marketing: false, thirdParty: false, savedAt: new Date().toISOString() }
-  const next: StoredConsent = { ...current, thirdParty: value, savedAt: new Date().toISOString() }
+  const current = readStored() ?? { essential: true, analytics: false, marketing: false, thirdParty: false, savedAt: new Date().toISOString(), cookies_version: COOKIES_VERSION }
+  const next: StoredConsent = { ...current, thirdParty: value, savedAt: new Date().toISOString(), cookies_version: COOKIES_VERSION }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   window.dispatchEvent(new CustomEvent('cookie-consent-change', { detail: next }))
 }
@@ -99,6 +104,7 @@ export function CookieBanner() {
     const stored: StoredConsent = {
       ...consent,
       savedAt: new Date().toISOString(),
+      cookies_version: COOKIES_VERSION,  // P-12: versiona el consent para forzar re-consent en cambios de política
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
     setVisible(false)

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { SEO } from '@/components/layout/SEO'
 import { supabase } from '@/lib/supabase'
 import { STORE_ADDRESS_FALLBACK } from '@/hooks/useStoreAddress'
+import { LAST_AUDIT_DATE } from '@/lib/legal-versions'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -91,7 +92,7 @@ export default function LegalNotice() {
             AVISO LEGAL
           </h1>
           <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">
-            Última actualización: mayo de 2026
+            Última actualización: {LAST_AUDIT_DATE}
           </p>
         </section>
 
