@@ -91,7 +91,7 @@ const html = `<!DOCTYPE html>
     DC Bikes Cantabria<br />
     C. la Cantábrica, bloque 2 n, 1 BAJO<br />
     39610 El Astillero · Cantabria · España<br />
-    Correo electrónico: info@dcbikes.es
+    Correo electrónico: info@dcbikescantabria.es
   </div>
 
   <p>

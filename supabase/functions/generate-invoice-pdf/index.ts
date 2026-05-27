@@ -6,7 +6,8 @@
 //   1. Input: { order_id }.
 //   2. Lee orden + items + settings legales (legal_company_name/cif/address).
 //   3. Si ya existe factura para el order_id → devuelve la existente (no regenera).
-//   4. Llama RPC next_invoice_number(YEAR) → contador correlativo atómico.
+//   4. Llama RPC next_b2c_invoice_number(YEAR) → contador correlativo atómico
+//      (la antigua next_invoice_number(int) fue dropeada por C-03 auditoría V3).
 //   5. Construye PDF A4 (Helvetica con codificación WinAnsi → soporta ñ/áéíóú/€).
 //   6. Upload PDF al bucket privado 'invoices' en {year}/{invoice_number}.pdf.
 //   7. INSERT en tabla `invoices` con snapshots legales + importes.
