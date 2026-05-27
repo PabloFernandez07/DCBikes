@@ -110,12 +110,17 @@ function BreachForm({
   const isEdit = Boolean(initial.id)
   const now = new Date().toISOString().slice(0, 16)
 
-  const [form, setForm] = useState<BreachDraft & { id?: string }>({
-    ...EMPTY_DRAFT,
-    detected_at: now,
-    ...(isEdit ? initial : {}),
-    // Asegurar que detected_at no es null cuando editamos
-    detected_at: initial.detected_at?.slice(0, 16) ?? now,
+  const [form, setForm] = useState<BreachDraft & { id?: string }>(() => {
+    const base = {
+      ...EMPTY_DRAFT,
+      ...(isEdit ? initial : {}),
+    }
+    return {
+      ...base,
+      detected_at: isEdit
+        ? (initial.detected_at?.slice(0, 16) ?? now)
+        : now,
+    }
   })
   const [saving, setSaving] = useState(false)
 
@@ -328,7 +333,7 @@ function BreachForm({
               <select
                 value={form.notification_method ?? ''}
                 onChange={e =>
-                  set('notification_method', (e.target as HTMLInputElement).value || null)
+                  set('notification_method', e.target.value || null)
                 }
                 className="h-9 px-3 rounded-lg bg-[var(--color-ink)] border border-[var(--color-card-hover)] text-sm font-[var(--font-body)] text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
               >

@@ -654,6 +654,104 @@ export interface Database {
         }
         Relationships: []
       }
+      // ── 0010_data_breaches + 0024_data_breaches_rls_audit ────────
+      data_breaches: {
+        Row: {
+          id: string
+          detected_at: string
+          description: string
+          source: string | null
+          affected_data_categories: string[] | null
+          affected_users_estimated: number | null
+          contains_special_categories: boolean
+          risk_level: 'low' | 'medium' | 'high' | 'critical'
+          risk_justification: string | null
+          notified_aepd: boolean
+          notified_aepd_at: string | null
+          aepd_case_number: string | null
+          notified_users: boolean
+          notified_users_at: string | null
+          notification_method: string | null
+          containment_measures: string | null
+          resolution_status: 'open' | 'contained' | 'resolved'
+          resolved_at: string | null
+          reported_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          detected_at: string
+          description: string
+          source?: string | null
+          affected_data_categories?: string[] | null
+          affected_users_estimated?: number | null
+          contains_special_categories?: boolean
+          risk_level?: 'low' | 'medium' | 'high' | 'critical'
+          risk_justification?: string | null
+          notified_aepd?: boolean
+          notified_aepd_at?: string | null
+          aepd_case_number?: string | null
+          notified_users?: boolean
+          notified_users_at?: string | null
+          notification_method?: string | null
+          containment_measures?: string | null
+          resolution_status?: 'open' | 'contained' | 'resolved'
+          resolved_at?: string | null
+          reported_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          detected_at?: string
+          description?: string
+          source?: string | null
+          affected_data_categories?: string[] | null
+          affected_users_estimated?: number | null
+          contains_special_categories?: boolean
+          risk_level?: 'low' | 'medium' | 'high' | 'critical'
+          risk_justification?: string | null
+          notified_aepd?: boolean
+          notified_aepd_at?: string | null
+          aepd_case_number?: string | null
+          notified_users?: boolean
+          notified_users_at?: string | null
+          notification_method?: string | null
+          containment_measures?: string | null
+          resolution_status?: 'open' | 'contained' | 'resolved'
+          resolved_at?: string | null
+          reported_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      // ── 0022_product_price_history (C-04 Omnibus) ────────────────
+      product_price_history: {
+        Row: {
+          id: number
+          product_id: string
+          price: number
+          effective_from: string
+          effective_to: string | null
+        }
+        Insert: {
+          id?: number
+          product_id: string
+          price: number
+          effective_from?: string
+          effective_to?: string | null
+        }
+        Update: {
+          id?: number
+          product_id?: string
+          price?: number
+          effective_from?: string
+          effective_to?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -661,9 +759,20 @@ export interface Database {
         Args: { p_year: number }
         Returns: number
       }
-      next_invoice_number: {
+      // next_invoice_number: dropeada por C-03 (migración 0020).
+      // Sustituida por next_b2c_invoice_number / next_b2b_invoice_number (migración 0011).
+      next_b2c_invoice_number: {
         Args: { p_year: number }
         Returns: number
+      }
+      next_b2b_invoice_number: {
+        Args: { p_year: number }
+        Returns: number
+      }
+      // C-04 Omnibus: mínimo precio últimos 30 días (migración 0022).
+      get_min_price_last_30d: {
+        Args: { p_product_id: string }
+        Returns: number | null
       }
     }
     Enums: Record<string, never>
