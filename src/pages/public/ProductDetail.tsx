@@ -44,6 +44,7 @@ export default function ProductDetail() {
   const [images, setImages] = useState<ProductImage[]>([])
   const [category, setCategory] = useState<Category | null>(null)
   const [quoteOpen, setQuoteOpen] = useState(false)
+  const [minPrice30d, setMinPrice30d] = useState<number | null>(null)
   const pageRef = useReveal([parentProduct, selectedVariant?.id])
 
   // IMPORTANTE: los hooks de stores deben ir antes de cualquier return condicional
@@ -91,6 +92,18 @@ export default function ProductDetail() {
       .single()
       .then(({ data }) => setCategory(data))
   }, [parentProduct?.category_id])
+
+  // Omnibus / RDL 1/2007 art. 20.1 — mínimo precio últimos 30 días.
+  // Se recarga al cambiar de variante (selectedVariant.id).
+  useEffect(() => {
+    if (!selectedVariant?.id) {
+      setMinPrice30d(null)
+      return
+    }
+    supabase
+      .rpc('get_min_price_last_30d', { p_product_id: selectedVariant.id })
+      .then(({ data }) => setMinPrice30d(data ?? null))
+  }, [selectedVariant?.id])
 
   // Galería sincronizada con la variante seleccionada:
   //   1. Si la variante seleccionada tiene fotos propias → esas.
@@ -258,6 +271,20 @@ export default function ProductDetail() {
             </div>
             {!hasDiscount && (
               <span className="text-[var(--color-mid)] font-[var(--font-cond)] text-sm tracking-wide">PVP</span>
+            )}
+            {/* Omnibus / RDL 1/2007 art. 20.1 — precio de referencia obligatorio */}
+            {hasDiscount && minPrice30d != null && (
+              <div className="mt-2 space-y-1 text-sm font-[var(--font-cond)]">
+                <div className="text-[var(--color-mid)] tracking-wide">
+                  Precio anterior (mín. últimos 30 días):{' '}
+                  <span className="text-[var(--color-cream-dim)]">{fmt(minPrice30d)} €</span>
+                </div>
+                {minPrice30d > finalPrice && (
+                  <div className="text-green-400 font-bold tracking-wide">
+                    Ahorras un {Math.round((1 - finalPrice / minPrice30d) * 100)}% respecto al precio anterior
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
