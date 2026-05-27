@@ -423,7 +423,20 @@ serve(async (req) => {
       'shipping_free_threshold_cents',
       'tax_rate_default',
       'order_series_prefix',
+      'legal_company_name',
+      'legal_company_cif',
+      'legal_company_address',
     ])
+
+    // Gate fiscal (L-02 / C-02): bloquear pedidos si los datos legales no están
+    // configurados — sin ellos no se puede emitir factura legal válida.
+    const legalReady =
+      typeof settings.legal_company_name === 'string' && settings.legal_company_name.trim().length > 0 &&
+      typeof settings.legal_company_cif === 'string' && settings.legal_company_cif.trim().length > 0 &&
+      typeof settings.legal_company_address === 'string' && settings.legal_company_address.trim().length > 0
+    if (!legalReady) {
+      return jsonError('Tienda no operativa temporalmente. Estamos completando la configuración fiscal.', 503)
+    }
     const totals = computeTotals(products, body.items, body.delivery_method, settings)
     const orderPrefix = asString(settings.order_series_prefix, 'ORD')
 

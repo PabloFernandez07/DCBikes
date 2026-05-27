@@ -19,9 +19,10 @@ insert into settings (key, value) values
   ('tax_rate_default',              '21.00'::jsonb),       -- IVA 21 %
   ('invoice_series_prefix',         '"FAC"'::jsonb),
   ('order_series_prefix',           '"ORD"'::jsonb),
-  ('legal_company_name',            '""'::jsonb),
-  ('legal_company_cif',             '""'::jsonb),
-  ('legal_company_address',         '""'::jsonb),
+  -- Datos legales (legal_company_*) NO se siembran como string vacío:
+  -- el cliente debe rellenarlos en /admin/configuracion antes de aceptar pedidos.
+  -- order-place/index.ts hace gate y devuelve 503 si están vacíos.
+  ('store_contact_email',           '"info@dcbikescantabria.es"'::jsonb),
 
   -- ─── Pasarela Redsys (no credenciales) ───────────────────────
   ('redsys_environment',            '"test"'::jsonb),      -- 'test' | 'prod'

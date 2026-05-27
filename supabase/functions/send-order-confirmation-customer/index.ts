@@ -52,6 +52,7 @@ serve(async (req) => {
       'store_address',
       'store_phone',
       'quote_destination_email',
+      'store_contact_email',
       'order_auto_cancel_hours',
       'legal_company_name',
       'legal_company_cif',
@@ -62,6 +63,7 @@ serve(async (req) => {
     const storeAddress = asString(settings.store_address)
     const storePhone = asString(settings.store_phone)
     const storeEmail = asString(settings.quote_destination_email)
+    const supportEmail = (settings.store_contact_email as string | undefined) ?? 'info@dcbikescantabria.es'
     const legalCompanyName = asString(settings.legal_company_name, 'DC Bikes Cantabria')
     const legalCompanyCif = asString(settings.legal_company_cif)
     const legalCompanyAddress = asString(settings.legal_company_address) || storeAddress
@@ -126,7 +128,7 @@ serve(async (req) => {
         <li>${escapeHtml(legalCompanyName)} (DC Bikes Cantabria)</li>
         <li>NIF: ${escapeHtml(cifDisplay)}</li>
         <li>${escapeHtml(addrDisplay)}</li>
-        <li>Email: info@dcbikescantabria.es · Tel: +34 942 054 501</li>
+        <li>Email: ${escapeHtml(supportEmail)} · Tel: +34 942 054 501</li>
       </ul>
 
       <p style="margin:0 0 6px 0;color:#444;font-size:14px"><strong>Derecho de desistimiento</strong></p>
@@ -138,7 +140,7 @@ serve(async (req) => {
       <p style="margin:0 0 6px 0;color:#555;font-size:13px">Puedes ejercer este derecho:</p>
       <ul style="margin:0 0 16px 18px;padding:0;color:#555;font-size:13px;line-height:1.6">
         <li>Descargando el <a href="${siteUrl}/devoluciones-formulario.pdf" style="color:#A788B5;text-decoration:underline">formulario oficial UE</a> y enviándonoslo cumplimentado.</li>
-        <li>O comunicándolo por email a info@dcbikescantabria.es indicando tu número de pedido.</li>
+        <li>O comunicándolo por email a ${escapeHtml(supportEmail)} indicando tu número de pedido.</li>
         <li>Consulta la <a href="${siteUrl}/devoluciones" style="color:#A788B5;text-decoration:underline">política de devoluciones completa</a>.</li>
       </ul>
 
@@ -151,7 +153,7 @@ serve(async (req) => {
 
       <p style="margin:0 0 6px 0;color:#444;font-size:14px"><strong>Resolución de conflictos</strong></p>
       <p style="margin:0 0 6px 0;color:#555;font-size:13px;line-height:1.6">
-        Si tienes una reclamación, puedes contactarnos en info@dcbikescantabria.es o:
+        Si tienes una reclamación, puedes contactarnos en ${escapeHtml(supportEmail)} o:
       </p>
       <ul style="margin:0 0 16px 18px;padding:0;color:#555;font-size:13px;line-height:1.6">
         <li>Usar la <a href="https://ec.europa.eu/odr" style="color:#A788B5;text-decoration:underline">plataforma europea de resolución de litigios en línea (ODR)</a>.</li>
