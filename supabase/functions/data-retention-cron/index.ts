@@ -1,21 +1,31 @@
 // supabase/functions/data-retention-cron/index.ts
 //
-// Sprint 5.2 + Auditoría v2 (N6, N13, N15, N16) — RGPD art. 5.1.e (limitación
-// del plazo de conservación). Ejecutado diariamente por pg_cron
-// (ver migración 0012_data_retention_cron.sql).
+// Sprint 5.2 + Auditoría v2 (N6, N13, N15, N16) + Auditoría legal V5
+// (Q-11, Q-12, Q-14) — RGPD art. 5.1.e (limitación del plazo de
+// conservación). Ejecutado diariamente por pg_cron.
 //
 // Acciones (ejecutadas en paralelo con Promise.allSettled):
-//   1. `customer_sessions` cuya `expires_at` < hoy-30d → DELETE.
-//   2. `payments_log.raw_payload` con created_at < hoy-6a → anonimizar payload
-//      (registro contable se conserva).
-//   3. `quote_requests` con created_at < hoy-13m → DELETE.
-//      Nota: el esquema actual no tiene `replied_at`; usamos antigüedad
-//      absoluta. Si en el futuro se añade ese campo, restringir a las
-//      resueltas (replied_at not null).
-//   4. `product_views` con viewed_at < hoy-24m → DELETE.
-//   5. `search_queries` con searched_at < hoy-24m → DELETE.
-//   6. `orders` con created_at < hoy-6a y `anonymized_at is null` →
+//   1. `customer_sessions` con expires_at < hoy-30d y purged_at IS NULL →
+//      soft-purge: UPDATE email/token_hash/ip_address/user_agent a valores
+//      anonimizados + purged_at = now() (Q-12, patrón soft-purge).
+//   2. `customer_sessions` con expires_at < hoy-90d → DELETE físico
+//      (las 30..90d ya están anonimizadas; se conserva el id histórico
+//      durante 60 días extra para trazabilidad mínima) (Q-12).
+//   3. `payments_log.raw_payload` con created_at < hoy-6a → anonimizar
+//      payload (registro contable se conserva).
+//   4a. `quote_requests` con revoked_at < hoy-7d y purged_at IS NULL →
+//      purga inmediata por revocación de consentimiento (Q-14).
+//   4b. `quote_requests` con created_at < hoy-13m y purged_at IS NULL →
+//      anonimizar message + purged_at = now() (Q-14).
+//   5. `product_views` con viewed_at < hoy-24m → DELETE.
+//   6. `search_queries` con searched_at < hoy-24m → DELETE.
+//   7. `orders` con created_at < hoy-6a y `anonymized_at is null` →
 //      anonimizar PII (conservación contable AEAT impide borrar).
+//
+// Concurrencia:
+//   Antes de cualquier mutación se invoca RPC `try_data_retention_lock()`
+//   (Q-11). Si devuelve false, otra ejecución sigue en marcha y abortamos
+//   con 200 OK { skipped: true }.
 //
 // Auth:
 //   - Header `Authorization: Bearer <CRON_SECRET>` obligatorio.
@@ -34,6 +44,8 @@ const SIX_YEARS_MS = 6 * 365 * DAY_MS
 const THIRTEEN_MONTHS_MS = Math.round(13 * 30.4375 * DAY_MS)
 const TWENTYFOUR_MONTHS_MS = Math.round(24 * 30.4375 * DAY_MS)
 const THIRTY_DAYS_MS = 30 * DAY_MS
+const SEVEN_DAYS_MS = 7 * DAY_MS
+const NINETY_DAYS_MS = 90 * DAY_MS
 
 interface ActionResult {
   name: string
@@ -54,9 +66,28 @@ function authorize(req: Request): { ok: boolean; reason?: string } {
   return { ok: true }
 }
 
-/* ─── 1. customer_sessions expiradas >30d → DELETE ────────────── */
-async function purgeExpiredSessions(supabase: SupabaseClient): Promise<ActionResult> {
+/* ─── 1. customer_sessions expiradas >30d → SOFT-PURGE ────────── */
+async function softPurgeExpiredSessions(supabase: SupabaseClient): Promise<ActionResult> {
   const cutoff = new Date(Date.now() - THIRTY_DAYS_MS).toISOString()
+  const { data, error } = await supabase
+    .from('customer_sessions')
+    .update({
+      email: 'anonimizado@anonimizado.local',
+      token_hash: '',
+      ip_address: null,
+      user_agent: null,
+      purged_at: new Date().toISOString(),
+    })
+    .lt('expires_at', cutoff)
+    .is('purged_at', null)
+    .select('id')
+  if (error) return { name: 'sessions_soft_purged', count: 0, error: error.message }
+  return { name: 'sessions_soft_purged', count: data?.length ?? 0 }
+}
+
+/* ─── 2. customer_sessions expiradas >90d → DELETE físico ─────── */
+async function hardDeleteOldSessions(supabase: SupabaseClient): Promise<ActionResult> {
+  const cutoff = new Date(Date.now() - NINETY_DAYS_MS).toISOString()
   const { data, error } = await supabase
     .from('customer_sessions')
     .delete()
@@ -66,7 +97,7 @@ async function purgeExpiredSessions(supabase: SupabaseClient): Promise<ActionRes
   return { name: 'sessions_deleted', count: data?.length ?? 0 }
 }
 
-/* ─── 2. payments_log.raw_payload >6 años → ANONIMIZAR ────────── */
+/* ─── 3. payments_log.raw_payload >6 años → ANONIMIZAR ────────── */
 async function anonymizePayments(supabase: SupabaseClient): Promise<ActionResult> {
   const cutoff = new Date(Date.now() - SIX_YEARS_MS).toISOString()
   const { data, error } = await supabase
@@ -81,19 +112,39 @@ async function anonymizePayments(supabase: SupabaseClient): Promise<ActionResult
   return { name: 'payments_anonymized', count: data?.length ?? 0 }
 }
 
-/* ─── 3. quote_requests >13 meses → DELETE ────────────────────── */
+/* ─── 4a. quote_requests revocadas >7d → PURGAR inmediato ─────── */
+async function purgeRevokedQuotes(supabase: SupabaseClient): Promise<ActionResult> {
+  const cutoff = new Date(Date.now() - SEVEN_DAYS_MS).toISOString()
+  const { data, error } = await supabase
+    .from('quote_requests')
+    .update({
+      message: '[purgado]',
+      purged_at: new Date().toISOString(),
+    })
+    .lt('revoked_at', cutoff)
+    .is('purged_at', null)
+    .select('id')
+  if (error) return { name: 'quotes_revoked_purged', count: 0, error: error.message }
+  return { name: 'quotes_revoked_purged', count: data?.length ?? 0 }
+}
+
+/* ─── 4b. quote_requests >13 meses → ANONIMIZAR message ───────── */
 async function purgeOldQuotes(supabase: SupabaseClient): Promise<ActionResult> {
   const cutoff = new Date(Date.now() - THIRTEEN_MONTHS_MS).toISOString()
   const { data, error } = await supabase
     .from('quote_requests')
-    .delete()
+    .update({
+      message: '[purgado]',
+      purged_at: new Date().toISOString(),
+    })
     .lt('created_at', cutoff)
+    .is('purged_at', null)
     .select('id')
-  if (error) return { name: 'quotes_deleted', count: 0, error: error.message }
-  return { name: 'quotes_deleted', count: data?.length ?? 0 }
+  if (error) return { name: 'quotes_aged_purged', count: 0, error: error.message }
+  return { name: 'quotes_aged_purged', count: data?.length ?? 0 }
 }
 
-/* ─── 4. product_views >24 meses → DELETE ─────────────────────── */
+/* ─── 5. product_views >24 meses → DELETE ─────────────────────── */
 async function purgeOldProductViews(supabase: SupabaseClient): Promise<ActionResult> {
   const cutoff = new Date(Date.now() - TWENTYFOUR_MONTHS_MS).toISOString()
   // El esquema usa `viewed_at` (no created_at) en product_views.
@@ -106,7 +157,7 @@ async function purgeOldProductViews(supabase: SupabaseClient): Promise<ActionRes
   return { name: 'product_views_deleted', count: data?.length ?? 0 }
 }
 
-/* ─── 5. search_queries >24 meses → DELETE ────────────────────── */
+/* ─── 6. search_queries >24 meses → DELETE ────────────────────── */
 async function purgeOldSearches(supabase: SupabaseClient): Promise<ActionResult> {
   const cutoff = new Date(Date.now() - TWENTYFOUR_MONTHS_MS).toISOString()
   // El esquema usa `searched_at` (no created_at) en search_queries.
@@ -119,7 +170,7 @@ async function purgeOldSearches(supabase: SupabaseClient): Promise<ActionResult>
   return { name: 'searches_deleted', count: data?.length ?? 0 }
 }
 
-/* ─── 6. orders >6 años → ANONIMIZAR (no borrar — contable) ──── */
+/* ─── 7. orders >6 años → ANONIMIZAR (no borrar — contable) ──── */
 async function anonymizeOldOrders(supabase: SupabaseClient): Promise<ActionResult> {
   const cutoff = new Date(Date.now() - SIX_YEARS_MS).toISOString()
   const { data, error } = await supabase
@@ -163,9 +214,22 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
+    // Q-11: advisory lock — si otra ejecución sigue en marcha, abortar.
+    const { data: lockData, error: lockError } = await supabase.rpc('try_data_retention_lock')
+    if (lockError) {
+      console.error(`[${ts()}] data-retention-cron lock rpc error:`, lockError.message)
+      return jsonError('lock rpc failed', 500, req)
+    }
+    if (!lockData) {
+      console.warn(`[${ts()}] data-retention-cron skipped: previous run still in progress`)
+      return jsonOk({ skipped: 'previous run still in progress' }, req)
+    }
+
     const settled = await Promise.allSettled([
-      purgeExpiredSessions(supabase),
+      softPurgeExpiredSessions(supabase),
+      hardDeleteOldSessions(supabase),
       anonymizePayments(supabase),
+      purgeRevokedQuotes(supabase),
       purgeOldQuotes(supabase),
       purgeOldProductViews(supabase),
       purgeOldSearches(supabase),
@@ -184,7 +248,7 @@ serve(async (req) => {
     }
 
     console.log(
-      `[${ts()}] ✓ data-retention-cron · ${Object.entries(counts).map(([k, v]) => `${k}=${v}`).join(' · ')} · errors=${errors.length}`,
+      `[${ts()}] OK data-retention-cron · ${Object.entries(counts).map(([k, v]) => `${k}=${v}`).join(' · ')} · errors=${errors.length}`,
     )
 
     return jsonOk({
@@ -193,7 +257,7 @@ serve(async (req) => {
       errors,
     }, req)
   } catch (err) {
-    console.error(`[${ts()}] ✗ data-retention-cron fatal:`, String(err))
+    console.error(`[${ts()}] FAIL data-retention-cron fatal:`, String(err))
     return jsonError(String(err), 500, req)
   }
 })

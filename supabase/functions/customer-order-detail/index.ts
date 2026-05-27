@@ -20,11 +20,11 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 import {
-  CORS_HEADERS,
   getSignedInvoiceUrl,
   jsonError,
   jsonOk,
   corsPreflightResponse,
+  maskEmail,
 } from '../_shared/email-utils.ts'
 import { verifyCustomerSession } from '../_shared/customer-session.ts'
 
@@ -98,7 +98,7 @@ serve(async (req) => {
       String(order.customer_email).toLowerCase() !== session.email
     ) {
       console.warn(
-        `[${ts()}] customer-order-detail forbidden · session=${session.email} · order=${order.order_number}`,
+        `[${ts()}] customer-order-detail forbidden · session=${maskEmail(session.email)} · order=${order.order_number}`,
       )
       return jsonError('forbidden', 403, req)
     }
@@ -159,7 +159,7 @@ serve(async (req) => {
     const orderPublic = { ...orderRest, items }
 
     console.log(
-      `[${ts()}] ✓ order-detail · email=${session.email} · order=${order.order_number} · items=${items.length}`,
+      `[${ts()}] ✓ order-detail · email=${maskEmail(session.email)} · order=${order.order_number} · items=${items.length}`,
     )
     return jsonOk({ order: orderPublic, invoice }, req)
   } catch (err) {

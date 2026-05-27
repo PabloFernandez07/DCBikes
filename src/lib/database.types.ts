@@ -56,6 +56,10 @@ export interface Database {
           model_group: string | null
           weight_grams: number | null
           ean: string | null
+          // ── 0039_products_safety_compliance ──
+          ce_marking: boolean
+          safety_standards: string[]
+          manufacturer_eu: string | null
         }
         Insert: {
           id?: string
@@ -79,6 +83,10 @@ export interface Database {
           model_group?: string | null
           weight_grams?: number | null
           ean?: string | null
+          // ── 0039_products_safety_compliance ──
+          ce_marking?: boolean
+          safety_standards?: string[]
+          manufacturer_eu?: string | null
         }
         Update: {
           id?: string
@@ -102,6 +110,10 @@ export interface Database {
           model_group?: string | null
           weight_grams?: number | null
           ean?: string | null
+          // ── 0039_products_safety_compliance ──
+          ce_marking?: boolean
+          safety_standards?: string[]
+          manufacturer_eu?: string | null
         }
         Relationships: [
           {

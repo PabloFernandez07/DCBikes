@@ -46,6 +46,20 @@ interface NotificationOutcome {
   rawPayload: Record<string, unknown>
   signatureValid: boolean | null
   source: 'redsys' | 'mock'
+  /** B-14: sha256 hex de Ds_MerchantParameters para anti-replay. null en mock. */
+  merchantParamsHash: string | null
+}
+
+// B-14: sha256 hex helper para anti-replay de notificaciones Redsys.
+async function sha256Hex(input: string): Promise<string> {
+  const buf = new TextEncoder().encode(input)
+  const digest = await crypto.subtle.digest('SHA-256', buf)
+  const bytes = new Uint8Array(digest)
+  let out = ''
+  for (let i = 0; i < bytes.length; i++) {
+    out += bytes[i].toString(16).padStart(2, '0')
+  }
+  return out
 }
 
 function isOkResponseCode(code: string | null): boolean {
@@ -146,6 +160,7 @@ async function parsePayload(
       rawPayload: { ...mockBody, simulated: true },
       signatureValid: null,
       source: 'mock',
+      merchantParamsHash: null,
     }
   }
 
@@ -181,6 +196,9 @@ async function parsePayload(
   const authCode = String(params['Ds_AuthorisationCode'] ?? params['DS_AUTHORISATIONCODE'] ?? '') || null
   const redsysOrderId = String(params['Ds_Order'] ?? params['DS_ORDER'] ?? '') || null
 
+  // B-14: hash determinista del payload firmado para anti-replay.
+  const merchantParamsHash = await sha256Hex(Ds_MerchantParameters)
+
   return {
     authorized: valid && isOkResponseCode(responseCode),
     responseCode,
@@ -190,6 +208,7 @@ async function parsePayload(
     rawPayload: params,
     signatureValid: valid,
     source: 'redsys',
+    merchantParamsHash,
   }
 }
 
@@ -229,6 +248,39 @@ serve(async (req) => {
       return jsonError('payload inválido', 400, req)
     }
 
+    // B-14: anti-replay. SOLO se aplica a callbacks Redsys con firma válida.
+    // Mock se exime (el simulador interno reusa el mismo order_id sin payload
+    // firmado). Si el hash ya existe → callback duplicado → 200 silencioso.
+    if (
+      outcome.source === 'redsys' &&
+      outcome.signatureValid === true &&
+      outcome.merchantParamsHash
+    ) {
+      const { error: dedupErr } = await supabase
+        .from('redsys_notification_dedup')
+        .insert({
+          merchant_params_hash: outcome.merchantParamsHash,
+          ds_order: outcome.redsysOrderId,
+          ds_response: outcome.responseCode,
+        })
+      if (dedupErr) {
+        // Postgres unique violation → callback ya procesado previamente.
+        // (code 23505 / status 409). Cualquier otro error se loguea pero
+        // se permite continuar para no romper Redsys.
+        const code = (dedupErr as { code?: string }).code
+        if (code === '23505') {
+          console.log(
+            `[${ts()}] duplicate callback ignored · hash=${outcome.merchantParamsHash.slice(0, 12)}...`,
+          )
+          return jsonOk({ ok: true, duplicate: true }, req)
+        }
+        console.warn(
+          `[${ts()}] redsys_notification_dedup insert error (non-blocking):`,
+          dedupErr.message,
+        )
+      }
+    }
+
     if (outcome.source === 'redsys' && outcome.signatureValid === false) {
       // Log defensivo: aún así guardamos el intento para auditoría.
       await supabase.from('payments_log').insert({
@@ -246,19 +298,21 @@ serve(async (req) => {
     }
 
     // 2. Localizar pedido.
-    let order: { id: string; status: string; customer_email: string; order_number: string } | null = null
+    let order:
+      | { id: string; status: string; customer_email: string; order_number: string; total_cents: number }
+      | null = null
 
     if (outcome.source === 'mock' && orderIdFromMock) {
       const { data } = await supabase
         .from('orders')
-        .select('id, status, customer_email, order_number')
+        .select('id, status, customer_email, order_number, total_cents')
         .eq('id', orderIdFromMock)
         .maybeSingle()
       order = data ?? null
     } else if (outcome.redsysOrderId) {
       const { data } = await supabase
         .from('orders')
-        .select('id, status, customer_email, order_number')
+        .select('id, status, customer_email, order_number, total_cents')
         .eq('payment_pre_auth_id', outcome.redsysOrderId)
         .maybeSingle()
       order = data ?? null
@@ -295,6 +349,38 @@ serve(async (req) => {
         signature_valid: outcome.signatureValid,
       })
       return jsonOk({ ok: true, status: order.status }, req)
+    }
+
+    // B-13 (S2-B1): validar Ds_Amount contra order.total_cents.
+    // Bloquea ataques de modificación del importe (atacante intercepta el form
+    // o forja un callback con un Ds_Amount inferior al real). Aplicamos solo a
+    // callbacks Redsys con firma válida — el mock no envía Ds_Amount. Ya hemos
+    // pasado verificación de firma y deduplicación; cualquier mismatch aquí
+    // representa fraude o bug grave.
+    if (outcome.source === 'redsys' && outcome.signatureValid === true) {
+      const rawAmount = outcome.rawPayload['Ds_Amount'] ?? outcome.rawPayload['DS_AMOUNT']
+      const dsAmountCents = parseInt(String(rawAmount ?? '0'), 10)
+      if (!Number.isFinite(dsAmountCents) || dsAmountCents !== order.total_cents) {
+        console.error(
+          `[${ts()}] ✗ redsys-notification AMOUNT MISMATCH · order=${order.order_number} · expected=${order.total_cents}c · received=${dsAmountCents}c`,
+        )
+        await supabase.from('payments_log').insert({
+          order_id: order.id,
+          payment_provider: 'redsys',
+          operation_type: 'notification',
+          redsys_response_code: outcome.responseCode,
+          redsys_authorization_code: outcome.authCode,
+          redsys_transaction_type: String(outcome.rawPayload['Ds_TransactionType'] ?? ''),
+          raw_payload: sanitizeRedsysPayload({
+            ...outcome.rawPayload,
+            warning: 'amount_mismatch',
+            expected_cents: order.total_cents,
+            received_cents: dsAmountCents,
+          }),
+          signature_valid: true,
+        })
+        return jsonError('amount mismatch', 400, req)
+      }
     }
 
     // 4. Decidir nuevo status.

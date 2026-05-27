@@ -348,7 +348,7 @@ export default function OrderConfirmation() {
             </li>
             <li>
               <strong className="text-[var(--color-cream-dim)]">Garantía legal:</strong>{' '}
-              3 años desde la entrega (art. 120 RDL 1/2007).
+              3 años desde la entrega (arts. 114–127 RDL 1/2007).
             </li>
             <li>
               <strong className="text-[var(--color-cream-dim)]">Resolución de litigios:</strong>{' '}

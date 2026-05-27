@@ -85,6 +85,7 @@ export default function CookiePolicy() {
   const storeAddress = useStoreAddress()
 
   const resetConsent = () => {
+    if (!confirm('Esto recargará la página y borrará tu preferencia de cookies. ¿Continuar?')) return
     localStorage.removeItem('dcbikes_cookie_consent')
     window.location.reload()
   }

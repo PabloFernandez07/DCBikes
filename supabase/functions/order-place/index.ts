@@ -22,7 +22,7 @@
 // lo mueva a 'authorized' (o 'payment_failed').
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 import {
   CORS_HEADERS,
@@ -217,8 +217,9 @@ function validateBody(raw: unknown): { ok: true; body: InputBody } | { ok: false
   }
 }
 
-/* ─────────────── Stock con UPDATE atómico ─────────────── */
+/* ─────────────── Stock snapshot ─────────────── */
 
+// Snapshot que viaja a order_items tras llamar a reserve_stock RPC.
 interface StockedProduct {
   id: string
   name: string
@@ -227,90 +228,6 @@ interface StockedProduct {
   retail_price: number
   is_purchasable: boolean
   decremented: number
-}
-
-/**
- * Para cada item: UPDATE products SET stock = stock - qty
- *                  WHERE id=? AND is_purchasable=true AND active=true AND stock>=qty
- *                  RETURNING *.
- * Si alguno falla → revertir los anteriores (re-incrementar).
- */
-async function reserveStock(
-  supabase: SupabaseClient,
-  items: InputItem[],
-): Promise<
-  | { ok: true; products: StockedProduct[] }
-  | { ok: false; error: string; conflictProductId?: string }
-> {
-  const reserved: StockedProduct[] = []
-  for (const it of items) {
-    // Implementación: leer producto, validar, hacer UPDATE con condición.
-    // Usamos RPC-style con SQL via .from().update() y filtro stock>=qty.
-    const { data: prod, error: pErr } = await supabase
-      .from('products')
-      .select('id, name, sku, size_label, retail_price, is_purchasable, active, stock')
-      .eq('id', it.product_id)
-      .maybeSingle()
-
-    if (pErr || !prod) {
-      await rollbackReserved(supabase, reserved)
-      return { ok: false, error: `producto no encontrado: ${it.product_id}`, conflictProductId: it.product_id }
-    }
-    if (!prod.is_purchasable || !prod.active) {
-      await rollbackReserved(supabase, reserved)
-      return { ok: false, error: `producto no disponible para compra online: ${prod.name}`, conflictProductId: prod.id }
-    }
-    if ((prod.stock ?? 0) < it.quantity) {
-      await rollbackReserved(supabase, reserved)
-      return { ok: false, error: `sin stock suficiente: ${prod.name}`, conflictProductId: prod.id }
-    }
-
-    // UPDATE atómico con condición.
-    const { data: updRows, error: uErr } = await supabase
-      .from('products')
-      .update({ stock: (prod.stock ?? 0) - it.quantity })
-      .eq('id', it.product_id)
-      .eq('stock', prod.stock) // optimistic concurrency: solo si el stock NO cambió
-      .select('id, stock')
-
-    if (uErr || !updRows || updRows.length === 0) {
-      await rollbackReserved(supabase, reserved)
-      return {
-        ok: false,
-        error: `conflicto de stock (otro pedido en curso): ${prod.name}. Reintenta.`,
-        conflictProductId: prod.id,
-      }
-    }
-
-    reserved.push({
-      id: prod.id,
-      name: prod.name,
-      sku: prod.sku,
-      size_label: prod.size_label,
-      retail_price: Number(prod.retail_price),
-      is_purchasable: prod.is_purchasable,
-      decremented: it.quantity,
-    })
-  }
-  return { ok: true, products: reserved }
-}
-
-async function rollbackReserved(
-  supabase: SupabaseClient,
-  reserved: StockedProduct[],
-): Promise<void> {
-  for (const r of reserved) {
-    const { data: cur } = await supabase
-      .from('products')
-      .select('stock')
-      .eq('id', r.id)
-      .maybeSingle()
-    if (!cur) continue
-    await supabase
-      .from('products')
-      .update({ stock: (cur.stock ?? 0) + r.decremented })
-      .eq('id', r.id)
-  }
 }
 
 /* ─────────────── Cálculo totales ─────────────── */
@@ -427,12 +344,58 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
-    // 1. Reservar stock.
-    const stockRes = await reserveStock(supabase, body.items)
-    if (!stockRes.ok) {
-      return jsonError(stockRes.error, 409, req)
+    // 1. Reservar stock — RPC atómica (B-07 / S2-B2 V5).
+    // reserve_stock(p_items jsonb) hace UPDATE ... WHERE stock >= qty por
+    // cada item dentro de una sola transacción del lado Postgres. Si algún
+    // item no tiene stock → raise → toda la operación se revierte.
+    //
+    // Aún necesitamos cargar los products tras reservar para conocer
+    // retail_price/name/sku/size_label (snapshot en order_items).
+    const reserveItems = body.items.map((it) => ({ product_id: it.product_id, qty: it.quantity }))
+    const { error: reserveError } = await supabase.rpc('reserve_stock', { p_items: reserveItems })
+    if (reserveError) {
+      const msg = reserveError.message || ''
+      if (msg.includes('insufficient stock')) {
+        return jsonError('Sin stock para uno o más productos', 409, req)
+      }
+      console.error(`[${ts()}] reserve_stock error:`, msg)
+      return jsonError('error reservando stock', 500, req)
     }
-    const products = stockRes.products
+
+    // Cargar productos reservados para el snapshot de order_items.
+    // Si alguno desapareció entre la reserva y este SELECT (delete físico),
+    // restauramos stock y abortamos.
+    const productIds = body.items.map((it) => it.product_id)
+    const { data: prodRows, error: prodErr } = await supabase
+      .from('products')
+      .select('id, name, sku, size_label, retail_price, is_purchasable, active')
+      .in('id', productIds)
+    if (prodErr || !prodRows || prodRows.length !== productIds.length) {
+      await supabase.rpc('restore_stock', { p_items: reserveItems })
+      console.error(`[${ts()}] product fetch post-reserve error:`, prodErr?.message)
+      return jsonError('producto no encontrado', 409, req)
+    }
+    const prodById = new Map(prodRows.map((p) => [p.id, p]))
+    const products: StockedProduct[] = body.items.map((it) => {
+      const p = prodById.get(it.product_id)!
+      return {
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        size_label: p.size_label,
+        retail_price: Number(p.retail_price),
+        is_purchasable: p.is_purchasable,
+        decremented: it.quantity,
+      }
+    })
+    // Defensa adicional: si algún producto vino marcado no-purchasable o
+    // inactivo (raza con admin que lo desactivó), abortar.
+    for (const p of products) {
+      if (!p.is_purchasable) {
+        await supabase.rpc('restore_stock', { p_items: reserveItems })
+        return jsonError(`producto no disponible para compra online: ${p.name}`, 409, req)
+      }
+    }
 
     // 2. Calcular totales.
     const settings = await getSettings(supabase, [
@@ -443,6 +406,7 @@ serve(async (req) => {
       'legal_company_name',
       'legal_company_cif',
       'legal_company_address',
+      'require_payment_otp',
     ])
 
     // Gate fiscal (L-02 / C-02): bloquear pedidos si los datos legales no están
@@ -463,7 +427,7 @@ serve(async (req) => {
       p_year: year,
     })
     if (numErr || nextNumData == null) {
-      await rollbackReserved(supabase, products)
+      await supabase.rpc('restore_stock', { p_items: reserveItems })
       console.error(`[${ts()}] next_order_number error:`, numErr?.message)
       return jsonError('no se pudo reservar número de pedido', 500, req)
     }
@@ -475,7 +439,7 @@ serve(async (req) => {
     try {
       config = await loadRedsysConfig(supabase)
     } catch (err) {
-      await rollbackReserved(supabase, products)
+      await supabase.rpc('restore_stock', { p_items: reserveItems })
       console.error(`[${ts()}] redsys-config:`, String(err))
       return jsonError(String(err), 500, req)
     }
@@ -522,7 +486,7 @@ serve(async (req) => {
       .single<{ id: string }>()
 
     if (insErr || !insertedOrder) {
-      await rollbackReserved(supabase, products)
+      await supabase.rpc('restore_stock', { p_items: reserveItems })
       console.error(`[${ts()}] insert order error:`, insErr?.message)
       return jsonError('no se pudo crear el pedido', 500, req)
     }
@@ -549,7 +513,7 @@ serve(async (req) => {
       // Best-effort cleanup. Stock ya descontado se queda comprometido al
       // pedido pending; el cron de auto-cancel lo liberará vía rechazo.
       await supabase.from('orders').delete().eq('id', orderId)
-      await rollbackReserved(supabase, products)
+      await supabase.rpc('restore_stock', { p_items: reserveItems })
       return jsonError('no se pudieron guardar las líneas', 500, req)
     }
 
@@ -603,6 +567,37 @@ serve(async (req) => {
 
     // 9. Public access token.
     const publicToken = await generateOrderToken(orderId, body.customer.email)
+
+    // 9.b. OTP gate (X-17 / Sprint 2 V5).
+    //
+    // Si `require_payment_otp` está activo, el cliente debe introducir un
+    // código de 6 dígitos enviado por email antes de ser redirigido a
+    // Redsys. Aquí solo decidimos a dónde mandar al frontend: la lógica
+    // de generación/validación del OTP la implementa el agente S2-X2-OTP
+    // (edge function payment-otp-verify, página React, migración 0040).
+    //
+    // El valor del setting puede llegar como boolean, string 'true'/'false'
+    // o número — aceptamos las tres formas (idéntico patrón a otros gates
+    // booleanos del proyecto).
+    const otpRaw = settings.require_payment_otp
+    const requireOtp =
+      otpRaw === true ||
+      otpRaw === 1 ||
+      (typeof otpRaw === 'string' && otpRaw.trim().toLowerCase() === 'true')
+
+    if (requireOtp) {
+      console.log(`[${ts()}] ✓ order-place ${config.mode} · ${orderNumber} · OTP requerido — redirigiendo a /pedido/${orderId}/otp`)
+      return jsonOk({
+        order_id: orderId,
+        order_number: orderNumber,
+        public_token: publicToken,
+        payment: {
+          mode: 'otp_required',
+          redirect_to: `/pedido/${orderId}/otp?token=${encodeURIComponent(publicToken)}`,
+          redsys_order_id: redsysOrderId,
+        },
+      }, req)
+    }
 
     // 10. Generar contrato PDF (soporte duradero L-05) — non-blocking.
     //     Si falla, el pedido ya existe y el email se enviará igualmente.

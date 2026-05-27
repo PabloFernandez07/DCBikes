@@ -201,6 +201,9 @@ export function Footer() {
             <Link to="/aviso-legal" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
               Aviso legal
             </Link>
+            <Link to="/aviso-legal#accesibilidad" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
+              Accesibilidad
+            </Link>
             <Link to="/cookies" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">
               Cookies
             </Link>

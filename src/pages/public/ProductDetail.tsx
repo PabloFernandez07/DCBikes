@@ -325,6 +325,47 @@ export default function ProductDetail() {
             </div>
           )}
 
+          {/* Conformidad y seguridad (X-04 · Reg. UE 2023/988) */}
+          {(parentProduct.ce_marking ||
+            (parentProduct.safety_standards && parentProduct.safety_standards.length > 0) ||
+            parentProduct.manufacturer_eu) && (
+            <section
+              aria-labelledby="conformidad-seguridad-heading"
+              className="border-t border-[var(--color-card)] pt-6"
+            >
+              <h3
+                id="conformidad-seguridad-heading"
+                className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-3"
+              >
+                Conformidad y seguridad
+              </h3>
+              <ul className="space-y-2 text-[var(--color-mid)] font-[var(--font-body)] text-sm leading-relaxed">
+                {parentProduct.ce_marking && (
+                  <li>
+                    Marcado <strong className="text-[var(--color-cream)]">CE</strong> conforme al
+                    Reglamento (UE) 2023/988 sobre seguridad general de los productos.
+                  </li>
+                )}
+                {parentProduct.safety_standards && parentProduct.safety_standards.length > 0 && (
+                  <li>
+                    Normas técnicas aplicables:{" "}
+                    <span className="text-[var(--color-cream)]">
+                      {parentProduct.safety_standards.join(", ")}
+                    </span>
+                  </li>
+                )}
+                {parentProduct.manufacturer_eu && (
+                  <li>
+                    Fabricante / Representante UE:{" "}
+                    <span className="text-[var(--color-cream)]">
+                      {parentProduct.manufacturer_eu}
+                    </span>
+                  </li>
+                )}
+              </ul>
+            </section>
+          )}
+
           {/* CTA */}
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             {isPurchasable && inStock ? (

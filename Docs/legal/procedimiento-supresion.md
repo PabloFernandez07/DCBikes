@@ -224,7 +224,20 @@ Si en el futuro se implementa una sección "Solicitudes RGPD" en `/admin/...`, e
 
 ---
 
-## 6. Referencias
+## 6. Backups y plazos de recuperación temporal (PITR)
+
+Supabase mantiene backups automáticos del proyecto con una ventana de Point In Time Recovery (PITR) de 7 días (plan Pro) o más según el plan contratado. Esto significa que aunque ejecutemos un DELETE / UPDATE de anonimización inmediatamente al recibir una solicitud de supresión, los datos originales pueden permanecer recuperables dentro de la ventana PITR.
+
+Implicaciones para el interesado:
+- La anonimización ESTRUCTURAL (en la BD viva) se aplica en plazo máximo de 1 mes (RGPD art. 12.3).
+- La eliminación COMPLETA incluyendo backups requiere esperar al ciclo de retención de backups (7 días con plan Pro, ampliable).
+- En casos excepcionales (orden judicial, retirada de denuncia explícita) podemos solicitar a Supabase la purga forzada del PITR, pero NO está incluido en el procedimiento estándar.
+
+Esta cláusula se ajusta a la posición de la AEPD (Resolución 02316/2021 y similares) sobre el deber de informar al interesado del alcance temporal real del derecho de supresión cuando intervienen sistemas de backup automatizados.
+
+---
+
+## 7. Referencias
 
 - Reglamento (UE) 2016/679 (RGPD), arts. 12, 17, 18, 19.
 - Ley Orgánica 3/2018 (LOPDGDD).

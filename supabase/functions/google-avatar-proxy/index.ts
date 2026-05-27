@@ -1,4 +1,4 @@
-import { CORS_HEADERS, jsonError, corsPreflightResponse } from '../_shared/email-utils.ts'
+import { buildCorsHeaders, jsonError, corsPreflightResponse } from '../_shared/email-utils.ts'
 
 const ALLOWED_HOSTS = new Set([
   'lh3.googleusercontent.com',
@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
   return new Response(upstream.body, {
     status: 200,
     headers: {
-      ...CORS_HEADERS,
+      ...buildCorsHeaders(req),
       'Content-Type': contentType,
       'Cache-Control': 'public, max-age=86400',
     },

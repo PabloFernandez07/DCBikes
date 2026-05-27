@@ -350,7 +350,7 @@ export default function TermsOfSale() {
             <p>
               Todos los productos comercializados disponen de la{' '}
               <strong className="text-[var(--color-cream)]">garantía legal de 3 años</strong> por falta de
-              conformidad establecida en los artículos 114 y siguientes del RDL 1/2007 (texto reformado por el RDL
+              conformidad establecida en los arts. 114–127 RDL 1/2007 (texto reformado por el RDL
               7/2021, vigente desde el 1 de enero de 2022).
             </p>
             <p>

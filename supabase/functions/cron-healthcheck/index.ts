@@ -18,14 +18,8 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsPreflightResponse } from '../_shared/email-utils.ts'
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-}
+import { buildCorsHeaders, corsPreflightResponse, jsonError } from '../_shared/email-utils.ts'
+import { timingSafeEq } from '../_shared/security.ts'
 
 interface JobThreshold {
   jobname: string
@@ -43,7 +37,10 @@ function authorize(req: Request): boolean {
   const expected = Deno.env.get('CRON_SECRET') ?? ''
   if (!expected) return false
   const auth = req.headers.get('authorization') ?? ''
-  return auth === `Bearer ${expected}`
+  const prefix = 'Bearer '
+  if (!auth.startsWith(prefix)) return false
+  const token = auth.slice(prefix.length)
+  return timingSafeEq(token, expected)
 }
 
 async function lastRunFor(
@@ -66,10 +63,7 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   if (!authorize(req)) {
-    return new Response(JSON.stringify({ ok: false, error: 'unauthorized' }), {
-      status: 401,
-      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-    })
+    return jsonError('unauthorized', 401, req)
   }
 
   try {
@@ -106,19 +100,13 @@ serve(async (req) => {
     return new Response(JSON.stringify({ ok: allOk, jobs: results }), {
       status: allOk ? 200 : 500,
       headers: {
-        ...CORS_HEADERS,
+        ...buildCorsHeaders(req),
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store',
       },
     })
   } catch (err) {
     console.error(`[${ts()}] ✗ cron-healthcheck fatal:`, String(err))
-    return new Response(
-      JSON.stringify({ ok: false, error: String(err) }),
-      {
-        status: 500,
-        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-      },
-    )
+    return jsonError(String(err), 500, req)
   }
 })

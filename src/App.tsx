@@ -15,6 +15,7 @@ const Cart         = lazy(() => import("@/pages/public/Cart"));
 const Checkout     = lazy(() => import("@/pages/public/Checkout"));
 const RedsysRedirecting = lazy(() => import("@/pages/public/RedsysRedirecting"));
 const MockRedsysPayment = lazy(() => import("@/pages/public/MockRedsysPayment"));
+const PaymentOtp = lazy(() => import("@/pages/public/PaymentOtp"));
 const OrderConfirmation = lazy(() => import("@/pages/public/OrderConfirmation"));
 const PaymentError = lazy(() => import("@/pages/public/PaymentError"));
 const CookiePolicy = lazy(() => import("@/pages/public/CookiePolicy"));
@@ -241,6 +242,14 @@ export default function App() {
           element={
             <PublicLayout>
               <RedsysRedirecting />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/pedido/:orderId/otp"
+          element={
+            <PublicLayout>
+              <PaymentOtp />
             </PublicLayout>
           }
         />

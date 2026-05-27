@@ -87,8 +87,9 @@ export function CookieBanner() {
   useEffect(() => {
     const stored = readStored()
     if (!stored) {
-      const timer = setTimeout(() => setVisible(true), 800)
-      return () => clearTimeout(timer)
+      // F-10 (V5): AEPD exige que el banner aparezca de forma inmediata, sin delays
+      // que sugieran "consentimiento ya otorgado" mientras se navega.
+      setVisible(true)
     }
   }, [])
 
@@ -177,11 +178,13 @@ export function CookieBanner() {
             >
               Aceptar todas
             </Button>
+            {/* F-11 (V5): AEPD exige que "Configurar" tenga el mismo peso visual que
+                "Aceptar todas" y "Rechazar todas" (variant equivalente, no ghost). */}
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={() => setExpanded(v => !v)}
-              className="text-xs font-[var(--font-cond)] tracking-wide"
+              className="flex-1 sm:flex-none text-xs font-[var(--font-cond)] tracking-wide"
               aria-expanded={expanded}
             >
               Configurar

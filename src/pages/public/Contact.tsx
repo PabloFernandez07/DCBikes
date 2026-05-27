@@ -7,6 +7,7 @@ import { SEO } from '@/components/layout/SEO'
 import { useSchedule } from '@/hooks/useSchedule'
 import { useCookieConsent, setThirdPartyConsent } from '@/components/layout/CookieBanner'
 import { STORE_ADDRESS_FALLBACK } from '@/hooks/useStoreAddress'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return (
@@ -57,6 +58,7 @@ export default function Contact() {
   const cookieConsent = useCookieConsent()
   const [mapsEnabled, setMapsEnabled] = useState(cookieConsent?.thirdParty ?? false)
   const pageRef = useReveal()
+  const prefersReducedMotion = useReducedMotion()
 
   useEffect(() => {
     supabase
@@ -417,7 +419,8 @@ export default function Contact() {
           ))}
         </div>
 
-        {/* Grid de vídeos */}
+        {/* Grid de vídeos — F-08 (V5): controls obligatorio (WCAG 2.1.1) y
+             autoplay sólo cuando NO se haya solicitado prefers-reduced-motion. */}
         <div className="rv mt-6 grid grid-cols-2 md:grid-cols-3 gap-3">
           {[1, 2, 3, 4, 5, 6].map((n) => (
             <video
@@ -425,10 +428,12 @@ export default function Contact() {
               src={`/store/store-video-${n}.mp4`}
               className="w-full rounded-xl object-cover"
               style={{ aspectRatio: '9/16', maxHeight: '520px' }}
-              autoPlay
+              controls
+              autoPlay={!prefersReducedMotion}
               muted
-              loop
+              loop={!prefersReducedMotion}
               playsInline
+              preload="metadata"
             />
           ))}
         </div>

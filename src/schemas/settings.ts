@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isValidSpanishId } from '@/lib/spanish-id'
 
 /**
  * Schemas Zod para las nuevas secciones de configuración del admin (Fase J):
@@ -62,9 +63,6 @@ export type EcommerceSettingsValues = z.infer<typeof ecommerceSettingsSchema>
 // Facturación
 // ─────────────────────────────────────────────────────────────
 
-// CIF español (B12345678) o NIF persona física (12345678X). Acepta ambos.
-const cifOrNifRegex = /^[A-Z]\d{8}$|^\d{8}[A-Z]$/
-
 export const invoiceSettingsSchema = z.object({
   legal_company_name: z.string().min(1, 'Razón social obligatoria').max(120),
 
@@ -72,7 +70,10 @@ export const invoiceSettingsSchema = z.object({
     .string()
     .trim()
     .toUpperCase()
-    .regex(cifOrNifRegex, 'CIF (B12345678) o NIF (12345678X) no válido'),
+    .refine(
+      v => isValidSpanishId(v),
+      'NIF/CIF/NIE inválido (control algorítmico fallido)',
+    ),
 
   legal_company_address: z
     .string()

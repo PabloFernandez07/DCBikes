@@ -272,7 +272,7 @@ export default function Returns() {
             <p>
               Si el producto presenta una falta de conformidad, tendrás derecho a la puesta en conformidad mediante
               reparación o sustitución, a la reducción del precio o, en su caso, a la resolución del contrato
-              conforme a los artículos 117 y siguientes del RDL 1/2007.
+              conforme a los arts. 114–127 RDL 1/2007.
             </p>
             <p>
               Para hacer efectiva la garantía, contacta con nosotros en{' '}

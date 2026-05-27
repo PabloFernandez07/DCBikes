@@ -32,6 +32,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function MyOrdersRequestAccess() {
   const [email, setEmail] = useState('')
+  const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -46,6 +47,12 @@ export default function MyOrdersRequestAccess() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (submitting || !emailValid) return
+    // F-07 (V5): bloqueo defensivo — la validación visual se hace mediante disabled,
+    // pero conservamos check inline por si alguien manipula el DOM.
+    if (!privacyAccepted) {
+      setErrorMsg('Debes confirmar que has leído la Política de Privacidad para continuar.')
+      return
+    }
     setSubmitting(true)
     setErrorMsg(null)
     try {
@@ -167,13 +174,39 @@ export default function MyOrdersRequestAccess() {
                 </p>
               </div>
 
+              {/* F-07 (V5): checkbox de privacidad obligatorio.
+                  Base legal art. 6.1.b RGPD (ejecución del contrato de compraventa). */}
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={privacyAccepted}
+                  onChange={e => setPrivacyAccepted(e.target.checked)}
+                  required
+                  className="mt-0.5 w-4 h-4 shrink-0 accent-[var(--color-lavender)] cursor-pointer"
+                  aria-describedby="privacy-help"
+                />
+                <span
+                  id="privacy-help"
+                  className="text-xs text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed"
+                >
+                  He leído la{' '}
+                  <Link
+                    to="/privacidad"
+                    className="text-[var(--color-lavender)] underline underline-offset-2 hover:no-underline"
+                  >
+                    Política de Privacidad
+                  </Link>
+                  . Mis datos se tratan en base al art. 6.1.b RGPD (ejecución de la relación contractual) para enviarme el enlace de acceso a mis pedidos.
+                </span>
+              </label>
+
               {errorMsg && (
-                <p className="text-sm text-red-300 font-[var(--font-body)]">{errorMsg}</p>
+                <p className="text-sm text-red-300 font-[var(--font-body)]" role="alert">{errorMsg}</p>
               )}
 
               <button
                 type="submit"
-                disabled={!emailValid || submitting}
+                disabled={!emailValid || !privacyAccepted || submitting}
                 className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--color-lavender)] text-[var(--color-ink)] font-[var(--font-cond)] font-semibold tracking-widest hover:brightness-110 active:brightness-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (

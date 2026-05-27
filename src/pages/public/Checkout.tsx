@@ -712,8 +712,16 @@ export default function Checkout() {
             </div>
           </section>
 
-          {/* Footer formulario móvil */}
+          {/* Footer formulario móvil — total duplicado para no perderlo de vista */}
           <div className="lg:hidden">
+            <div className="flex items-center justify-between gap-3 mb-3 p-3 rounded-lg bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+              <span className="text-sm font-[var(--font-cond)] tracking-wide text-[var(--color-cream-dim)]">
+                Total a pagar
+              </span>
+              <span className="font-[var(--font-display)] text-2xl text-[var(--color-lavender)] tracking-wide tabular-nums">
+                {fmtEuros(totalCents)} €
+              </span>
+            </div>
             <Button
               type="submit"
               variant="primary"

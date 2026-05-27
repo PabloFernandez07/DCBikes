@@ -39,21 +39,20 @@ export function corsPreflightResponse(req: Request): Response {
 }
 
 /**
- * @deprecated Prefer buildCorsHeaders(req) for new code. Wildcard fallback
- * para callers legacy sin Request en scope (avatar proxy binary response).
+ * @deprecated Eliminado en S2-B1 (B-09). Usar siempre `buildCorsHeaders(req)`
+ * en respuestas con Request disponible. Las funciones que devuelvan respuestas
+ * sin Request en scope deben construir CORS estrictos a mano — wildcard '*' ya
+ * no es aceptable. Mantenido como objeto vacío para evitar romper imports
+ * legacy hasta que se completen Sprint 2/3.
  */
-export const CORS_HEADERS: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+export const CORS_HEADERS: Record<string, string> = {}
 
 /**
- * Returns a 200 JSON response. Pass `req` to scope CORS to the allowlist origin;
- * omit only when no Request is available (falls back to wildcard CORS_HEADERS).
+ * Returns a 200 JSON response. Always pass `req` — sin él la respuesta NO
+ * incluirá cabeceras CORS (B-09: prohibido wildcard '*').
  */
 export function jsonOk(data: Record<string, unknown>, req?: Request): Response {
-  const corsHeaders = req ? buildCorsHeaders(req) : CORS_HEADERS
+  const corsHeaders = req ? buildCorsHeaders(req) : {}
   return new Response(JSON.stringify({ ok: true, ...data }), {
     status: 200,
     headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -61,11 +60,11 @@ export function jsonOk(data: Record<string, unknown>, req?: Request): Response {
 }
 
 /**
- * Returns an error JSON response. Pass `req` to scope CORS to the allowlist origin;
- * omit only when no Request is available (falls back to wildcard CORS_HEADERS).
+ * Returns an error JSON response. Always pass `req` — sin él la respuesta NO
+ * incluirá cabeceras CORS (B-09: prohibido wildcard '*').
  */
 export function jsonError(message: string, status = 500, req?: Request): Response {
-  const corsHeaders = req ? buildCorsHeaders(req) : CORS_HEADERS
+  const corsHeaders = req ? buildCorsHeaders(req) : {}
   return new Response(JSON.stringify({ ok: false, error: message }), {
     status,
     headers: { 'Content-Type': 'application/json', ...corsHeaders },

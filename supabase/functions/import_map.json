@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "std/http/server.ts": "https://deno.land/std@0.224.0/http/server.ts",
+    "std/encoding/base64.ts": "https://deno.land/std@0.224.0/encoding/base64.ts",
+    "std/encoding/hex.ts": "https://deno.land/std@0.224.0/encoding/hex.ts",
+    "std/crypto/mod.ts": "https://deno.land/std@0.224.0/crypto/mod.ts",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.4"
+  },
+  "scopes": {}
+}

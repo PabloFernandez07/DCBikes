@@ -146,7 +146,11 @@ function ReviewCarousel({ reviews }: { reviews: import("@/hooks/useGoogleReviews
           msOverflowStyle: "none",
         } as React.CSSProperties}
       >
-        {reviews.map((review, i) => (
+        {reviews.map((review, i) => {
+          const reportSubject = encodeURIComponent(
+            `DSA notice — reseña ${review.author_name} (#${i + 1})`,
+          );
+          return (
           <div
             key={i}
             className="group relative p-8 rounded-2xl bg-[var(--color-card)] border border-[var(--color-card-hover)] hover:border-[rgba(196,162,207,0.2)] transition-all duration-500 overflow-hidden flex flex-col flex-shrink-0"
@@ -197,9 +201,17 @@ function ReviewCarousel({ reviews }: { reviews: import("@/hooks/useGoogleReviews
                   </p>
                 </div>
               </div>
+              <a
+                href={`mailto:dsa@dcbikescantabria.es?subject=${reportSubject}`}
+                className="mt-4 inline-block text-[10px] uppercase tracking-widest text-[var(--color-mid)] hover:text-[var(--color-lavender)] underline underline-offset-4 transition-colors self-start"
+                aria-label={`Reportar reseña de ${review.author_name} conforme al Reglamento (UE) 2022/2065 (DSA)`}
+              >
+                Reportar esta reseña
+              </a>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
       </div>
 
@@ -759,6 +771,24 @@ export default function Home() {
               </div>
               <ChevronRight size={18} className="ml-2 text-[var(--color-mid)] group-hover:text-[var(--color-lavender)] transition-colors" />
             </a>
+          </div>
+
+          {/* Leyenda informativa DSA (Reg. UE 2022/2065) — X-02 / X-11 */}
+          <div className="rv mb-8 max-w-3xl">
+            <p className="font-[var(--font-cond)] text-xs text-[var(--color-mid)] leading-relaxed tracking-wide">
+              Reseñas reales publicadas por nuestros clientes en Google Maps.
+              DC Bikes Cantabria no las modera ni edita; reflejan opiniones
+              independientes de sus autores. Si consideras que una reseña
+              vulnera la ley o las políticas de la plataforma, puedes
+              comunicárnoslo escribiendo a{" "}
+              <a
+                href="mailto:dsa@dcbikescantabria.es?subject=DSA%20notice%20%E2%80%94%20rese%C3%B1a"
+                className="underline underline-offset-2 hover:text-[var(--color-lavender)] transition-colors"
+              >
+                dsa@dcbikescantabria.es
+              </a>{" "}
+              conforme al art. 16 del Reglamento (UE) 2022/2065.
+            </p>
           </div>
 
           {/* Skeleton de carga */}
