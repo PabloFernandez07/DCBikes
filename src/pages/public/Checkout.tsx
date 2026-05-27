@@ -147,7 +147,7 @@ export default function Checkout() {
         : null,
       consents: {
         accepted_terms: data.accepted_terms,
-        accepted_privacy: data.accepted_privacy,
+        read_privacy: data.read_privacy,
       },
       terms_version: TERMS_VERSION,
       privacy_version: PRIVACY_VERSION,
@@ -653,28 +653,40 @@ export default function Checkout() {
                 </p>
               )}
 
+              {/*
+                RGPD art. 6.1.b: el tratamiento de tus datos para procesar el
+                pedido se basa en la ejecución del contrato, no en el
+                consentimiento. Por eso INFORMAMOS del tratamiento (párrafo) y
+                solo pedimos que CONFIRMES haber leído la Política de
+                Privacidad. Pedir "consentimiento" para algo necesario al
+                contrato es un dark pattern sancionable por la AEPD.
+              */}
+              <p className="text-xs font-[var(--font-body)] text-[var(--color-mid)] leading-relaxed pl-7">
+                Tus datos personales se tratan para procesar tu pedido (RGPD
+                art. 6.1.b — ejecución del contrato). Más detalle en nuestra{' '}
+                <Link
+                  to="/privacidad"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[var(--color-lavender)] underline hover:text-[var(--color-cream)]"
+                >
+                  Política de Privacidad
+                </Link>
+                .
+              </p>
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  {...register('accepted_privacy')}
+                  {...register('read_privacy')}
                   className="mt-1 accent-[var(--color-lavender)] w-4 h-4 shrink-0"
                 />
                 <span className="text-sm font-[var(--font-body)] text-[var(--color-cream-dim)] leading-relaxed">
-                  He leído y acepto la{' '}
-                  <Link
-                    to="/privacidad"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[var(--color-lavender)] underline hover:text-[var(--color-cream)]"
-                  >
-                    Política de Privacidad
-                  </Link>
-                  .
+                  Confirmo haber leído la Política de Privacidad.
                 </span>
               </label>
-              {errors.accepted_privacy && (
+              {errors.read_privacy && (
                 <p className="text-xs text-[var(--color-brand-red)] ml-7">
-                  {errors.accepted_privacy.message}
+                  {errors.read_privacy.message}
                 </p>
               )}
 

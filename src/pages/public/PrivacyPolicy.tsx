@@ -314,53 +314,67 @@ export default function PrivacyPolicy() {
               <table className="w-full text-xs font-[var(--font-body)]">
                 <thead>
                   <tr className="bg-[var(--color-card)] border-b border-[var(--color-card-hover)]">
-                    <th className="px-4 py-2.5 text-left text-[var(--color-cream)] font-[var(--font-cond)] tracking-wide">Proveedor</th>
-                    <th className="px-4 py-2.5 text-left text-[var(--color-cream)] font-[var(--font-cond)] tracking-wide">Finalidad</th>
-                    <th className="px-4 py-2.5 text-left text-[var(--color-cream)] font-[var(--font-cond)] tracking-wide">País</th>
-                    <th className="px-4 py-2.5 text-left text-[var(--color-cream)] font-[var(--font-cond)] tracking-wide">Garantías</th>
+                    <th className="px-4 py-2.5 text-left text-[var(--color-cream)] font-[var(--font-cond)] tracking-wide">Encargado</th>
+                    <th className="px-4 py-2.5 text-left text-[var(--color-cream)] font-[var(--font-cond)] tracking-wide">Sede</th>
+                    <th className="px-4 py-2.5 text-left text-[var(--color-cream)] font-[var(--font-cond)] tracking-wide">Qué datos recibe</th>
+                    <th className="px-4 py-2.5 text-left text-[var(--color-cream)] font-[var(--font-cond)] tracking-wide">Base legal de transferencia</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-card-hover)]">
                   <tr className="bg-[var(--color-ink)]">
-                    <td className="px-4 py-3 text-[var(--color-cream)]">Supabase, Inc.</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">Almacenamiento de base de datos y autenticación</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU. (sede social) · Datos en eu-west-1 (Irlanda)</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">CCT 2021/914 · DPA · TIA</td>
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Supabase, Inc. (BD + Auth + Edge Functions)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">UE (Irlanda) — datos en Frankfurt</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Todos los datos del pedido, cuenta y formularios</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">RGPD art. 6.1.b. Sin transferencia internacional (alojamiento UE). DPA estándar firmado.</td>
                   </tr>
                   <tr className="bg-[var(--color-ink)]">
-                    <td className="px-4 py-3 text-[var(--color-cream)]">Vercel Inc.</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">Alojamiento del frontend (sitio web) y CDN</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU. (Delaware)</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">CCT 2021/914 · DPA estándar Vercel</td>
-                  </tr>
-                  <tr className="bg-[var(--color-ink)]">
-                    <td className="px-4 py-3 text-[var(--color-cream)]">Google LLC</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">Mapa de localización (Google Maps) en la página de contacto</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU. (Mountain View)</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">CCT 2021/914 · Solo si el usuario consiente cookies de terceros</td>
-                  </tr>
-                  <tr className="bg-[var(--color-ink)]">
-                    <td className="px-4 py-3 text-[var(--color-cream)]">Resend, Inc.</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">Envío de correos electrónicos transaccionales</td>
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Resend (envío de emails transaccionales)</td>
                     <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU.</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">CCT 2021/914</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Email destinatario, nombre, asunto, cuerpo del mensaje</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]"><strong className="text-[var(--color-cream)]">CCT 2021/914</strong> (cláusulas contractuales tipo aprobadas por la Comisión).</td>
                   </tr>
                   <tr className="bg-[var(--color-ink)]">
-                    <td className="px-4 py-3 text-[var(--color-cream)]">Redsys Servicios de Procesamiento, S.L.</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">Procesamiento del pago con tarjeta y Bizum (pasarela TPV)</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">España (UE)</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">Sin transferencia internacional · PCI-DSS</td>
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Vercel Inc. (hosting frontend + CDN)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU. (puede servir desde UE)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Logs de acceso (IP, user-agent, URL)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]"><strong className="text-[var(--color-cream)]">DPF (Data Privacy Framework)</strong> si está activo, en caso contrario CCT 2021/914.</td>
                   </tr>
-                  {/* P-04: Cloudflare añadido como encargado de tratamiento (DPF UE-EE.UU.) */}
                   <tr className="bg-[var(--color-ink)]">
-                    <td className="px-4 py-3 text-[var(--color-cream)]">Cloudflare, Inc.</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">Prevención de fraude y bots (Cloudflare Turnstile) en formularios de contacto y presupuesto. Base legal: art. 6.1.b RGPD (medida pre-contractual) + art. 6.1.f RGPD (interés legítimo: anti-fraude) + art. 22.2 LSSI.</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU. (San Francisco)</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">EU-US Data Privacy Framework (DPF) — Cloudflare certificado · DPA estándar Cloudflare</td>
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Cloudflare Turnstile (anti-fraude captcha)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU.</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Token efímero del navegador + IP visitante</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]"><strong className="text-[var(--color-cream)]">DPF</strong> (Cloudflare certificado). Sin datos personales identificativos del usuario.</td>
+                  </tr>
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Google Maps Platform (mapa de tienda + reseñas)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU.</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Ubicación del navegador (cuando consientes cookies funcionales)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]"><strong className="text-[var(--color-cream)]">DPF</strong> (Google LLC certificado).</td>
+                  </tr>
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Redsys (TPV virtual)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">España</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Datos de tarjeta (no los almacenamos nosotros, los procesa la pasarela), importe, número de pedido</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">RGPD art. 6.1.b. Sede UE, sin transferencia internacional.</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+            <p className="text-xs">
+              <strong className="text-[var(--color-cream)]">Verificación periódica DPF.</strong>{' '}
+              Verificamos trimestralmente el estado de certificación DPF de los encargados estadounidenses en{' '}
+              <a
+                href="https://www.dataprivacyframework.gov/list"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[var(--color-lavender)] underline underline-offset-2"
+              >
+                dataprivacyframework.gov/list
+              </a>
+              . Si un encargado pierde su certificación DPF, mantenemos la garantía de la transferencia mediante las{' '}
+              <strong className="text-[var(--color-cream)]">Cláusulas Contractuales Tipo 2021/914</strong>{' '}
+              aprobadas por la Comisión Europea.
+            </p>
             <p>
               <strong className="text-[var(--color-cream)]">Redsys</strong> (CIF B85955367) actúa como entidad
               procesadora de los pagos en su condición de encargado del tratamiento (art. 28 RGPD). La base legal
@@ -379,22 +393,23 @@ export default function PrivacyPolicy() {
               </a>.
             </p>
             <p>
-              <strong className="text-[var(--color-cream)]">Supabase, Inc.</strong> (Delaware, EE.&nbsp;UU.) actúa
-              como proveedor de la infraestructura de base de datos y autenticación. El{' '}
+              <strong className="text-[var(--color-cream)]">Supabase, Inc.</strong> presta servicios de base de
+              datos, autenticación y funciones serverless. El{' '}
               <strong className="text-[var(--color-cream)]">almacenamiento físico de los datos se realiza en la
-              región europea eu-west-1 (Irlanda)</strong>. La transferencia internacional al responsable del
-              tratamiento (acceso por personal de soporte de Supabase con sede en EE.&nbsp;UU.) está amparada
-              por las{' '}
+              Unión Europea (región Irlanda, con datos en Frankfurt)</strong>, sin transferencia internacional
+              en operativa normal. Cuenta con DPA (Data Processing Agreement) estándar firmado. Si en algún
+              momento el acceso por personal de soporte requiriera transferencia internacional puntual, ésta
+              quedaría amparada por las{' '}
               <strong className="text-[var(--color-cream)]">Cláusulas Contractuales Tipo 2021/914</strong> de
-              la Comisión Europea, complementadas con DPA (Data Processing Agreement) firmado y evaluación{' '}
-              <strong className="text-[var(--color-cream)]">TIA</strong> (Transfer Impact Assessment) que
-              verifica la equivalencia del nivel de protección.
+              la Comisión Europea.
             </p>
             <p>
-              Las transferencias internacionales a EE.&nbsp;UU. de los restantes encargados están amparadas,
-              en todos los casos, por las Cláusulas Contractuales Tipo aprobadas por la Comisión Europea
-              (Decisión 2021/914), que garantizan un nivel de protección equivalente al exigido en el
-              Espacio Económico Europeo.
+              Las transferencias internacionales a EE.&nbsp;UU. de los restantes encargados están amparadas, en
+              cada caso, por su <strong className="text-[var(--color-cream)]">certificación al EU-US Data
+              Privacy Framework</strong> o, en su defecto, por las{' '}
+              <strong className="text-[var(--color-cream)]">Cláusulas Contractuales Tipo 2021/914</strong>{' '}
+              aprobadas por la Comisión Europea (Decisión 2021/914), que garantizan un nivel de protección
+              equivalente al exigido en el Espacio Económico Europeo.
             </p>
           </Section>
 

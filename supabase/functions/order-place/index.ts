@@ -67,7 +67,13 @@ interface InputInvoiceB2B {
 
 interface InputConsents {
   accepted_terms: boolean
-  accepted_privacy: boolean
+  /**
+   * Sprint 1 V5 (F-01): rename de accepted_privacy → read_privacy
+   * (confirmación de lectura, no consentimiento RGPD; base legal contrato
+   * art. 6.1.b). Se acepta cualquiera de los dos por compatibilidad mientras
+   * el frontend converge al nuevo nombre.
+   */
+  read_privacy: boolean
 }
 
 interface InputBody {
@@ -87,6 +93,14 @@ interface InputBody {
 /* ─────────────── Validación ─────────────── */
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/**
+ * Versión por defecto de los documentos legales para consent_audit (Q-04 V5).
+ * El frontend puede sobreescribirla enviando terms_version/privacy_version en
+ * el payload; si no, se cae a esta constante o al env var CONSENT_VERSION.
+ */
+const DEFAULT_CONSENT_VERSION =
+  Deno.env.get('CONSENT_VERSION') ?? '2026-05-27-v5'
 
 function validateBody(raw: unknown): { ok: true; body: InputBody } | { ok: false; error: string } {
   if (!raw || typeof raw !== 'object') return { ok: false, error: 'body inválido' }
@@ -173,10 +187,12 @@ function validateBody(raw: unknown): { ok: true; body: InputBody } | { ok: false
   const co = (b.consents ?? {}) as Record<string, unknown>
   const consents: InputConsents = {
     accepted_terms: !!co.accepted_terms,
-    accepted_privacy: !!co.accepted_privacy,
+    // read_privacy es el nombre nuevo (Sprint 1 V5); accepted_privacy se
+    // sigue aceptando hasta que el frontend complete el rename.
+    read_privacy: !!co.read_privacy || !!co.accepted_privacy,
   }
-  if (!consents.accepted_terms || !consents.accepted_privacy) {
-    return { ok: false, error: 'debes aceptar términos y política de privacidad' }
+  if (!consents.accepted_terms || !consents.read_privacy) {
+    return { ok: false, error: 'debes aceptar términos y confirmar lectura de privacidad' }
   }
 
   // Versiones de los documentos legales aceptados (opcionales — el frontend
@@ -544,6 +560,46 @@ serve(async (req) => {
       to_status: 'pending',
       reason: 'order created',
     })
+
+    // 8.b. consent_audit (Q-04 V5): bitácora granular inmutable de
+    // consentimientos. Una fila por cada checkbox aceptado en el checkout.
+    //   - accepted_terms → consent_type='terms' / action='grant'
+    //   - read_privacy   → consent_type='privacy' / action='confirm_read'
+    //     (no es consentimiento RGPD: la base legal es contrato art. 6.1.b,
+    //     pero conservamos prueba de que el usuario tuvo acceso al texto).
+    const termsVersion = body.terms_version ?? DEFAULT_CONSENT_VERSION
+    const privacyVersion = body.privacy_version ?? DEFAULT_CONSENT_VERSION
+    const consentRows = [
+      {
+        order_id: orderId,
+        customer_email: body.customer.email,
+        consent_type: 'terms',
+        consent_version: termsVersion,
+        consent_action: 'grant',
+        ip_address: consent_ip,
+        user_agent: consent_user_agent,
+      },
+      {
+        order_id: orderId,
+        customer_email: body.customer.email,
+        consent_type: 'privacy',
+        consent_version: privacyVersion,
+        consent_action: 'confirm_read',
+        ip_address: consent_ip,
+        user_agent: consent_user_agent,
+      },
+    ]
+    const { error: consentErr } = await supabase
+      .from('consent_audit')
+      .insert(consentRows)
+    if (consentErr) {
+      // No bloqueante: el pedido ya existe. Las columnas consent_* en orders
+      // y order_status_history mantienen prueba mínima. Log y seguimos.
+      console.error(
+        `[${ts()}] consent_audit insert failed (non-blocking):`,
+        consentErr.message,
+      )
+    }
 
     // 9. Public access token.
     const publicToken = await generateOrderToken(orderId, body.customer.email)

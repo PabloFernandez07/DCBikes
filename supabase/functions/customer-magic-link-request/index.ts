@@ -35,6 +35,13 @@ const IP_RATE_LIMIT_MAX = 20
 const PUBLIC_MESSAGE =
   'Si existe un pedido asociado a ese email, recibirás un enlace en breve.'
 
+/**
+ * Versión por defecto del documento de privacidad para consent_audit (Q-04 V5).
+ * Configurable vía env var CONSENT_VERSION.
+ */
+const DEFAULT_CONSENT_VERSION =
+  Deno.env.get('CONSENT_VERSION') ?? '2026-05-27-v5'
+
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
   if (req.method === 'OPTIONS') return corsPreflightResponse(req)
@@ -43,11 +50,23 @@ serve(async (req) => {
   try {
     if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
-    const body = (await req.json().catch(() => ({}))) as { email?: string }
+    const body = (await req.json().catch(() => ({}))) as {
+      email?: string
+      // Sprint 1 V5 (Q-04): el frontend (MyOrdersRequestAccess.tsx) añadirá
+      // un checkbox de confirmación de lectura de privacidad. Si llega
+      // true, se registra fila en consent_audit. Campo opcional para no
+      // romper compatibilidad mientras el frontend converge.
+      read_privacy?: boolean
+      privacy_version?: string | null
+    }
     const email = (body.email ?? '').toString().trim().toLowerCase()
     if (!email || !EMAIL_RE.test(email)) {
       return jsonError('Email inválido', 400, req)
     }
+    const readPrivacy = !!body.read_privacy
+    const privacyVersion =
+      (typeof body.privacy_version === 'string' && body.privacy_version.trim()) ||
+      DEFAULT_CONSENT_VERSION
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -124,6 +143,30 @@ serve(async (req) => {
       console.error(`[${ts()}] createCustomerSession failed:`, String(err))
       // Devolvemos OK público igualmente — no revelamos errores internos.
       return jsonOk({ message: PUBLIC_MESSAGE }, req)
+    }
+
+    // consent_audit (Q-04 V5): si el cliente marcó el checkbox de privacidad
+    // al pedir el magic link, registramos confirm_read. Sin pedido asociado
+    // (todavía no ha entrado a /mis-pedidos), pero el email es suficiente
+    // para correlar la prueba probatoria.
+    if (readPrivacy) {
+      const { error: consentErr } = await supabase
+        .from('consent_audit')
+        .insert({
+          order_id: null,
+          customer_email: email,
+          consent_type: 'privacy',
+          consent_version: privacyVersion,
+          consent_action: 'confirm_read',
+          ip_address: ip,
+          user_agent: ua,
+        })
+      if (consentErr) {
+        console.error(
+          `[${ts()}] consent_audit insert failed (non-blocking):`,
+          consentErr.message,
+        )
+      }
     }
 
     // Invocar send-customer-magic-link (fire-and-forget — no bloqueamos al cliente).

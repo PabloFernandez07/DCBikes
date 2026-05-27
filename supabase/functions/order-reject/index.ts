@@ -67,6 +67,28 @@ serve(async (req) => {
       return jsonError('falta payment_pre_auth_id', 500, req)
     }
 
+    // B-05: transición atómica vía RPC con SELECT ... FOR UPDATE.
+    const { data: rejectRpc, error: rejectErr } = await supabase.rpc('reject_order', {
+      p_order_id: orderId,
+      p_admin_id: userId,
+      p_reason: reason || null,
+    })
+    if (rejectErr) {
+      const msg = rejectErr.message ?? ''
+      if (msg.includes('invalid state')) {
+        return jsonError('conflicto de concurrencia: pedido ya procesado', 409, req)
+      }
+      if (msg.includes('order not found')) {
+        return jsonError('pedido no encontrado', 404, req)
+      }
+      console.error(`[${ts()}] reject_order rpc error:`, msg)
+      return jsonError('error procesando pedido', 500, req)
+    }
+    const rpcRow = Array.isArray(rejectRpc) ? rejectRpc[0] : rejectRpc
+    const prevStatus = (rpcRow && typeof rpcRow === 'object' && 'prev_status' in rpcRow)
+      ? String((rpcRow as { prev_status?: string }).prev_status ?? 'authorized')
+      : 'authorized'
+
     const cancelResult = await runRedsysOperation({
       config,
       redsysOrderId: order.payment_pre_auth_id,
@@ -79,23 +101,12 @@ serve(async (req) => {
       console.warn(`[${ts()}] cancel devolvió no-ok · ${order.order_number} · code=${cancelResult.responseCode}`)
     }
 
-    const now = new Date().toISOString()
-    const { error: uErr } = await supabase
-      .from('orders')
-      .update({
-        status: 'rejected',
-        rejection_reason: reason || null,
-        payment_cancelled_at: now,
-      })
-      .eq('id', orderId)
-    if (uErr) return jsonError(`update failed: ${uErr.message}`, 500, req)
-
     await restoreStockFor(supabase, orderId)
     await logPayment(supabase, orderId, 'cancel', cancelResult, '9')
     await logStatusChange(
       supabase,
       orderId,
-      'authorized',
+      prevStatus,
       'rejected',
       userId,
       reason || (cancelResult.simulated ? 'Rechazado (mock)' : 'Rechazado por admin'),

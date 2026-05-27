@@ -128,6 +128,41 @@ serve(async (req) => {
       return jsonError('Error cancelando el pago, contacta con la tienda', 502, req)
     }
 
+    // 4-bis) Transición atómica vía RPC ANTES de Redsys. Si Redsys falla
+    // luego, revertimos a 'authorized' es complejo (la RPC inversa requeriría
+    // un permiso especial). En su lugar, hacemos primero la RPC y, si
+    // Redsys devuelve KO, mantenemos el pedido como cancelled pero
+    // alertamos al admin vía log (el dinero queda retenido hasta que el
+    // admin resuelva manualmente).
+    const { data: cancelRpc, error: cancelErr } = await supabase.rpc('cancel_order_by_customer', {
+      p_order_id: order.id,
+      p_customer_email: session.email,
+    })
+    if (cancelErr) {
+      const msg = cancelErr.message ?? ''
+      if (msg.includes('forbidden')) {
+        return jsonError('forbidden', 403, req)
+      }
+      if (msg.includes('invalid state')) {
+        return new Response(
+          JSON.stringify({
+            ok: false,
+            error: `No se puede cancelar un pedido en este estado`,
+          }),
+          { status: 422, headers: { 'Content-Type': 'application/json', ...cors } },
+        )
+      }
+      if (msg.includes('order not found')) {
+        return jsonError('pedido no encontrado', 404, req)
+      }
+      console.error(`[${ts()}] cancel_order_by_customer rpc error:`, msg)
+      return jsonError('error procesando pedido', 500, req)
+    }
+    const rpcRow = Array.isArray(cancelRpc) ? cancelRpc[0] : cancelRpc
+    const prevStatus = (rpcRow && typeof rpcRow === 'object' && 'prev_status' in rpcRow)
+      ? String((rpcRow as { prev_status?: string }).prev_status ?? 'authorized')
+      : 'authorized'
+
     const cancelResult = await runRedsysOperation({
       config,
       redsysOrderId: order.payment_pre_auth_id ?? '',
@@ -135,41 +170,20 @@ serve(async (req) => {
     })
 
     if (!cancelResult.ok && !cancelResult.simulated) {
-      // Defensa: si Redsys devuelve KO, NO actualizamos el estado del pedido.
-      // El dinero sigue retenido en la tarjeta del cliente; al menos el admin
-      // puede intentar resolverlo manualmente sin que el pedido aparezca como
-      // "cancelado" engañosamente.
       console.error(
-        `[${ts()}] cancel Redsys KO · ${order.order_number} · code=${cancelResult.responseCode}`,
+        `[${ts()}] cancel Redsys KO POST-RPC · ${order.order_number} · code=${cancelResult.responseCode}`,
       )
       // Loguea el intento aunque haya fallado (auditoría).
       await logPayment(supabase, order.id, 'cancel', cancelResult, '9')
-      return jsonError('Error cancelando el pago, contacta con la tienda', 502, req)
-    }
-
-    // 5) UPDATE orders.
-    const now = new Date().toISOString()
-    const reason = 'Cancelado por el cliente'
-    const { error: uErr } = await supabase
-      .from('orders')
-      .update({
-        status: 'cancelled',
-        cancelled_by_customer: true,
-        client_modified_at: now,
-        payment_cancelled_at: now,
-        rejection_reason: reason,
-      })
-      .eq('id', order.id)
-
-    if (uErr) {
-      console.error(`[${ts()}] customer-order-cancel update error:`, uErr.message)
-      return jsonError('error actualizando el pedido', 500, req)
+      // No revertimos la cancelación: el cliente ya recibió "cancelado" de la
+      // RPC. El admin debe resolver el reembolso manualmente.
     }
 
     // 6) Auditoría + restauración de stock + log de pago.
+    const reason = 'Cancelado por el cliente'
     await restoreStockFor(supabase, order.id)
     await logPayment(supabase, order.id, 'cancel', cancelResult, '9')
-    await logStatusChange(supabase, order.id, 'authorized', 'cancelled', null, reason)
+    await logStatusChange(supabase, order.id, prevStatus, 'cancelled', null, reason)
 
     // 7) Emails (fire-and-forget). Lanzados en paralelo para reducir latencia.
     //    a) Confirmación al cliente.

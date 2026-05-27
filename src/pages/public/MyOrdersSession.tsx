@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { LogOut, Package, Calendar, Truck, Store, ChevronRight, ArrowLeft, RefreshCw } from 'lucide-react'
+import { LogOut, Package, Calendar, Truck, Store, ChevronRight, ArrowLeft, RefreshCw, Download } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { SEO } from '@/components/layout/SEO'
 import { OrderStatusBadge, type OrderStatus } from '@/components/public/OrderStatusBadge'
@@ -64,6 +64,8 @@ export default function MyOrdersSession() {
   const [expired, setExpired] = useState(false)
   const [email, setEmail] = useState<string | null>(null)
   const [orders, setOrders] = useState<CustomerOrderSummary[]>([])
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   const fetchOrders = useCallback(async (tk: string) => {
     setLoading(true)
@@ -128,6 +130,42 @@ export default function MyOrdersSession() {
     clearSession()
     navigate('/')
   }
+
+  const handleExport = useCallback(async () => {
+    if (!token) return
+    setExporting(true)
+    setExportError(null)
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-data-export', {
+        body: { token },
+      })
+      if (error) {
+        const ctx = (error as unknown as { context?: { status?: number } }).context
+        if (ctx?.status === 401) {
+          setExpired(true)
+          clearSession()
+          return
+        }
+        throw new Error(error.message)
+      }
+      // supabase.functions.invoke devuelve el JSON parseado; lo serializamos
+      // de vuelta para que el navegador descargue un archivo legible.
+      const json = JSON.stringify(data, null, 2)
+      const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'mis-datos-dcbikes.json'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'No se pudo generar el archivo')
+    } finally {
+      setExporting(false)
+    }
+  }, [token])
 
   if (loading) {
     return (
@@ -279,6 +317,36 @@ export default function MyOrdersSession() {
             ))}
           </ul>
         )}
+
+        {/* X-10 (auditoría V5): portabilidad RGPD art. 15 / art. 20 */}
+        <section className="mt-12 pt-8 border-t border-[var(--color-card)]">
+          <h2 className="font-[var(--font-display)] text-xl text-[var(--color-cream)] tracking-wide mb-2">
+            Tus datos personales
+          </h2>
+          <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)] leading-relaxed mb-4 max-w-xl">
+            Conforme al artículo 15 del Reglamento (UE) 2016/679 (RGPD), puedes solicitar
+            una copia digital de todos tus datos asociados a este correo electrónico
+            (pedidos, items, solicitudes de presupuesto, consentimientos otorgados y sesiones).
+            La descarga es inmediata y se entrega en formato JSON estructurado.
+          </p>
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={exporting || !token}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--color-card-hover)] bg-[var(--color-card)] text-[var(--color-cream)] text-sm font-[var(--font-cond)] tracking-wide hover:border-[var(--color-lavender)]/40 hover:bg-[var(--color-card-hover)]/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download size={14} className={exporting ? 'animate-pulse' : ''} />
+            {exporting ? 'Generando…' : 'Descargar mis datos (JSON)'}
+          </button>
+          {exportError && (
+            <p
+              role="alert"
+              className="mt-3 text-xs text-red-400 font-[var(--font-body)]"
+            >
+              {exportError}
+            </p>
+          )}
+        </section>
       </div>
     </div>
   )

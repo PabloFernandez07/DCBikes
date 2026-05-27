@@ -185,6 +185,11 @@ export async function runRedsysOperation(opts: {
 
 /* ─────────── Restaurar stock ─────────── */
 
+// B-07 (Sprint 1 V5): delega en la RPC atómica restore_stock(p_items jsonb)
+// definida en 0031_atomic_order_transitions.sql. Antes hacíamos un SELECT
+// stock + UPDATE en loop por item, lo que abría una ventana race condition
+// si dos restauraciones simultáneas afectaban al mismo producto. Ahora cada
+// UPDATE es atómico (stock = stock + qty) dentro de la transacción de la RPC.
 export async function restoreStockFor(
   supabase: SupabaseClient,
   orderId: string,
@@ -197,18 +202,13 @@ export async function restoreStockFor(
     console.warn('[order-admin] restoreStockFor: no se pudieron leer items:', error?.message)
     return
   }
-  for (const it of items) {
-    if (!it.product_id) continue
-    const { data: prod } = await supabase
-      .from('products')
-      .select('stock')
-      .eq('id', it.product_id)
-      .maybeSingle()
-    if (!prod) continue
-    await supabase
-      .from('products')
-      .update({ stock: (prod.stock ?? 0) + it.quantity })
-      .eq('id', it.product_id)
+  const payload = items
+    .filter((it) => it.product_id && typeof it.quantity === 'number' && it.quantity > 0)
+    .map((it) => ({ product_id: it.product_id, qty: it.quantity }))
+  if (payload.length === 0) return
+  const { error: rpcErr } = await supabase.rpc('restore_stock', { p_items: payload })
+  if (rpcErr) {
+    console.warn('[order-admin] restoreStockFor: restore_stock RPC falló:', rpcErr.message)
   }
 }
 

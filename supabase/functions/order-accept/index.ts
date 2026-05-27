@@ -30,6 +30,7 @@ import {
   logPayment,
   logStatusChange,
   requireAdmin,
+  restoreStockFor,
   runRedsysOperation,
 } from '../_shared/order-admin.ts'
 
@@ -79,6 +80,29 @@ serve(async (req) => {
       return jsonError('falta payment_pre_auth_id — no se puede capturar', 500, req)
     }
 
+    // B-05: transición de estado atómica con SELECT ... FOR UPDATE en RPC.
+    // Hacemos la RPC ANTES de Redsys (locking pesimista cierra la ventana
+    // de concurrencia). Si Redsys falla luego, revertimos vía reject_order.
+    const { data: acceptRpc, error: acceptErr } = await supabase.rpc('accept_order', {
+      p_order_id: orderId,
+      p_admin_id: userId,
+    })
+    if (acceptErr) {
+      const msg = acceptErr.message ?? ''
+      if (msg.includes('invalid state')) {
+        return jsonError('conflicto de concurrencia: pedido ya procesado', 409, req)
+      }
+      if (msg.includes('order not found')) {
+        return jsonError('pedido no encontrado', 404, req)
+      }
+      console.error(`[${ts()}] accept_order rpc error:`, msg)
+      return jsonError('error procesando pedido', 500, req)
+    }
+    const rpcRow = Array.isArray(acceptRpc) ? acceptRpc[0] : acceptRpc
+    const prevStatus = (rpcRow && typeof rpcRow === 'object' && 'prev_status' in rpcRow)
+      ? String((rpcRow as { prev_status?: string }).prev_status ?? 'authorized')
+      : 'authorized'
+
     const captureResult = await runRedsysOperation({
       config,
       redsysOrderId: order.payment_pre_auth_id,
@@ -88,29 +112,54 @@ serve(async (req) => {
     if (!captureResult.ok) {
       console.warn(`[${ts()}] capture FAIL · ${order.order_number} · code=${captureResult.responseCode}`)
       await logPayment(supabase, orderId, 'capture', captureResult, '2')
+      // Revertir vía reject_order (acepta `accepted → rejected` desde 0031).
+      const revertReason = `Revert tras capture KO (${captureResult.responseCode ?? 'n/a'})`
+      const { error: revertErr } = await supabase.rpc('reject_order', {
+        p_order_id: orderId,
+        p_admin_id: userId,
+        p_reason: revertReason,
+      })
+      if (revertErr) {
+        console.error(`[${ts()}] revert reject_order FAIL:`, revertErr.message)
+        return jsonError(
+          `Redsys rechazó la captura (código ${captureResult.responseCode ?? 'n/a'}) y la reversión en BD falló: ${revertErr.message}. Revisar manualmente.`,
+          500,
+          req,
+        )
+      }
+      // Restaurar stock + auditoría del rollback.
+      await restoreStockFor(supabase, orderId)
+      await logStatusChange(
+        supabase,
+        orderId,
+        'accepted',
+        'rejected',
+        userId,
+        revertReason,
+      )
       return jsonError(
-        `Redsys rechazó la captura (código ${captureResult.responseCode ?? 'n/a'}). El pedido sigue en 'authorized'.`,
+        `Redsys rechazó la captura (código ${captureResult.responseCode ?? 'n/a'}). El pedido fue revertido a 'rejected'.`,
         502,
         req,
       )
     }
 
-    // UPDATE order.
+    // Notas internas + payment_captured_at: se actualizan ahora (la RPC solo
+    // toca status/accepted_*). Optimistic lock con .eq('status','accepted').
     const now = new Date().toISOString()
     const updatePayload: Record<string, unknown> = {
-      status: 'accepted',
-      accepted_by: userId,
-      accepted_at: now,
       payment_captured_at: now,
     }
     if (typeof body.notes_internal === 'string' && body.notes_internal.trim().length > 0) {
       updatePayload.notes_internal = body.notes_internal.trim().slice(0, 5000)
     }
-    const { error: uErr } = await supabase.from('orders').update(updatePayload).eq('id', orderId)
+    const { error: uErr } = await supabase
+      .from('orders')
+      .update(updatePayload)
+      .eq('id', orderId)
+      .eq('status', 'accepted')
     if (uErr) {
       console.error(`[${ts()}] update order error:`, uErr.message)
-      // El capture en Redsys ya pasó. No revertimos automáticamente — se queda
-      // como capturado en Redsys y el admin tendrá que arreglar a mano.
       return jsonError(`captura OK pero falló actualizar el pedido: ${uErr.message}`, 500, req)
     }
 
@@ -118,7 +167,7 @@ serve(async (req) => {
     await logStatusChange(
       supabase,
       orderId,
-      'authorized',
+      prevStatus,
       'accepted',
       userId,
       captureResult.simulated

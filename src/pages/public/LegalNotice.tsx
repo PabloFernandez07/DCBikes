@@ -273,6 +273,43 @@ export default function LegalNotice() {
             </p>
           </Section>
 
+          {/* 9. Punto de contacto DSA — X-01 auditoría V5 */}
+          <Section id="dsa" title="9. Punto de contacto único (Reglamento UE 2022/2065 - DSA)">
+            <p>
+              Conforme al artículo 11 del Reglamento (UE) 2022/2065 (Ley de Servicios Digitales — DSA),
+              {companyName} designa como punto de contacto único para autoridades competentes, usuarios
+              y la Comisión Europea:
+            </p>
+            <ul className="list-disc list-inside space-y-1 pl-2">
+              <li>
+                <strong className="text-[var(--color-cream)]">Email:</strong>{' '}
+                <a
+                  href="mailto:dsa@dcbikescantabria.es"
+                  className="text-[var(--color-lavender)] underline underline-offset-2"
+                >
+                  dsa@dcbikescantabria.es
+                </a>
+              </li>
+              <li>
+                <strong className="text-[var(--color-cream)]">Idiomas de comunicación:</strong>{' '}
+                Español e Inglés.
+              </li>
+              <li>
+                <strong className="text-[var(--color-cream)]">Mecanismo notice-and-action:</strong>{' '}
+                para denunciar contenido potencialmente ilícito (reseñas inadecuadas, comentarios
+                infractores, etc.), envía un correo electrónico a la dirección anterior con el asunto{' '}
+                <em>«DSA notice»</em> indicando la URL del contenido, el motivo y tus datos de contacto.
+                Te responderemos sin demora indebida indicando la decisión adoptada (mantener, retirar
+                o suspender) y los motivos de la misma.
+              </li>
+            </ul>
+            <p className="text-xs text-[var(--color-mid)]">
+              {companyName} es una microempresa exenta de las obligaciones específicas aplicables a
+              plataformas en línea de gran tamaño, pero asume voluntariamente este punto de contacto
+              único para facilitar el cumplimiento del Reglamento DSA.
+            </p>
+          </Section>
+
           <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-xs">
             Para cualquier consulta,{' '}
             <Link to="/contacto" className="text-[var(--color-lavender)] underline underline-offset-2">

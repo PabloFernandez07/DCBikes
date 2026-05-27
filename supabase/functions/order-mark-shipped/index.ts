@@ -53,22 +53,36 @@ serve(async (req) => {
       )
     }
 
-    const now = new Date().toISOString()
-    const { error: uErr } = await supabase
-      .from('orders')
-      .update({
-        status: 'shipped',
-        shipped_at: now,
-        tracking_number: trackingNumber.slice(0, 100),
-        tracking_carrier: trackingCarrier.slice(0, 50),
-      })
-      .eq('id', orderId)
-    if (uErr) return jsonError(`update failed: ${uErr.message}`, 500, req)
+    // B-05: transición atómica vía RPC mark_shipped_order.
+    const { data: shipRpc, error: shipErr } = await supabase.rpc('mark_shipped_order', {
+      p_order_id: orderId,
+      p_admin_id: userId,
+      p_tracking_number: trackingNumber.slice(0, 100),
+      p_tracking_carrier: trackingCarrier.slice(0, 50),
+    })
+    if (shipErr) {
+      const msg = shipErr.message ?? ''
+      if (msg.includes('invalid state')) {
+        return jsonError('conflicto de concurrencia: pedido ya procesado', 409, req)
+      }
+      if (msg.includes('invalid delivery_method')) {
+        return jsonError('este pedido no es de envío a domicilio', 409, req)
+      }
+      if (msg.includes('order not found')) {
+        return jsonError('pedido no encontrado', 404, req)
+      }
+      console.error(`[${ts()}] mark_shipped_order rpc error:`, msg)
+      return jsonError('error procesando pedido', 500, req)
+    }
+    const rpcRow = Array.isArray(shipRpc) ? shipRpc[0] : shipRpc
+    const prevStatus = (rpcRow && typeof rpcRow === 'object' && 'prev_status' in rpcRow)
+      ? String((rpcRow as { prev_status?: string }).prev_status ?? 'accepted')
+      : 'accepted'
 
     await logStatusChange(
       supabase,
       orderId,
-      'accepted',
+      prevStatus,
       'shipped',
       userId,
       `Enviado vía ${trackingCarrier} · tracking ${trackingNumber}`,

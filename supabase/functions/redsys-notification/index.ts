@@ -307,13 +307,35 @@ serve(async (req) => {
       if (outcome.paymentMethod) updatePayload.payment_method = outcome.paymentMethod
     }
 
-    const { error: uErr } = await supabase
+    // B-05: optimistic lock — solo actualiza si sigue en 'pending'. Si otro
+    // proceso ya transitó el estado, count=0 y la idempotencia previa nos
+    // protege (ya verificamos status !== 'pending' arriba), pero esta línea
+    // cierra la ventana de race entre el SELECT y el UPDATE.
+    const { error: uErr, count: uCount } = await supabase
       .from('orders')
-      .update(updatePayload)
+      .update(updatePayload, { count: 'exact' })
       .eq('id', order.id)
+      .eq('status', 'pending')
     if (uErr) {
       console.error(`[${ts()}] update order error:`, uErr.message)
       return jsonError(uErr.message, 500, req)
+    }
+    if (uCount === 0) {
+      console.warn(
+        `[${ts()}] redsys-notification race · ${order.order_number} · estado cambió entre SELECT y UPDATE — log only`,
+      )
+      // Loguea la notificación duplicada y devuelve 200 (Redsys no debe reintentar).
+      await supabase.from('payments_log').insert({
+        order_id: order.id,
+        payment_provider: outcome.source === 'mock' ? 'mock' : 'redsys',
+        operation_type: 'notification',
+        redsys_response_code: outcome.responseCode,
+        redsys_authorization_code: outcome.authCode,
+        redsys_transaction_type: String(outcome.rawPayload['Ds_TransactionType'] ?? '1'),
+        raw_payload: sanitizeRedsysPayload({ ...outcome.rawPayload, note: 'race lost — no update applied' }),
+        signature_valid: outcome.signatureValid,
+      })
+      return jsonOk({ ok: true, status: 'race_lost' }, req)
     }
 
     // 5. Log + history.

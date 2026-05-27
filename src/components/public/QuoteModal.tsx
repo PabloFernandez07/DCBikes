@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -62,6 +62,14 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
   const [status, setStatus] = useState<Status>('idle')
   const [errorText, setErrorText] = useState<string>('')
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [turnstileLoaded, setTurnstileLoaded] = useState(false)
+
+  // F-06: lazy-load del widget Turnstile — solo se carga cuando el usuario
+  // interactúa por primera vez con el formulario. Privacidad (Cloudflare no
+  // recibe señal hasta que el usuario realmente va a enviar) y mejora LCP/FID.
+  const handleFirstFocus = useCallback(() => {
+    setTurnstileLoaded(prev => prev || true)
+  }, [])
 
   const pct = product?.discount_percent
   const hasDiscount = pct != null && pct > 0
@@ -199,6 +207,7 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
             placeholder="Tu nombre"
             error={errors.name?.message}
             {...register('name')}
+            onFocus={handleFirstFocus}
           />
           <Field
             label="Email"
@@ -207,6 +216,7 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
             placeholder="tu@email.com"
             error={errors.email?.message}
             {...register('email')}
+            onFocus={handleFirstFocus}
           />
           <Field
             label="Teléfono"
@@ -214,6 +224,7 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
             placeholder="+34 600 000 000"
             error={errors.phone?.message}
             {...register('phone')}
+            onFocus={handleFirstFocus}
           />
           <Field
             label="Mensaje"
@@ -223,6 +234,7 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
             placeholder="Cuéntanos qué necesitas (mínimo 20 caracteres)..."
             error={errors.message?.message}
             {...register('message')}
+            onFocus={handleFirstFocus}
           />
           <div className="flex items-start gap-3">
             <input
@@ -234,9 +246,11 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
             <label htmlFor="privacy" className="text-xs text-[var(--color-mid)] font-[var(--font-body)] leading-relaxed cursor-pointer">
               He leído y acepto la{' '}
               <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-[var(--color-lavender)] hover:underline">
-                política de privacidad
+                Política de Privacidad
               </a>
-              {' '}y el tratamiento de mis datos para gestionar mi consulta.
+              . Mis datos serán tratados por DC Bikes (Supabase, UE-Irlanda) para gestionar mi
+              solicitud, enviados a Resend (EE.UU., CCT 2021/914) para notificación por email,
+              y verificados con Cloudflare Turnstile (EE.UU., DPF) contra spam.
             </label>
           </div>
           {errors.privacy && (
@@ -245,16 +259,18 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
 
           {TURNSTILE_SITE_KEY ? (
             <>
-              <Turnstile
-                siteKey={TURNSTILE_SITE_KEY}
-                onSuccess={(token) => setTurnstileToken(token)}
-                onError={() => setTurnstileToken(null)}
-                onExpire={() => setTurnstileToken(null)}
-                options={{ theme: 'dark', size: 'flexible' }}
-              />
+              {turnstileLoaded && (
+                <Turnstile
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onError={() => setTurnstileToken(null)}
+                  onExpire={() => setTurnstileToken(null)}
+                  options={{ theme: 'dark', size: 'flexible' }}
+                />
+              )}
               {/* P-04: aviso legal Cloudflare Turnstile junto al widget */}
               <p className="text-xs text-gray-500 mt-1">
-                Verificación anti-fraude vía Cloudflare Turnstile.{' '}
+                Verificación anti-fraude vía Cloudflare Turnstile (se carga al interactuar con el formulario).{' '}
                 <a href="/cookies" className="underline">Más info</a>.
               </p>
             </>

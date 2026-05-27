@@ -8,7 +8,11 @@ import { isValidSpanishId } from '@/lib/spanish-id'
  *  - Datos cliente (nombre, apellidos, email, teléfono ES).
  *  - Entrega: shipping (con dirección completa) o pickup.
  *  - Facturación B2B opcional (si needs_invoice → CIF, razón social, dirección).
- *  - Consentimientos legales (términos y privacidad obligatorios).
+ *  - Aceptación de Términos y Condiciones (base contractual real, RGPD 6.1.b + LSSI).
+ *  - Confirmación de lectura de Política de Privacidad (NO es consentimiento: la base
+ *    legal del tratamiento de datos del pedido es la ejecución del contrato — art.
+ *    6.1.b RGPD —, así que se INFORMA, no se pide consentimiento, para evitar el
+ *    dark pattern sancionado por la AEPD).
  *
  * Validación de campos condicionales mediante `superRefine`.
  */
@@ -103,9 +107,12 @@ export const checkoutSchema = z
     accepted_terms: z
       .boolean()
       .refine(v => v === true, 'Debes aceptar los Términos y Condiciones'),
-    accepted_privacy: z
+    // RGPD art. 6.1.b: el tratamiento de datos para gestionar el pedido se basa en
+    // la ejecución del contrato, no en el consentimiento. Por eso pedimos
+    // confirmación de LECTURA de la Política de Privacidad, no consentimiento.
+    read_privacy: z
       .boolean()
-      .refine(v => v === true, 'Debes aceptar la Política de Privacidad'),
+      .refine(v => v === true, 'Confirma que has leído la Política de Privacidad'),
   })
   .superRefine((data, ctx) => {
     // Si shipping → exigir todos los campos de dirección.
@@ -223,5 +230,5 @@ export const checkoutDefaults: CheckoutFormValues = {
   invoice_cif: '',
   invoice_address: '',
   accepted_terms: false,
-  accepted_privacy: false,
+  read_privacy: false,
 }
