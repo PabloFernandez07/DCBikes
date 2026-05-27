@@ -195,16 +195,61 @@ serve(async (req) => {
       ],
     })
 
+    /* ─── Adjuntos L-05 / C-07 / C-08 (best-effort; no bloquean el envío) ─── */
+
+    // Helper: descarga un PDF de un bucket y lo codifica en base64.
+    // Devuelve null si el archivo no existe o si falla la descarga.
+    const downloadPdf = async (bucket: string, path: string): Promise<string | null> => {
+      try {
+        const { data, error } = await supabase.storage.from(bucket).download(path)
+        if (error || !data) {
+          console.warn(`[${ts()}] [confirmation-customer] storage download failed bucket=${bucket} path=${path}:`, error?.message)
+          return null
+        }
+        const buf = new Uint8Array(await data.arrayBuffer())
+        // btoa + chunking (safe para bytes > 0x7F en Deno)
+        let binary = ''
+        const chunk = 0x8000
+        for (let i = 0; i < buf.length; i += chunk) {
+          binary += String.fromCharCode(...buf.subarray(i, i + chunk))
+        }
+        return btoa(binary)
+      } catch (err) {
+        console.warn(`[${ts()}] [confirmation-customer] downloadPdf exception bucket=${bucket} path=${path}:`, String(err))
+        return null
+      }
+    }
+
+    // a) Contrato del pedido (soporte duradero art. 98 RDL 1/2007 — hallazgo L-05)
+    const contractBase64 = await downloadPdf('order-contracts', `${order.id}.pdf`)
+
+    // b) Formulario oficial de desistimiento (C-07 / C-08)
+    const withdrawalBase64 = await downloadPdf('legal-templates', 'devoluciones-formulario.pdf')
+
+    const attachments = [
+      ...(contractBase64
+        ? [{ filename: `contrato-pedido-${order.order_number}.pdf`, content: contractBase64 }]
+        : []),
+      ...(withdrawalBase64
+        ? [{ filename: 'formulario-desistimiento.pdf', content: withdrawalBase64 }]
+        : []),
+    ]
+
     const email_id = await sendViaResend({
       from: buildFromAddress(),
       to: [order.customer_email],
       subject: `Hemos recibido tu pedido #${order.order_number} en DC Bikes`,
       html,
       reply_to: storeEmail || undefined,
+      attachments: attachments.length > 0 ? attachments : undefined,
     })
 
-    console.log(`[${ts()}] ✓ confirmation-customer enviado · order=${order.order_number} · resend=${email_id}`)
-    return jsonOk({ email_id }, req)
+    console.log(
+      `[${ts()}] ✓ confirmation-customer enviado · order=${order.order_number}` +
+      ` · contract=${!!contractBase64} · withdrawal=${!!withdrawalBase64}` +
+      ` · resend=${email_id}`,
+    )
+    return jsonOk({ email_id, contract_attached: !!contractBase64, withdrawal_attached: !!withdrawalBase64 }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-order-confirmation-customer:`, String(err))
     return jsonError(String(err), 500, req)

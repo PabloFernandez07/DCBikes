@@ -547,7 +547,22 @@ serve(async (req) => {
     // 9. Public access token.
     const publicToken = await generateOrderToken(orderId, body.customer.email)
 
-    // 10. Payload según modo.
+    // 10. Generar contrato PDF (soporte duradero L-05) — non-blocking.
+    //     Si falla, el pedido ya existe y el email se enviará igualmente.
+    //     El adjunto se omitirá silenciosamente; el error queda en los logs.
+    fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-order-contract`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+      },
+      body: JSON.stringify({ order_id: orderId }),
+    }).catch((err: unknown) => {
+      console.error(`[${ts()}] [order-place] contract generation failed (non-blocking):`, String(err))
+    })
+
+    // 11. Payload según modo.
+    // mode: mock devuelve URL interna; test/prod construye payload Redsys firmado.
     if (config.mode === 'mock') {
       // mock_url debe ser RELATIVO (path-only) para que React Router lo trate
       // como ruta interna. Si fuera absoluto (https://dominio/...), navigate()
