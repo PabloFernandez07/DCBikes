@@ -35,6 +35,9 @@ import {
 import {
   buildInvoiceNumber,
   computeTaxBreakdown,
+  computeTaxBreakdownMulti,
+  summarizeTaxBreakdown,
+  type TaxLine,
   formatDateDMY,
   formatEuroCents,
   sanitizeWinAnsi,
@@ -193,13 +196,17 @@ serve(async (req) => {
     const invoiceNumber = buildInvoiceNumber(effectivePrefix, year, counterData)
     const storagePath = `${year}/${invoiceNumber}.pdf`
 
-    /* ─── 5. Calcular desglose IVA ─── */
+    /* ─── 5. Calcular desglose IVA (multi-tipo C-12) ─── */
     const taxRatePct = Number(order.tax_rate) || 21
-    const breakdown = computeTaxBreakdown(
+    // computeTaxBreakdownMulti agrupa por tax_rate_pct por item.
+    // Como OrderItemRow no incluye tax_rate_pct todavía, cada item hereda defaultRatePct (taxRatePct).
+    // Cuando se añada tax_rate_pct a order_items, el desglose aparecerá automáticamente.
+    const taxLines = computeTaxBreakdownMulti(
       order.order_items,
       order.shipping_cents,
       taxRatePct,
     )
+    const breakdown = summarizeTaxBreakdown(taxLines)
 
     // Verificación de consistencia con total persistido en orders
     if (breakdown.total_cents !== order.total_cents) {
@@ -258,6 +265,7 @@ serve(async (req) => {
       invoiceNumber,
       issuer: { name: companyName, cif: companyCif, address: companyAddress },
       breakdown,
+      taxLines,
       taxRatePct,
       storePhone,
       storeEmail,
@@ -332,6 +340,7 @@ interface RenderArgs {
   invoiceNumber: string
   issuer: { name: string; cif: string; address: string }
   breakdown: { base_cents: number; tax_cents: number; total_cents: number }
+  taxLines: TaxLine[]
   taxRatePct: number
   storePhone: string
   storeEmail: string
@@ -345,6 +354,7 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
     invoiceNumber,
     issuer,
     breakdown,
+    taxLines,
     taxRatePct,
     storePhone,
     storeEmail,
@@ -708,6 +718,7 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
   const totalsLabelX = totalsX
   const totalsValueX = PAGE_W - MARGIN_X - 8
 
+  // Base imponible total
   drawText(page, 'Base imponible', totalsLabelX, y, {
     font,
     size: 10,
@@ -721,18 +732,42 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
   })
   y -= 14
 
-  drawText(page, `IVA (${taxRatePct.toFixed(2).replace('.00', '')}%)`, totalsLabelX, y, {
-    font,
-    size: 10,
-    color: COLOR_GRAY,
-  })
-  drawText(page, formatEuroCents(breakdown.tax_cents), totalsValueX, y, {
-    font,
-    size: 10,
-    color: COLOR_DARK,
-    align: 'right',
-  })
-  y -= 18
+  // Desglose IVA por tipo (C-12 multi-tipo)
+  // Si hay un único tipo se muestra una línea; si hay varios, una línea por tipo.
+  if (taxLines.length <= 1) {
+    // Modo mono-tipo (caso habitual): una sola línea "IVA (21%): X €"
+    const rateLbl = taxRatePct.toFixed(2).replace('.00', '')
+    drawText(page, `IVA (${rateLbl}%)`, totalsLabelX, y, {
+      font,
+      size: 10,
+      color: COLOR_GRAY,
+    })
+    drawText(page, formatEuroCents(breakdown.tax_cents), totalsValueX, y, {
+      font,
+      size: 10,
+      color: COLOR_DARK,
+      align: 'right',
+    })
+    y -= 14
+  } else {
+    // Modo multi-tipo: encabezado + una línea por tipo
+    drawText(page, 'Desglose IVA', totalsLabelX, y, {
+      font,
+      size: 9,
+      color: COLOR_GRAY,
+    })
+    y -= 12
+    for (const tl of taxLines) {
+      const rateLbl = tl.rate_pct.toFixed(2).replace('.00', '')
+      drawText(page, `  Base ${rateLbl}%: ${formatEuroCents(tl.base_cents)}  IVA: ${formatEuroCents(tl.iva_cents)}`, totalsLabelX, y, {
+        font,
+        size: 8.5,
+        color: COLOR_GRAY,
+      })
+      y -= 11
+    }
+  }
+  y -= 4
 
   // Doble línea separadora
   drawHLine(page, totalsX, PAGE_W - MARGIN_X, y + 8, COLOR_DARK, 0.8)

@@ -261,7 +261,7 @@ export function renderEmail(ctx: EmailContext): string {
                 ctx.showOdrBlock
                   ? `<p style="margin:14px 0 6px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${COLORS.textSecondary};text-align:center;line-height:1.6">
                     <strong>Resolución de conflictos de consumo:</strong><br/>
-                    <a href="https://ec.europa.eu/odr" style="color:${COLORS.lavenderDark};text-decoration:underline">Plataforma europea de resolución de litigios en línea (ODR)</a><br/>
+                    <a href="https://ec.europa.eu/consumers/odr/" style="color:${COLORS.lavenderDark};text-decoration:underline">Plataforma europea de resolución de litigios en línea (ODR)</a><br/>
                     Dirección General de Consumo del Gobierno de Cantabria
                   </p>`
                   : ''

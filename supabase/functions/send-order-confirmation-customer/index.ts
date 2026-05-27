@@ -156,7 +156,7 @@ serve(async (req) => {
         Si tienes una reclamación, puedes contactarnos en ${escapeHtml(supportEmail)} o:
       </p>
       <ul style="margin:0 0 16px 18px;padding:0;color:#555;font-size:13px;line-height:1.6">
-        <li>Usar la <a href="https://ec.europa.eu/odr" style="color:#A788B5;text-decoration:underline">plataforma europea de resolución de litigios en línea (ODR)</a>.</li>
+        <li>Usar la <a href="https://ec.europa.eu/consumers/odr/" style="color:#A788B5;text-decoration:underline">plataforma europea de resolución de litigios en línea (ODR)</a>.</li>
         <li>Acudir a la Dirección General de Consumo del Gobierno de Cantabria.</li>
       </ul>
 

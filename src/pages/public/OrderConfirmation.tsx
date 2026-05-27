@@ -333,8 +333,50 @@ export default function OrderConfirmation() {
           </p>
         </div>
 
-        {/* CTA */}
-        <div className="flex justify-center pt-4">
+        {/* Información legal archivable — L-07 */}
+        <section className="bg-[var(--color-card)] rounded-2xl p-5 space-y-3 text-sm font-[var(--font-body)]">
+          <h2 className="font-[var(--font-display)] text-lg tracking-widest text-[var(--color-cream)]">
+            Información importante
+          </h2>
+          <ul className="text-[var(--color-mid)] space-y-2 list-disc pl-5 leading-relaxed">
+            <li>
+              <strong className="text-[var(--color-cream-dim)]">Derecho de desistimiento:</strong>{' '}
+              14 días naturales desde la recepción del producto (art. 102 RDL 1/2007).{' '}
+              <Link to="/devoluciones" className="text-[var(--color-lavender)] underline underline-offset-2">
+                Más info y formulario
+              </Link>.
+            </li>
+            <li>
+              <strong className="text-[var(--color-cream-dim)]">Garantía legal:</strong>{' '}
+              3 años desde la entrega (art. 120 RDL 1/2007).
+            </li>
+            <li>
+              <strong className="text-[var(--color-cream-dim)]">Resolución de litigios:</strong>{' '}
+              plataforma ODR{' '}
+              <a
+                href="https://ec.europa.eu/consumers/odr/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[var(--color-lavender)] underline underline-offset-2"
+              >
+                ec.europa.eu/consumers/odr/
+              </a>.
+            </li>
+            <li>
+              <strong className="text-[var(--color-cream-dim)]">Idioma del contrato:</strong>{' '}
+              Español.
+            </li>
+          </ul>
+        </section>
+
+        {/* CTA + Imprimir */}
+        <div className="flex flex-wrap justify-center gap-3 pt-4 print:hidden">
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-[var(--color-lavender)]/40 text-[var(--color-lavender)] font-[var(--font-cond)] font-semibold tracking-widest hover:border-[var(--color-lavender)] transition-all"
+          >
+            Guardar / Imprimir PDF
+          </button>
           <Link
             to="/catalogo"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--color-lavender)] text-[var(--color-ink)] font-[var(--font-cond)] font-semibold tracking-widest hover:brightness-110 transition-all"

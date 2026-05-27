@@ -71,12 +71,84 @@ export function buildInvoiceNumber(prefix: string, year: number, n: number): str
 }
 
 /**
+ * Una línea de desglose IVA agrupada por tipo impositivo.
+ * C-12 — soporte multi-tipo IVA (21 %, 10 %, 4 %…).
+ */
+export interface TaxLine {
+  /** Tipo impositivo en porcentaje entero o decimal, ej. 21 o 10. */
+  rate_pct: number
+  base_cents: number
+  iva_cents: number
+}
+
+/**
+ * Calcula el desglose IVA agrupado por tipo impositivo (multi-tipo).
+ *
+ * Cada item puede llevar su propio `tax_rate_pct`; si no lo tiene se usa `defaultRatePct`.
+ * El envío (`shippingCents`) siempre tributa al tipo por defecto.
+ *
+ * Para cada línea: base = round(line_total / (1 + rate)), tax = line_total - base.
+ * Los resultados se agrupan por tipo y se ordenan de mayor a menor tipo.
+ *
+ * @param items líneas con line_total_cents (PVP con IVA incluido) y tax_rate_pct opcional.
+ * @param shippingCents envío con IVA (tributa al tipo por defecto).
+ * @param defaultRatePct tipo IVA por defecto en %, ej. 21.
+ */
+export function computeTaxBreakdownMulti(
+  items: { line_total_cents: number; tax_rate_pct?: number | null }[],
+  shippingCents: number,
+  defaultRatePct: number,
+): TaxLine[] {
+  const buckets = new Map<number, { base_cents: number; iva_cents: number }>()
+
+  const addToBucket = (ratePct: number, lineCents: number) => {
+    const rate = ratePct / 100
+    const baseLine = Math.round(lineCents / (1 + rate))
+    const ivaLine = lineCents - baseLine
+    const prev = buckets.get(ratePct) ?? { base_cents: 0, iva_cents: 0 }
+    buckets.set(ratePct, { base_cents: prev.base_cents + baseLine, iva_cents: prev.iva_cents + ivaLine })
+  }
+
+  for (const it of items) {
+    addToBucket(it.tax_rate_pct ?? defaultRatePct, it.line_total_cents)
+  }
+
+  // Envío tributa siempre al tipo por defecto
+  if (shippingCents > 0) {
+    addToBucket(defaultRatePct, shippingCents)
+  }
+
+  return Array.from(buckets.entries())
+    .map(([rate_pct, b]) => ({ rate_pct, base_cents: b.base_cents, iva_cents: b.iva_cents }))
+    .sort((a, b) => b.rate_pct - a.rate_pct) // mayor tipo primero
+}
+
+/**
+ * Agrega un array de TaxLine en el formato plano `{ base_cents, tax_cents, total_cents }`
+ * para callers que no necesitan el desglose por tipo (backward-compat con callers existentes).
+ */
+export function summarizeTaxBreakdown(
+  lines: TaxLine[],
+): { base_cents: number; tax_cents: number; total_cents: number } {
+  let baseSum = 0
+  let ivaSum = 0
+  for (const l of lines) {
+    baseSum += l.base_cents
+    ivaSum += l.iva_cents
+  }
+  return { base_cents: baseSum, tax_cents: ivaSum, total_cents: baseSum + ivaSum }
+}
+
+/**
  * Desglose IVA exacto en céntimos a partir de líneas con precio PVP (con IVA incluido).
  *
  * Para cada línea: base_line = round(line_total / (1 + rate)), tax_line = line_total - base_line.
  * Suma todas las líneas → totales. Garantiza base + tax = subtotal exacto al céntimo.
  *
  * Para el envío (también con IVA incluido): mismo cálculo, sumado al total.
+ *
+ * Backward-compat: asume un único tipo IVA (`taxRatePct`).
+ * Para multi-tipo usa `computeTaxBreakdownMulti` + `summarizeTaxBreakdown`.
  *
  * @param items líneas con line_total_cents (con IVA).
  * @param shippingCents envío con IVA.
@@ -87,27 +159,6 @@ export function computeTaxBreakdown(
   shippingCents: number,
   taxRatePct: number,
 ): { base_cents: number; tax_cents: number; total_cents: number } {
-  const rate = taxRatePct / 100
-  let baseSum = 0
-  let taxSum = 0
-
-  for (const it of items) {
-    const lineWithTax = it.line_total_cents
-    const baseLine = Math.round(lineWithTax / (1 + rate))
-    const taxLine = lineWithTax - baseLine
-    baseSum += baseLine
-    taxSum += taxLine
-  }
-
-  // Envío
-  const baseShip = Math.round(shippingCents / (1 + rate))
-  const taxShip = shippingCents - baseShip
-  baseSum += baseShip
-  taxSum += taxShip
-
-  return {
-    base_cents: baseSum,
-    tax_cents: taxSum,
-    total_cents: baseSum + taxSum,
-  }
+  const lines = computeTaxBreakdownMulti(items, shippingCents, taxRatePct)
+  return summarizeTaxBreakdown(lines)
 }
