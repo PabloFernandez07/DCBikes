@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+const SUPABASE_FUNCTIONS_URL =
+  `${import.meta.env.VITE_SUPABASE_URL as string}/functions/v1`;
+
 export interface GoogleReview {
   author_name: string;
   rating: number;
@@ -42,7 +45,9 @@ export function useGoogleReviews() {
                 relative_time_description:
                   r.relativePublishTimeDescription ?? "",
                 text: r.text?.text ?? r.originalText?.text ?? "",
-                profile_photo_url: r.authorAttribution?.photoUri ?? "",
+                profile_photo_url: r.authorAttribution?.photoUri
+                  ? `${SUPABASE_FUNCTIONS_URL}/google-avatar-proxy?url=${encodeURIComponent(r.authorAttribution.photoUri)}`
+                  : "",
               }))
           : [];
 

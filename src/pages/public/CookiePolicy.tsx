@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { Cookie, Shield, BarChart2, Target, Trash2 } from 'lucide-react'
+import { Cookie, Shield, BarChart2, Target, Trash2, Image } from 'lucide-react'
 import { useStoreAddress } from '@/hooks/useStoreAddress'
 
 function useReveal() {
@@ -233,6 +233,25 @@ export default function CookiePolicy() {
                   el futuro se implementan, esta política se actualizará y se solicitará tu{' '}
                   <strong className="text-[var(--color-cream)]">consentimiento previo expreso</strong> mediante
                   el banner de cookies antes de su activación.
+                </p>
+              </div>
+            </div>
+
+            {/* E. Imágenes de Google */}
+            <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+              <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                <Image size={18} className="text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1">
+                  E. Imágenes de Google (avatares de reseñas) — sin cookies
+                </p>
+                <p>
+                  En la sección de reseñas mostramos las fotos de perfil de los autores obtenidas de Google.{' '}
+                  <strong className="text-[var(--color-cream)]">No instalamos ninguna cookie</strong> ni enviamos tu
+                  dirección IP a Google: las imágenes se descargan a través de un proxy alojado en nuestros servidores
+                  (dominio <code className="text-[var(--color-lavender)]">supabase.co</code>), por lo que Google no
+                  recibe ningún dato de navegación tuyo al ver estas fotografías.
                 </p>
               </div>
             </div>
