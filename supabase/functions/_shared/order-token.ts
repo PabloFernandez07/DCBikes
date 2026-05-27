@@ -12,17 +12,12 @@
 // Formato actual (sprint 3.2):
 //   token = `${issuedAtMs}.${base64UrlSig}`
 //   firma = HMAC-SHA256(orderId + ':' + email + ':' + issuedAtMs, secret)
-//   validez: 30 días desde issuedAt
+//   validez: 7 días desde issuedAt (S-04: reducido de 30d)
 //
-// Retro-compatibilidad:
-//   Durante 60 días tras deploy aceptamos también el formato antiguo
-//   (firma desnuda sin timestamp). Logueamos warning para analítica.
-//   Tras 2026-07-25 eliminar el bloque marcado [DEPRECATED].
-//
-// El secreto se lee de la env var ORDER_TOKEN_SECRET. Como fallback (dev) se
-// deriva del SUPABASE_SERVICE_ROLE_KEY namespaceado.
+// El secreto se lee de la env var ORDER_TOKEN_SECRET (obligatoria).
+// Configurar en: Supabase Dashboard > Project Settings > Edge Functions > Secrets.
 
-const TTL_MS = 30 * 24 * 60 * 60 * 1000 // 30 días
+const TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 días (S-04: era 30d, reducido por auditoría legal V3)
 
 function utf8(s: string): Uint8Array {
   return new TextEncoder().encode(s)
@@ -38,11 +33,11 @@ function toBase64Url(bytes: Uint8Array): string {
 }
 
 function getSecret(): string {
-  const explicit = Deno.env.get('ORDER_TOKEN_SECRET')
-  if (explicit && explicit.length > 0) return explicit
-  // Fallback determinista pero NO el service_role completo (lo "namespaceamos").
-  const fallbackBase = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  return `dc-bikes:order-token:${fallbackBase}`
+  const secret = Deno.env.get('ORDER_TOKEN_SECRET')
+  if (!secret || secret.length === 0) {
+    throw new Error('ORDER_TOKEN_SECRET env var es obligatoria (S-04 auditoría legal V3)')
+  }
+  return secret
 }
 
 async function hmacSha256B64Url(data: string): Promise<string> {
@@ -89,10 +84,8 @@ export async function generateOrderToken(
  * Verifica si el token recibido corresponde al esperado y no ha caducado.
  * Comparación timing-safe.
  *
- * Acepta dos formatos:
- *   - Nuevo: `${issuedAt}.${sig}` — valida firma + TTL (30 días).
- *   - [DEPRECATED — eliminar tras 2026-07-25] Antiguo: solo firma —
- *     valida firma de `${orderId}:${email}` sin expiración.
+ * Solo acepta el formato actual: `${issuedAt}.${sig}` — valida firma + TTL (7 días).
+ * Tokens en formato antiguo (sin timestamp) ya no son válidos (S-04 auditoría legal V3).
  */
 export async function verifyOrderToken(
   orderId: string,
@@ -102,22 +95,18 @@ export async function verifyOrderToken(
   if (!receivedToken) return false
   const email = normalizeEmail(customerEmail)
 
-  // Formato nuevo: contiene un punto separador.
-  if (receivedToken.includes('.')) {
-    const dotIdx = receivedToken.indexOf('.')
-    const issuedAtStr = receivedToken.slice(0, dotIdx)
-    const sig = receivedToken.slice(dotIdx + 1)
-    const issuedAt = Number.parseInt(issuedAtStr, 10)
-    if (!Number.isFinite(issuedAt) || issuedAt <= 0) return false
-    if (Date.now() - issuedAt > TTL_MS) return false
-    const expected = await hmacSha256B64Url(`${orderId}:${email}:${issuedAt}`)
-    return timingSafeEqual(sig, expected)
-  }
+  // Formato requerido: contiene un punto separador (issuedAt.sig).
+  if (!receivedToken.includes('.')) return false
 
-  // [DEPRECATED — eliminar tras 2026-07-25] Formato antiguo: solo firma.
-  console.warn(
-    `[order-token] usando token formato antiguo (sin timestamp) para order ${orderId}`,
-  )
-  const expectedLegacy = await hmacSha256B64Url(`${orderId}:${email}`)
-  return timingSafeEqual(receivedToken, expectedLegacy)
+  const dotIdx = receivedToken.indexOf('.')
+  const issuedAtStr = receivedToken.slice(0, dotIdx)
+  const sig = receivedToken.slice(dotIdx + 1)
+  const issuedAt = Number.parseInt(issuedAtStr, 10)
+  if (!Number.isFinite(issuedAt) || issuedAt <= 0) return false
+  if (Date.now() - issuedAt > TTL_MS) return false
+  const expected = await hmacSha256B64Url(`${orderId}:${email}:${issuedAt}`)
+  return timingSafeEqual(sig, expected)
 }
+
+// Audit trail:
+//   2026-05-27 (S-04 auditoría legal V3): TTL 30d -> 7d, drop rama legacy, secret obligatorio.
