@@ -196,7 +196,7 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   try {
-    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+    if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -219,7 +219,7 @@ serve(async (req) => {
     const outcome = await parsePayload(ct, rawBody, mockBody, supabase)
 
     if (!outcome) {
-      return jsonError('payload inválido', 400)
+      return jsonError('payload inválido', 400, req)
     }
 
     if (outcome.source === 'redsys' && outcome.signatureValid === false) {
@@ -270,7 +270,7 @@ serve(async (req) => {
         raw_payload: sanitizeRedsysPayload({ ...outcome.rawPayload, warning: 'order not found' }),
         signature_valid: outcome.signatureValid,
       })
-      return jsonOk({ ignored: true })
+      return jsonOk({ ignored: true }, req)
     }
 
     // 3. Idempotencia: si ya está authorized/accepted/rejected/cancelled,
@@ -287,7 +287,7 @@ serve(async (req) => {
         raw_payload: sanitizeRedsysPayload({ ...outcome.rawPayload, note: 'duplicate notification ignored' }),
         signature_valid: outcome.signatureValid,
       })
-      return jsonOk({ ok: true, status: order.status })
+      return jsonOk({ ok: true, status: order.status }, req)
     }
 
     // 4. Decidir nuevo status.
@@ -306,7 +306,7 @@ serve(async (req) => {
       .eq('id', order.id)
     if (uErr) {
       console.error(`[${ts()}] update order error:`, uErr.message)
-      return jsonError(uErr.message)
+      return jsonError(uErr.message, 500, req)
     }
 
     // 5. Log + history.
@@ -353,11 +353,11 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ redsys-notification · ${order.order_number} · ${outcome.source} · ${nextStatus}`,
     )
-    return jsonOk({ ok: true, status: nextStatus })
+    return jsonOk({ ok: true, status: nextStatus }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ redsys-notification:`, String(err))
     // Devolvemos 200 igualmente para evitar reintentos infinitos de Redsys.
     // El error queda logueado en consola.
-    return jsonOk({ ok: false, error: String(err) })
+    return jsonOk({ ok: false, error: String(err) }, req)
   }
 })

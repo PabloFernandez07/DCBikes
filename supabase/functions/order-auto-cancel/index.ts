@@ -50,12 +50,12 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   try {
-    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+    if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     const cronAuth = authorizeCron(req)
     if (!cronAuth.ok) {
       console.warn(`[${ts()}] cron unauthorized:`, cronAuth.reason)
-      return jsonError('unauthorized', 401)
+      return jsonError('unauthorized', 401, req)
     }
 
     const supabase = createClient(
@@ -76,11 +76,11 @@ serve(async (req) => {
 
     if (qErr) {
       console.error(`[${ts()}] auto-cancel query error:`, qErr.message)
-      return jsonError(qErr.message)
+      return jsonError(qErr.message, 500, req)
     }
 
     if (!pending || pending.length === 0) {
-      return jsonOk({ cancelled: 0, scanned: 0 })
+      return jsonOk({ cancelled: 0, scanned: 0 }, req)
     }
 
     const config = await loadConfig(supabase)
@@ -142,9 +142,9 @@ serve(async (req) => {
       }
     }
 
-    return jsonOk({ scanned: pending.length, cancelled, failed, hours })
+    return jsonOk({ scanned: pending.length, cancelled, failed, hours }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ order-auto-cancel:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

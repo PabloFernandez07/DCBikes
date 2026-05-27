@@ -54,12 +54,12 @@ serve(async (req) => {
       token = body.token ?? null
       orderId = body.order_id ?? null
     } else {
-      return jsonError('method not allowed', 405)
+      return jsonError('method not allowed', 405, req)
     }
 
-    if (!token) return jsonError('token requerido', 400)
+    if (!token) return jsonError('token requerido', 400, req)
     if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) {
-      return jsonError('order_id inválido', 400)
+      return jsonError('order_id inválido', 400, req)
     }
 
     const supabase = createClient(
@@ -68,7 +68,7 @@ serve(async (req) => {
     )
 
     const session = await verifyCustomerSession(supabase, token)
-    if (!session) return jsonError('Sesión expirada o inválida', 401)
+    if (!session) return jsonError('Sesión expirada o inválida', 401, req)
 
     const { data: order, error: oErr } = await supabase
       .from('orders')
@@ -93,9 +93,9 @@ serve(async (req) => {
 
     if (oErr) {
       console.error(`[${ts()}] customer-order-detail read error:`, oErr.message)
-      return jsonError('error leyendo el pedido', 500)
+      return jsonError('error leyendo el pedido', 500, req)
     }
-    if (!order) return jsonError('forbidden', 403)
+    if (!order) return jsonError('forbidden', 403, req)
 
     // Verifica pertenencia + no soft-deleted (en una sola respuesta 403 para
     // no diferenciar entre "no es tuyo" y "no existe").
@@ -106,7 +106,7 @@ serve(async (req) => {
       console.warn(
         `[${ts()}] customer-order-detail forbidden · session=${session.email} · order=${order.order_number}`,
       )
-      return jsonError('forbidden', 403)
+      return jsonError('forbidden', 403, req)
     }
 
     // Factura si aplica.
@@ -167,9 +167,9 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ order-detail · email=${session.email} · order=${order.order_number} · items=${items.length}`,
     )
-    return jsonOk({ order: orderPublic, invoice })
+    return jsonOk({ order: orderPublic, invoice }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-order-detail:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

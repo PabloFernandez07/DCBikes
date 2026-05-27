@@ -40,7 +40,7 @@ serve(async (req) => {
 
   try {
     const { order_id } = await req.json().catch(() => ({}))
-    if (!order_id) return jsonError('order_id required', 400)
+    if (!order_id) return jsonError('order_id required', 400, req)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -53,7 +53,7 @@ serve(async (req) => {
       .eq('id', order_id)
       .single<OrderRow>()
 
-    if (oErr || !order) return jsonError('order not found', 404)
+    if (oErr || !order) return jsonError('order not found', 404, req)
 
     // Buscar factura asociada (puede no existir aún)
     const { data: invoice } = await supabase
@@ -174,9 +174,9 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ accepted-customer · order=${order.order_number} · invoice=${invoice?.invoice_number ?? 'none'} · attached=${!!attachment} · resend=${email_id}`,
     )
-    return jsonOk({ email_id, invoice_attached: !!attachment })
+    return jsonOk({ email_id, invoice_attached: !!attachment }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-order-accepted-customer:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

@@ -30,10 +30,10 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   try {
-    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+    if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     const auth = await requireAdmin(req)
-    if (!auth.ok) return jsonError(auth.error, auth.status)
+    if (!auth.ok) return jsonError(auth.error, auth.status, req)
     const { supabase, userId } = auth.ctx
 
     const body = (await req.json().catch(() => ({}))) as {
@@ -42,7 +42,7 @@ serve(async (req) => {
     }
     const orderId = body.order_id
     if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) {
-      return jsonError('order_id requerido (uuid)', 400)
+      return jsonError('order_id requerido (uuid)', 400, req)
     }
 
     // Lectura: incluimos deleted_at para detectar idempotencia.
@@ -59,18 +59,19 @@ serve(async (req) => {
 
     if (oErr) {
       console.error(`[${ts()}] order-delete read error:`, oErr.message)
-      return jsonError(`error leyendo el pedido: ${oErr.message}`, 500)
+      return jsonError(`error leyendo el pedido: ${oErr.message}`, 500, req)
     }
-    if (!order) return jsonError('pedido no encontrado', 404)
+    if (!order) return jsonError('pedido no encontrado', 404, req)
 
     if (order.deleted_at !== null) {
-      return jsonError('Ya eliminado', 409)
+      return jsonError('Ya eliminado', 409, req)
     }
 
     if (!DELETABLE_STATUSES.has(order.status)) {
       return jsonError(
         `Solo se pueden eliminar pedidos pendientes de pago o con pago fallido. Estado actual: ${order.status}`,
         422,
+        req,
       )
     }
 
@@ -83,7 +84,7 @@ serve(async (req) => {
 
     if (uErr) {
       console.error(`[${ts()}] order-delete update error:`, uErr.message)
-      return jsonError(`error eliminando el pedido: ${uErr.message}`, 500)
+      return jsonError(`error eliminando el pedido: ${uErr.message}`, 500, req)
     }
 
     const cleanReason =
@@ -103,9 +104,9 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ order-delete · ${order.order_number} · prev=${order.status} · by=${userId}`,
     )
-    return jsonOk({})
+    return jsonOk({}, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ order-delete:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

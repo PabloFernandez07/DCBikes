@@ -31,10 +31,10 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   try {
-    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+    if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     const auth = await requireAdmin(req)
-    if (!auth.ok) return jsonError(auth.error, auth.status)
+    if (!auth.ok) return jsonError(auth.error, auth.status, req)
     const { supabase, userId } = auth.ctx
 
     const body = await req.json().catch(() => ({})) as {
@@ -42,25 +42,26 @@ serve(async (req) => {
       rejection_reason?: string | null
     }
     const orderId = body.order_id
-    if (!orderId) return jsonError('order_id required', 400)
+    if (!orderId) return jsonError('order_id required', 400, req)
     const reason = (body.rejection_reason ?? '').trim().slice(0, 1000)
 
     const order = await loadOrder(supabase, orderId)
-    if (!order) return jsonError('order not found', 404)
+    if (!order) return jsonError('order not found', 404, req)
 
     if (order.status === 'rejected') {
-      return jsonOk({ status: 'rejected' })
+      return jsonOk({ status: 'rejected' }, req)
     }
     if (order.status !== 'authorized') {
       return jsonError(
         `solo se pueden rechazar pedidos 'authorized' (actual: ${order.status})`,
         409,
+        req,
       )
     }
 
     const config = await loadConfig(supabase)
     if (!order.payment_pre_auth_id) {
-      return jsonError('falta payment_pre_auth_id', 500)
+      return jsonError('falta payment_pre_auth_id', 500, req)
     }
 
     const cancelResult = await runRedsysOperation({
@@ -84,7 +85,7 @@ serve(async (req) => {
         payment_cancelled_at: now,
       })
       .eq('id', orderId)
-    if (uErr) return jsonError(`update failed: ${uErr.message}`, 500)
+    if (uErr) return jsonError(`update failed: ${uErr.message}`, 500, req)
 
     await restoreStockFor(supabase, orderId)
     await logPayment(supabase, orderId, 'cancel', cancelResult, '9')
@@ -103,9 +104,9 @@ serve(async (req) => {
       .catch((err) => console.warn(`[${ts()}] send-order-rejected-customer:`, String(err)))
 
     console.log(`[${ts()}] ✓ order-reject · ${order.order_number}`)
-    return jsonOk({ status: 'rejected', mode: config.mode })
+    return jsonOk({ status: 'rejected', mode: config.mode }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ order-reject:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

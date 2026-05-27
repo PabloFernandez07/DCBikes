@@ -36,12 +36,12 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   try {
-    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+    if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     const body = (await req.json().catch(() => ({}))) as { email?: string }
     const email = (body.email ?? '').toString().trim().toLowerCase()
     if (!email || !EMAIL_RE.test(email)) {
-      return jsonError('Email inválido', 400)
+      return jsonError('Email inválido', 400, req)
     }
 
     const supabase = createClient(
@@ -62,6 +62,7 @@ serve(async (req) => {
       return jsonError(
         'Demasiadas solicitudes. Inténtalo de nuevo en una hora.',
         429,
+        req,
       )
     }
 
@@ -76,7 +77,7 @@ serve(async (req) => {
       console.error(`[${ts()}] orders count error:`, cErr.message)
       // Aun así devolvemos OK público para no revelar nada. Pero NO creamos
       // sesión ni email (no hay datos válidos).
-      return jsonOk({ message: PUBLIC_MESSAGE })
+      return jsonOk({ message: PUBLIC_MESSAGE }, req)
     }
 
     if (!orderCount || orderCount === 0) {
@@ -84,7 +85,7 @@ serve(async (req) => {
       console.log(
         `[${ts()}] magic-link request · email=${email} · no-orders (silent ok)`,
       )
-      return jsonOk({ message: PUBLIC_MESSAGE })
+      return jsonOk({ message: PUBLIC_MESSAGE }, req)
     }
 
     // Crear sesión.
@@ -100,7 +101,7 @@ serve(async (req) => {
     } catch (err) {
       console.error(`[${ts()}] createCustomerSession failed:`, String(err))
       // Devolvemos OK público igualmente — no revelamos errores internos.
-      return jsonOk({ message: PUBLIC_MESSAGE })
+      return jsonOk({ message: PUBLIC_MESSAGE }, req)
     }
 
     // Invocar send-customer-magic-link (fire-and-forget — no bloqueamos al cliente).
@@ -121,9 +122,9 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ magic-link request · email=${email} · orders=${orderCount}`,
     )
-    return jsonOk({ message: PUBLIC_MESSAGE })
+    return jsonOk({ message: PUBLIC_MESSAGE }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-magic-link-request:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

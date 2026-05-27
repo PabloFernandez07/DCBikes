@@ -13,22 +13,22 @@ Deno.serve(async (req) => {
   }
 
   if (req.method !== 'GET') {
-    return jsonError('Method not allowed', 405)
+    return jsonError('Method not allowed', 405, req)
   }
 
   const { searchParams } = new URL(req.url)
   const target = searchParams.get('url')
-  if (!target) return jsonError('Missing url param', 400)
+  if (!target) return jsonError('Missing url param', 400, req)
 
   let parsed: URL
   try {
     parsed = new URL(target)
   } catch {
-    return jsonError('Invalid url', 400)
+    return jsonError('Invalid url', 400, req)
   }
 
-  if (parsed.protocol !== 'https:') return jsonError('Only https allowed', 400)
-  if (!ALLOWED_HOSTS.has(parsed.host)) return jsonError('Host not allowed', 400)
+  if (parsed.protocol !== 'https:') return jsonError('Only https allowed', 400, req)
+  if (!ALLOWED_HOSTS.has(parsed.host)) return jsonError('Host not allowed', 400, req)
 
   let upstream: Response
   try {
@@ -39,10 +39,10 @@ Deno.serve(async (req) => {
       },
     })
   } catch {
-    return jsonError('Upstream fetch failed', 502)
+    return jsonError('Upstream fetch failed', 502, req)
   }
 
-  if (!upstream.ok) return jsonError('Upstream error', 502)
+  if (!upstream.ok) return jsonError('Upstream error', 502, req)
 
   const contentType = upstream.headers.get('content-type') ?? 'image/jpeg'
 

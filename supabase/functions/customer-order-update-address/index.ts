@@ -131,7 +131,7 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   try {
-    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+    if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     const body = (await req.json().catch(() => ({}))) as {
       token?: string
@@ -141,15 +141,15 @@ serve(async (req) => {
     const token = body.token ?? ''
     const orderId = body.order_id ?? ''
 
-    if (!token) return jsonError('token requerido', 400)
+    if (!token) return jsonError('token requerido', 400, req)
     if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) {
-      return jsonError('order_id inválido', 400)
+      return jsonError('order_id inválido', 400, req)
     }
 
     // 1) Validación de la nueva dirección antes de tocar BD.
     const validation = validateShipping(body.shipping)
     if (!validation.ok || !validation.value) {
-      return jsonError(validation.error ?? 'shipping inválido', 400)
+      return jsonError(validation.error ?? 'shipping inválido', 400, req)
     }
     const newShipping = validation.value
 
@@ -160,7 +160,7 @@ serve(async (req) => {
 
     // 2) Sesión.
     const session = await verifyCustomerSession(supabase, token)
-    if (!session) return jsonError('Sesión expirada o inválida', 401)
+    if (!session) return jsonError('Sesión expirada o inválida', 401, req)
 
     // 3) Carga pedido con shipping_* + status + deleted_at.
     const { data: order, error: oErr } = await supabase
@@ -182,9 +182,9 @@ serve(async (req) => {
 
     if (oErr) {
       console.error(`[${ts()}] customer-order-update-address read:`, oErr.message)
-      return jsonError('error leyendo el pedido', 500)
+      return jsonError('error leyendo el pedido', 500, req)
     }
-    if (!order) return jsonError('forbidden', 403)
+    if (!order) return jsonError('forbidden', 403, req)
 
     if (
       order.deleted_at !== null ||
@@ -193,7 +193,7 @@ serve(async (req) => {
       console.warn(
         `[${ts()}] update-address forbidden · session=${session.email} · order=${order.order_number}`,
       )
-      return jsonError('forbidden', 403)
+      return jsonError('forbidden', 403, req)
     }
 
     // 4) Solo aplica a envío a domicilio.
@@ -231,7 +231,7 @@ serve(async (req) => {
       // No hay nada que cambiar — no escribimos en BD pero respondemos OK
       // (idempotencia: el usuario podría haber pulsado guardar sin tocar nada).
       console.log(`[${ts()}] update-address sin cambios · ${order.order_number}`)
-      return jsonOk({ updated: false, diff })
+      return jsonOk({ updated: false, diff }, req)
     }
 
     // 7) UPDATE.
@@ -250,7 +250,7 @@ serve(async (req) => {
 
     if (uErr) {
       console.error(`[${ts()}] update-address update:`, uErr.message)
-      return jsonError('error actualizando el pedido', 500)
+      return jsonError('error actualizando el pedido', 500, req)
     }
 
     // 8) Historial. changed_by=NULL → identifica acción del cliente.
@@ -277,9 +277,9 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ customer-order-update-address · ${order.order_number} · diff="${diff}"`,
     )
-    return jsonOk({ updated: true, diff })
+    return jsonOk({ updated: true, diff }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-order-update-address:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

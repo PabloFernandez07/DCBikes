@@ -28,26 +28,39 @@ export function buildCorsHeaders(req: Request): Record<string, string> {
   }
 }
 
-// Mantener el CORS_HEADERS exportado por compat con archivos que aún
-// no se refactorizan. Devuelve un wildcard provisional.
-// TODO: eliminar tras refactor completo.
+/**
+ * @deprecated Prefer buildCorsHeaders(req) for new code. This wildcard constant
+ * is kept for backward compatibility with preflight OPTIONS handlers and legacy
+ * call sites that do not have a Request in scope. Will be removed after full
+ * migration to per-request dynamic CORS.
+ */
 export const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-export function jsonOk(data: Record<string, unknown>): Response {
+/**
+ * Returns a 200 JSON response. Pass `req` to scope CORS to the allowlist origin;
+ * omit only when no Request is available (falls back to wildcard CORS_HEADERS).
+ */
+export function jsonOk(data: Record<string, unknown>, req?: Request): Response {
+  const corsHeaders = req ? buildCorsHeaders(req) : CORS_HEADERS
   return new Response(JSON.stringify({ ok: true, ...data }), {
     status: 200,
-    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
   })
 }
 
-export function jsonError(message: string, status = 500): Response {
+/**
+ * Returns an error JSON response. Pass `req` to scope CORS to the allowlist origin;
+ * omit only when no Request is available (falls back to wildcard CORS_HEADERS).
+ */
+export function jsonError(message: string, status = 500, req?: Request): Response {
+  const corsHeaders = req ? buildCorsHeaders(req) : CORS_HEADERS
   return new Response(JSON.stringify({ ok: false, error: message }), {
     status,
-    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
   })
 }
 

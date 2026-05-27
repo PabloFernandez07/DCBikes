@@ -36,10 +36,10 @@ serve(async (req) => {
       const body = (await req.json().catch(() => ({}))) as { token?: string }
       token = body.token ?? null
     } else {
-      return jsonError('method not allowed', 405)
+      return jsonError('method not allowed', 405, req)
     }
 
-    if (!token) return jsonError('token requerido', 400)
+    if (!token) return jsonError('token requerido', 400, req)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -48,7 +48,7 @@ serve(async (req) => {
 
     const session = await verifyCustomerSession(supabase, token)
     if (!session) {
-      return jsonError('Sesión expirada o inválida', 401)
+      return jsonError('Sesión expirada o inválida', 401, req)
     }
 
     const { data: orders, error: oErr } = await supabase
@@ -64,7 +64,7 @@ serve(async (req) => {
 
     if (oErr) {
       console.error(`[${ts()}] customer-orders-list query error:`, oErr.message)
-      return jsonError('error leyendo pedidos', 500)
+      return jsonError('error leyendo pedidos', 500, req)
     }
 
     const list = (orders ?? []).map((o) => {
@@ -84,9 +84,9 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ orders-list · email=${session.email} · count=${list.length}`,
     )
-    return jsonOk({ email: session.email, orders: list })
+    return jsonOk({ email: session.email, orders: list }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-orders-list:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

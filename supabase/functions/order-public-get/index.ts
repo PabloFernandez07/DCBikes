@@ -55,11 +55,11 @@ serve(async (req) => {
       id = body.id ?? body.order_id ?? null
       token = body.token ?? null
     } else {
-      return jsonError('method not allowed', 405)
+      return jsonError('method not allowed', 405, req)
     }
 
-    if (!id || !token) return jsonError('id y token requeridos', 400)
-    if (!/^[0-9a-f-]{36}$/i.test(id)) return jsonError('id inválido', 400)
+    if (!id || !token) return jsonError('id y token requeridos', 400, req)
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return jsonError('id inválido', 400, req)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -79,14 +79,14 @@ serve(async (req) => {
 
     if (oErr || !order) {
       // No revelamos si existe el id o no — 403 genérico.
-      return jsonError('forbidden', 403)
+      return jsonError('forbidden', 403, req)
     }
 
     // Validar token HMAC.
     const valid = await verifyOrderToken(order.id, order.customer_email, token)
     if (!valid) {
       console.warn(`[${ts()}] token inválido para ${order.order_number}`)
-      return jsonError('forbidden', 403)
+      return jsonError('forbidden', 403, req)
     }
 
     // Buscar factura si aplica.
@@ -125,9 +125,9 @@ serve(async (req) => {
         items: order.order_items ?? [],
         invoice: invoiceNumber ? { invoice_number: invoiceNumber, signed_url: invoiceUrl } : null,
       },
-    })
+    }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ order-public-get:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

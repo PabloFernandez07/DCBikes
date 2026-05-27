@@ -29,7 +29,7 @@ serve(async (req) => {
 
   try {
     const { order_id } = await req.json().catch(() => ({}))
-    if (!order_id) return jsonError('order_id required', 400)
+    if (!order_id) return jsonError('order_id required', 400, req)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -42,9 +42,9 @@ serve(async (req) => {
       .eq('id', order_id)
       .single<OrderRow>()
 
-    if (oErr || !order) return jsonError('order not found', 404)
+    if (oErr || !order) return jsonError('order not found', 404, req)
     if (order.delivery_method !== 'shipping') {
-      return jsonError(`order ${order.order_number} is not shipping (delivery_method=${order.delivery_method})`, 400)
+      return jsonError(`order ${order.order_number} is not shipping (delivery_method=${order.delivery_method})`, 400, req)
     }
 
     const settings = await getSettings(supabase, [
@@ -146,9 +146,9 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ shipped · order=${order.order_number} · tracking=${tracking ?? 'none'} · carrier=${carrier ?? 'none'} · resend=${email_id}`,
     )
-    return jsonOk({ email_id })
+    return jsonOk({ email_id }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-order-shipped:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

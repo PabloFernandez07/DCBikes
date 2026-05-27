@@ -27,7 +27,7 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   try {
-    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+    if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     const body = (await req.json().catch(() => ({}))) as {
       email?: string
@@ -36,9 +36,9 @@ serve(async (req) => {
     const email = (body.email ?? '').toString().trim().toLowerCase()
     const token = (body.token ?? '').toString().trim()
 
-    if (!email) return jsonError('email requerido', 400)
+    if (!email) return jsonError('email requerido', 400, req)
     if (!token || !/^[0-9a-f]{64}$/i.test(token)) {
-      return jsonError('token inválido', 400)
+      return jsonError('token inválido', 400, req)
     }
 
     const supabase = createClient(
@@ -108,9 +108,9 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ magic-link email · to=${email} · resend=${email_id}`,
     )
-    return jsonOk({ email_id })
+    return jsonOk({ email_id }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-customer-magic-link:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

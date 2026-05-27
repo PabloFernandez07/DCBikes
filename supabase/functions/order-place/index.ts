@@ -389,11 +389,11 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   try {
-    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+    if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     const rawBody = await req.json().catch(() => null)
     const v = validateBody(rawBody)
-    if (!v.ok) return jsonError(v.error, 400)
+    if (!v.ok) return jsonError(v.error, 400, req)
     const body = v.body
 
     // Captura IP/UA del cliente para prueba probatoria del consentimiento
@@ -413,7 +413,7 @@ serve(async (req) => {
     // 1. Reservar stock.
     const stockRes = await reserveStock(supabase, body.items)
     if (!stockRes.ok) {
-      return jsonError(stockRes.error, 409)
+      return jsonError(stockRes.error, 409, req)
     }
     const products = stockRes.products
 
@@ -435,7 +435,7 @@ serve(async (req) => {
       typeof settings.legal_company_cif === 'string' && settings.legal_company_cif.trim().length > 0 &&
       typeof settings.legal_company_address === 'string' && settings.legal_company_address.trim().length > 0
     if (!legalReady) {
-      return jsonError('Tienda no operativa temporalmente. Estamos completando la configuración fiscal.', 503)
+      return jsonError('Tienda no operativa temporalmente. Estamos completando la configuración fiscal.', 503, req)
     }
     const totals = computeTotals(products, body.items, body.delivery_method, settings)
     const orderPrefix = asString(settings.order_series_prefix, 'ORD')
@@ -448,7 +448,7 @@ serve(async (req) => {
     if (numErr || nextNumData == null) {
       await rollbackReserved(supabase, products)
       console.error(`[${ts()}] next_order_number error:`, numErr?.message)
-      return jsonError('no se pudo reservar número de pedido', 500)
+      return jsonError('no se pudo reservar número de pedido', 500, req)
     }
     const seq = String(nextNumData).padStart(4, '0')
     const orderNumber = `${orderPrefix}-${year}-${seq}`
@@ -460,7 +460,7 @@ serve(async (req) => {
     } catch (err) {
       await rollbackReserved(supabase, products)
       console.error(`[${ts()}] redsys-config:`, String(err))
-      return jsonError(String(err), 500)
+      return jsonError(String(err), 500, req)
     }
 
     // 5. Pre-generar Ds_Merchant_Order para correlar webhook (test/prod).
@@ -507,7 +507,7 @@ serve(async (req) => {
     if (insErr || !insertedOrder) {
       await rollbackReserved(supabase, products)
       console.error(`[${ts()}] insert order error:`, insErr?.message)
-      return jsonError('no se pudo crear el pedido', 500)
+      return jsonError('no se pudo crear el pedido', 500, req)
     }
     const orderId = insertedOrder.id
 
@@ -533,7 +533,7 @@ serve(async (req) => {
       // pedido pending; el cron de auto-cancel lo liberará vía rechazo.
       await supabase.from('orders').delete().eq('id', orderId)
       await rollbackReserved(supabase, products)
-      return jsonError('no se pudieron guardar las líneas', 500)
+      return jsonError('no se pudieron guardar las líneas', 500, req)
     }
 
     // 8. Historial.
@@ -565,7 +565,7 @@ serve(async (req) => {
           mock_url: mockUrl,
           redsys_order_id: redsysOrderId,
         },
-      })
+      }, req)
     }
 
     // mode test / prod
@@ -589,9 +589,9 @@ serve(async (req) => {
         mode: 'redsys',
         form_data: formData,
       },
-    })
+    }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ order-place:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

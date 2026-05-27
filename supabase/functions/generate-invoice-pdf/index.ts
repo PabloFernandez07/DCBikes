@@ -74,11 +74,11 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   try {
-    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+    if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     const body = await req.json().catch(() => ({})) as { order_id?: string }
     const orderId = body.order_id
-    if (!orderId) return jsonError('order_id required', 400)
+    if (!orderId) return jsonError('order_id required', 400, req)
 
     const supabase: SupabaseClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -94,18 +94,19 @@ serve(async (req) => {
 
     if (oErr || !order) {
       console.warn(`[${ts()}] order not found id=${orderId}`)
-      return jsonError('order not found', 404)
+      return jsonError('order not found', 404, req)
     }
 
     if (!INVOICE_STATUS_VALID.has(order.status)) {
       return jsonError(
         `no se puede facturar un pedido en estado "${order.status}". Acepta el pedido primero.`,
         400,
+        req,
       )
     }
 
     if (!order.order_items || order.order_items.length === 0) {
-      return jsonError('order has no items', 400)
+      return jsonError('order has no items', 400, req)
     }
 
     /* ─── 2. Idempotencia: si ya hay factura, devolverla ─── */
@@ -123,7 +124,7 @@ serve(async (req) => {
         invoice_number: existing.invoice_number,
         storage_path: existing.pdf_storage_path,
         already_existed: true,
-      })
+      }, req)
     }
 
     /* ─── 3. Settings legales emisor + prefijo + verifactu_mode ─── */
@@ -148,6 +149,7 @@ serve(async (req) => {
       return jsonError(
         'Falta configurar datos fiscales en /admin/settings → Facturación (razón social, CIF, dirección).',
         400,
+        req,
       )
     }
 
@@ -158,6 +160,7 @@ serve(async (req) => {
       return jsonError(
         'Modo Verifactu no configurado. El administrador debe definir settings.verifactu_mode antes de emitir facturas.',
         503,
+        req,
       )
     }
 
@@ -173,7 +176,7 @@ serve(async (req) => {
     })
     if (counterErr || typeof counterData !== 'number') {
       console.error(`[${ts()}] ${rpcName} failed`, counterErr)
-      return jsonError(`fallo al obtener número de factura: ${counterErr?.message ?? 'unknown'}`)
+      return jsonError(`fallo al obtener número de factura: ${counterErr?.message ?? 'unknown'}`, 500, req)
     }
     const effectivePrefix = isB2B ? `${invoicePrefix}-B` : invoicePrefix
     const invoiceNumber = buildInvoiceNumber(effectivePrefix, year, counterData)
@@ -259,7 +262,7 @@ serve(async (req) => {
     )
     if (uploadRes.error) {
       console.error(`[${ts()}] storage upload failed`, uploadRes.error)
-      return jsonError(`fallo al subir PDF: ${uploadRes.error.message}`)
+      return jsonError(`fallo al subir PDF: ${uploadRes.error.message}`, 500, req)
     }
 
     /* ─── 9. INSERT en tabla invoices (rollback storage si falla) ─── */
@@ -291,7 +294,7 @@ serve(async (req) => {
       await supabase.storage.from('invoices').remove([storagePath]).catch((e) =>
         console.warn(`[${ts()}] rollback remove failed`, e),
       )
-      return jsonError(`fallo al persistir factura: ${insErr.message}`)
+      return jsonError(`fallo al persistir factura: ${insErr.message}`, 500, req)
     }
 
     console.log(
@@ -302,10 +305,10 @@ serve(async (req) => {
       invoice_number: invoiceNumber,
       storage_path: storagePath,
       size_bytes: pdfBytes.length,
-    })
+    }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ generate-invoice-pdf fatal:`, err)
-    return jsonError(`internal error: ${String(err)}`)
+    return jsonError(`internal error: ${String(err)}`, 500, req)
   }
 })
 

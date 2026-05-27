@@ -30,7 +30,7 @@ serve(async (req) => {
 
   try {
     const { order_id } = await req.json().catch(() => ({}))
-    if (!order_id) return jsonError('order_id required', 400)
+    if (!order_id) return jsonError('order_id required', 400, req)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -43,7 +43,7 @@ serve(async (req) => {
       .eq('id', order_id)
       .single<OrderRow>()
 
-    if (oErr || !order) return jsonError('order not found', 404)
+    if (oErr || !order) return jsonError('order not found', 404, req)
 
     const settings = await getSettings(supabase, [
       'order_notification_emails',
@@ -60,7 +60,7 @@ serve(async (req) => {
       if (fallback) recipients = [fallback]
     }
     if (recipients.length === 0) {
-      return jsonError('no admin recipients configured (settings.order_notification_emails)', 400)
+      return jsonError('no admin recipients configured (settings.order_notification_emails)', 400, req)
     }
 
     const autoCancelHours = asInt(settings.order_auto_cancel_hours, 48)
@@ -143,9 +143,9 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ new-admin enviado · order=${order.order_number} · to=${recipients.length} addrs · resend=${email_id}`,
     )
-    return jsonOk({ email_id, recipients_count: recipients.length })
+    return jsonOk({ email_id, recipients_count: recipients.length }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-order-new-admin:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

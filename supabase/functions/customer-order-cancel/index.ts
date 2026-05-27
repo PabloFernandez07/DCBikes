@@ -39,7 +39,7 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   try {
-    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+    if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     const body = (await req.json().catch(() => ({}))) as {
       token?: string
@@ -48,9 +48,9 @@ serve(async (req) => {
     const token = body.token ?? ''
     const orderId = body.order_id ?? ''
 
-    if (!token) return jsonError('token requerido', 400)
+    if (!token) return jsonError('token requerido', 400, req)
     if (!orderId || !/^[0-9a-f-]{36}$/i.test(orderId)) {
-      return jsonError('order_id inválido', 400)
+      return jsonError('order_id inválido', 400, req)
     }
 
     const supabase = createClient(
@@ -60,7 +60,7 @@ serve(async (req) => {
 
     // 1) Verifica sesión.
     const session = await verifyCustomerSession(supabase, token)
-    if (!session) return jsonError('Sesión expirada o inválida', 401)
+    if (!session) return jsonError('Sesión expirada o inválida', 401, req)
 
     // 2) Carga pedido + verifica pertenencia. Necesitamos también deleted_at,
     // así que hacemos un select más amplio que loadOrder().
@@ -84,9 +84,9 @@ serve(async (req) => {
 
     if (oErr) {
       console.error(`[${ts()}] customer-order-cancel read error:`, oErr.message)
-      return jsonError('error leyendo el pedido', 500)
+      return jsonError('error leyendo el pedido', 500, req)
     }
-    if (!order) return jsonError('forbidden', 403)
+    if (!order) return jsonError('forbidden', 403, req)
 
     // 403 sin diferenciar: pedido borrado o de otro cliente.
     if (
@@ -96,7 +96,7 @@ serve(async (req) => {
       console.warn(
         `[${ts()}] customer-order-cancel forbidden · session=${session.email} · order=${order.order_number}`,
       )
-      return jsonError('forbidden', 403)
+      return jsonError('forbidden', 403, req)
     }
 
     // 3) Solo 'authorized' es cancelable por el cliente.
@@ -122,7 +122,7 @@ serve(async (req) => {
       console.error(
         `[${ts()}] customer-order-cancel sin payment_pre_auth_id · ${order.order_number}`,
       )
-      return jsonError('Error cancelando el pago, contacta con la tienda', 502)
+      return jsonError('Error cancelando el pago, contacta con la tienda', 502, req)
     }
 
     const cancelResult = await runRedsysOperation({
@@ -141,7 +141,7 @@ serve(async (req) => {
       )
       // Loguea el intento aunque haya fallado (auditoría).
       await logPayment(supabase, order.id, 'cancel', cancelResult, '9')
-      return jsonError('Error cancelando el pago, contacta con la tienda', 502)
+      return jsonError('Error cancelando el pago, contacta con la tienda', 502, req)
     }
 
     // 5) UPDATE orders.
@@ -160,7 +160,7 @@ serve(async (req) => {
 
     if (uErr) {
       console.error(`[${ts()}] customer-order-cancel update error:`, uErr.message)
-      return jsonError('error actualizando el pedido', 500)
+      return jsonError('error actualizando el pedido', 500, req)
     }
 
     // 6) Auditoría + restauración de stock + log de pago.
@@ -195,9 +195,9 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ customer-order-cancel · ${order.order_number} · mode=${config.mode}`,
     )
-    return jsonOk({ status: 'cancelled', mode: config.mode })
+    return jsonOk({ status: 'cancelled', mode: config.mode }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-order-cancel:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

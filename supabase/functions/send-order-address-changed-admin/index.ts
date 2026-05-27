@@ -36,7 +36,7 @@ serve(async (req) => {
     }
     const order_id = body.order_id
     const diff = (body.diff ?? '').trim()
-    if (!order_id) return jsonError('order_id required', 400)
+    if (!order_id) return jsonError('order_id required', 400, req)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -49,7 +49,7 @@ serve(async (req) => {
       .eq('id', order_id)
       .single<OrderRow>()
 
-    if (oErr || !order) return jsonError('order not found', 404)
+    if (oErr || !order) return jsonError('order not found', 404, req)
 
     const settings = await getSettings(supabase, [
       'order_notification_emails',
@@ -67,6 +67,7 @@ serve(async (req) => {
       return jsonError(
         'no admin recipients configured (settings.order_notification_emails)',
         400,
+        req,
       )
     }
 
@@ -148,9 +149,9 @@ serve(async (req) => {
     console.log(
       `[${ts()}] ✓ address-changed-admin · order=${order.order_number} · to=${recipients.length} · resend=${email_id}`,
     )
-    return jsonOk({ email_id, recipients_count: recipients.length })
+    return jsonOk({ email_id, recipients_count: recipients.length }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-order-address-changed-admin:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

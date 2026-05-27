@@ -148,12 +148,12 @@ serve(async (req) => {
   const ts = () => new Date().toISOString()
 
   try {
-    if (req.method !== 'POST') return jsonError('method not allowed', 405)
+    if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     const auth = authorize(req)
     if (!auth.ok) {
       console.warn(`[${ts()}] data-retention-cron unauthorized:`, auth.reason)
-      return jsonError('unauthorized', 401)
+      return jsonError('unauthorized', 401, req)
     }
 
     const supabase = createClient(
@@ -189,9 +189,9 @@ serve(async (req) => {
       ok: errors.length === 0,
       counts,
       errors,
-    })
+    }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ data-retention-cron fatal:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })

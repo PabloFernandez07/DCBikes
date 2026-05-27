@@ -30,7 +30,7 @@ serve(async (req) => {
 
   try {
     const { order_id } = await req.json().catch(() => ({}))
-    if (!order_id) return jsonError('order_id required', 400)
+    if (!order_id) return jsonError('order_id required', 400, req)
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -45,7 +45,7 @@ serve(async (req) => {
 
     if (oErr || !order) {
       console.error(`[${ts()}] order not found:`, oErr?.message)
-      return jsonError('order not found', 404)
+      return jsonError('order not found', 404, req)
     }
 
     const settings = await getSettings(supabase, [
@@ -204,9 +204,9 @@ serve(async (req) => {
     })
 
     console.log(`[${ts()}] ✓ confirmation-customer enviado · order=${order.order_number} · resend=${email_id}`)
-    return jsonOk({ email_id })
+    return jsonOk({ email_id }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-order-confirmation-customer:`, String(err))
-    return jsonError(String(err))
+    return jsonError(String(err), 500, req)
   }
 })
