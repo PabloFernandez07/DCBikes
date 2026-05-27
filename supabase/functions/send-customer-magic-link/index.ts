@@ -18,6 +18,7 @@ import {
   getSiteUrl,
   jsonError,
   jsonOk,
+  maskEmail,
   sendViaResend,
 } from '../_shared/email-utils.ts'
 
@@ -106,7 +107,7 @@ serve(async (req) => {
     })
 
     console.log(
-      `[${ts()}] ✓ magic-link email · to=${email} · resend=${email_id}`,
+      `[${ts()}] ✓ magic-link email · to=${maskEmail(email)} · resend=${email_id}`,
     )
     return jsonOk({ email_id }, req)
   } catch (err) {

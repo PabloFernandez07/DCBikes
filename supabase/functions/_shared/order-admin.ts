@@ -10,6 +10,7 @@
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { signRedsysPayload } from './redsys-sign.ts'
 import { loadRedsysConfig, type RedsysConfig } from './redsys-config.ts'
+import { maskEmail } from './email-utils.ts'
 
 /* ─────────── Auth admin ─────────── */
 
@@ -61,7 +62,7 @@ export async function requireAdmin(req: Request): Promise<
     return { ok: false, status: 500, error: 'admin check failed' }
   }
   if (!isAdmin) {
-    console.warn(`[requireAdmin] user ${userData.user.email} not in admin_users`)
+    console.warn(`[requireAdmin] user ${maskEmail(userData.user.email)} not in admin_users`)
     return { ok: false, status: 403, error: 'not authorized as admin' }
   }
   return {

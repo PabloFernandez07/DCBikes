@@ -30,7 +30,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-import { buildCorsHeaders, jsonError, jsonOk } from '../_shared/email-utils.ts'
+import { buildCorsHeaders, escapeHtml, getSettings, asString, jsonError, jsonOk, sendViaResend, buildFromAddress } from '../_shared/email-utils.ts'
 import { loadRedsysConfig } from '../_shared/redsys-config.ts'
 import { verifyRedsysSignature } from '../_shared/redsys-sign.ts'
 
@@ -195,17 +195,21 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   const ts = () => new Date().toISOString()
 
+  // Hoisted so catch block can reference them for S-12 error logging.
+  let supabase: ReturnType<typeof createClient> | null = null
+  let rawBody: string | null = null
+
   try {
     if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
-    const supabase = createClient(
+    supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
 
     // 1. Parsear payload (mock o Redsys). Leemos el body una sola vez.
     const ct = req.headers.get('content-type') ?? ''
-    const rawBody = await req.text()
+    rawBody = await req.text()
     let mockBody: MockBody | null = null
     let orderIdFromMock: string | null = null
     if (ct.includes('application/json')) {
@@ -355,9 +359,50 @@ serve(async (req) => {
     )
     return jsonOk({ ok: true, status: nextStatus }, req)
   } catch (err) {
-    console.error(`[${ts()}] ✗ redsys-notification:`, String(err))
-    // Devolvemos 200 igualmente para evitar reintentos infinitos de Redsys.
-    // El error queda logueado en consola.
-    return jsonOk({ ok: false, error: String(err) }, req)
+    const errMsg = err instanceof Error ? err.message : String(err)
+    console.error(`[${ts()}] ✗ redsys-notification FATAL:`, errMsg)
+
+    // S-12: persistir en payments_log con operation_type='notification' + warning flag.
+    // (El CHECK constraint solo permite preauth/capture/cancel/refund/notification.)
+    if (supabase) {
+      try {
+        await supabase.from('payments_log').insert({
+          order_id: null,
+          payment_provider: 'redsys',
+          operation_type: 'notification',
+          raw_payload: {
+            warning: 'fatal_error',
+            error_message: errMsg.slice(0, 500),
+            body_preview: rawBody != null ? rawBody.slice(0, 1000) : null,
+          },
+          signature_valid: null,
+        })
+      } catch (logErr) {
+        console.error(`[${ts()}] payments_log insert failed:`, String(logErr))
+      }
+    }
+
+    // S-12: alerta DPO best-effort (no bloquea la respuesta 200 a Redsys).
+    if (supabase) {
+      try {
+        const alertSettings = await getSettings(supabase, ['dpo_contact_email', 'store_contact_email'])
+        const alertTo =
+          asString(alertSettings.dpo_contact_email).trim() ||
+          asString(alertSettings.store_contact_email).trim()
+        if (alertTo) {
+          await sendViaResend({
+            from: buildFromAddress(),
+            to: [alertTo],
+            subject: '[ALERTA] Error fatal en redsys-notification',
+            html: `<p>Error fatal procesando notificación Redsys. Revisar <code>payments_log</code> (warning=fatal_error) para detalles.</p><pre style="background:#f5f5f5;padding:12px;font-size:12px">${escapeHtml(errMsg.slice(0, 500))}</pre><p>Este mensaje es automático. <strong>Verificar que el pago no quedó en estado inconsistente.</strong></p>`,
+          })
+        }
+      } catch {
+        // Alerta best-effort — no propagar
+      }
+    }
+
+    // Redsys necesita 200 OK para no reintentar indefinidamente.
+    return jsonOk({ ok: false }, req)
   }
 })

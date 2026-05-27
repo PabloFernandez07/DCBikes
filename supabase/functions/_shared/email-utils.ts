@@ -64,6 +64,39 @@ export function jsonError(message: string, status = 500, req?: Request): Respons
   })
 }
 
+/* ─────────────────── PII masking (S-10) ─────────────────── */
+
+/**
+ * S-10 (auditoría legal V3): enmascara email para logs.
+ * Ejemplo: "user@example.com" → "u***@example.com"
+ */
+export function maskEmail(email: string | null | undefined): string {
+  if (!email) return '<empty>'
+  const at = email.indexOf('@')
+  if (at < 1) return '<invalid>'
+  const local = email.slice(0, at)
+  const domain = email.slice(at + 1)
+  const visible = local.charAt(0)
+  return `${visible}${'*'.repeat(Math.max(2, local.length - 1))}@${domain}`
+}
+
+/**
+ * S-10: enmascara IP para logs.
+ * IPv4: 192.168.1.42 → 192.168.1.x
+ * IPv6: trunca a primeros 3 bloques
+ */
+export function maskIp(ip: string | null | undefined): string {
+  if (!ip || ip === 'unknown') return '<unknown>'
+  if (ip.includes(':')) {
+    // IPv6: queda primeros 3 bloques
+    const parts = ip.split(':')
+    return parts.slice(0, 3).join(':') + ':xxxx'
+  }
+  const parts = ip.split('.')
+  if (parts.length !== 4) return '<malformed>'
+  return parts.slice(0, 3).join('.') + '.x'
+}
+
 /* ─────────────────── Formatters ─────────────────── */
 
 /** 690 → "6,90 €" · 5000 → "50,00 €" */

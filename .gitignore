@@ -37,3 +37,6 @@ Docs/*.doc
 # Mantenemos los markdown/html de Docs (auditoría legal, testing report, etc.)
 !Docs/**/*.md
 !Docs/**/*.html
+
+# S-15: runbook real con mapeo UUID→persona (PII). Solo el .template se commitea.
+Docs/runbooks/admin-users-seed.md

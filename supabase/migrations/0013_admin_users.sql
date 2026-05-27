@@ -34,10 +34,10 @@ create policy admin_users_select_admin on admin_users
 create policy admin_users_modify_admin on admin_users
   for all to authenticated using (is_admin()) with check (is_admin());
 
--- Seed inicial: los 2 admins existentes (Pablo dev + DC Bikes cliente).
+-- Seed inicial: los 2 admins existentes (ver Docs/runbooks/admin-users-seed.md.template).
 insert into admin_users (user_id, role, notes) values
-  ('27491008-2d9d-4410-bc7b-c46c460cdbc1', 'admin', 'Pablo Fernández — desarrollador'),
-  ('f29d7069-449b-4d81-99cb-cc34d4f981c3', 'admin', 'DC Bikes Cantabria — titular')
+  ('27491008-2d9d-4410-bc7b-c46c460cdbc1', 'admin', 'admin-1 — desarrollador'),
+  ('f29d7069-449b-4d81-99cb-cc34d4f981c3', 'admin', 'admin-2 — titular')
 on conflict (user_id) do nothing;
 
 -- Reescribir RLS policies de las tablas sensibles.

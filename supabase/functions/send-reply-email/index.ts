@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { maskEmail } from '../_shared/email-utils.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const FROM_EMAIL     = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev'
@@ -49,7 +50,7 @@ serve(async (req) => {
       console.error(`[${ts()}] Quote no encontrado:`, qErr?.message)
       throw new Error('Quote not found')
     }
-    console.log(`[${ts()}] Enviando respuesta a:`, quote.email)
+    console.log(`[${ts()}] Enviando respuesta a:`, maskEmail(quote.email))
 
     // Leer reply_from en settings (email real de la tienda para el Reply-To)
     const { data: replySetting } = await supabase

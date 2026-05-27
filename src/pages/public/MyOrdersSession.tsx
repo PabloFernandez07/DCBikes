@@ -103,9 +103,26 @@ export default function MyOrdersSession() {
       setLoading(false)
       return
     }
+    // S-08 (fase 1): limpiar token de la URL inmediatamente tras consumirlo
+    // para evitar fugas vía Referrer header o historial del navegador.
+    // TODO S-08 fase 2: intercambiar token por cookie HttpOnly Secure SameSite=Strict
+    // mediante Edge Function customer-session-exchange (actualmente el token reside en localStorage).
+    if (window.location.search.includes('token=')) {
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
     persistSession(token)
     fetchOrders(token)
   }, [token, fetchOrders])
+
+  // S-08: meta referrer=no-referrer en esta ruta — el token nunca aparecerá
+  // como Referrer hacia recursos externos aunque se carguen en esta página.
+  useEffect(() => {
+    const meta = document.createElement('meta')
+    meta.name = 'referrer'
+    meta.content = 'no-referrer'
+    document.head.appendChild(meta)
+    return () => { document.head.removeChild(meta) }
+  }, [])
 
   const handleLogout = () => {
     clearSession()

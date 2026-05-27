@@ -14,6 +14,7 @@
 //   500 → error interno
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { maskIp } from '../_shared/email-utils.ts'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -82,7 +83,7 @@ Deno.serve(async (req) => {
   // Verifica captcha
   const captchaOk = await verifyTurnstile(cf_turnstile_token, ip)
   if (!captchaOk) {
-    console.warn('[quote-submit] captcha invalid, ip:', ip)
+    console.warn('[quote-submit] captcha invalid, ip:', maskIp(ip))
     return jsonRes({ ok: false, error: 'captcha verification failed' }, 403)
   }
 
@@ -102,7 +103,7 @@ Deno.serve(async (req) => {
     if (countErr) {
       console.error('[quote-submit] rate-limit count error:', countErr.message)
     } else if ((count ?? 0) >= 3) {
-      console.warn(`[quote-submit] rate-limit exceeded for ip ${ip}: ${count}`)
+      console.warn(`[quote-submit] rate-limit exceeded for ip ${maskIp(ip)}: ${count}`)
       return jsonRes({ ok: false, error: 'rate limit exceeded; try again in 1 hour' }, 429)
     }
   }

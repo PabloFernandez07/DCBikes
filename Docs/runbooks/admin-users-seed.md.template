@@ -1,0 +1,25 @@
+# Admin Users Seed — Template (S-15)
+
+> **Documento interno.** Mapea UUIDs de admins a sus identificadores reales.
+> NO debe estar en repo publico si contiene datos personales.
+> Mantener este archivo solo localmente o en gestor de credenciales del equipo.
+>
+> El archivo real (`admin-users-seed.md`, sin extension `.template`) esta en
+> `.gitignore` para evitar que datos personales se commiteen accidentalmente.
+
+## Mapeo UUID → Identificador
+
+| UUID | Identificador | Rol | Fecha alta | Notas |
+|------|---------------|-----|------------|-------|
+| 27491008-2d9d-4410-bc7b-c46c460cdbc1 | (rellenar: admin-1) | admin | YYYY-MM-DD | desarrollador |
+| f29d7069-449b-4d81-99cb-cc34d4f981c3 | (rellenar: admin-2) | admin | YYYY-MM-DD | titular |
+
+## Procedimiento para añadir un nuevo admin
+
+```sql
+insert into admin_users (user_id, role, notes) values
+  ('<uuid-del-usuario>', 'admin', 'admin-N — <rol>')
+on conflict (user_id) do nothing;
+```
+
+Registrar el mapeo en este archivo (localmente) antes de ejecutar en produccion.

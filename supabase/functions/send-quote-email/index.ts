@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { maskEmail } from '../_shared/email-utils.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const FROM_EMAIL     = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev'
@@ -53,7 +54,7 @@ serve(async (req) => {
       console.error(`[${ts()}] ✗ Quote no encontrado:`, qErr?.message ?? 'no data')
       throw new Error('Quote not found: ' + (qErr?.message ?? 'no data'))
     }
-    console.log(`[${ts()}] [2/5] Quote encontrado — email cliente:`, quote.email, '· producto:', (quote.products as { name: string } | null)?.name ?? 'ninguno')
+    console.log(`[${ts()}] [2/5] Quote encontrado — email cliente:`, maskEmail(quote.email), '· producto:', (quote.products as { name: string } | null)?.name ?? 'ninguno')
 
     // PASO 3 — Leer email destino
     console.log(`[${ts()}] [3/5] Leyendo quote_destination_email de settings...`)
@@ -69,7 +70,7 @@ serve(async (req) => {
 
     const rawDestination = (setting?.value as string | null) ?? '"info@dcbikescantabria.es"'
     const destination    = rawDestination.replace(/^"|"$/g, '')
-    console.log(`[${ts()}] [3/5] Email destino:`, destination)
+    console.log(`[${ts()}] [3/5] Email destino:`, maskEmail(destination))
 
     // PASO 4 — Construir y enviar email
     const productName = (quote.products as { name: string } | null)?.name ?? 'Consulta general (taller)'
@@ -107,7 +108,7 @@ serve(async (req) => {
         </div>
       </div>`
 
-    console.log(`[${ts()}] [4/5] Llamando a Resend API — from: ${FROM_NAME} <${FROM_EMAIL}> → to: ${destination}`)
+    console.log(`[${ts()}] [4/5] Llamando a Resend API — from: ${FROM_NAME} → to: ${maskEmail(destination)}`)
 
     const resendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
