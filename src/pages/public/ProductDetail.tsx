@@ -288,6 +288,11 @@ export default function ProductDetail() {
             )}
           </div>
 
+          {/* L-06 — Info precontractual mínima (art. 97 RDL 1/2007): IVA + plazo */}
+          <p className="text-sm text-gray-500 mt-1">
+            IVA incluido · Plazo de entrega 2-5 días laborables (Península)
+          </p>
+
           {/* Size selector (solo si hay 2+ variantes) */}
           {showSizeSelector && (
             <div className="border-t border-[var(--color-card)] pt-6">

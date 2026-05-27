@@ -290,9 +290,11 @@ export default function TermsOfSale() {
               )}
             </p>
             <p>
-              El plazo de entrega habitual, una vez aceptado el pedido por la tienda, es de{' '}
-              <strong className="text-[var(--color-cream)]">2 a 5 días laborables</strong> dentro de Península.
-              Estos plazos son orientativos y pueden variar en función de la disponibilidad del transportista.
+              <strong className="text-[var(--color-cream)]">Plazo máximo de entrega:</strong>{' '}
+              30 días naturales desde la aceptación del pedido (art. 66 bis RDL 1/2007).
+              El plazo habitual es de 2-5 días laborables en Península. Si transcurrido el plazo máximo no hemos entregado,
+              el comprador tiene derecho a emplazar a entrega en un plazo adicional adecuado y, en su defecto,
+              a resolver el contrato y obtener el reembolso íntegro de lo pagado.
             </p>
           </Section>
 

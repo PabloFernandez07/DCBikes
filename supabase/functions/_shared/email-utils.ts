@@ -431,6 +431,7 @@ export interface OrderRow {
   shipping_postal_code: string | null
   shipping_province: string | null
   shipping_notes: string | null
+  customer_dni: string | null
   needs_invoice: boolean
   invoice_business_name: string | null
   invoice_cif: string | null

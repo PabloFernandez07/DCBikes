@@ -79,6 +79,7 @@ export default function Checkout() {
 
   const deliveryMethod = watch('delivery_method')
   const needsInvoice = watch('needs_invoice')
+  const customerDni = watch('customer_dni')
 
   // Si carrito vacío → redirect a /carrito.
   useEffect(() => {
@@ -96,11 +97,20 @@ export default function Checkout() {
     return shippingFlatRateCents
   })()
   const totalCents = subtotalCents + shippingCents
+  // RD 1619/2012 art. 7.1: NIF obligatorio en facturas simplificadas >= 400€.
+  const isHighValue = totalCents > 40000
   // Desglose IVA: precios son con IVA incluido.
   const baseCents = Math.round(totalCents / (1 + taxRate / 100))
   const taxCents = totalCents - baseCents
 
   const onSubmit = async (data: CheckoutFormValues) => {
+    // C-09: NIF/DNI obligatorio en pedidos > 400 € (RD 1619/2012 art. 7.1).
+    // Solo aplica a B2C — si pide factura empresa ya lleva CIF en invoice_cif.
+    if (isHighValue && !data.needs_invoice && !data.customer_dni?.trim()) {
+      toast.error('Para operaciones superiores a 400 € es obligatorio el NIF/DNI del comprador (RD 1619/2012 art. 7.1).')
+      return
+    }
+
     // Construimos el body que `order-place` espera (ver contrato Fase E).
     // OJO: NO enviamos snapshot ni totales — el backend recalcula precios
     // y stock para evitar manipulación del cliente.
@@ -114,6 +124,7 @@ export default function Checkout() {
         last_name: data.last_name.trim(),
         email: data.email.trim().toLowerCase(),
         phone: data.phone.trim(),
+        dni: data.customer_dni?.trim() || null,
       },
       delivery_method: data.delivery_method,
       shipping_address:
@@ -281,6 +292,45 @@ export default function Checkout() {
                 error={errors.phone?.message}
                 autoComplete="tel"
               />
+            </div>
+
+            {/* NIF/DNI — obligatorio si total > 400 € (RD 1619/2012 art. 7.1) */}
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="customer_dni"
+                className="text-sm font-[var(--font-cond)] font-medium text-[var(--color-cream-dim)] tracking-wide"
+              >
+                NIF / DNI
+                {isHighValue ? (
+                  <span className="text-[var(--color-brand-red)] ml-0.5">*</span>
+                ) : (
+                  <span className="text-[var(--color-mid)] ml-1 font-normal">(opcional)</span>
+                )}
+              </label>
+              <input
+                id="customer_dni"
+                type="text"
+                placeholder="12345678A"
+                {...register('customer_dni')}
+                required={isHighValue}
+                aria-required={isHighValue}
+                autoComplete="off"
+                className={`w-full bg-[var(--color-ink)] border rounded-lg px-4 py-2.5 text-[var(--color-cream)] font-[var(--font-body)] text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-lavender)]/50 focus:border-[var(--color-lavender)] ${
+                  errors.customer_dni
+                    ? 'border-[var(--color-brand-red)]'
+                    : 'border-[var(--color-card)] hover:border-[var(--color-mid)]/60'
+                }`}
+              />
+              {isHighValue && !customerDni && (
+                <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)]">
+                  Obligatorio para operaciones superiores a 400 € (RD 1619/2012 art. 7.1).
+                </p>
+              )}
+              {errors.customer_dni && (
+                <p className="text-xs text-[var(--color-brand-red)] font-[var(--font-body)]">
+                  {errors.customer_dni.message}
+                </p>
+              )}
             </div>
           </section>
 

@@ -217,6 +217,13 @@ export default function Returns() {
               <li>Servicios <strong className="text-[var(--color-cream)]">ya prestados completamente</strong> cuando la ejecución se haya iniciado con tu consentimiento expreso previo.</li>
               <li>Grabaciones sonoras, vídeo o programas informáticos precintados que hayan sido desprecintados después de la entrega.</li>
             </ul>
+            <p className="text-[var(--color-cream-dim)] text-sm">
+              <strong className="text-[var(--color-cream)]">Bicicletas personalizadas:</strong>{' '}
+              no procede el derecho de desistimiento sobre bicicletas montadas a medida del cliente
+              (talla de cuadro, manillar, sillín, transmisión y componentes seleccionados expresamente)
+              conforme al art. 103.c RDL 1/2007. Estas ventas se formalizan en tienda presencial con
+              presupuesto firmado y entrega tras aceptación expresa por escrito.
+            </p>
           </Section>
 
           {/* 6. Quién paga el porte */}

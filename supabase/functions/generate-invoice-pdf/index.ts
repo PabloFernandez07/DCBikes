@@ -109,6 +109,17 @@ serve(async (req) => {
       return jsonError('order has no items', 400, req)
     }
 
+    /* ─── 1b. Gate C-09: NIF/DNI obligatorio en B2C > 400 € (RD 1619/2012 art. 7.1) ─── */
+    const isB2BOrder = order.needs_invoice === true && !!order.invoice_cif
+    const isHighValueB2C = !isB2BOrder && order.total_cents > 40000
+    if (isHighValueB2C && !order.customer_dni) {
+      return jsonError(
+        'Operación >400€ requiere NIF/DNI del comprador (RD 1619/2012 art. 7.1). El campo customer_dni está vacío en este pedido.',
+        400,
+        req,
+      )
+    }
+
     /* ─── 2. Idempotencia: si ya hay factura, devolverla ─── */
     const { data: existing } = await supabase
       .from('invoices')
@@ -428,6 +439,16 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
     .join(' · ')
   drawText(page, contactLine, MARGIN_X, y, { font, size: 9, color: COLOR_GRAY })
   y -= 12
+
+  // C-09: mostrar NIF/DNI del receptor en facturas B2C con NIF aportado.
+  if (!order.needs_invoice && order.customer_dni) {
+    drawText(page, `NIF/DNI: ${sanitizeWinAnsi(order.customer_dni)}`, MARGIN_X, y, {
+      font,
+      size: 9,
+      color: COLOR_DARK,
+    })
+    y -= 12
+  }
 
   if (order.needs_invoice && order.invoice_business_name) {
     y -= 4

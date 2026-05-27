@@ -88,6 +88,11 @@ export const checkoutSchema = z
     shipping_province: z.string().optional(),
     shipping_notes: z.string().max(500, 'Máximo 500 caracteres').optional(),
 
+    // ─── NIF/DNI comprador (obligatorio si total > 400 €) ──────────────
+    // RD 1619/2012 art. 7.1: factura simplificada debe incluir NIF del
+    // destinatario en operaciones ≥ 400 € (IVA incluido).
+    customer_dni: z.string().optional(),
+
     // ─── Facturación B2B (opcional) ─────────────────────────────────────
     needs_invoice: z.boolean(),
     invoice_business_name: z.string().optional(),
@@ -152,6 +157,20 @@ export const checkoutSchema = z
       }
     }
 
+    // Si total > 400 € (B2C, no empresa) → exigir NIF/DNI comprador.
+    // Nota: el total_cents no viaja en el schema (lo recalcula el backend);
+    // la validación de obligatoriedad se aplica en el UI con isHighValue.
+    // Aquí solo validamos el formato cuando se ha rellenado.
+    if (data.customer_dni && data.customer_dni.trim().length > 0) {
+      if (!isValidSpanishId(data.customer_dni.trim())) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['customer_dni'],
+          message: 'NIF/DNI/NIE no válido. Verifica el formato y la letra de control.',
+        })
+      }
+    }
+
     // Si needs_invoice → exigir CIF, razón social, dirección fiscal.
     if (data.needs_invoice) {
       if (
@@ -204,6 +223,7 @@ export const checkoutDefaults: CheckoutFormValues = {
   shipping_postal_code: '',
   shipping_province: '',
   shipping_notes: '',
+  customer_dni: '',
   needs_invoice: false,
   invoice_business_name: '',
   invoice_cif: '',
