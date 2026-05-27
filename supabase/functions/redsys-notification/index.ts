@@ -30,7 +30,9 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-import { buildCorsHeaders, escapeHtml, getSettings, asString, jsonError, jsonOk, sendViaResend, buildFromAddress } from '../_shared/email-utils.ts'
+import { buildCorsHeaders, escapeHtml, getSettings, asString, jsonError, jsonOk, sendViaResend, buildFromAddress,
+  corsPreflightResponse,
+} from '../_shared/email-utils.ts'
 import { loadRedsysConfig } from '../_shared/redsys-config.ts'
 import { verifyRedsysSignature } from '../_shared/redsys-sign.ts'
 
@@ -192,7 +194,7 @@ async function parsePayload(
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
 
   // Hoisted so catch block can reference them for S-12 error logging.

@@ -22,7 +22,9 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-import { buildCorsHeaders, jsonError, jsonOk } from '../_shared/email-utils.ts'
+import { buildCorsHeaders, jsonError, jsonOk,
+  corsPreflightResponse,
+} from '../_shared/email-utils.ts'
 import { verifyCustomerSession } from '../_shared/customer-session.ts'
 import {
   loadConfig,
@@ -35,7 +37,7 @@ import {
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
 
   try {

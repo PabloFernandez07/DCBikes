@@ -31,6 +31,7 @@ import {
   getSettings,
   jsonError,
   jsonOk,
+  corsPreflightResponse,
 } from '../_shared/email-utils.ts'
 import { loadRedsysConfig, type RedsysConfig } from '../_shared/redsys-config.ts'
 import { buildRedsysOrderId, signRedsysPayload } from '../_shared/redsys-sign.ts'
@@ -385,7 +386,7 @@ async function buildRedsysFormData(opts: {
 /* ─────────────── Handler ─────────────── */
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS })
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
 
   try {

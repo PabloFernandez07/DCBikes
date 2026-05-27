@@ -25,6 +25,7 @@ import {
   jsonOk,
   type OrderItemRow,
   type OrderRow,
+  corsPreflightResponse,
 } from '../_shared/email-utils.ts'
 import { sanitizeWinAnsi } from '../_shared/pdf-utils.ts'
 
@@ -41,7 +42,7 @@ const COLOR_PRIMARY = rgb(0.65, 0.53, 0.71) // #A788B5
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
 
   try {

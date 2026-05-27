@@ -14,7 +14,9 @@
 //   500 → error interno
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { maskIp } from '../_shared/email-utils.ts'
+import { maskIp,
+  corsPreflightResponse,
+} from '../_shared/email-utils.ts'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -53,7 +55,7 @@ async function verifyTurnstile(token: string, ip: string | null): Promise<boolea
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS })
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: CORS_HEADERS })
 
   let body: QuoteBody

@@ -9,11 +9,12 @@ import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 /* ─────────────────── CORS ─────────────────── */
 
 // CORS dinámico por origen. Permite solo dominios propios.
-// Si se compra dcbikescantabria.es, añadir aquí + redeploy de las funciones.
 const ALLOWED_ORIGINS = new Set<string>([
   'https://dc-bikes-cantabria.vercel.app',
-  // 'https://dcbikescantabria.es',
-  // 'https://www.dcbikescantabria.es',
+  'https://dcbikescantabria.es',
+  'https://www.dcbikescantabria.es',
+  'http://localhost:5173',
+  'http://localhost:4173',
 ])
 
 export function buildCorsHeaders(req: Request): Record<string, string> {
@@ -29,10 +30,17 @@ export function buildCorsHeaders(req: Request): Record<string, string> {
 }
 
 /**
- * @deprecated Prefer buildCorsHeaders(req) for new code. This wildcard constant
- * is kept for backward compatibility with preflight OPTIONS handlers and legacy
- * call sites that do not have a Request in scope. Will be removed after full
- * migration to per-request dynamic CORS.
+ * S-01 auditoría V3: respuesta estándar para preflight OPTIONS con CORS dinámico.
+ * Usar en todas las Edge Functions:
+ *   if (req.method === 'OPTIONS') return corsPreflightResponse(req)
+ */
+export function corsPreflightResponse(req: Request): Response {
+  return new Response(null, { status: 204, headers: buildCorsHeaders(req) })
+}
+
+/**
+ * @deprecated Prefer buildCorsHeaders(req) for new code. Wildcard fallback
+ * para callers legacy sin Request en scope (avatar proxy binary response).
  */
 export const CORS_HEADERS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',

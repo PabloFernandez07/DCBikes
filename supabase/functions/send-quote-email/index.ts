@@ -1,6 +1,8 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { maskEmail } from '../_shared/email-utils.ts'
+import { maskEmail,
+  corsPreflightResponse,
+} from '../_shared/email-utils.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const FROM_EMAIL     = Deno.env.get('RESEND_FROM_EMAIL') ?? 'onboarding@resend.dev'
@@ -13,9 +15,7 @@ const CORS = {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: CORS })
-  }
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
 
   const ts = () => new Date().toISOString()
 

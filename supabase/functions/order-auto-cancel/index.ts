@@ -18,7 +18,9 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-import { buildCorsHeaders, asInt, getSettings, jsonError, jsonOk } from '../_shared/email-utils.ts'
+import { buildCorsHeaders, asInt, getSettings, jsonError, jsonOk,
+  corsPreflightResponse,
+} from '../_shared/email-utils.ts'
 import {
   loadConfig,
   logPayment,
@@ -46,7 +48,7 @@ function authorizeCron(req: Request): { ok: boolean; reason?: string } {
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
 
   try {

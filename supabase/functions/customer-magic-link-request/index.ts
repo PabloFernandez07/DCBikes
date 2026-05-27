@@ -18,7 +18,9 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-import { buildCorsHeaders, jsonError, jsonOk, maskEmail, maskIp } from '../_shared/email-utils.ts'
+import { buildCorsHeaders, jsonError, jsonOk, maskEmail, maskIp,
+  corsPreflightResponse,
+} from '../_shared/email-utils.ts'
 import {
   countRecentSessionsForEmail,
   createCustomerSession,
@@ -34,7 +36,7 @@ const PUBLIC_MESSAGE =
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
 
   try {

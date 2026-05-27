@@ -1,4 +1,4 @@
-import { CORS_HEADERS, jsonError } from '../_shared/email-utils.ts'
+import { CORS_HEADERS, jsonError, corsPreflightResponse } from '../_shared/email-utils.ts'
 
 const ALLOWED_HOSTS = new Set([
   'lh3.googleusercontent.com',
@@ -8,9 +8,7 @@ const ALLOWED_HOSTS = new Set([
 ])
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: CORS_HEADERS })
-  }
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
 
   if (req.method !== 'GET') {
     return jsonError('Method not allowed', 405, req)

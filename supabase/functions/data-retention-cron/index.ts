@@ -25,7 +25,9 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-import { CORS_HEADERS, jsonError, jsonOk } from '../_shared/email-utils.ts'
+import { CORS_HEADERS, jsonError, jsonOk,
+  corsPreflightResponse,
+} from '../_shared/email-utils.ts'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const SIX_YEARS_MS = 6 * 365 * DAY_MS
@@ -144,7 +146,7 @@ async function anonymizeOldOrders(supabase: SupabaseClient): Promise<ActionResul
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS })
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
 
   try {

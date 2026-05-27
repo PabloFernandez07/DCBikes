@@ -21,11 +21,12 @@ import {
   renderShippingBlock,
   sendViaResend,
   type OrderRow,
+  corsPreflightResponse,
 } from '../_shared/email-utils.ts'
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
 
   try {

@@ -24,18 +24,12 @@ import {
   getSignedInvoiceUrl,
   jsonError,
   jsonOk,
+  corsPreflightResponse,
 } from '../_shared/email-utils.ts'
 import { verifyCustomerSession } from '../_shared/customer-session.ts'
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', {
-      headers: {
-        ...CORS_HEADERS,
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      },
-    })
-  }
+  if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
 
   try {
