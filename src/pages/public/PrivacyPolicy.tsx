@@ -379,6 +379,13 @@ export default function PrivacyPolicy() {
                     <td className="px-4 py-3 text-[var(--color-mid)]">España (UE)</td>
                     <td className="px-4 py-3 text-[var(--color-mid)]">Sin transferencia internacional · PCI-DSS</td>
                   </tr>
+                  {/* P-04: Cloudflare añadido como encargado de tratamiento (DPF UE-EE.UU.) */}
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Cloudflare, Inc.</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Prevención de fraude y bots (Cloudflare Turnstile) en formularios de contacto y presupuesto. Base legal: art. 6.1.b RGPD (medida pre-contractual) + art. 6.1.f RGPD (interés legítimo: anti-fraude) + art. 22.2 LSSI.</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">EE. UU. (San Francisco)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">EU-US Data Privacy Framework (DPF) — Cloudflare certificado · DPA estándar Cloudflare</td>
+                  </tr>
                 </tbody>
               </table>
             </div>

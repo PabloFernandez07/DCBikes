@@ -149,6 +149,9 @@ export default function CookiePolicy() {
                   { nombre: 'dcb_session', tipo: 'sessionStorage', titular: 'Propia', duracion: 'Sesión', finalidad: 'Identificador de sesión para analítica anónima' },
                   { nombre: 'dcb_groupings_confirmed', tipo: 'localStorage', titular: 'Propia', duracion: 'Indefinida', finalidad: 'Uso exclusivo del panel administrativo' },
                   { nombre: 'sb-*', tipo: 'localStorage', titular: 'Propia (Supabase Auth)', duracion: 'Sesión administrativa', finalidad: 'Autenticación del administrador de la tienda' },
+                  // P-04: Cloudflare Turnstile — técnicas imprescindibles, exentas de consentimiento (art. 22.2 LSSI)
+                  { nombre: '__cf_bm', tipo: 'Cookie HTTP', titular: 'Cloudflare, Inc.', duracion: '30 min (sesión)', finalidad: 'Filtro de bots — Cloudflare Bot Management. Prevención de fraude en formularios de contacto y presupuesto.' },
+                  { nombre: 'cf_clearance', tipo: 'Cookie HTTP', titular: 'Cloudflare, Inc.', duracion: '30 días', finalidad: 'Validación de retos de seguridad superados. Técnica imprescindible (art. 22.2 LSSI).' },
                 ]} />
               </div>
             </div>
@@ -163,12 +166,15 @@ export default function CookiePolicy() {
                   B. Cookies de terceros funcionales — requieren consentimiento
                 </p>
                 <ul className="list-disc list-inside space-y-2 pl-2">
+                  {/* P-07: tabla Maps actualizada — 1P_JAR eliminada (deprecada por Google en 2023).
+                      TODO: inventariar cookies vivas en DevTools tras aceptar mapa (P-07 fase 2) para verificar
+                      el inventario exacto con la versión de Maps iframe en producción. */}
                   <li>
                     <strong className="text-[var(--color-cream)]">Google Maps</strong> (Google LLC, EE.&nbsp;UU.)
-                    — cookies <code className="text-[var(--color-lavender)]">NID</code>,{' '}
-                    <code className="text-[var(--color-lavender)]">1P_JAR</code>,{' '}
+                    — cookies conocidas: <code className="text-[var(--color-lavender)]">NID</code>,{' '}
                     <code className="text-[var(--color-lavender)]">CONSENT</code> — duración variable (hasta 24 meses)
-                    — finalidad: mostrar el mapa de localización de la tienda en la página de contacto. Más información en la{' '}
+                    — finalidad: mostrar el mapa de localización de la tienda en la página de contacto. Google puede
+                    depositar cookies adicionales según la versión del API en uso; consulta la{' '}
                     <a
                       href="https://policies.google.com/privacy"
                       target="_blank"
@@ -176,7 +182,8 @@ export default function CookiePolicy() {
                       className="text-[var(--color-lavender)] underline underline-offset-2"
                     >
                       política de privacidad de Google
-                    </a>.
+                    </a>{' '}
+                    para el detalle actualizado.
                   </li>
                   <li>
                     <strong className="text-[var(--color-cream)]">Redsys</strong> durante la pasarela de pago

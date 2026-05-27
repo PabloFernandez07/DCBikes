@@ -51,8 +51,11 @@ export function hasAnalyticsConsent(): boolean {
   return readStored()?.analytics === true
 }
 
+// P-05: toggle marketing eliminado porque no existe tratamiento de marketing real.
+// Si en el futuro hay newsletter, reintroducir con doble opt-in declarado.
+// Este helper se mantiene devolviendo siempre false para compatibilidad con lecturas residuales.
 export function hasMarketingConsent(): boolean {
-  return readStored()?.marketing === true
+  return false
 }
 
 export function hasThirdPartyConsent(): boolean {
@@ -85,9 +88,10 @@ export function CookieBanner() {
   }, [])
 
   const save = (level: ConsentLevel, custom?: CookiePreferences) => {
+    // P-05: marketing siempre false — no existe tratamiento de marketing real.
     const consent: CookiePreferences =
       level === 'all'
-        ? { essential: true, analytics: true, marketing: true, thirdParty: true }
+        ? { essential: true, analytics: true, marketing: false, thirdParty: true }
         : level === 'reject'
           ? { essential: true, analytics: false, marketing: false, thirdParty: false }
           : (custom ?? prefs)
@@ -122,12 +126,15 @@ export function CookieBanner() {
           </div>
 
           <div className="flex-1 min-w-0">
+            {/* P-06: literal actualizado — fiel a la realidad técnica (técnicas + mapa opcional, sin marketing ni analítica de terceros). */}
             <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] text-sm tracking-wide mb-0.5">
-              Usamos cookies
+              Cookies técnicas y mapa opcional
             </p>
             <p className="text-[var(--color-mid)] font-[var(--font-body)] text-xs leading-relaxed">
-              Utilizamos cookies propias y de terceros para analizar el uso de la web y mejorar tu experiencia.
-              Puedes aceptarlas, rechazarlas o{' '}
+              Esta web usa cookies y almacenamiento técnicos imprescindibles para funcionamiento, seguridad y
+              prevención de fraude (Cloudflare Turnstile). En la página de contacto cargamos opcionalmente el
+              mapa de Google Maps si das tu consentimiento. No usamos cookies de marketing ni analítica de
+              terceros. Puedes{' '}
               <button
                 type="button"
                 onClick={() => setExpanded(v => !v)}
@@ -135,7 +142,7 @@ export function CookieBanner() {
               >
                 configurar tu elección
               </button>
-              . Más info en nuestra{' '}
+              {' '}o consultar nuestra{' '}
               <Link
                 to="/cookies"
                 className="text-[var(--color-lavender)] underline underline-offset-2 hover:no-underline transition-all"
@@ -203,13 +210,8 @@ export function CookieBanner() {
               checked={prefs.analytics}
               onChange={v => setPrefs(p => ({ ...p, analytics: v }))}
             />
-            <CookieToggle
-              icon={<span className="text-[10px] font-bold">🎯</span>}
-              title="Cookies de marketing"
-              description="Permiten mostrarte contenido personalizado en redes sociales y plataformas externas."
-              checked={prefs.marketing}
-              onChange={v => setPrefs(p => ({ ...p, marketing: v }))}
-            />
+            {/* P-05: toggle "Cookies de marketing" eliminado — no existe tratamiento de marketing real.
+                Si en el futuro se implementa newsletter, reintroducir con doble opt-in declarado. */}
             <CookieToggle
               icon={<Map size={14} />}
               title="Cookies de terceros funcionales (mapa de Google)"

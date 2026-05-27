@@ -244,13 +244,20 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
           )}
 
           {TURNSTILE_SITE_KEY ? (
-            <Turnstile
-              siteKey={TURNSTILE_SITE_KEY}
-              onSuccess={(token) => setTurnstileToken(token)}
-              onError={() => setTurnstileToken(null)}
-              onExpire={() => setTurnstileToken(null)}
-              options={{ theme: 'dark', size: 'flexible' }}
-            />
+            <>
+              <Turnstile
+                siteKey={TURNSTILE_SITE_KEY}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken(null)}
+                onExpire={() => setTurnstileToken(null)}
+                options={{ theme: 'dark', size: 'flexible' }}
+              />
+              {/* P-04: aviso legal Cloudflare Turnstile junto al widget */}
+              <p className="text-xs text-gray-500 mt-1">
+                Verificación anti-fraude vía Cloudflare Turnstile.{' '}
+                <a href="/cookies" className="underline">Más info</a>.
+              </p>
+            </>
           ) : (
             <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
               ⚠ Captcha no configurado (VITE_TURNSTILE_SITE_KEY). Las solicitudes seguirán rate-limit por IP.
