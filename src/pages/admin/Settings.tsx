@@ -92,7 +92,7 @@ const PAYMENT_DEFAULTS: { redsys_environment: 'test' | 'prod'; redsys_merchant_n
 // ─── UI helpers locales ──────────────────────────────────────────────────
 
 interface SectionHeaderProps {
-  icon: React.ComponentType<{ size?: number; className?: string }>
+  icon: React.ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean }>
   title: string
   subtitle?: string
 }
@@ -100,7 +100,7 @@ function SectionHeader({ icon: Icon, title, subtitle }: SectionHeaderProps) {
   return (
     <div className="flex items-start gap-3">
       <span className="mt-0.5 inline-flex items-center justify-center w-9 h-9 rounded-lg bg-[var(--color-ink)] text-[var(--color-lavender)]">
-        <Icon size={18} />
+        <Icon size={18} aria-hidden={true} />
       </span>
       <div>
         <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
@@ -448,10 +448,10 @@ export function Settings() {
             className="rounded-2xl border-2 border-[var(--color-brand-red)] bg-[var(--color-brand-red)]/10 p-5"
           >
             <div className="flex items-start gap-3">
-              <ShieldAlert size={22} className="text-[var(--color-brand-red)] shrink-0 mt-0.5" />
+              <ShieldAlert size={22} className="text-[var(--color-brand-red)] shrink-0 mt-0.5" aria-hidden="true" />
               <div className="flex-1">
                 <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide text-sm mb-2">
-                  ⚠ AVISO LEGAL CRÍTICO
+                  <span role="img" aria-hidden="true">⚠</span> AVISO LEGAL CRÍTICO
                 </p>
                 <p className="text-xs text-[var(--color-cream-dim)] leading-relaxed mb-3">
                   Los datos fiscales del titular están incompletos. La web{' '}
@@ -800,7 +800,7 @@ export function Settings() {
               />
 
               <div className="rounded-lg border border-[var(--color-card-hover)] bg-[var(--color-ink)]/40 px-3 py-2.5 flex gap-2 items-start">
-                <Info size={14} className="text-[var(--color-lavender)] mt-0.5 shrink-0" />
+                <Info size={14} className="text-[var(--color-lavender)] mt-0.5 shrink-0" aria-hidden="true" />
                 <p className="text-xs text-[var(--color-mid)] leading-relaxed">
                   Estos datos aparecerán en cada factura emitida. Cambiarlos{' '}
                   <strong className="text-[var(--color-cream-dim)]">NO modifica facturas pasadas</strong>{' '}
@@ -969,12 +969,12 @@ export function Settings() {
                 {/* Badge contextual del entorno seleccionado */}
                 {paymentValues.redsys_environment === 'test' ? (
                   <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-[var(--font-cond)] w-fit">
-                    <Info size={14} />
+                    <Info size={14} aria-hidden="true" />
                     Modo pruebas — no se procesan pagos reales
                   </div>
                 ) : (
                   <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-[var(--color-brand-red)]/15 border border-[var(--color-brand-red)]/40 text-[var(--color-brand-red)] text-xs font-[var(--font-cond)] font-semibold w-fit">
-                    <ShieldAlert size={14} />
+                    <ShieldAlert size={14} aria-hidden="true" />
                     Modo producción — los pagos son REALES
                   </div>
                 )}
@@ -1006,6 +1006,7 @@ export function Settings() {
                 <ShieldAlert
                   size={18}
                   className="text-[var(--color-lavender)] shrink-0 mt-0.5"
+                  aria-hidden="true"
                 />
                 <div className="text-xs text-[var(--color-cream-dim)] leading-relaxed space-y-1">
                   <p>

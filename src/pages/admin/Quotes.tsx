@@ -320,7 +320,7 @@ export function Quotes() {
                   className="p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)] transition-colors"
                   aria-label="Cerrar panel"
                 >
-                  <X size={16} />
+                  <X size={16} aria-hidden="true" />
                 </button>
               </div>
             </div>
@@ -347,7 +347,7 @@ export function Quotes() {
                   onClick={() => replyOpen ? setReplyOpen(false) : openReplyCompose(selected)}
                   className="gap-2"
                 >
-                  <Mail size={14} />
+                  <Mail size={14} aria-hidden="true" />
                   {replyOpen ? 'Cancelar respuesta' : 'Responder por email'}
                 </Button>
               )}
@@ -358,7 +358,7 @@ export function Quotes() {
                   onClick={() => updateStatus(selected, 'read')}
                   className="gap-2"
                 >
-                  <CheckCheck size={14} />
+                  <CheckCheck size={14} aria-hidden="true" />
                   Marcar leída
                 </Button>
               )}
@@ -369,7 +369,7 @@ export function Quotes() {
                   onClick={() => updateStatus(selected, 'archived')}
                   className="gap-2"
                 >
-                  <Archive size={14} />
+                  <Archive size={14} aria-hidden="true" />
                   Archivar
                 </Button>
               )}
@@ -380,7 +380,7 @@ export function Quotes() {
                   onClick={() => updateStatus(selected, 'new')}
                   className="gap-2"
                 >
-                  <RotateCcw size={14} />
+                  <RotateCcw size={14} aria-hidden="true" />
                   Restaurar
                 </Button>
               )}
@@ -441,8 +441,8 @@ export function Quotes() {
                     className="gap-2 shrink-0"
                   >
                     {replySending
-                      ? <><Loader2 size={14} className="animate-spin" /> Enviando…</>
-                      : <><Send size={14} /> Enviar respuesta</>
+                      ? <><Loader2 size={14} className="animate-spin" aria-hidden="true" /> Enviando…</>
+                      : <><Send size={14} aria-hidden="true" /> Enviar respuesta</>
                     }
                   </Button>
                 </div>

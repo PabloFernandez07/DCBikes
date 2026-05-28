@@ -73,7 +73,7 @@ export default function PaymentError() {
             to="/contacto"
             className="inline-flex items-center justify-center gap-2 text-sm font-[var(--font-cond)] tracking-wide text-[var(--color-lavender)] hover:text-[var(--color-cream)] transition-colors"
           >
-            <Mail size={14} />
+            <Mail size={14} aria-hidden="true" />
             Contactar con la tienda
           </Link>
         </div>

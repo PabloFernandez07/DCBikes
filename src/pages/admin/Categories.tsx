@@ -355,7 +355,7 @@ export function Categories() {
                               >
                                 {savingId === cat.id
                                   ? <div className="w-4 h-4 rounded-full border-2 border-green-400 border-t-transparent animate-spin" />
-                                  : <Check size={15} />
+                                  : <Check size={15} aria-hidden="true" />
                                 }
                               </button>
                               <button
@@ -364,7 +364,7 @@ export function Categories() {
                                 className="p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)] transition-colors"
                                 aria-label="Cancelar"
                               >
-                                <X size={15} />
+                                <X size={15} aria-hidden="true" />
                               </button>
                             </div>
                           </td>
@@ -401,7 +401,7 @@ export function Categories() {
                               >
                                 {movingId === cat.id
                                   ? <div className="w-3.5 h-3.5 rounded-full border-2 border-[var(--color-lavender)] border-t-transparent animate-spin" />
-                                  : <ChevronUp size={14} />
+                                  : <ChevronUp size={14} aria-hidden="true" />
                                 }
                               </button>
                               <button
@@ -411,7 +411,7 @@ export function Categories() {
                                 className="p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[var(--color-lavender)]/10 transition-colors disabled:opacity-20 disabled:pointer-events-none"
                                 aria-label="Bajar"
                               >
-                                <ChevronDown size={14} />
+                                <ChevronDown size={14} aria-hidden="true" />
                               </button>
 
                               {/* divider */}
@@ -424,7 +424,7 @@ export function Categories() {
                                 className="p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[var(--color-lavender)]/10 transition-colors"
                                 aria-label="Editar"
                               >
-                                <Pencil size={14} />
+                                <Pencil size={14} aria-hidden="true" />
                               </button>
                               <button
                                 type="button"
@@ -432,7 +432,7 @@ export function Categories() {
                                 className="p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-brand-red)] hover:bg-[var(--color-brand-red)]/10 transition-colors"
                                 aria-label="Eliminar"
                               >
-                                <Trash2 size={14} />
+                                <Trash2 size={14} aria-hidden="true" />
                               </button>
                             </div>
                           </td>
@@ -494,7 +494,7 @@ export function Categories() {
               >
                 {adding
                   ? <div className="w-4 h-4 rounded-full border-2 border-white/60 border-t-transparent animate-spin" />
-                  : <Plus size={14} />
+                  : <Plus size={14} aria-hidden="true" />
                 }
                 Añadir
               </Button>

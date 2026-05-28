@@ -155,6 +155,7 @@ export default function MockRedsysPayment() {
           <XCircle
             size={48}
             className="text-[var(--color-brand-red)] mx-auto"
+            aria-hidden="true"
           />
           <h1 className="font-[var(--font-display)] text-3xl text-[var(--color-cream)] tracking-wide">
             Enlace inválido
@@ -166,7 +167,7 @@ export default function MockRedsysPayment() {
             to="/carrito"
             className="inline-flex items-center gap-2 text-[var(--color-lavender)] hover:text-[var(--color-cream)] transition-colors"
           >
-            <ArrowLeft size={16} /> Volver al carrito
+            <ArrowLeft size={16} aria-hidden="true" /> Volver al carrito
           </Link>
         </div>
       </div>
@@ -196,7 +197,7 @@ export default function MockRedsysPayment() {
           </div>
           <div className="px-5 py-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--color-ink)] flex items-center justify-center">
-              <CreditCard size={20} className="text-[var(--color-lavender)]" />
+              <CreditCard size={20} className="text-[var(--color-lavender)]" aria-hidden="true" />
             </div>
             <div className="flex-1">
               <p className="font-[var(--font-display)] text-lg text-[var(--color-cream)] tracking-wide">
@@ -270,7 +271,7 @@ export default function MockRedsysPayment() {
 
         <div className="flex items-center justify-between text-xs font-[var(--font-cond)] text-[var(--color-mid)]">
           <span className="inline-flex items-center gap-1.5">
-            <Lock size={12} /> Conexión local · sin datos sensibles
+            <Lock size={12} aria-hidden="true" /> Conexión local · sin datos sensibles
           </span>
           <button
             type="button"

@@ -453,7 +453,7 @@ export function Brechas() {
             role="alert"
             className="rounded-2xl border-2 border-[var(--color-brand-red)] bg-[var(--color-brand-red)]/10 p-4 flex gap-3 items-start"
           >
-            <ShieldAlert size={20} className="text-[var(--color-brand-red)] shrink-0 mt-0.5" />
+            <ShieldAlert size={20} className="text-[var(--color-brand-red)] shrink-0 mt-0.5" aria-hidden="true" />
             <div>
               <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] text-sm tracking-wide">
                 BRECHA DE ALTO RIESGO ABIERTA

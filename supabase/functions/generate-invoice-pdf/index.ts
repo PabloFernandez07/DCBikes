@@ -222,34 +222,19 @@ serve(async (req) => {
     }
 
     /* ─── 6. Hash chain Verifactu (RD 1007/2023) ─── */
-    // 6a) Recupera hash de la última factura emitida (cualquier serie B2C/B2B).
-    const { data: prevInvoice } = await supabase
-      .from('invoices')
-      .select('hash')
-      .order('issued_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-    const previousHash = (prevInvoice?.hash as string | null) ?? null
+    // 6a-6c) El hash + previous_hash + INSERT se calculan dentro de la RPC atómica
+    //   `append_invoice_chained` (migración 0051, B-28): adquiere
+    //   pg_advisory_xact_lock(hashtext('invoices_chain')), lee la cabeza de la
+    //   cadena, calcula el SHA-256 e inserta — todo en UNA transacción, lo que
+    //   elimina el TOCTOU que permitía bifurcar la cadena. Por eso aquí ya NO se
+    //   lee la cabeza ni se calcula el hash en JS (se hacía en pasos separados).
+    //   La RPC usa su propio now() como issued_at tanto para el hash como para
+    //   la fila → hash y fecha persistida coinciden (el JS antiguo divergía).
 
-    // 6b) Payload determinista: número|fecha|NIF-emisor|NIF-receptor|total-céntimos|hash-anterior
+    // 6d) QR payload (formato validación AEAT). Usa la fecha de emisión; la RPC
+    //   sella su propio now(), por lo que puede diferir en milisegundos del QR,
+    //   pero el QR solo expone la fecha (DD-MM-YYYY), no la hora, así que coincide.
     const issuedIso = new Date().toISOString()
-    const buyerNif = (order.invoice_cif as string | null) ?? ''
-    const payload = [
-      invoiceNumber,
-      issuedIso,
-      companyCif,
-      buyerNif,
-      breakdown.total_cents.toString(),
-      previousHash ?? '',
-    ].join('|')
-
-    // 6c) SHA-256 (Web Crypto — disponible en Deno Deploy)
-    const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload))
-    const hash = Array.from(new Uint8Array(hashBuf))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('')
-
-    // 6d) QR payload (formato validación AEAT)
     const issuedDateDMY = issuedIso.slice(0, 10).split('-').reverse().join('-') // DD-MM-YYYY
     const qrPayload =
       `https://www2.agenciatributaria.gob.es/wlpl/TIKE-CONT/ValidarQR?` +
@@ -286,44 +271,43 @@ serve(async (req) => {
       return jsonError(`fallo al subir PDF: ${uploadRes.error.message}`, 500, req)
     }
 
-    /* ─── 9. INSERT en tabla invoices (rollback storage si falla) ─── */
+    /* ─── 9. Persistir factura vía RPC atómica (rollback storage si falla) ─── */
+    // append_invoice_chained (0051, B-28) hace lock + lectura de cabeza + hash +
+    // INSERT en una sola transacción. Sustituye al SELECT/SHA-256/INSERT no
+    // atómico anterior, que podía bifurcar la cadena de hash Verifactu.
     const invoiceType: 'b2b' | 'b2c' = isB2B ? 'b2b' : 'b2c'
     // TODO: invocar AEAT SOAP/REST endpoint (modo verifactu real-time) — fase posterior.
     const aeatStatus = verifactuMode === 'verifactu' ? 'pending_send' : 'not_applicable'
-    // B-22: estado del ciclo de envío AEAT que consumirá verifactu-send-cron.
-    // 'pending' solo cuando el gate está activo; en otro caso 'disabled'.
-    const verifactuStatus = verifactuMode === 'verifactu' ? 'pending' : 'disabled'
-    const { error: insErr } = await supabase.from('invoices').insert({
-      order_id: order.id,
-      invoice_number: invoiceNumber,
-      invoice_type: invoiceType,
-      pdf_storage_path: storagePath,
-      issuer_company_name: companyName,
-      issuer_cif: companyCif,
-      issuer_address: companyAddress,
-      base_cents: breakdown.base_cents,
-      tax_cents: breakdown.tax_cents,
-      total_cents: breakdown.total_cents,
-      // ─── Verifactu (RD 1007/2023) ───
-      hash,
-      previous_hash: previousHash,
-      qr_payload: qrPayload,
-      verifactu_mode: verifactuMode,
-      aeat_status: aeatStatus,
-      verifactu_status: verifactuStatus,
-      // signature y aeat_csv quedan null en esta fase (XAdES pendiente)
-    })
+    const buyerNif = (order.invoice_cif as string | null) ?? ''
+    const { data: appended, error: insErr } = await supabase
+      .rpc('append_invoice_chained', {
+        p_order_id: order.id,
+        p_invoice_number: invoiceNumber,
+        p_invoice_type: invoiceType,
+        p_pdf_storage_path: storagePath,
+        p_issuer_company_name: companyName,
+        p_issuer_cif: companyCif,
+        p_issuer_address: companyAddress,
+        p_base_cents: breakdown.base_cents,
+        p_tax_cents: breakdown.tax_cents,
+        p_total_cents: breakdown.total_cents,
+        p_buyer_nif: buyerNif,
+        p_qr_payload: qrPayload,
+        p_verifactu_mode: verifactuMode,
+        p_aeat_status: aeatStatus,
+      })
+      .single<{ invoice_id: string; hash: string; previous_hash: string | null; issued_at: string }>()
 
-    if (insErr) {
-      console.error(`[${ts()}] invoices INSERT failed, rolling back storage`, insErr)
+    if (insErr || !appended) {
+      console.error(`[${ts()}] append_invoice_chained failed, rolling back storage`, insErr)
       await supabase.storage.from('invoices').remove([storagePath]).catch((e) =>
         console.warn(`[${ts()}] rollback remove failed`, e),
       )
-      return jsonError(`fallo al persistir factura: ${insErr.message}`, 500, req)
+      return jsonError(`fallo al persistir factura: ${insErr?.message ?? 'unknown'}`, 500, req)
     }
 
     console.log(
-      `[${ts()}] ✓ invoice created order=${order.order_number} · invoice=${invoiceNumber} · pdf=${storagePath} · size=${pdfBytes.length}B`,
+      `[${ts()}] ✓ invoice created order=${order.order_number} · invoice=${invoiceNumber} · pdf=${storagePath} · size=${pdfBytes.length}B · hash=${appended.hash.slice(0, 12)}…`,
     )
 
     return jsonOk({

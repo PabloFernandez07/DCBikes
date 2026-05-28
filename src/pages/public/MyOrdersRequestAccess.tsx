@@ -109,7 +109,7 @@ export default function MyOrdersRequestAccess() {
         {/* Hero */}
         <header className="text-center space-y-3 mb-10">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[rgba(196,162,207,0.12)] border border-[var(--color-lavender)]/30 text-[var(--color-lavender)] mx-auto">
-            <Package size={22} strokeWidth={1.5} />
+            <Package size={22} strokeWidth={1.5} aria-hidden="true" />
           </div>
           <h1 className="font-[var(--font-display)] text-4xl sm:text-5xl text-[var(--color-cream)] tracking-wide">
             Mis pedidos
@@ -145,7 +145,7 @@ export default function MyOrdersRequestAccess() {
           {submitted ? (
             <div className="space-y-5 text-center">
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[rgba(80,200,120,0.12)] text-green-400 mx-auto">
-                <CheckCircle2 size={28} strokeWidth={1.5} />
+                <CheckCircle2 size={28} strokeWidth={1.5} aria-hidden="true" />
               </div>
               <h2 className="font-[var(--font-display)] text-2xl text-[var(--color-cream)] tracking-wide">
                 Revisa tu bandeja de entrada
@@ -275,7 +275,7 @@ export default function MyOrdersRequestAccess() {
                   </>
                 ) : (
                   <>
-                    <Send size={15} />
+                    <Send size={15} aria-hidden="true" />
                     Enviar enlace de acceso
                   </>
                 )}
@@ -285,7 +285,7 @@ export default function MyOrdersRequestAccess() {
                 to="/"
                 className="inline-flex items-center gap-1.5 text-xs font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] hover:text-[var(--color-lavender)] mt-2 transition-colors"
               >
-                <ArrowLeft size={13} />
+                <ArrowLeft size={13} aria-hidden="true" />
                 Volver al inicio
               </Link>
             </form>

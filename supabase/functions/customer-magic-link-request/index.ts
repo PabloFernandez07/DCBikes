@@ -26,6 +26,7 @@ import {
   createCustomerSession,
 } from '../_shared/customer-session.ts'
 import { internalSecretHeader } from '../_shared/security.ts'
+import { verifyTurnstile } from '../_shared/turnstile.ts'
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const RATE_LIMIT_MAX = 5
@@ -64,6 +65,9 @@ serve(async (req) => {
       // romper compatibilidad mientras el frontend converge.
       read_privacy?: boolean
       privacy_version?: string | null
+      // X-18: el frontend (MyOrdersRequestAccess.tsx) envía un token de
+      // Cloudflare Turnstile que se verifica fail-closed antes de procesar.
+      turnstile_token?: string
     }
     const email = (body.email ?? '').toString().trim().toLowerCase()
     if (!email || !EMAIL_RE.test(email)) {
@@ -86,6 +90,16 @@ serve(async (req) => {
       req.headers.get('cf-connecting-ip')
     const ip = ipHeader ? ipHeader.split(',')[0].trim() : null
     const ua = req.headers.get('user-agent')
+
+    // X-18: verificación Turnstile fail-closed ANTES de cualquier procesamiento
+    // (rate-limit, lookup de pedidos, generación de sesión). Si el secret no
+    // está configurado o el token es inválido → 403, igual que quote-submit.
+    const turnstileToken = (body.turnstile_token ?? '').toString()
+    const captchaOk = await verifyTurnstile(turnstileToken, ip, 'customer-magic-link-request')
+    if (!captchaOk) {
+      console.warn(`[${ts()}] captcha invalid · ip=${maskIp(ip)}`)
+      return jsonError('captcha verification failed', 403, req)
+    }
 
     // S-09: rate-limit por IP (20 req/hora) — primer check, antes del de email,
     // para bloquear ataques distribuidos multi-email desde la misma IP.

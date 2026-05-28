@@ -18,6 +18,7 @@ import { maskIp,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
 import { internalSecretHeader } from '../_shared/security.ts'
+import { verifyTurnstile } from '../_shared/turnstile.ts'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -33,27 +34,6 @@ interface QuoteBody {
   product_id?: string | null
   cf_turnstile_token: string
   consent_version?: string
-}
-
-async function verifyTurnstile(token: string, ip: string | null): Promise<boolean> {
-  const secret = Deno.env.get('TURNSTILE_SECRET')
-  if (!secret) {
-    // B-03: fail-closed. Si el secret no está configurado, NO podemos verificar
-    // el captcha y aceptar la solicitud abriría un vector de spam/abuso. La
-    // política es rechazar siempre hasta que el operador configure el secreto.
-    console.error('[quote-submit] TURNSTILE_SECRET MISSING — refusing all submissions (fail-closed)')
-    return false
-  }
-  const form = new FormData()
-  form.append('secret', secret)
-  form.append('response', token)
-  if (ip) form.append('remoteip', ip)
-  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    body: form,
-  })
-  const data = (await res.json()) as { success?: boolean }
-  return data.success === true
 }
 
 Deno.serve(async (req) => {
@@ -91,7 +71,7 @@ Deno.serve(async (req) => {
   const ua = (req.headers.get('user-agent') ?? '').slice(0, 512) || null
 
   // Verifica captcha
-  const captchaOk = await verifyTurnstile(cf_turnstile_token, ip)
+  const captchaOk = await verifyTurnstile(cf_turnstile_token, ip, 'quote-submit')
   if (!captchaOk) {
     console.warn('[quote-submit] captcha invalid, ip:', maskIp(ip))
     return jsonRes({ ok: false, error: 'captcha verification failed' }, 403)

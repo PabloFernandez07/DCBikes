@@ -184,7 +184,7 @@ export default function MyOrdersSession() {
         <SEO title="Enlace expirado" noIndex />
         <div className="max-w-md mx-auto text-center space-y-5">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[var(--color-card-hover)] text-[var(--color-mid)] mx-auto">
-            <RefreshCw size={24} strokeWidth={1.5} />
+            <RefreshCw size={24} strokeWidth={1.5} aria-hidden="true" />
           </div>
           <h1 className="font-[var(--font-display)] text-3xl text-[var(--color-cream)] tracking-wide">
             Tu enlace ha expirado o ya no es válido
@@ -216,7 +216,7 @@ export default function MyOrdersSession() {
               to="/"
               className="inline-flex items-center gap-1.5 text-xs font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] hover:text-[var(--color-lavender)] mb-2 transition-colors"
             >
-              <ArrowLeft size={13} />
+              <ArrowLeft size={13} aria-hidden="true" />
               Inicio
             </Link>
             <h1 className="font-[var(--font-display)] text-3xl sm:text-4xl text-[var(--color-cream)] tracking-wide">
@@ -236,7 +236,7 @@ export default function MyOrdersSession() {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)]/40 transition-colors disabled:opacity-50"
               title="Refrescar mis pedidos"
             >
-              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} aria-hidden="true" />
               Refrescar
             </button>
             <button
@@ -244,7 +244,7 @@ export default function MyOrdersSession() {
               onClick={handleLogout}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)]/40 transition-colors"
             >
-              <LogOut size={13} />
+              <LogOut size={13} aria-hidden="true" />
               Cerrar sesión
             </button>
           </div>
@@ -253,7 +253,7 @@ export default function MyOrdersSession() {
         {/* Orders list */}
         {orders.length === 0 ? (
           <div className="text-center py-16 bg-[var(--color-card)] rounded-2xl border border-[var(--color-card-hover)]">
-            <Package size={32} className="text-[var(--color-mid)] mx-auto mb-3" strokeWidth={1.5} />
+            <Package size={32} className="text-[var(--color-mid)] mx-auto mb-3" strokeWidth={1.5} aria-hidden="true" />
             <p className="text-[var(--color-cream-dim)] font-[var(--font-body)]">
               No tienes pedidos asociados a este email.
             </p>
@@ -278,7 +278,7 @@ export default function MyOrdersSession() {
                         {o.order_number}
                       </p>
                       <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)] mt-0.5 inline-flex items-center gap-1.5">
-                        <Calendar size={11} />
+                        <Calendar size={11} aria-hidden="true" />
                         {formatDate(o.created_at)}
                       </p>
                     </div>
@@ -289,15 +289,15 @@ export default function MyOrdersSession() {
                     <div className="flex items-center gap-3 text-[var(--color-cream-dim)] font-[var(--font-body)]">
                       <span className="inline-flex items-center gap-1.5">
                         {o.delivery_method === 'shipping' ? (
-                          <Truck size={13} className="text-[var(--color-mid)]" />
+                          <Truck size={13} className="text-[var(--color-mid)]" aria-hidden="true" />
                         ) : (
-                          <Store size={13} className="text-[var(--color-mid)]" />
+                          <Store size={13} className="text-[var(--color-mid)]" aria-hidden="true" />
                         )}
                         {o.delivery_method === 'shipping' ? 'Envío' : 'Recogida'}
                       </span>
                       <span className="text-[var(--color-mid)]">·</span>
                       <span className="inline-flex items-center gap-1.5">
-                        <Package size={13} className="text-[var(--color-mid)]" />
+                        <Package size={13} className="text-[var(--color-mid)]" aria-hidden="true" />
                         {o.items_count} {o.items_count === 1 ? 'artículo' : 'artículos'}
                       </span>
                     </div>
@@ -309,6 +309,7 @@ export default function MyOrdersSession() {
                       <ChevronRight
                         size={16}
                         className="text-[var(--color-mid)] group-hover:text-[var(--color-lavender)] group-hover:translate-x-0.5 transition-all"
+                        aria-hidden="true"
                       />
                     </div>
                   </div>
@@ -335,7 +336,7 @@ export default function MyOrdersSession() {
             disabled={exporting || !token}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--color-card-hover)] bg-[var(--color-card)] text-[var(--color-cream)] text-sm font-[var(--font-cond)] tracking-wide hover:border-[var(--color-lavender)]/40 hover:bg-[var(--color-card-hover)]/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download size={14} className={exporting ? 'animate-pulse' : ''} />
+            <Download size={14} className={exporting ? 'animate-pulse' : ''} aria-hidden="true" />
             {exporting ? 'Generando…' : 'Descargar mis datos (JSON)'}
           </button>
           {exportError && (

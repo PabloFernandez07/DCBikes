@@ -57,7 +57,7 @@ export default function Login() {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-4">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--color-brand-red)] mx-auto">
-            <Bike size={32} className="text-white" />
+            <Bike size={32} className="text-white" aria-hidden="true" />
           </div>
           <div>
             <h1 className="text-3xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
@@ -116,7 +116,7 @@ export default function Login() {
           ) : resetSent ? (
             <div className="text-center space-y-4 py-2">
               <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mx-auto">
-                <span className="text-green-400 text-xl">✓</span>
+                <span className="text-green-400 text-xl" role="img" aria-hidden="true">✓</span>
               </div>
               <p className="text-sm font-[var(--font-body)] text-[var(--color-cream)]">
                 Email enviado a <strong>{resetEmail}</strong>

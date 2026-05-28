@@ -245,7 +245,7 @@ export default function OrderDetail() {
           El pedido solicitado no existe o ha sido eliminado.
         </p>
         <Button variant="primary" size="sm" onClick={() => navigate('/admin/pedidos')}>
-          <ArrowLeft size={14} />
+          <ArrowLeft size={14} aria-hidden="true" />
           Volver a pedidos
         </Button>
       </div>
@@ -266,7 +266,7 @@ export default function OrderDetail() {
               to="/admin/pedidos"
               className="inline-flex items-center gap-1.5 text-xs font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] hover:text-[var(--color-lavender)] mb-2 transition-colors"
             >
-              <ArrowLeft size={13} />
+              <ArrowLeft size={13} aria-hidden="true" />
               Volver a pedidos
             </Link>
             <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest flex items-center gap-3 flex-wrap">
@@ -284,7 +284,7 @@ export default function OrderDetail() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-cream-dim)] border border-[var(--color-card-hover)] hover:border-[var(--color-lavender)]/40 hover:text-[var(--color-cream)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Refrescar datos del pedido"
           >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} aria-hidden="true" />
             Refrescar
           </button>
         </div>
@@ -292,7 +292,7 @@ export default function OrderDetail() {
         {/* Banners de cambios del cliente */}
         {order.cancelled_by_customer && (
           <div className="bg-red-900/15 border border-red-700/40 rounded-2xl px-5 py-4 flex items-start gap-3">
-            <XCircle size={20} className="text-red-300 shrink-0 mt-0.5" />
+            <XCircle size={20} className="text-red-300 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="text-sm font-[var(--font-body)] text-[var(--color-cream-dim)]">
               <p className="font-[var(--font-cond)] font-semibold text-red-200 mb-0.5 tracking-wide">
                 El cliente canceló este pedido
@@ -308,7 +308,7 @@ export default function OrderDetail() {
         )}
         {order.client_modified_at && !order.cancelled_by_customer && (
           <div className="bg-orange-500/10 border border-orange-500/40 rounded-2xl px-5 py-4 flex items-start gap-3">
-            <History size={20} className="text-orange-300 shrink-0 mt-0.5" />
+            <History size={20} className="text-orange-300 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="text-sm font-[var(--font-body)] text-[var(--color-cream-dim)]">
               <p className="font-[var(--font-cond)] font-semibold text-orange-200 mb-0.5 tracking-wide">
                 Este pedido fue modificado por el cliente
@@ -338,7 +338,7 @@ export default function OrderDetail() {
                     href={`mailto:${order.customer_email}`}
                     className="inline-flex items-center gap-1.5 text-[var(--color-lavender)] hover:underline font-[var(--font-body)]"
                   >
-                    <Mail size={13} />
+                    <Mail size={13} aria-hidden="true" />
                     {order.customer_email}
                   </a>
                 </Field>
@@ -347,7 +347,7 @@ export default function OrderDetail() {
                     href={`tel:${order.customer_phone}`}
                     className="inline-flex items-center gap-1.5 text-[var(--color-lavender)] hover:underline font-[var(--font-body)]"
                   >
-                    <Phone size={13} />
+                    <Phone size={13} aria-hidden="true" />
                     {order.customer_phone}
                   </a>
                 </Field>
@@ -357,7 +357,7 @@ export default function OrderDetail() {
             {/* Entrega */}
             <Section
               title={order.delivery_method === 'shipping' ? 'Dirección de envío' : 'Recogida en tienda'}
-              icon={order.delivery_method === 'shipping' ? <MapPin size={15} /> : <Store size={15} />}
+              icon={order.delivery_method === 'shipping' ? <MapPin size={15} aria-hidden="true" /> : <Store size={15} aria-hidden="true" />}
             >
               {order.delivery_method === 'shipping' ? (
                 <div className="text-sm text-[var(--color-cream)] font-[var(--font-body)] space-y-1">
@@ -396,7 +396,7 @@ export default function OrderDetail() {
 
             {/* Facturación B2B */}
             {order.needs_invoice && (
-              <Section title="Facturación B2B" icon={<Receipt size={15} />}>
+              <Section title="Facturación B2B" icon={<Receipt size={15} aria-hidden="true" />}>
                 <div className="grid sm:grid-cols-2 gap-3 text-sm">
                   <Field label="Razón social">
                     <span className="text-[var(--color-cream)] font-[var(--font-body)]">
@@ -418,7 +418,7 @@ export default function OrderDetail() {
             )}
 
             {/* Items */}
-            <Section title={`Artículos (${items.length})`} icon={<PackageIcon size={15} />}>
+            <Section title={`Artículos (${items.length})`} icon={<PackageIcon size={15} aria-hidden="true" />}>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -443,7 +443,7 @@ export default function OrderDetail() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <PackageIcon size={16} className="text-[var(--color-mid)]" />
+                              <PackageIcon size={16} className="text-[var(--color-mid)]" aria-hidden="true" />
                             )}
                           </div>
                         </td>
@@ -514,7 +514,7 @@ export default function OrderDetail() {
                     onClick={() => setDeleteOpen(true)}
                     className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-[var(--font-cond)] font-medium tracking-wide text-red-300/80 border border-red-700/30 bg-red-900/10 hover:bg-red-900/20 hover:text-red-300 hover:border-red-700/50 transition-colors"
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={13} aria-hidden="true" />
                     Eliminar pedido
                   </button>
                 </div>
@@ -569,7 +569,7 @@ export default function OrderDetail() {
               />
               <div className="mt-2 flex justify-end">
                 <Button variant="secondary" size="sm" onClick={handleSaveNotes} disabled={savingNotes}>
-                  {savingNotes ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                  {savingNotes ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <Save size={13} aria-hidden="true" />}
                   Guardar notas
                 </Button>
               </div>
@@ -577,7 +577,7 @@ export default function OrderDetail() {
 
             {/* Invoice */}
             {invoice && (
-              <Section title="Factura" muted icon={<FileText size={15} />}>
+              <Section title="Factura" muted icon={<FileText size={15} aria-hidden="true" />}>
                 <p className="text-sm font-[var(--font-cond)] text-[var(--color-cream)] tracking-wide">
                   {invoice.invoice_number}
                 </p>
@@ -591,7 +591,7 @@ export default function OrderDetail() {
                   disabled={downloadingInvoice}
                   className="w-full"
                 >
-                  {downloadingInvoice ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+                  {downloadingInvoice ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
                   Descargar PDF
                 </Button>
               </Section>
@@ -687,7 +687,7 @@ export default function OrderDetail() {
               onClick={handleDeleteOrder}
               disabled={deleting}
             >
-              {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+              {deleting ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <Trash2 size={13} aria-hidden="true" />}
               Sí, eliminar
             </Button>
           </div>

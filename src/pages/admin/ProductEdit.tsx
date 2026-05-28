@@ -106,7 +106,7 @@ export function ProductEdit() {
             onClick={() => navigate('/admin/productos')}
             className="flex items-center gap-2 text-sm font-[var(--font-cond)] text-[var(--color-mid)] hover:text-[var(--color-cream)] transition-colors tracking-wide"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={16} aria-hidden="true" />
             Volver a productos
           </button>
         </div>

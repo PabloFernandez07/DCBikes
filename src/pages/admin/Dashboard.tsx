@@ -171,17 +171,17 @@ export default function Dashboard() {
         <MetricCard
           label="Productos activos"
           value={activeProducts}
-          icon={<Package size={20} />}
+          icon={<Package size={20} aria-hidden="true" />}
         />
         <MetricCard
           label="Consultas hoy"
           value={quotesToday}
-          icon={<MessageSquare size={20} />}
+          icon={<MessageSquare size={20} aria-hidden="true" />}
         />
         <MetricCard
           label="Visitas hoy"
           value={viewsToday}
-          icon={<Eye size={20} />}
+          icon={<Eye size={20} aria-hidden="true" />}
         />
       </div>
 
@@ -196,7 +196,7 @@ export default function Dashboard() {
           )}
         >
           <div className="w-11 h-11 rounded-xl bg-yellow-500/15 flex items-center justify-center text-yellow-300 shrink-0">
-            <Bell size={20} />
+            <Bell size={20} aria-hidden="true" />
           </div>
           <div>
             <p className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] leading-none">
@@ -213,7 +213,7 @@ export default function Dashboard() {
           className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-5 flex items-center gap-4 transition-all hover:bg-[var(--color-card-hover)]/60"
         >
           <div className="w-11 h-11 rounded-xl bg-[var(--color-lavender)]/15 flex items-center justify-center text-[var(--color-lavender)] shrink-0">
-            <ShoppingBag size={20} />
+            <ShoppingBag size={20} aria-hidden="true" />
           </div>
           <div>
             <p className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] leading-none">

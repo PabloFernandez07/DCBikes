@@ -305,6 +305,7 @@ export default function Groupings() {
                 <Search
                   size={14}
                   className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-mid)]"
+                  aria-hidden="true"
                 />
                 <input
                   type="text"
@@ -408,9 +409,9 @@ export default function Groupings() {
                 className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-cream-dim)] hover:bg-[var(--color-card-hover)]/40 transition-colors"
               >
                 {ungroupedOpen ? (
-                  <ChevronDown size={13} className="text-[var(--color-mid)]" />
+                  <ChevronDown size={13} className="text-[var(--color-mid)]" aria-hidden="true" />
                 ) : (
-                  <ChevronRight size={13} className="text-[var(--color-mid)]" />
+                  <ChevronRight size={13} className="text-[var(--color-mid)]" aria-hidden="true" />
                 )}
                 <span className="flex-1">Sin agrupar</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[var(--color-ink)] text-[var(--color-mid)] font-semibold">
@@ -439,13 +440,13 @@ export default function Groupings() {
                 {/* Header del panel */}
                 <div className="px-5 py-4 border-b border-[var(--color-card-hover)] flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0">
-                    <Layers size={16} className="text-[var(--color-lavender)] shrink-0" />
+                    <Layers size={16} className="text-[var(--color-lavender)] shrink-0" aria-hidden="true" />
                     <h2 className="font-mono text-sm text-[var(--color-cream)] truncate">
                       {selectedGroup}
                     </h2>
                     {isConfirmed && (
                       <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-[var(--font-cond)] uppercase tracking-wider">
-                        <Lock size={10} />
+                        <Lock size={10} aria-hidden="true" />
                         Confirmado
                       </span>
                     )}
@@ -460,7 +461,7 @@ export default function Groupings() {
                       size="sm"
                       onClick={handleConfirmGroup}
                     >
-                      <CheckCircle2 size={14} />
+                      <CheckCircle2 size={14} aria-hidden="true" />
                       {isConfirmed ? 'Marcar pendiente' : 'Confirmar grupo'}
                     </Button>
                     <Button
@@ -468,7 +469,7 @@ export default function Groupings() {
                       size="sm"
                       onClick={() => setBreakOpen(true)}
                     >
-                      <Unlink size={14} />
+                      <Unlink size={14} aria-hidden="true" />
                       Romper grupo
                     </Button>
                   </div>
@@ -548,7 +549,7 @@ export default function Groupings() {
               loading={breakRunning}
               onClick={handleBreakGroup}
             >
-              <Unlink size={14} />
+              <Unlink size={14} aria-hidden="true" />
               Sí, romper grupo
             </Button>
           </div>
@@ -622,7 +623,7 @@ export default function Groupings() {
               onClick={() => handleMoveProduct(moveQuery)}
               disabled={!moveQuery.trim()}
             >
-              <ArrowRightLeft size={14} />
+              <ArrowRightLeft size={14} aria-hidden="true" />
               Mover
             </Button>
           </div>
@@ -640,7 +641,7 @@ function EmptyState() {
   return (
     <div className="h-full min-h-[500px] flex flex-col items-center justify-center gap-3 px-6 text-center">
       <div className="w-14 h-14 rounded-2xl bg-[var(--color-lavender)]/10 flex items-center justify-center">
-        <Layers size={26} className="text-[var(--color-lavender)]" />
+        <Layers size={26} className="text-[var(--color-lavender)]" aria-hidden="true" />
       </div>
       <h3 className="text-lg font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
         SELECCIONA UN GRUPO
@@ -783,7 +784,7 @@ function VariantRow({
               aria-label="Guardar talla"
               title="Guardar talla"
             >
-              <Save size={14} />
+              <Save size={14} aria-hidden="true" />
             </button>
           )}
         </div>
@@ -813,7 +814,7 @@ function VariantRow({
             aria-label="Mover a otro grupo"
             title="Mover a otro grupo"
           >
-            <ArrowRightLeft size={14} />
+            <ArrowRightLeft size={14} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -823,7 +824,7 @@ function VariantRow({
             aria-label="Sacar de este grupo"
             title="Sacar de este grupo"
           >
-            <X size={14} />
+            <X size={14} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -933,7 +934,7 @@ function UngroupedList({
                 aria-label="Asignar a grupo"
                 title="Asignar a grupo"
               >
-                <ArrowRightLeft size={12} />
+                <ArrowRightLeft size={12} aria-hidden="true" />
               </button>
             </li>
           ))}

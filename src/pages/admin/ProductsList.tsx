@@ -198,13 +198,13 @@ export default function ProductsList() {
             <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)]">{total} en total</p>
           </div>
           <Button variant="primary" onClick={() => setModalOpen(true)}>
-            <Plus size={16} /> Nuevo producto
+            <Plus size={16} aria-hidden="true" /> Nuevo producto
           </Button>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="relative flex-1 min-w-[200px]">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)]" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)]" aria-hidden="true" />
             <input
               type="text"
               placeholder="Buscar por nombre..."
@@ -537,7 +537,7 @@ function ProductRow({
             className="p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[var(--color-lavender)]/10 transition-colors"
             aria-label="Editar"
           >
-            <Pencil size={15} />
+            <Pencil size={15} aria-hidden="true" />
           </button>
           <button
             type="button"
@@ -545,7 +545,7 @@ function ProductRow({
             className="p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-brand-red)] hover:bg-[var(--color-brand-red)]/10 transition-colors"
             aria-label="Archivar"
           >
-            <Archive size={15} />
+            <Archive size={15} aria-hidden="true" />
           </button>
         </div>
       </td>

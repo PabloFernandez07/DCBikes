@@ -431,7 +431,7 @@ export default function MyOrderDetailCustomer() {
             to={backToList}
             className="inline-flex items-center gap-1.5 text-xs font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] hover:text-[var(--color-lavender)] mb-3 transition-colors"
           >
-            <ArrowLeft size={13} />
+            <ArrowLeft size={13} aria-hidden="true" />
             Volver a mis pedidos
           </Link>
           <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -444,7 +444,7 @@ export default function MyOrderDetailCustomer() {
               </p>
               {wasModified && order.client_modified_at && (
                 <span className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full text-[11px] font-[var(--font-cond)] tracking-wide bg-orange-500/10 text-orange-200 border border-orange-500/30">
-                  <History size={11} />
+                  <History size={11} aria-hidden="true" />
                   Modificado el {formatDateTime(order.client_modified_at)}
                 </span>
               )}
@@ -460,7 +460,7 @@ export default function MyOrderDetailCustomer() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)]/40 transition-colors disabled:opacity-50"
                 title="Refrescar pedido"
               >
-                <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+                <RefreshCw size={13} className={loading ? 'animate-spin' : ''} aria-hidden="true" />
                 Refrescar
               </button>
               <OrderStatusBadge status={order.status} size="md" />
@@ -499,7 +499,7 @@ export default function MyOrderDetailCustomer() {
                           isCurrent && 'ring-2 ring-[var(--color-lavender)]/30',
                         )}
                       >
-                        {reached ? <CheckCircle2 size={14} /> : <Circle size={10} />}
+                        {reached ? <CheckCircle2 size={14} aria-hidden="true" /> : <Circle size={10} aria-hidden="true" />}
                       </span>
                     </div>
                     <span
@@ -520,7 +520,7 @@ export default function MyOrderDetailCustomer() {
         {/* Tracking si aplica */}
         {order.status === 'shipped' && order.tracking_number && (
           <section className="bg-[rgba(56,189,248,0.06)] border border-sky-500/30 rounded-2xl p-5 flex items-start gap-3">
-            <Truck size={20} className="text-sky-300 shrink-0 mt-0.5" />
+            <Truck size={20} className="text-sky-300 shrink-0 mt-0.5" aria-hidden="true" />
             <div className="text-sm font-[var(--font-body)] text-[var(--color-cream-dim)]">
               <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] mb-0.5">
                 Tu pedido está en camino
@@ -538,7 +538,7 @@ export default function MyOrderDetailCustomer() {
         {/* Items */}
         <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6">
           <h2 className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)] tracking-wide mb-4 inline-flex items-center gap-2">
-            <Package size={15} className="text-[var(--color-lavender)]" />
+            <Package size={15} className="text-[var(--color-lavender)]" aria-hidden="true" />
             Artículos ({(order.items ?? []).length})
           </h2>
           <ul className="space-y-2">
@@ -556,7 +556,7 @@ export default function MyOrderDetailCustomer() {
                       loading="lazy"
                     />
                   ) : (
-                    <Bike size={18} strokeWidth={1} className="text-[var(--color-mid)]" />
+                    <Bike size={18} strokeWidth={1} className="text-[var(--color-mid)]" aria-hidden="true" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -617,14 +617,14 @@ export default function MyOrderDetailCustomer() {
 
           <div>
             <h3 className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-2 inline-flex items-center gap-1.5">
-              {order.delivery_method === 'shipping' ? <Truck size={11} /> : <Store size={11} />}
+              {order.delivery_method === 'shipping' ? <Truck size={11} aria-hidden="true" /> : <Store size={11} aria-hidden="true" />}
               {order.delivery_method === 'shipping' ? 'Dirección de envío' : 'Recogida en tienda'}
             </h3>
             {order.delivery_method === 'shipping' ? (
               <div className="text-sm text-[var(--color-cream)] font-[var(--font-body)] space-y-0.5">
                 {order.shipping_address && (
                   <p className="inline-flex items-start gap-1.5">
-                    <MapPin size={13} className="text-[var(--color-mid)] mt-0.5 shrink-0" />
+                    <MapPin size={13} className="text-[var(--color-mid)] mt-0.5 shrink-0" aria-hidden="true" />
                     <span>{order.shipping_address}</span>
                   </p>
                 )}
@@ -646,7 +646,7 @@ export default function MyOrderDetailCustomer() {
           <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-5 flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[rgba(196,162,207,0.12)] text-[var(--color-lavender)] flex items-center justify-center shrink-0">
-                <FileText size={18} />
+                <FileText size={18} aria-hidden="true" />
               </div>
               <div>
                 <p className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)]">
@@ -662,7 +662,7 @@ export default function MyOrderDetailCustomer() {
               onClick={() => order.invoice_signed_url && window.open(order.invoice_signed_url, '_blank', 'noopener,noreferrer')}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-lavender)] text-[var(--color-ink)] font-[var(--font-cond)] font-semibold text-sm tracking-wide hover:brightness-110 transition-all"
             >
-              <Download size={14} />
+              <Download size={14} aria-hidden="true" />
               Descargar factura PDF
             </button>
           </section>
@@ -681,7 +681,7 @@ export default function MyOrderDetailCustomer() {
                   onClick={openEditModal}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-[var(--font-cond)] font-semibold tracking-wide bg-[var(--color-card-hover)] text-[var(--color-cream)] border border-[var(--color-mid)]/30 hover:border-[var(--color-lavender)]/50 hover:text-[var(--color-lavender)] transition-colors"
                 >
-                  <Pencil size={14} />
+                  <Pencil size={14} aria-hidden="true" />
                   Modificar dirección
                 </button>
               )}
@@ -691,7 +691,7 @@ export default function MyOrderDetailCustomer() {
                   onClick={() => setCancelOpen(true)}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-[var(--font-cond)] font-semibold tracking-wide bg-red-900/15 text-red-300 border border-red-700/40 hover:bg-red-900/25 hover:border-red-600/60 transition-colors"
                 >
-                  <XCircle size={14} />
+                  <XCircle size={14} aria-hidden="true" />
                   Cancelar pedido
                 </button>
               )}
@@ -750,7 +750,7 @@ export default function MyOrderDetailCustomer() {
               onClick={handleCancelOrder}
               disabled={cancelling}
             >
-              {cancelling ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
+              {cancelling ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <XCircle size={13} aria-hidden="true" />}
               Sí, cancelar pedido
             </Button>
           </div>
@@ -840,7 +840,7 @@ export default function MyOrderDetailCustomer() {
               Cancelar
             </Button>
             <Button variant="primary" size="sm" type="submit" disabled={savingAddress}>
-              {savingAddress ? <Loader2 size={13} className="animate-spin" /> : <Pencil size={13} />}
+              {savingAddress ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <Pencil size={13} aria-hidden="true" />}
               Guardar dirección
             </Button>
           </div>

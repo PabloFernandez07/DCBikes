@@ -341,7 +341,7 @@ export default function OrdersList() {
             className="p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Página anterior"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={16} aria-hidden="true" />
           </button>
           <span className="px-2 text-[var(--color-cream-dim)] font-[var(--font-cond)]">
             {page + 1} / {totalPages}
@@ -353,7 +353,7 @@ export default function OrdersList() {
             className="p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Página siguiente"
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={16} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -379,7 +379,7 @@ export default function OrdersList() {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-cream-dim)] border border-[var(--color-card-hover)] hover:border-[var(--color-lavender)]/40 hover:text-[var(--color-cream)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           title="Refrescar lista de pedidos"
         >
-          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} aria-hidden="true" />
           Refrescar
         </button>
       </div>
@@ -483,7 +483,7 @@ export default function OrdersList() {
               Buscar
             </label>
             <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)]" />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)]" aria-hidden="true" />
               <input
                 type="text"
                 value={search}
@@ -527,7 +527,7 @@ export default function OrdersList() {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-0.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-lavender)] border border-[var(--color-lavender)]/40 hover:bg-[var(--color-lavender)]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Exportar pedidos aceptados de envío como CSV (formato transportistas)"
           >
-            <FileDown size={13} />
+            <FileDown size={13} aria-hidden="true" />
             {exportingCsv ? 'Exportando…' : 'Exportar pendientes envío (CSV)'}
           </button>
         </div>
@@ -665,7 +665,7 @@ export default function OrdersList() {
                           onClick={e => { e.stopPropagation(); navigate(`/admin/pedidos/${o.id}`) }}
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-[var(--font-cond)] text-[var(--color-lavender)] hover:bg-[var(--color-lavender)]/10 transition-colors"
                         >
-                          <Eye size={13} />
+                          <Eye size={13} aria-hidden="true" />
                           Ver
                         </button>
                       </td>
