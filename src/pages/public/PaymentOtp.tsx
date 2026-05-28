@@ -47,7 +47,6 @@ export default function PaymentOtp() {
   const [phase, setPhase] = useState<Phase>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [maskedEmail, setMaskedEmail] = useState<string | null>(null)
-  const [expiresAt, setExpiresAt] = useState<string | null>(null)
   const [resendCooldown, setResendCooldown] = useState(0)
   const [resending, setResending] = useState(false)
   const requestedRef = useRef(false)
@@ -84,7 +83,6 @@ export default function PaymentOtp() {
           throw new Error(data?.error || 'No hemos podido enviar el código.')
         }
         setMaskedEmail(data.masked_email ?? null)
-        setExpiresAt(data.expires_at ?? null)
         if (isResend) {
           setResendCooldown(RESEND_COOLDOWN_SECONDS)
         }
