@@ -28,3 +28,28 @@ site_url = "http://localhost:5173"
 additional_redirect_urls = ["https://localhost:5173"]
 jwt_expiry = 3600
 enable_signup = false
+
+# ─────────────────────────────────────────────────────────────────
+# verify_jwt por función (auditoría V5 — fix deploy)
+# Funciones invocadas SIN JWT de plataforma: webhooks externos (Redsys),
+# recursos públicos (img proxy) y crons (pg_cron / monitor con su propio
+# secreto). Su seguridad se basa en firma HMAC / CRON_SECRET / token, no
+# en el JWT de Supabase. El resto de funciones mantiene verify_jwt=true.
+# ─────────────────────────────────────────────────────────────────
+[functions.redsys-notification]
+verify_jwt = false
+
+[functions.google-avatar-proxy]
+verify_jwt = false
+
+[functions.order-auto-cancel]
+verify_jwt = false
+
+[functions.data-retention-cron]
+verify_jwt = false
+
+[functions.cron-healthcheck]
+verify_jwt = false
+
+[functions.verifactu-send-cron]
+verify_jwt = false

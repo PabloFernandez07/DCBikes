@@ -46,10 +46,22 @@ export function verifyInternalSecret(req: Request): boolean {
 }
 
 /**
- * Devuelve el header `x-internal-secret` correctamente formado para
- * propagar entre Edge Functions. Si la env no está configurada,
- * devuelve cadena vacía (el receptor rechazará la llamada con 403).
+ * Devuelve los headers para invocar otra Edge Function interna vía
+ * `supabase.functions.invoke(name, { headers: internalSecretHeader() })`.
+ *
+ * CRÍTICO: incluye `Authorization` con el SERVICE_ROLE_KEY. El objeto que
+ * se pasa a `functions.invoke({ headers })` REEMPLAZA los headers por
+ * defecto del cliente — si solo devolviésemos `x-internal-secret`, se
+ * perdería el `Authorization` que la plataforma exige cuando la función
+ * receptora tiene `verify_jwt = true`, y la invocación fallaría con 401
+ * antes de llegar al handler (y por tanto antes de verificar el secreto).
+ *
+ * Doble capa: la plataforma valida el JWT service_role (verify_jwt) y el
+ * handler valida `x-internal-secret` (verifyInternalSecret).
  */
-export function internalSecretHeader(): { 'x-internal-secret': string } {
-  return { 'x-internal-secret': Deno.env.get('INTERNAL_INVOKE_SECRET') ?? '' }
+export function internalSecretHeader(): Record<string, string> {
+  return {
+    Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''}`,
+    'x-internal-secret': Deno.env.get('INTERNAL_INVOKE_SECRET') ?? '',
+  }
 }
