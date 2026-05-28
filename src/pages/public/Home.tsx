@@ -165,7 +165,7 @@ function ReviewCarousel({ reviews }: { reviews: import("@/hooks/useGoogleReviews
               style={{ background: "radial-gradient(circle at 30% 30%, rgba(196,162,207,0.06), transparent 70%)" }}
             />
             <div className="relative flex flex-col flex-1">
-              <div className="flex items-center gap-0.5 mb-5">
+              <div className="flex items-center gap-0.5 mb-5" role="img" aria-label={`${review.rating} de 5 estrellas`}>
                 {[1, 2, 3, 4, 5].map((s) => (
                   <Star
                     key={s}
@@ -173,6 +173,7 @@ function ReviewCarousel({ reviews }: { reviews: import("@/hooks/useGoogleReviews
                     fill={s <= review.rating ? "#FBBC05" : "transparent"}
                     stroke={s <= review.rating ? "none" : "#FBBC05"}
                     strokeWidth={1.5}
+                    aria-hidden="true"
                   />
                 ))}
               </div>
@@ -242,7 +243,7 @@ function ReviewCarousel({ reviews }: { reviews: import("@/hooks/useGoogleReviews
             aria-label="Anterior"
             className="w-10 h-10 rounded-full border border-[var(--color-card-hover)] flex items-center justify-center text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:border-[rgba(196,162,207,0.4)] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={18} aria-hidden="true" />
           </button>
           <button
             onClick={next}
@@ -250,7 +251,7 @@ function ReviewCarousel({ reviews }: { reviews: import("@/hooks/useGoogleReviews
             aria-label="Siguiente"
             className="w-10 h-10 rounded-full border border-[var(--color-card-hover)] flex items-center justify-center text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:border-[rgba(196,162,207,0.4)] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={18} aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -392,19 +393,19 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
-                icon: <Award size={36} strokeWidth={1.2} />,
+                icon: <Award size={36} strokeWidth={1.2} aria-hidden="true" />,
                 title: "Calidad premium",
                 text: "Seleccionamos las mejores marcas del mercado para ofrecerte bicicletas que duran una vida.",
                 color: "rgba(196,162,207,0.12)",
               },
               {
-                icon: <Wrench size={36} strokeWidth={1.2} />,
+                icon: <Wrench size={36} strokeWidth={1.2} aria-hidden="true" />,
                 title: "Taller experto",
                 text: "Nuestros mecánicos realizan todo tipo de reparaciones, mantenimientos y personalizaciones.",
                 color: "rgba(229,48,30,0.08)",
               },
               {
-                icon: <Zap size={36} strokeWidth={1.2} />,
+                icon: <Zap size={36} strokeWidth={1.2} aria-hidden="true" />,
                 title: "Asesoramiento real",
                 text: "Te ayudamos a encontrar la bici perfecta según tu estilo, presupuesto y objetivos.",
                 color: "rgba(196,162,207,0.1)",
@@ -460,7 +461,7 @@ export default function Home() {
               to="/catalogo"
               className="rv hidden sm:flex items-center gap-2 font-[var(--font-cond)] text-sm text-[var(--color-mid)] hover:text-[var(--color-lavender)] transition-colors tracking-wide"
             >
-              Ver todo el catálogo <ChevronRight size={16} />
+              Ver todo el catálogo <ChevronRight size={16} aria-hidden="true" />
             </Link>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -488,7 +489,7 @@ export default function Home() {
               size="lg"
               onClick={() => navigate("/catalogo")}
             >
-              Ver catálogo completo <ArrowRight size={18} />
+              Ver catálogo completo <ArrowRight size={18} aria-hidden="true" />
             </Button>
           </div>
         </div>
@@ -688,7 +689,7 @@ export default function Home() {
                   size="md"
                   onClick={() => navigate("/taller")}
                 >
-                  Conoce el taller <ArrowRight size={18} />
+                  Conoce el taller <ArrowRight size={18} aria-hidden="true" />
                 </Button>
               </div>
             </div>
@@ -704,7 +705,7 @@ export default function Home() {
                     key={label}
                     className="group flex flex-col items-center justify-center gap-3 py-6 px-3 sm:py-10 sm:px-6 rounded-2xl bg-[var(--color-card)] border border-[var(--color-mid)]/20 hover:border-[rgba(196,162,207,0.3)] hover:bg-[rgba(196,162,207,0.05)] transition-all duration-300 text-center cursor-default"
                   >
-                    <span className="text-4xl group-hover:scale-125 transition-transform duration-300">
+                    <span className="text-4xl group-hover:scale-125 transition-transform duration-300" role="img" aria-hidden="true">
                       {icon}
                     </span>
                     <span className="font-[var(--font-cond)] text-base font-semibold text-[var(--color-cream)] tracking-wide">
@@ -746,7 +747,7 @@ export default function Home() {
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
               </svg>
               <div>
-                <div className="flex items-center gap-0.5 mb-1">
+                <div className="flex items-center gap-0.5 mb-1" aria-hidden="true">
                   {[1, 2, 3, 4, 5].map((s) => {
                     const filled = reviewData ? s <= Math.round(reviewData.rating) : false;
                     return (
@@ -756,6 +757,7 @@ export default function Home() {
                         fill={filled ? "#FBBC05" : "transparent"}
                         stroke={filled ? "none" : "#FBBC05"}
                         strokeWidth={1.5}
+                        aria-hidden="true"
                       />
                     );
                   })}
@@ -769,7 +771,7 @@ export default function Home() {
                     : reviewLoading ? "Cargando…" : "Reseñas en Google"}
                 </p>
               </div>
-              <ChevronRight size={18} className="ml-2 text-[var(--color-mid)] group-hover:text-[var(--color-lavender)] transition-colors" />
+              <ChevronRight size={18} className="ml-2 text-[var(--color-mid)] group-hover:text-[var(--color-lavender)] transition-colors" aria-hidden="true" />
             </a>
           </div>
 
@@ -824,17 +826,17 @@ export default function Home() {
                 {
                   title: "Atención personalizada",
                   text: "Asesoramiento experto sin presión. Te ayudan a elegir la bici perfecta según tu nivel, uso y presupuesto.",
-                  icon: <Star size={22} strokeWidth={1.5} />,
+                  icon: <Star size={22} strokeWidth={1.5} aria-hidden="true" />,
                 },
                 {
                   title: "Taller de confianza",
                   text: "Servicio técnico rápido y profesional. Trabajan con todas las marcas y componentes, con garantía en cada reparación.",
-                  icon: <Wrench size={22} strokeWidth={1.5} />,
+                  icon: <Wrench size={22} strokeWidth={1.5} aria-hidden="true" />,
                 },
                 {
                   title: "Distribuidores oficiales Giant",
                   text: "Concesionario oficial Giant y Liv en Cantabria. Garantía oficial, recambios originales y servicio técnico certificado.",
-                  icon: <Award size={22} strokeWidth={1.5} />,
+                  icon: <Award size={22} strokeWidth={1.5} aria-hidden="true" />,
                 },
               ].map(({ title, text, icon }, i) => (
                 <div
@@ -847,9 +849,9 @@ export default function Home() {
                     style={{ background: "radial-gradient(circle at 30% 30%, rgba(196,162,207,0.06), transparent 70%)" }}
                   />
                   <div className="relative">
-                    <div className="flex items-center gap-0.5 mb-4">
+                    <div className="flex items-center gap-0.5 mb-4" role="img" aria-label="5 de 5 estrellas">
                       {[1, 2, 3, 4, 5].map((s) => (
-                        <Star key={s} size={14} fill="#FBBC05" stroke="none" />
+                        <Star key={s} size={14} fill="#FBBC05" stroke="none" aria-hidden="true" />
                       ))}
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-[rgba(196,162,207,0.1)] flex items-center justify-center text-[var(--color-lavender)] mb-5">
@@ -908,7 +910,7 @@ export default function Home() {
                 onClick={() => navigate("/catalogo")}
                 className="font-[var(--font-display)] tracking-widest text-xl"
               >
-                Ver catálogo <ArrowRight size={20} />
+                Ver catálogo <ArrowRight size={20} aria-hidden="true" />
               </Button>
               <Button
                 variant="secondary"

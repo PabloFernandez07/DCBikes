@@ -72,7 +72,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
             className="ml-auto p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-mid)]/20 transition-colors"
             aria-label="Cerrar"
           >
-            <X size={18} />
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
         <div className="px-6 py-5 overflow-y-auto flex-1 min-h-0">{children}</div>

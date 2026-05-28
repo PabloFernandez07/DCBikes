@@ -180,6 +180,6 @@ serve(async (req) => {
     return jsonOk({ email_id, invoice_attached: !!attachment }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-order-accepted-customer:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

@@ -66,7 +66,7 @@ export default function Cart() {
         />
         <div className="max-w-md mx-auto text-center flex flex-col items-center gap-6">
           <div className="w-24 h-24 rounded-full bg-[var(--color-card)] flex items-center justify-center text-[var(--color-mid)]">
-            <ShoppingBag size={42} strokeWidth={1} />
+            <ShoppingBag size={42} strokeWidth={1} aria-hidden="true" />
           </div>
           <div>
             <h1 className="font-[var(--font-display)] text-4xl tracking-wide text-[var(--color-cream)] mb-2">
@@ -81,7 +81,7 @@ export default function Cart() {
             to="/catalogo"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--color-lavender)] text-[var(--color-ink)] font-[var(--font-cond)] font-semibold tracking-widest hover:brightness-110 transition-all"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={18} aria-hidden="true" />
             Ver catálogo
           </Link>
         </div>
@@ -154,6 +154,7 @@ export default function Cart() {
                       size={28}
                       strokeWidth={1}
                       className="text-[var(--color-mid)]"
+                      aria-hidden="true"
                     />
                   )}
                 </Link>
@@ -197,7 +198,7 @@ export default function Cart() {
                       disabled={quantity <= 1}
                       aria-label="Disminuir cantidad"
                     >
-                      <Minus size={14} />
+                      <Minus size={14} aria-hidden="true" />
                     </button>
                     <span className="min-w-[28px] text-center font-[var(--font-cond)] text-sm text-[var(--color-cream)] tabular-nums">
                       {quantity}
@@ -211,7 +212,7 @@ export default function Cart() {
                         !canIncrease ? 'Stock máximo alcanzado' : undefined
                       }
                     >
-                      <Plus size={14} />
+                      <Plus size={14} aria-hidden="true" />
                     </button>
                   </div>
                 </div>
@@ -233,7 +234,7 @@ export default function Cart() {
                     className="p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-brand-red)] hover:bg-[rgba(255,77,77,0.08)] transition-colors"
                     aria-label={`Eliminar ${snapshot.name} del carrito`}
                   >
-                    <Trash2 size={18} />
+                    <Trash2 size={18} aria-hidden="true" />
                   </button>
                 </div>
               </article>
@@ -245,7 +246,7 @@ export default function Cart() {
               to="/catalogo"
               className="inline-flex items-center gap-1.5 text-sm font-[var(--font-cond)] tracking-wide text-[var(--color-lavender)] hover:text-[var(--color-cream)] transition-colors"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} aria-hidden="true" />
               Volver al catálogo
             </Link>
           </div>
@@ -277,7 +278,7 @@ export default function Cart() {
                 onChange={() => setDeliveryPreview('shipping')}
                 className="accent-[var(--color-lavender)]"
               />
-              <Truck size={18} className="text-[var(--color-lavender)] shrink-0" />
+              <Truck size={18} className="text-[var(--color-lavender)] shrink-0" aria-hidden="true" />
               <div className="flex-1 min-w-0">
                 <p className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)]">
                   Envío a dirección
@@ -302,7 +303,7 @@ export default function Cart() {
                 onChange={() => setDeliveryPreview('pickup')}
                 className="accent-[var(--color-lavender)]"
               />
-              <Store size={18} className="text-[var(--color-lavender)] shrink-0" />
+              <Store size={18} className="text-[var(--color-lavender)] shrink-0" aria-hidden="true" />
               <div className="flex-1 min-w-0">
                 <p className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)]">
                   Recogida en tienda

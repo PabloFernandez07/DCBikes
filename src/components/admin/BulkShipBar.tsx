@@ -48,7 +48,7 @@ export function BulkShipBar({
             onClick={onMarkShipped}
             disabled={disabled}
           >
-            <Truck size={14} />
+            <Truck size={14} aria-hidden="true" />
             Marcar como enviados
           </Button>
           <Button
@@ -57,7 +57,7 @@ export function BulkShipBar({
             onClick={onExportSelected}
             disabled={disabled}
           >
-            <FileDown size={14} />
+            <FileDown size={14} aria-hidden="true" />
             Exportar CSV seleccionados
           </Button>
           <button
@@ -67,7 +67,7 @@ export function BulkShipBar({
             className="p-1.5 rounded-md text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)] transition-colors disabled:opacity-50"
             aria-label="Limpiar selección"
           >
-            <X size={16} />
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
       </div>

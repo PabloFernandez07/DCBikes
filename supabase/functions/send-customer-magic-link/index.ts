@@ -152,6 +152,6 @@ serve(async (req) => {
     return jsonOk({ email_id }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-customer-magic-link:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

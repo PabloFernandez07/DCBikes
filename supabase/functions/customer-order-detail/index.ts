@@ -164,6 +164,6 @@ serve(async (req) => {
     return jsonOk({ order: orderPublic, invoice }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-order-detail:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

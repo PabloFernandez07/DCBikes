@@ -161,10 +161,10 @@ export default function OrderConfirmation() {
         {/* Header celebratorio */}
         <header className="text-center space-y-4">
           <div className="w-20 h-20 rounded-full bg-[rgba(80,200,120,0.12)] flex items-center justify-center text-green-400 mx-auto">
-            <CheckCircle size={42} strokeWidth={1.5} />
+            <CheckCircle size={42} strokeWidth={1.5} aria-hidden="true" />
           </div>
           <h1 className="font-[var(--font-display)] text-5xl text-[var(--color-cream)] tracking-wide">
-            ¡Pedido recibido! 🎉
+            ¡Pedido recibido! <span role="img" aria-hidden="true">🎉</span>
           </h1>
           <p className="font-[var(--font-cond)] text-2xl text-[var(--color-lavender)] tracking-widest">
             {order.order_number}
@@ -238,6 +238,7 @@ export default function OrderConfirmation() {
                       size={18}
                       strokeWidth={1}
                       className="text-[var(--color-mid)]"
+                      aria-hidden="true"
                     />
                   )}
                 </div>
@@ -296,11 +297,13 @@ export default function OrderConfirmation() {
             <Store
               size={20}
               className="text-[var(--color-lavender)] shrink-0 mt-0.5"
+              aria-hidden="true"
             />
           ) : (
             <Truck
               size={20}
               className="text-[var(--color-lavender)] shrink-0 mt-0.5"
+              aria-hidden="true"
             />
           )}
           <div className="text-sm font-[var(--font-body)] text-[var(--color-cream-dim)]">
@@ -320,7 +323,7 @@ export default function OrderConfirmation() {
         {/* Email enviado */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 text-sm text-[var(--color-cream-dim)] font-[var(--font-body)]">
-            <Mail size={14} className="text-[var(--color-lavender)]" />
+            <Mail size={14} className="text-[var(--color-lavender)]" aria-hidden="true" />
             <span>
               Hemos enviado los detalles a{' '}
               <strong className="text-[var(--color-cream)]">
@@ -329,7 +332,7 @@ export default function OrderConfirmation() {
             </span>
           </div>
           <p className="text-[10px] text-[var(--color-mid)] font-[var(--font-cond)] uppercase tracking-widest inline-flex items-center gap-1.5">
-            <Lock size={10} /> Pago seguro vía Redsys
+            <Lock size={10} aria-hidden="true" /> Pago seguro vía Redsys
           </p>
         </div>
 

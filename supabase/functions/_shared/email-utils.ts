@@ -178,13 +178,13 @@ export function formatItemsTable(items: OrderItemRow[]): string {
           ${it.product_size_label ? escapeHtml(it.product_size_label) : '—'}
         </td>
         <td style="padding:12px 8px;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#555;text-align:center;white-space:nowrap">
-          ${it.quantity}
+          ${escapeHtml(String(it.quantity))}
         </td>
         <td style="padding:12px 8px;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#555;text-align:right;white-space:nowrap">
-          ${formatPriceCents(it.unit_price_cents)}
+          ${escapeHtml(formatPriceCents(it.unit_price_cents))}
         </td>
         <td style="padding:12px 8px;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;text-align:right;font-weight:600;white-space:nowrap">
-          ${formatPriceCents(it.line_total_cents)}
+          ${escapeHtml(formatPriceCents(it.line_total_cents))}
         </td>
       </tr>`,
     )
@@ -349,16 +349,22 @@ export function asInt(v: unknown, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback
 }
 
-/** Parsea CSV de emails ("a@x.com, b@y.com") → array limpio, dedupe. */
+/**
+ * Parsea CSV de emails ("a@x.com, b@y.com") → array limpio, dedupe.
+ * B-34: valida cada entrada contra un patrón de email, normaliza a minúsculas
+ * y descarta las inválidas. Evita inyectar destinatarios malformados en Resend
+ * (header injection, CC/BCC a direcciones basura) desde settings editables.
+ */
 export function parseEmailCsv(csv: unknown): string[] {
   if (!csv) return []
   const raw = typeof csv === 'string' ? csv : String(csv)
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return Array.from(
     new Set(
       raw
         .split(/[,;\n]/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0 && s.includes('@')),
+        .map((s) => s.trim().toLowerCase())
+        .filter((s) => EMAIL_RE.test(s)),
     ),
   )
 }
@@ -419,14 +425,15 @@ export function buildFromAddress(): string {
 /* ─────────────────── URLs base ─────────────────── */
 
 /**
- * URL pública del sitio (frontend). Configurable vía env SITE_URL,
- * con fallback razonable al dominio de producción.
+ * URL pública del sitio (frontend). Requiere env SITE_URL configurada.
+ * B-30: eliminado el fallback hardcoded — un fallback silencioso podía generar
+ * enlaces a un dominio incorrecto (magic links, facturas) si la env faltaba.
+ * Fail-closed: lanza si no está configurada.
  */
 export function getSiteUrl(): string {
-  return (Deno.env.get('SITE_URL') ?? 'https://dc-bikes-cantabria.vercel.app').replace(
-    /\/+$/,
-    '',
-  )
+  const url = Deno.env.get('SITE_URL')
+  if (!url) throw new Error('SITE_URL env var missing')
+  return url.replace(/\/+$/, '')
 }
 
 /* ─────────────────── Tracking carriers ─────────────────── */

@@ -270,7 +270,6 @@ export default function TermsOfSale() {
             </p>
             <ul className="list-disc list-inside space-y-1 pl-2">
               <li><strong className="text-[var(--color-cream)]">Tarjeta bancaria</strong> Visa y Mastercard (crédito y débito).</li>
-              <li><strong className="text-[var(--color-cream)]">Bizum</strong> (sujeto a activación por la entidad bancaria).</li>
             </ul>
             <p className="text-xs">
               Las transacciones se realizan en un entorno cifrado bajo el estándar de seguridad PCI-DSS.{' '}
@@ -427,11 +426,19 @@ export default function TermsOfSale() {
             </p>
           </Section>
 
-          {/* 12. Idioma del contrato */}
-          <Section title="12. Idioma del contrato">
+          {/* 12. Idioma de las comunicaciones contractuales */}
+          <Section title="12. Idioma de las comunicaciones contractuales">
             <p>
-              El presente contrato se celebra en <strong className="text-[var(--color-cream)]">español</strong>, idioma único para la formalización del contrato y para la atención al cliente.
-              En caso de discrepancia entre traducciones a otros idiomas, prevalece la versión en español.
+              El idioma único para la formalización del contrato, para las comunicaciones
+              contractuales (confirmaciones, facturas, notificaciones de estado del pedido y
+              atención posventa) y para la atención al cliente es el{' '}
+              <strong className="text-[var(--color-cream)]">español</strong>.
+            </p>
+            <p>
+              En caso de discrepancia entre la versión en español de estos términos o de
+              cualquier comunicación contractual y una eventual traducción a otro idioma,{' '}
+              <strong className="text-[var(--color-cream)]">prevalecerá siempre la versión en
+              español</strong>.
             </p>
           </Section>
 

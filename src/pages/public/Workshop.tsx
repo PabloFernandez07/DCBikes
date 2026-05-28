@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Wrench, Settings, Star, ArrowRight, CheckCircle, Clock, Phone } from 'lucide-react'
+import { Wrench, Settings, Star, ArrowRight, CheckCircle, Clock, Phone, FileText } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { QuoteModal } from '@/components/public/QuoteModal'
@@ -22,21 +22,21 @@ function useReveal() {
 
 const services = [
   {
-    icon: <Wrench size={32} strokeWidth={1.5} />,
+    icon: <Wrench size={32} strokeWidth={1.5} aria-hidden="true" />,
     title: 'Reparación',
     text: 'Diagnóstico completo y reparación de cualquier avería, sea cual sea la marca o el tipo de bicicleta.',
     items: ['Revisión y ajuste de frenos', 'Reparación y ajuste de cambios', 'Cambio de cables y fundas', 'Reparación de ruedas y pinchaduras', 'Reparación de cuadro y horquilla'],
     accent: 'from-[rgba(196,162,207,0.15)] to-transparent',
   },
   {
-    icon: <Settings size={32} strokeWidth={1.5} />,
+    icon: <Settings size={32} strokeWidth={1.5} aria-hidden="true" />,
     title: 'Mantenimiento',
     text: 'Revisiones periódicas para mantener tu bici en perfectas condiciones y alargar su vida útil al máximo.',
     items: ['Revisión básica (puesta a punto)', 'Revisión completa (20 puntos)', 'Limpieza y desengrase profundo', 'Lubricación de transmisión', 'Comprobación de rodamientos'],
     accent: 'from-[rgba(229,48,30,0.08)] to-transparent',
   },
   {
-    icon: <Star size={32} strokeWidth={1.5} />,
+    icon: <Star size={32} strokeWidth={1.5} aria-hidden="true" />,
     title: 'Personalización & Upgrades',
     text: 'Dale una segunda vida a tu bicicleta o llévala al siguiente nivel con componentes premium.',
     items: ['Cambio y upgrade de grupo', 'Montaje de componentes', 'Instalación de accesorios', 'Cambio de ruedas y cubiertas', 'Asesoramiento de mejoras'],
@@ -99,11 +99,11 @@ export default function Workshop() {
           <div className="rv flex flex-wrap gap-4 mt-10" style={{ transitionDelay: '180ms' }}>
             <Button variant="primary" size="lg" onClick={() => setQuoteOpen(true)} className="font-[var(--font-display)] tracking-widest text-lg">
               Pedir presupuesto
-              <ArrowRight size={18} />
+              <ArrowRight size={18} aria-hidden="true" />
             </Button>
             <Link to="/contacto">
               <Button variant="secondary" size="lg" className="font-[var(--font-cond)] tracking-wide">
-                <Phone size={16} />
+                <Phone size={16} aria-hidden="true" />
                 Cómo llegar
               </Button>
             </Link>
@@ -160,7 +160,7 @@ export default function Workshop() {
                   <ul className="flex flex-col gap-2.5">
                     {items.map(item => (
                       <li key={item} className="flex items-center gap-2.5 text-sm text-[var(--color-cream-dim)] font-[var(--font-body)]">
-                        <CheckCircle size={14} className="text-[var(--color-lavender)] shrink-0" />
+                        <CheckCircle size={14} className="text-[var(--color-lavender)] shrink-0" aria-hidden="true" />
                         {item}
                       </li>
                     ))}
@@ -191,7 +191,7 @@ export default function Workshop() {
                 style={{ transitionDelay: `${i * 60}ms` }}
               >
                 <div className="w-8 h-8 rounded-lg bg-[rgba(196,162,207,0.12)] flex items-center justify-center shrink-0 mt-0.5">
-                  <CheckCircle size={16} className="text-[var(--color-lavender)]" />
+                  <CheckCircle size={16} className="text-[var(--color-lavender)]" aria-hidden="true" />
                 </div>
                 <div>
                   <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1">{title}</p>
@@ -239,6 +239,122 @@ export default function Workshop() {
         </div>
       </section>
 
+      {/* Condiciones del servicio de taller (X-27) */}
+      <section className="py-24 bg-[var(--color-ink-deep)]">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="rv mb-12 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[rgba(196,162,207,0.12)] flex items-center justify-center shrink-0">
+              <FileText size={20} className="text-[var(--color-lavender)]" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-1">
+                Información legal
+              </p>
+              <h2 className="font-[var(--font-display)] text-4xl sm:text-5xl text-[var(--color-cream)] tracking-wide">
+                CONDICIONES DEL TALLER
+              </h2>
+            </div>
+          </div>
+
+          <div className="rv max-w-3xl space-y-6 text-[var(--color-mid)] font-[var(--font-body)] text-sm leading-relaxed">
+            <div className="p-5 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+              <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1.5">
+                Citas y recepción
+              </p>
+              <p>
+                Atendemos por orden de llegada y, preferentemente, mediante cita previa para
+                garantizar la disponibilidad de los mecánicos. Puedes solicitar cita por teléfono,
+                en tienda o a través del formulario de presupuesto.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+              <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1.5">
+                Presupuesto previo y diagnóstico
+              </p>
+              <p>
+                El diagnóstico inicial y el presupuesto son <strong className="text-[var(--color-cream)]">gratuitos
+                siempre que la revisión no exceda de 30 minutos</strong>. Si la valoración requiere un despiece o
+                pruebas más prolongadas, te informaremos previamente del coste antes de continuar. No iniciaremos
+                ninguna reparación sin tu aprobación expresa del presupuesto.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+              <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1.5">
+                Plazos de reparación
+              </p>
+              <p>
+                Los plazos que indicamos son <strong className="text-[var(--color-cream)]">orientativos</strong> y
+                dependen de la complejidad del trabajo y de la disponibilidad de recambios. La mayoría de
+                reparaciones se resuelven en 24-48 horas, pero los plazos pueden variar; te mantendremos
+                informado de cualquier demora.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+              <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1.5">
+                Recambios aportados por el cliente
+              </p>
+              <p>
+                Si optas por aportar tus propios recambios, realizaremos el montaje pero{' '}
+                <strong className="text-[var(--color-cream)]">la garantía no cubrirá la pieza aportada ni los
+                defectos derivados de su calidad o idoneidad</strong>: la garantía del taller se limita en ese
+                caso exclusivamente a la mano de obra. Recomendamos consultarnos antes de adquirir componentes
+                por tu cuenta.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+              <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1.5">
+                Custodia de la bicicleta tras la reparación
+              </p>
+              <p>
+                Una vez te avisemos de que la bicicleta está lista, dispones de un plazo de{' '}
+                <strong className="text-[var(--color-cream)]">30 días naturales</strong> para recogerla sin coste.
+                Transcurrido ese plazo, podremos aplicar un{' '}
+                <strong className="text-[var(--color-cream)]">gasto de custodia de 5 € por día</strong> en concepto
+                de almacenaje, previa comunicación al cliente. Te contactaremos antes de aplicar cualquier cargo.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+              <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1.5">
+                Pago
+              </p>
+              <p>
+                El pago de los servicios de taller se realiza{' '}
+                <strong className="text-[var(--color-cream)]">contra entrega</strong>, en el momento de recoger la
+                bicicleta reparada.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-xl bg-[rgba(229,48,30,0.06)] border border-[var(--color-brand-red)]/20">
+              <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-1.5">
+                Derecho de desistimiento
+              </p>
+              <p>
+                Los servicios de reparación y mantenimiento de taller son servicios prestados a medida y conforme
+                a tus especificaciones. Por ello, una vez ejecutado el servicio con tu consentimiento previo,{' '}
+                <strong className="text-[var(--color-cream)]">no resulta de aplicación el derecho de
+                desistimiento</strong>, conforme al <strong className="text-[var(--color-cream)]">art. 103.a del
+                Real Decreto Legislativo 1/2007</strong> (contratos de servicios totalmente ejecutados, cuando la
+                ejecución haya comenzado con el consentimiento expreso del consumidor).
+              </p>
+            </div>
+
+            <p className="text-xs">
+              Estas condiciones se aplican exclusivamente a los servicios de taller. La venta de productos en la
+              tienda online se rige por los{' '}
+              <Link to="/terminos-venta" className="text-[var(--color-lavender)] underline underline-offset-2">
+                Términos de venta
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* CTA banner */}
       <section className="py-8 pb-24">
         <div className="w-full px-4 sm:px-6 lg:px-8">
@@ -257,7 +373,7 @@ export default function Workshop() {
                 ¿LISTA PARA RODAR?
               </h2>
               <div className="flex items-center gap-2 text-[var(--color-mid)] font-[var(--font-cond)] text-sm tracking-wide">
-                <Clock size={14} className="text-[var(--color-lavender)]" />
+                <Clock size={14} className="text-[var(--color-lavender)]" aria-hidden="true" />
                 Respondemos en menos de 24 horas
               </div>
             </div>
@@ -269,7 +385,7 @@ export default function Workshop() {
                 className="font-[var(--font-display)] tracking-widest text-xl"
               >
                 Pedir presupuesto
-                <ArrowRight size={20} />
+                <ArrowRight size={20} aria-hidden="true" />
               </Button>
               <Link to="/contacto">
                 <Button variant="secondary" size="lg" className="font-[var(--font-cond)] tracking-wide w-full">

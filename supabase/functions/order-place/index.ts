@@ -36,6 +36,7 @@ import {
 import { loadRedsysConfig, type RedsysConfig } from '../_shared/redsys-config.ts'
 import { buildRedsysOrderId, signRedsysPayload } from '../_shared/redsys-sign.ts'
 import { generateOrderToken } from '../_shared/order-token.ts'
+import { internalSecretHeader } from '../_shared/security.ts'
 
 /* ─────────────── Tipos input ─────────────── */
 
@@ -325,6 +326,12 @@ serve(async (req) => {
   try {
     if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
+    // B-27: rechazo temprano de payloads desproporcionados (anti-DoS).
+    const cl = Number(req.headers.get('content-length') ?? '0')
+    if (Number.isFinite(cl) && cl > 8192) {
+      return jsonError('payload demasiado grande', 413, req)
+    }
+
     const rawBody = await req.json().catch(() => null)
     const v = validateBody(rawBody)
     if (!v.ok) return jsonError(v.error, 400, req)
@@ -407,7 +414,19 @@ serve(async (req) => {
       'legal_company_cif',
       'legal_company_address',
       'require_payment_otp',
+      'verifactu_mode',
     ])
+
+    // B-22: gate Verifactu (RD 1007/2023). El envío real a la AEAT está aplazado;
+    // mientras `verifactu_mode='no_verifactu'` las facturas se emiten sin envío.
+    // Solo dejamos rastro de que el modo está activo: generate-invoice-pdf será
+    // quien marque `verifactu_status='pending'` en la factura resultante.
+    const verifactuActive =
+      typeof settings.verifactu_mode === 'string' &&
+      settings.verifactu_mode.trim().toLowerCase() === 'verifactu'
+    if (verifactuActive) {
+      console.log(`[${ts()}] order-place · verifactu_mode activo — la factura quedará pending de envío AEAT`)
+    }
 
     // Gate fiscal (L-02 / C-02): bloquear pedidos si los datos legales no están
     // configurados — sin ellos no se puede emitir factura legal válida.
@@ -602,16 +621,16 @@ serve(async (req) => {
     // 10. Generar contrato PDF (soporte duradero L-05) — non-blocking.
     //     Si falla, el pedido ya existe y el email se enviará igualmente.
     //     El adjunto se omitirá silenciosamente; el error queda en los logs.
-    fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/generate-order-contract`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-      },
-      body: JSON.stringify({ order_id: orderId }),
-    }).catch((err: unknown) => {
-      console.error(`[${ts()}] [order-place] contract generation failed (non-blocking):`, String(err))
-    })
+    //     B-19: invocación interna vía supabase.functions.invoke con
+    //     x-internal-secret (evita CORS interno y fija auth fail-closed).
+    supabase.functions
+      .invoke('generate-order-contract', {
+        body: { order_id: orderId },
+        headers: internalSecretHeader(),
+      })
+      .catch((err: unknown) => {
+        console.error(`[${ts()}] [order-place] contract generation failed (non-blocking):`, String(err))
+      })
 
     // 11. Payload según modo.
     // mode: mock devuelve URL interna; test/prod construye payload Redsys firmado.

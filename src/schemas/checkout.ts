@@ -70,6 +70,8 @@ export const PROVINCIAS_PENINSULA = [
 
 const phoneEsRegex = /^(?:\+34|0034|34)?[\s-]?[6789]\d{2}[\s-]?\d{3}[\s-]?\d{3}$/
 const postalCodePeninsulaRegex = /^[0-5]\d{4}$/
+// VAT B2B intracomunitario español: ES + 9 caracteres (CIF/NIF/NIE).
+const vatEsRegex = /^ES[A-Z0-9]{9}$/
 
 export const checkoutSchema = z
   .object({
@@ -81,6 +83,11 @@ export const checkoutSchema = z
       .string()
       .min(9, 'Teléfono no válido')
       .regex(phoneEsRegex, 'Teléfono español no válido (ej. 612 345 678)'),
+
+    // País de entrega y facturación. Solo se opera en España (península y
+    // Cantabria); el campo es fijo pero se modela para futuras ampliaciones y
+    // para que el VAT B2B se valide contra el país correcto.
+    country: z.literal('ES').default('ES'),
 
     // ─── Entrega ────────────────────────────────────────────────────────
     delivery_method: z.enum(['shipping', 'pickup']),
@@ -102,6 +109,10 @@ export const checkoutSchema = z
     invoice_business_name: z.string().optional(),
     invoice_cif: z.string().optional(),
     invoice_address: z.string().optional(),
+    // NIF-IVA intracomunitario (opcional). Si se aporta, debe tener formato
+    // español ESX0000000X — la validación VIES se realiza en backend
+    // (edge function validate-vat) porque exige consulta SOAP a la Comisión.
+    invoice_vat: z.string().optional(),
 
     // ─── Consentimientos legales ────────────────────────────────────────
     accepted_terms: z
@@ -136,6 +147,16 @@ export const checkoutSchema = z
           code: 'custom',
           path: ['shipping_postal_code'],
           message: 'Código postal obligatorio',
+        })
+      } else if (/^(35|38)/.test(data.shipping_postal_code.trim())) {
+        // Las Palmas (35) y Santa Cruz de Tenerife (38): Canarias está fuera
+        // del territorio de aplicación del IVA peninsular (IGIC) y del ámbito
+        // de envío. Mensaje específico para no confundir con un CP malformado.
+        ctx.addIssue({
+          code: 'custom',
+          path: ['shipping_postal_code'],
+          message:
+            'No realizamos envíos a Canarias. Contacta con la tienda para un presupuesto personalizado.',
         })
       } else if (!postalCodePeninsulaRegex.test(data.shipping_postal_code)) {
         ctx.addIssue({
@@ -208,6 +229,18 @@ export const checkoutSchema = z
           message: 'Dirección fiscal obligatoria',
         })
       }
+      // NIF-IVA intracomunitario opcional. Si se rellena, restringimos el
+      // formato a operador español (ES + 9 caracteres). La validez real contra
+      // VIES se comprueba en backend (edge function validate-vat).
+      if (data.invoice_vat && data.invoice_vat.trim().length > 0) {
+        if (!vatEsRegex.test(data.invoice_vat.trim().toUpperCase())) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['invoice_vat'],
+            message: 'NIF-IVA no válido. Formato esperado: ES + 9 caracteres (p. ej. ESB12345678).',
+          })
+        }
+      }
     }
   })
 
@@ -218,6 +251,7 @@ export const checkoutDefaults: CheckoutFormValues = {
   last_name: '',
   email: '',
   phone: '',
+  country: 'ES',
   delivery_method: 'shipping',
   shipping_address: '',
   shipping_city: '',
@@ -229,6 +263,7 @@ export const checkoutDefaults: CheckoutFormValues = {
   invoice_business_name: '',
   invoice_cif: '',
   invoice_address: '',
+  invoice_vat: '',
   accepted_terms: false,
   read_privacy: false,
 }

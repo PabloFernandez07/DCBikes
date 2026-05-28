@@ -159,6 +159,6 @@ serve(async (req) => {
     return jsonOk({ email_id, recipients_count: recipients.length }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-order-address-changed-admin:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

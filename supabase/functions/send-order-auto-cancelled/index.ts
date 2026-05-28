@@ -126,6 +126,6 @@ serve(async (req) => {
     return jsonOk({ email_id, admin_bcc_count: adminBcc.length }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-order-auto-cancelled:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

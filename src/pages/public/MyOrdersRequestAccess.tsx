@@ -1,8 +1,12 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Mail, Send, CheckCircle2, ArrowLeft, Package } from 'lucide-react'
+import { Turnstile } from '@marsidev/react-turnstile'
 import { supabase } from '@/lib/supabase'
 import { SEO } from '@/components/layout/SEO'
+import { PRIVACY_VERSION } from '@/lib/legal-versions'
+
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
 const STORAGE_KEY = 'dcbikes_customer_session'
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000 // 24h
@@ -37,12 +41,23 @@ export default function MyOrdersRequestAccess() {
   const [submitted, setSubmitted] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [existingSession, setExistingSession] = useState<StoredSession | null>(null)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [turnstileLoaded, setTurnstileLoaded] = useState(false)
 
   useEffect(() => {
     setExistingSession(readSession())
   }, [])
 
+  // X-18: lazy-load del widget Turnstile — solo se monta tras el primer focus
+  // del formulario. Mejora privacidad (Cloudflare no recibe señal antes de que
+  // el usuario vaya a enviar) y LCP/FID.
+  const handleFirstFocus = useCallback(() => {
+    setTurnstileLoaded(prev => prev || true)
+  }, [])
+
   const emailValid = useMemo(() => EMAIL_RE.test(email.trim()), [email])
+
+  const captchaRequired = Boolean(TURNSTILE_SITE_KEY)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,11 +68,24 @@ export default function MyOrdersRequestAccess() {
       setErrorMsg('Debes confirmar que has leído la Política de Privacidad para continuar.')
       return
     }
+    if (captchaRequired && !turnstileToken) {
+      setErrorMsg('Verifica que no eres un robot antes de enviar.')
+      return
+    }
     setSubmitting(true)
     setErrorMsg(null)
     try {
+      // TODO(X-08/X-18): la edge function `customer-magic-link-request` aún NO
+      // verifica `turnstile_token` (solo aplica rate-limit por IP/email). Cuando
+      // se añada la verificación Turnstile en backend, este token ya viaja en el
+      // body listo para ser comprobado (fail-closed como en quote-submit).
       const { error } = await supabase.functions.invoke('customer-magic-link-request', {
-        body: { email: email.trim().toLowerCase() },
+        body: {
+          email: email.trim().toLowerCase(),
+          read_privacy: privacyAccepted,
+          privacy_version: PRIVACY_VERSION,
+          turnstile_token: turnstileToken ?? '',
+        },
       })
       if (error) throw new Error(error.message)
       setSubmitted(true)
@@ -164,6 +192,7 @@ export default function MyOrdersRequestAccess() {
                     inputMode="email"
                     value={email}
                     onChange={e => setEmail(e.target.value)}
+                    onFocus={handleFirstFocus}
                     placeholder="tu@email.com"
                     required
                     className="w-full text-base text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-ink)] pl-10 pr-3 py-2.5 rounded-lg border border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/60 focus:outline-none transition-colors"
@@ -181,6 +210,7 @@ export default function MyOrdersRequestAccess() {
                   type="checkbox"
                   checked={privacyAccepted}
                   onChange={e => setPrivacyAccepted(e.target.checked)}
+                  onFocus={handleFirstFocus}
                   required
                   className="mt-0.5 w-4 h-4 shrink-0 accent-[var(--color-lavender)] cursor-pointer"
                   aria-describedby="privacy-help"
@@ -200,13 +230,39 @@ export default function MyOrdersRequestAccess() {
                 </span>
               </label>
 
+              {/* X-18: Turnstile lazy-load. Se monta solo tras el primer focus. */}
+              {captchaRequired ? (
+                <>
+                  {turnstileLoaded && (
+                    <Turnstile
+                      siteKey={TURNSTILE_SITE_KEY as string}
+                      onSuccess={token => setTurnstileToken(token)}
+                      onError={() => setTurnstileToken(null)}
+                      onExpire={() => setTurnstileToken(null)}
+                      options={{ theme: 'dark', size: 'flexible' }}
+                    />
+                  )}
+                  <p className="text-[11px] text-[var(--color-mid)] font-[var(--font-body)]">
+                    Verificación anti-fraude vía Cloudflare Turnstile (se carga al interactuar con el formulario).{' '}
+                    <Link to="/cookies" className="underline underline-offset-2 hover:no-underline">
+                      Más info
+                    </Link>
+                    .
+                  </p>
+                </>
+              ) : (
+                <p className="text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2 font-[var(--font-body)]">
+                  Captcha no configurado (VITE_TURNSTILE_SITE_KEY). El acceso sigue protegido por rate-limit por IP.
+                </p>
+              )}
+
               {errorMsg && (
                 <p className="text-sm text-red-300 font-[var(--font-body)]" role="alert">{errorMsg}</p>
               )}
 
               <button
                 type="submit"
-                disabled={!emailValid || !privacyAccepted || submitting}
+                disabled={!emailValid || !privacyAccepted || submitting || (captchaRequired && !turnstileToken)}
                 className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[var(--color-lavender)] text-[var(--color-ink)] font-[var(--font-cond)] font-semibold tracking-widest hover:brightness-110 active:brightness-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? (

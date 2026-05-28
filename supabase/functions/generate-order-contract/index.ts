@@ -20,7 +20,6 @@ import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1'
 import {
   buildCorsHeaders,
   asString,
-  getSettings,
   jsonError,
   jsonOk,
   type OrderItemRow,
@@ -28,6 +27,65 @@ import {
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
 import { sanitizeWinAnsi } from '../_shared/pdf-utils.ts'
+import { verifyInternalSecret } from '../_shared/security.ts'
+import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+/* ─────────────── Parseo seguro de settings (B-25) ───────────────
+ * Los valores de `settings` los edita el admin en /admin/configuracion, por lo
+ * que son entrada controlada por usuario. Parseamos con un límite de tamaño y
+ * un reviver que descarta claves peligrosas (prototype pollution). No usamos el
+ * getSettings compartido para estas claves para no propagar JSON.parse crudo. */
+const SAFE_JSON_MAX_BYTES = 65536
+const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function safeJsonParse(raw: string): unknown {
+  if (raw.length > SAFE_JSON_MAX_BYTES) {
+    throw new RangeError('settings value exceeds max size')
+  }
+  return JSON.parse(raw, (key, value) => {
+    if (DANGEROUS_KEYS.has(key)) return undefined
+    return value
+  })
+}
+
+async function getSettingsSafe(
+  supabase: SupabaseClient,
+  keys: string[],
+): Promise<Record<string, unknown>> {
+  const result: Record<string, unknown> = {}
+  if (keys.length === 0) return result
+
+  const { data, error } = await supabase
+    .from('settings')
+    .select('key, value')
+    .in('key', keys)
+
+  if (error) {
+    console.warn('[generate-order-contract] getSettingsSafe error:', error.message)
+    return result
+  }
+
+  for (const row of data ?? []) {
+    const raw = (row as { key: string; value: unknown }).value
+    const key = (row as { key: string }).key
+    if (typeof raw === 'string') {
+      try {
+        result[key] = safeJsonParse(raw)
+      } catch {
+        // No era JSON válido (o excedía el límite): tratamos como string plano.
+        result[key] = raw.replace(/^"|"$/g, '')
+      }
+    } else {
+      result[key] = raw
+    }
+  }
+
+  return result
+}
 
 /* ─────────────── Layout A4 ─────────────── */
 const PAGE_W = 595.28
@@ -47,6 +105,12 @@ serve(async (req) => {
 
   try {
     if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
+
+    // B-19: función interna — solo invocable vía x-internal-secret (fail-closed).
+    if (!verifyInternalSecret(req)) {
+      console.warn(`[${ts()}] ✗ generate-order-contract: x-internal-secret inválido o ausente`)
+      return jsonError('forbidden', 403, req)
+    }
 
     const body = await req.json().catch(() => ({})) as { order_id?: string }
     if (!body.order_id) return jsonError('order_id required', 400, req)
@@ -69,8 +133,8 @@ serve(async (req) => {
       return jsonError('order not found', 404, req)
     }
 
-    /* ─── 2. Cargar settings ─── */
-    const settings = await getSettings(supabase, [
+    /* ─── 2. Cargar settings (parseo seguro, B-25) ─── */
+    const settings = await getSettingsSafe(supabase, [
       'legal_company_name',
       'legal_company_cif',
       'legal_company_address',
@@ -101,13 +165,37 @@ serve(async (req) => {
       termsVersion,
     })
 
-    /* ─── 4. Subir a bucket order-contracts ─── */
-    const path = `${order.id}.pdf`
+    /* ─── 4. Subir a bucket order-contracts (versionado, B-26) ─── */
+    // upsert:false → nunca sobrescribimos un contrato ya emitido (soporte
+    // duradero inmutable, art. 98 RDL 1/2007). Nombre versionado por pedido:
+    // {order_number}-v{n}.pdf, calculando n = max(existentes) + 1.
+    const prefix = `${order.id}/`
+    const { data: existing, error: listErr } = await supabase.storage
+      .from('order-contracts')
+      .list(order.id, { limit: 1000 })
+
+    if (listErr) {
+      console.error(`[${ts()}] generate-order-contract list failed order=${orderId}:`, listErr.message)
+      return jsonError(`list failed: ${listErr.message}`, 500, req)
+    }
+
+    const versionRe = new RegExp(`^${escapeRegExp(order.order_number)}-v(\\d+)\\.pdf$`)
+    let maxVersion = 0
+    for (const f of existing ?? []) {
+      const m = versionRe.exec(f.name)
+      if (m) {
+        const n = parseInt(m[1], 10)
+        if (Number.isFinite(n) && n > maxVersion) maxVersion = n
+      }
+    }
+    const nextVersion = maxVersion + 1
+    const path = `${prefix}${order.order_number}-v${nextVersion}.pdf`
+
     const { error: uploadErr } = await supabase.storage
       .from('order-contracts')
       .upload(path, pdfBytes, {
         contentType: 'application/pdf',
-        upsert: true,
+        upsert: false,
         cacheControl: '3600',
       })
 
@@ -120,7 +208,7 @@ serve(async (req) => {
     return jsonOk({ path, terms_version: termsVersion }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ generate-order-contract fatal:`, String(err))
-    return jsonError(`internal error: ${String(err)}`, 500, req)
+    return jsonError('internal error', 500, req)
   }
 })
 

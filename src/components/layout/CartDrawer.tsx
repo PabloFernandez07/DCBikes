@@ -82,7 +82,7 @@ export function CartDrawer() {
             id="cart-drawer-title"
             className="font-[var(--font-display)] text-2xl tracking-widest text-[var(--color-cream)] flex items-center gap-2"
           >
-            <ShoppingBag size={20} />
+            <ShoppingBag size={20} aria-hidden="true" />
             Tu carrito
           </h2>
           <button
@@ -90,7 +90,7 @@ export function CartDrawer() {
             className="p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
             aria-label="Cerrar carrito"
           >
-            <X size={22} />
+            <X size={22} aria-hidden="true" />
           </button>
         </header>
 
@@ -98,7 +98,7 @@ export function CartDrawer() {
         {isEmpty ? (
           <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-5">
             <div className="w-20 h-20 rounded-full bg-[var(--color-card)] flex items-center justify-center text-[var(--color-mid)]">
-              <ShoppingBag size={36} strokeWidth={1} />
+              <ShoppingBag size={36} strokeWidth={1} aria-hidden="true" />
             </div>
             <div>
               <p className="font-[var(--font-display)] text-2xl tracking-wide text-[var(--color-cream)] mb-1">
@@ -148,6 +148,7 @@ export function CartDrawer() {
                           size={28}
                           strokeWidth={1}
                           className="text-[var(--color-mid)]"
+                          aria-hidden="true"
                         />
                       )}
                     </Link>
@@ -167,7 +168,7 @@ export function CartDrawer() {
                           className="shrink-0 p-1 rounded text-[var(--color-mid)] hover:text-[var(--color-brand-red)] transition-colors"
                           aria-label={`Eliminar ${snapshot.name}`}
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={16} aria-hidden="true" />
                         </button>
                       </div>
 
@@ -188,7 +189,7 @@ export function CartDrawer() {
                             disabled={quantity <= 1}
                             aria-label="Disminuir cantidad"
                           >
-                            <Minus size={14} />
+                            <Minus size={14} aria-hidden="true" />
                           </button>
                           <span className="min-w-[24px] text-center font-[var(--font-cond)] text-sm text-[var(--color-cream)] tabular-nums">
                             {quantity}
@@ -206,7 +207,7 @@ export function CartDrawer() {
                                 : undefined
                             }
                           >
-                            <Plus size={14} />
+                            <Plus size={14} aria-hidden="true" />
                           </button>
                         </div>
                         {/* Línea total */}

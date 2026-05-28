@@ -124,6 +124,6 @@ serve(async (req) => {
     return jsonOk({ status: 'rejected', mode: config.mode }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ order-reject:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

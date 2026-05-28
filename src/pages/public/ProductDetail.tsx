@@ -192,19 +192,40 @@ export default function ProductDetail() {
     openCart()
   }
 
+  const productUrl = `https://dc-bikes-cantabria.vercel.app/producto/${parentProduct.slug}`
+  const productJsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: displayName,
+    description: parentProduct.description ?? parentProduct.short_description ?? displayName,
+    image: carouselImages.map(img => img.url),
+    sku: selectedVariant.sku ?? undefined,
+    brand: { "@type": "Brand", name: parentProduct.brand ?? "DC Bikes" },
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "EUR",
+      price: finalPrice.toFixed(2),
+      availability: inStock
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      url: productUrl,
+    },
+  }
+
   return (
     <div ref={pageRef} className="w-full px-4 sm:px-6 lg:px-8 py-10">
       <SEO
         title={displayName}
         description={parentProduct.short_description ?? `${displayName} disponible en DC Bikes Cantabria, El Astillero. ${parentProduct.brand ? `Marca: ${parentProduct.brand}.` : ''} Consulta precio y disponibilidad.`}
-        url={`https://dc-bikes-cantabria.vercel.app/producto/${parentProduct.slug}`}
+        url={productUrl}
         type="product"
         breadcrumbs={[
           { name: "Inicio", url: "https://dc-bikes-cantabria.vercel.app" },
           { name: "Catálogo", url: "https://dc-bikes-cantabria.vercel.app/catalogo" },
           ...(category ? [{ name: category.name, url: "https://dc-bikes-cantabria.vercel.app/catalogo" }] : []),
-          { name: displayName, url: `https://dc-bikes-cantabria.vercel.app/producto/${parentProduct.slug}` },
+          { name: displayName, url: productUrl },
         ]}
+        jsonLd={productJsonLd}
       />
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 mb-8 text-sm text-[var(--color-mid)] font-[var(--font-cond)]" aria-label="Navegación de migas">

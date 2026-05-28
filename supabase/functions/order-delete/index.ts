@@ -109,6 +109,6 @@ serve(async (req) => {
     return jsonOk({}, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ order-delete:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

@@ -30,7 +30,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-import { buildCorsHeaders, escapeHtml, getSettings, asString, jsonError, jsonOk, sendViaResend, buildFromAddress,
+import { escapeHtml, getSettings, asString, jsonError, jsonOk, sendViaResend, buildFromAddress,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
 import { loadRedsysConfig } from '../_shared/redsys-config.ts'
@@ -145,7 +145,7 @@ async function parsePayload(
         '[redsys-notification] payload __mock RECHAZADO porque el modo Redsys actual es:',
         config.mode,
         '· order_id:',
-        mockBody.order_id,
+        mockBody.order_id?.slice(0, 8),
       )
       return null
     }
@@ -213,7 +213,6 @@ async function parsePayload(
 }
 
 serve(async (req) => {
-  const cors = buildCorsHeaders(req)
   if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   const ts = () => new Date().toISOString()
 
@@ -294,7 +293,7 @@ serve(async (req) => {
         signature_valid: false,
       })
       console.warn(`[${ts()}] ✗ redsys-notification firma inválida → 403`)
-      return new Response('signature invalid', { status: 403 })
+      return jsonError('forbidden', 403, req)
     }
 
     // 2. Localizar pedido.

@@ -43,6 +43,8 @@ export const Field = forwardRef<HTMLInputElement & HTMLTextAreaElement, FieldPro
             ref={ref as React.Ref<HTMLTextAreaElement>}
             id={fieldId}
             rows={rows}
+            required={required}
+            aria-required={required || undefined}
             className={twMerge(inputClasses, 'resize-none')}
             aria-invalid={!!error}
             aria-describedby={error ? `${fieldId}-error` : undefined}
@@ -52,6 +54,8 @@ export const Field = forwardRef<HTMLInputElement & HTMLTextAreaElement, FieldPro
           <input
             ref={ref as React.Ref<HTMLInputElement>}
             id={fieldId}
+            required={required}
+            aria-required={required || undefined}
             className={inputClasses}
             aria-invalid={!!error}
             aria-describedby={error ? `${fieldId}-error` : undefined}

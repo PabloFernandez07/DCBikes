@@ -353,7 +353,7 @@ export function BulkShipModal({
                     <td className="px-3 py-2 whitespace-nowrap">
                       {isOk && (
                         <span className="inline-flex items-center gap-1 text-xs text-green-300 font-[var(--font-cond)]">
-                          <CheckCircle2 size={14} /> Enviado
+                          <CheckCircle2 size={14} aria-hidden="true" /> Enviado
                         </span>
                       )}
                       {errMsg && (
@@ -361,7 +361,7 @@ export function BulkShipModal({
                           title={errMsg}
                           className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-[var(--font-cond)] tracking-wide border bg-red-900/30 text-red-300 border-red-500/40 uppercase max-w-[180px] truncate"
                         >
-                          <AlertTriangle size={11} /> {errMsg}
+                          <AlertTriangle size={11} aria-hidden="true" /> {errMsg}
                         </span>
                       )}
                       {!isOk && !errMsg && (
@@ -396,7 +396,7 @@ export function BulkShipModal({
                 onClick={() => handleSubmit(true)}
                 disabled={submitting}
               >
-                {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
+                {submitting ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : null}
                 Reintentar fallidos
               </Button>
             )}
@@ -407,7 +407,7 @@ export function BulkShipModal({
                 onClick={() => handleSubmit(false)}
                 disabled={submitting}
               >
-                {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
+                {submitting ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : null}
                 Confirmar envío ({pending.length})
               </Button>
             )}

@@ -60,6 +60,12 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return corsPreflightResponse(req)
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: CORS_HEADERS })
 
+  // B-27: rechazo temprano de payloads desproporcionados (anti-DoS).
+  const cl = Number(req.headers.get('content-length') ?? '0')
+  if (Number.isFinite(cl) && cl > 8192) {
+    return jsonRes({ ok: false, error: 'payload too large' }, 413)
+  }
+
   let body: QuoteBody
   try {
     body = (await req.json()) as QuoteBody

@@ -449,7 +449,7 @@ export function ExcelImporter() {
           className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
         />
-        <Upload size={40} className="mx-auto mb-4 text-[var(--color-mid)]" />
+        <Upload size={40} className="mx-auto mb-4 text-[var(--color-mid)]" aria-hidden="true" />
         <p className="text-lg font-[var(--font-cond)] text-[var(--color-cream)] tracking-wide">
           Arrastra tu archivo Excel o CSV
         </p>
@@ -472,7 +472,7 @@ export function ExcelImporter() {
             Paso 2: Mapear columnas
           </h3>
           <Button variant="ghost" size="sm" onClick={reset}>
-            <X size={15} /> Cancelar
+            <X size={15} aria-hidden="true" /> Cancelar
           </Button>
         </div>
 
@@ -552,20 +552,20 @@ export function ExcelImporter() {
             Paso 3: Validación
           </h3>
           <Button variant="ghost" size="sm" onClick={reset}>
-            <X size={15} /> Cancelar
+            <X size={15} aria-hidden="true" /> Cancelar
           </Button>
         </div>
 
         <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-lavender)]/10 border border-[var(--color-lavender)]/20">
-            <CheckCircle size={16} className="text-[var(--color-lavender)]" />
+            <CheckCircle size={16} className="text-[var(--color-lavender)]" aria-hidden="true" />
             <span className="text-sm font-[var(--font-cond)] text-[var(--color-cream)]">
               {valid.length} listos para importar
             </span>
           </div>
           {invalid.length > 0 && (
             <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[var(--color-brand-red)]/10 border border-[var(--color-brand-red)]/20">
-              <AlertTriangle size={16} className="text-[var(--color-brand-red)]" />
+              <AlertTriangle size={16} className="text-[var(--color-brand-red)]" aria-hidden="true" />
               <span className="text-sm font-[var(--font-cond)] text-[var(--color-cream)]">
                 {invalid.length} con errores (se saltarán)
               </span>
@@ -618,7 +618,7 @@ export function ExcelImporter() {
                         {row._errors.join(', ')}
                       </span>
                     ) : (
-                      <CheckCircle size={14} className="text-[var(--color-lavender)]" />
+                      <CheckCircle size={14} className="text-[var(--color-lavender)]" role="img" aria-label="Fila válida" />
                     )}
                   </td>
                 </tr>

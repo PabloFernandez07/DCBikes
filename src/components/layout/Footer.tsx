@@ -4,6 +4,7 @@ import { MapPin, Phone, Clock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useSchedule } from '@/hooks/useSchedule'
 import { useLegalIdentity } from '@/hooks/useLegalIdentity'
+import { LAST_AUDIT_DATE, AUDIT_VERSION } from '@/lib/legal-versions'
 
 function InstagramIcon({ size = 20 }: { size?: number }) {
   return (
@@ -96,7 +97,8 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[rgba(196,162,207,0.1)] transition-colors"
-                  aria-label="Instagram"
+                  title="Instagram — abre nueva pestaña, sales del sitio"
+                  aria-label="Instagram (abre en una nueva pestaña, sales del sitio)"
                 >
                   <InstagramIcon size={18} />
                 </a>
@@ -107,7 +109,8 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[rgba(196,162,207,0.1)] transition-colors"
-                  aria-label="Facebook"
+                  title="Facebook — abre nueva pestaña, sales del sitio"
+                  aria-label="Facebook (abre en una nueva pestaña, sales del sitio)"
                 >
                   <FacebookIcon size={18} />
                 </a>
@@ -196,6 +199,9 @@ export function Footer() {
                 {[legal?.companyName, legal?.cif && `CIF: ${legal.cif}`, legal?.address].filter(Boolean).join(' · ')}
               </p>
             )}
+            <p className="text-[var(--color-mid)] text-xs font-[var(--font-body)] opacity-70">
+              Última revisión legal: {LAST_AUDIT_DATE} ({AUDIT_VERSION})
+            </p>
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1 justify-center sm:justify-end">
             <Link to="/aviso-legal" className="text-[var(--color-mid)] text-xs hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]">

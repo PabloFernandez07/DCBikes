@@ -29,7 +29,7 @@ export default function PaymentError() {
 
       <div className="max-w-md mx-auto text-center space-y-6">
         <div className="w-20 h-20 rounded-full bg-[rgba(220,60,60,0.12)] flex items-center justify-center text-[var(--color-brand-red)] mx-auto">
-          <XCircle size={42} strokeWidth={1.5} />
+          <XCircle size={42} strokeWidth={1.5} aria-hidden="true" />
         </div>
 
         <div className="space-y-3">
@@ -66,7 +66,7 @@ export default function PaymentError() {
             to="/carrito"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[var(--color-lavender)] text-[var(--color-ink)] font-[var(--font-cond)] font-semibold tracking-widest hover:brightness-110 transition-all"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={16} aria-hidden="true" />
             Volver al carrito
           </Link>
           <Link

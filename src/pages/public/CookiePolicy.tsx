@@ -168,24 +168,29 @@ export default function CookiePolicy() {
                   B. Cookies de terceros funcionales — requieren consentimiento
                 </p>
                 <ul className="list-disc list-inside space-y-2 pl-2">
-                  {/* P-07: tabla Maps actualizada — 1P_JAR eliminada (deprecada por Google en 2023).
-                      TODO: inventariar cookies vivas en DevTools tras aceptar mapa (P-07 fase 2) para verificar
-                      el inventario exacto con la versión de Maps iframe en producción. */}
                   <li>
                     <strong className="text-[var(--color-cream)]">Google Maps</strong> (Google LLC, EE.&nbsp;UU.)
-                    — cookies conocidas: <code className="text-[var(--color-lavender)]">NID</code>,{' '}
-                    <code className="text-[var(--color-lavender)]">CONSENT</code> — duración variable (hasta 24 meses)
-                    — finalidad: mostrar el mapa de localización de la tienda en la página de contacto. Google puede
-                    depositar cookies adicionales según la versión del API en uso; consulta la{' '}
-                    <a
-                      href="https://policies.google.com/privacy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[var(--color-lavender)] underline underline-offset-2"
-                    >
-                      política de privacidad de Google
-                    </a>{' '}
-                    para el detalle actualizado.
+                    — finalidad: mostrar el mapa de localización de la tienda en la página de contacto. Cookies
+                    habituales que Google deposita al cargar el iframe de Maps:
+                    <CookieTable rows={[
+                      { nombre: 'NID', tipo: 'Cookie HTTP', titular: 'Google LLC', duracion: '~6 meses', finalidad: 'Preferencias de usuario en servicios Google (idioma, resultados, mapas)' },
+                      { nombre: '1P_JAR', tipo: 'Cookie HTTP', titular: 'Google LLC', duracion: '~1 mes', finalidad: 'Estadísticas y métricas agregadas de servicios Google' },
+                      { nombre: 'CONSENT', tipo: 'Cookie HTTP', titular: 'Google LLC', duracion: 'Indefinida', finalidad: 'Gestión del estado de consentimiento del usuario en servicios Google' },
+                      { nombre: '__Secure-3PSIDCC', tipo: 'Cookie HTTP', titular: 'Google LLC', duracion: '~1 año', finalidad: 'Anti-fraude y protección frente a usos abusivos de servicios Google' },
+                    ]} />
+                    <p className="mt-2">
+                      Consulta la{' '}
+                      <a
+                        href="https://policies.google.com/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[var(--color-lavender)] underline underline-offset-2"
+                      >
+                        política de privacidad de Google
+                      </a>{' '}
+                      para el detalle actualizado. Las transferencias internacionales a EE.&nbsp;UU. se amparan en
+                      el marco Data Privacy Framework (DPF).
+                    </p>
                   </li>
                   <li>
                     <strong className="text-[var(--color-cream)]">Redsys</strong> durante la pasarela de pago

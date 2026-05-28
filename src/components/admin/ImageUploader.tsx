@@ -167,7 +167,7 @@ export function ImageUploader({
           className="hidden"
           onChange={e => handleFiles(Array.from(e.target.files ?? []))}
         />
-        <Upload size={28} className="mx-auto mb-3 text-[var(--color-mid)]" />
+        <Upload size={28} className="mx-auto mb-3 text-[var(--color-mid)]" aria-hidden="true" />
         <p className="text-sm font-[var(--font-cond)] text-[var(--color-cream-dim)] tracking-wide">
           Arrastra imágenes o haz clic para seleccionar
         </p>
@@ -185,7 +185,7 @@ export function ImageUploader({
                 {img.preview ? (
                   <img src={img.preview} alt={img.alt} className="w-full h-full object-cover" />
                 ) : (
-                  <Image size={20} className="text-[var(--color-mid)]" />
+                  <Image size={20} className="text-[var(--color-mid)]" aria-hidden="true" />
                 )}
               </div>
 
@@ -217,7 +217,7 @@ export function ImageUploader({
                   className="p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-ink)] disabled:opacity-30 transition-colors"
                   aria-label="Mover arriba"
                 >
-                  <ArrowUp size={14} />
+                  <ArrowUp size={14} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -226,7 +226,7 @@ export function ImageUploader({
                   className="p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-ink)] disabled:opacity-30 transition-colors"
                   aria-label="Mover abajo"
                 >
-                  <ArrowDown size={14} />
+                  <ArrowDown size={14} aria-hidden="true" />
                 </button>
                 <button
                   type="button"
@@ -234,7 +234,7 @@ export function ImageUploader({
                   className="p-1.5 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-brand-red)] hover:bg-[var(--color-brand-red)]/10 transition-colors"
                   aria-label="Eliminar imagen"
                 >
-                  <X size={14} />
+                  <X size={14} aria-hidden="true" />
                 </button>
               </div>
             </div>

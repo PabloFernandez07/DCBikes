@@ -53,6 +53,6 @@ serve(async (req) => {
     return jsonOk({ status: 'delivered' }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ order-mark-delivered:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

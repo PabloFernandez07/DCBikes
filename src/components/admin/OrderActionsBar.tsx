@@ -329,7 +329,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
                 'w-full !bg-green-500 !text-white hover:!brightness-110',
               )}
             >
-              <Check size={16} />
+              <Check size={16} aria-hidden="true" />
               Aceptar pedido
             </Button>
             <Button
@@ -338,7 +338,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
               onClick={() => setRejectOpen(true)}
               className="w-full"
             >
-              <XIcon size={16} />
+              <XIcon size={16} aria-hidden="true" />
               Rechazar pedido
             </Button>
           </>
@@ -351,7 +351,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
             onClick={() => setShipOpen(true)}
             className="w-full"
           >
-            <Truck size={16} />
+            <Truck size={16} aria-hidden="true" />
             Marcar como enviado
           </Button>
         )}
@@ -363,7 +363,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
             onClick={() => setReadyOpen(true)}
             className="w-full"
           >
-            <Store size={16} />
+            <Store size={16} aria-hidden="true" />
             Marcar listo para recoger
           </Button>
         )}
@@ -375,7 +375,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
             onClick={() => setDeliveredOpen(true)}
             className="w-full !bg-green-500 !text-white hover:!brightness-110"
           >
-            <Package size={16} />
+            <Package size={16} aria-hidden="true" />
             Marcar entregado
           </Button>
         )}
@@ -387,7 +387,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
             onClick={() => setDeliveredOpen(true)}
             className="w-full !bg-green-500 !text-white hover:!brightness-110"
           >
-            <Check size={16} />
+            <Check size={16} aria-hidden="true" />
             Marcar recogido en tienda
           </Button>
         )}
@@ -400,7 +400,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
             disabled={busy}
             className="w-full"
           >
-            {busy ? <Loader2 size={14} className="animate-spin" /> : <Mail size={14} />}
+            {busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Mail size={14} aria-hidden="true" />}
             Reenviar email confirmación
           </Button>
         )}
@@ -435,7 +435,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
               disabled={busy}
               className="!bg-green-500 !text-white hover:!brightness-110"
             >
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+              {busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
               Confirmar aceptación
             </Button>
           </div>
@@ -479,7 +479,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
               Cancelar
             </Button>
             <Button variant="danger" size="sm" onClick={handleReject} disabled={busy}>
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <XIcon size={14} />}
+              {busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <XIcon size={14} aria-hidden="true" />}
               Confirmar rechazo
             </Button>
           </div>
@@ -523,7 +523,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
               Cancelar
             </Button>
             <Button variant="primary" size="sm" onClick={handleMarkShipped} disabled={busy}>
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <Truck size={14} />}
+              {busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Truck size={14} aria-hidden="true" />}
               Confirmar envío
             </Button>
           </div>
@@ -541,7 +541,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
               Cancelar
             </Button>
             <Button variant="primary" size="sm" onClick={handleMarkReady} disabled={busy}>
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <Store size={14} />}
+              {busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Store size={14} aria-hidden="true" />}
               Confirmar
             </Button>
           </div>
@@ -565,7 +565,7 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
               disabled={busy}
               className="!bg-green-500 !text-white hover:!brightness-110"
             >
-              {busy ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+              {busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Check size={14} aria-hidden="true" />}
               Confirmar entrega
             </Button>
           </div>

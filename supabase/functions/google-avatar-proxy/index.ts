@@ -42,6 +42,14 @@ Deno.serve(async (req) => {
 
   if (!upstream.ok) return jsonError('Upstream error', 502, req)
 
+  // B-31: cap por Content-Length para evitar que un upstream comprometido o
+  // un host de la allowlist sirva un cuerpo arbitrariamente grande a través
+  // del proxy (amplificación / agotamiento de recursos).
+  const cl = Number(upstream.headers.get('content-length') ?? '0')
+  if (Number.isFinite(cl) && cl > 4096) {
+    return jsonError('Payload too large', 413, req)
+  }
+
   const contentType = upstream.headers.get('content-type') ?? 'image/jpeg'
 
   return new Response(upstream.body, {

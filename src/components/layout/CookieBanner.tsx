@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Cookie, ChevronDown, ChevronUp, Shield, Map } from 'lucide-react'
+import { Cookie, ChevronDown, ChevronUp, Shield, Map, BarChart3 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { Button } from '@/components/ui/Button'
 import { COOKIES_VERSION } from '@/lib/legal-versions'
@@ -128,7 +128,7 @@ export function CookieBanner() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-5 sm:p-6">
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-10 h-10 rounded-xl bg-[var(--color-lavender)]/15 flex items-center justify-center">
-              <Cookie size={20} className="text-[var(--color-lavender)]" />
+              <Cookie size={20} className="text-[var(--color-lavender)]" aria-hidden="true" />
             </div>
           </div>
 
@@ -189,9 +189,9 @@ export function CookieBanner() {
             >
               Configurar
               {expanded ? (
-                <ChevronDown size={14} className="ml-1" />
+                <ChevronDown size={14} className="ml-1" aria-hidden="true" />
               ) : (
-                <ChevronUp size={14} className="ml-1" />
+                <ChevronUp size={14} className="ml-1" aria-hidden="true" />
               )}
             </Button>
           </div>
@@ -205,7 +205,7 @@ export function CookieBanner() {
             </p>
 
             <CookieToggle
-              icon={<Shield size={14} />}
+              icon={<Shield size={14} aria-hidden="true" />}
               title="Cookies esenciales"
               description="Necesarias para el funcionamiento básico de la web. No pueden desactivarse."
               checked={true}
@@ -213,7 +213,7 @@ export function CookieBanner() {
               onChange={() => {}}
             />
             <CookieToggle
-              icon={<span className="text-[10px] font-bold">📊</span>}
+              icon={<BarChart3 size={14} aria-hidden="true" />}
               title="Cookies analíticas"
               description="Nos ayudan a entender cómo navegas por la web para mejorar el servicio (visitas a productos, búsquedas)."
               checked={prefs.analytics}
@@ -222,7 +222,7 @@ export function CookieBanner() {
             {/* P-05: toggle "Cookies de marketing" eliminado — no existe tratamiento de marketing real.
                 Si en el futuro se implementa newsletter, reintroducir con doble opt-in declarado. */}
             <CookieToggle
-              icon={<Map size={14} />}
+              icon={<Map size={14} aria-hidden="true" />}
               title="Cookies de terceros funcionales (mapa de Google)"
               description="Permite cargar el mapa de Google que muestra la ubicación de la tienda en la página de contacto. Si rechazas, verás un enlace alternativo a Google Maps."
               checked={prefs.thirdParty}

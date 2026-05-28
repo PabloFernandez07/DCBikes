@@ -158,7 +158,7 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
         </div>
       ) : status === 'success' ? (
         <div className="flex flex-col items-center gap-4 py-6 text-center">
-          <CheckCircle size={52} className="text-green-400" />
+          <CheckCircle size={52} className="text-green-400" aria-hidden="true" />
           <h3 className="font-[var(--font-cond)] text-xl font-semibold text-[var(--color-cream)]">
             ¡Solicitud enviada!
           </h3>
@@ -191,7 +191,7 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
                       {fmt(product.retail_price)} €
                     </span>
                     <span className="inline-flex items-center gap-0.5 text-[10px] font-[var(--font-cond)] font-bold bg-[var(--color-brand-red)] text-white px-1.5 py-0.5 rounded">
-                      <Tag size={8} />
+                      <Tag size={8} aria-hidden="true" />
                       -{pct}%
                     </span>
                   </div>
@@ -276,7 +276,7 @@ export function QuoteModal({ productId, product, onClose }: QuoteModalProps) {
             </>
           ) : (
             <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
-              ⚠ Captcha no configurado (VITE_TURNSTILE_SITE_KEY). Las solicitudes seguirán rate-limit por IP.
+              <span role="img" aria-hidden="true">⚠</span> Captcha no configurado (VITE_TURNSTILE_SITE_KEY). Las solicitudes seguirán rate-limit por IP.
             </p>
           )}
 

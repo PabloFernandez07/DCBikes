@@ -290,6 +290,9 @@ serve(async (req) => {
     const invoiceType: 'b2b' | 'b2c' = isB2B ? 'b2b' : 'b2c'
     // TODO: invocar AEAT SOAP/REST endpoint (modo verifactu real-time) — fase posterior.
     const aeatStatus = verifactuMode === 'verifactu' ? 'pending_send' : 'not_applicable'
+    // B-22: estado del ciclo de envío AEAT que consumirá verifactu-send-cron.
+    // 'pending' solo cuando el gate está activo; en otro caso 'disabled'.
+    const verifactuStatus = verifactuMode === 'verifactu' ? 'pending' : 'disabled'
     const { error: insErr } = await supabase.from('invoices').insert({
       order_id: order.id,
       invoice_number: invoiceNumber,
@@ -307,6 +310,7 @@ serve(async (req) => {
       qr_payload: qrPayload,
       verifactu_mode: verifactuMode,
       aeat_status: aeatStatus,
+      verifactu_status: verifactuStatus,
       // signature y aeat_csv quedan null en esta fase (XAdES pendiente)
     })
 
@@ -329,7 +333,7 @@ serve(async (req) => {
     }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ generate-invoice-pdf fatal:`, err)
-    return jsonError(`internal error: ${String(err)}`, 500, req)
+    return jsonError('internal error', 500, req)
   }
 })
 

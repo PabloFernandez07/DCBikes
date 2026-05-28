@@ -131,10 +131,46 @@ Conservar copia del email enviado al solicitante (carpeta `Sent` del buzón) com
 
 ## 3. Tabla decisional
 
+### 3.1 Por antigüedad del pedido
+
 | Antigüedad pedido | Acción técnica | Justificación legal |
 |---|---|---|
 | **> 6 años** | Anonimización TOTAL (ya realizada por cron `data-retention-cron`) | Plazo legal de conservación cumplido |
 | **< 6 años** | Anonimización PARCIAL: mantener datos contables/factura, borrar datos identificativos no esenciales | Art. 17.3.b RGPD + art. 30 CCom + art. 66 LGT |
+
+### 3.2 Matriz por campo: conservar / anonimizar / eliminar
+
+Esta matriz se aplica a un pedido de **menos de 6 años** sobre el que se ejerce el
+derecho de supresión (escenario 4.b). Cada campo se clasifica en una de tres acciones:
+
+- **CONSERVAR** — se mantiene íntegro por obligación legal (art. 17.3.b RGPD).
+- **ANONIMIZAR** — se sustituye por un valor que rompe la identificación pero preserva la integridad referencial/contable del registro.
+- **ELIMINAR** — se pone a `NULL`; el dato deja de existir.
+
+| Campo / dato | Acción | Valor resultante | Base legal de la decisión |
+|---|---|---|---|
+| `order_number` | CONSERVAR | (sin cambios) | Art. 30 CCom — trazabilidad contable |
+| `total_cents`, `subtotal_cents`, `shipping_cents`, `tax_rate` | CONSERVAR | (sin cambios) | Art. 30 CCom + art. 66 LGT |
+| `invoice_number` | CONSERVAR | (sin cambios) | RD 1619/2012 — conservación de facturas |
+| `invoice_business_name`, `invoice_cif`, `invoice_address` (factura B2B) | CONSERVAR | (sin cambios) | Datos fiscales del cliente empresa, no del consumidor; RD 1619/2012 |
+| Líneas de pedido (`order_items`) e `invoices` asociadas | CONSERVAR | (sin cambios) | Art. 30 CCom — justificantes contables |
+| Fechas (`created_at`, `payment_captured_at`, etc.) | CONSERVAR | (sin cambios) | Art. 30 CCom — datación de asientos |
+| `customer_first_name` | ANONIMIZAR | `'Anonimizado'` | Identificativo no esencial para la obligación contable |
+| `customer_last_name` | ANONIMIZAR | `''` | Identificativo no esencial |
+| `customer_email` | ANONIMIZAR | `'anonimizado@anonimizado.local'` | Identificativo; se preserva formato para integridad del campo NOT NULL |
+| `customer_email` en `consent_audit` | ANONIMIZAR | `'anonimizado@anonimizado.local'` | Prueba de consentimiento (art. 7.1 RGPD): se conserva el registro técnico pero se rompe la identificación |
+| `customer_phone` | ELIMINAR | `NULL` | Identificativo no necesario para la obligación legal |
+| `shipping_address` | ELIMINAR | `NULL` | Identificativo no esencial; no consta en la factura |
+| `shipping_city` | ELIMINAR | `NULL` | Identificativo no esencial |
+| `shipping_postal_code` | ELIMINAR | `NULL` | Identificativo no esencial |
+| `shipping_province` | ELIMINAR | `NULL` | Identificativo no esencial |
+| `shipping_notes` | ELIMINAR | `NULL` | Texto libre, posible dato no necesario |
+| `consent_ip` | ELIMINAR | `NULL` | Dato personal de tráfico no necesario tras la supresión |
+| `consent_user_agent` | ELIMINAR | `NULL` | Dato técnico no necesario tras la supresión |
+
+> Para pedidos de **más de 6 años** (escenario 4.a), todos los campos de la columna
+> ANONIMIZAR/ELIMINAR ya han sido tratados por el cron `data-retention-cron`; no
+> queda actuación manual salvo verificar `anonymized_at IS NOT NULL`.
 
 ---
 

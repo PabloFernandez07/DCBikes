@@ -42,7 +42,7 @@ export function BulkActionsBar({
           onClick={onEnablePurchasable}
           disabled={disabled}
         >
-          <ShoppingCart size={14} />
+          <ShoppingCart size={14} aria-hidden="true" />
           Activar online
         </Button>
         <Button
@@ -51,7 +51,7 @@ export function BulkActionsBar({
           onClick={onDisablePurchasable}
           disabled={disabled}
         >
-          <Ban size={14} />
+          <Ban size={14} aria-hidden="true" />
           Desactivar online
         </Button>
         <button
@@ -61,7 +61,7 @@ export function BulkActionsBar({
           className="p-1.5 rounded-md text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)] transition-colors disabled:opacity-50"
           aria-label="Limpiar selección"
         >
-          <X size={16} />
+          <X size={16} aria-hidden="true" />
         </button>
       </div>
     </div>

@@ -281,9 +281,9 @@ export default function Catalog() {
               onClick={() => setSortOpen(v => !v)}
               className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)] hover:border-[rgba(196,162,207,0.3)] text-[var(--color-cream-dim)] font-[var(--font-cond)] text-sm tracking-wide transition-all w-full lg:w-auto"
             >
-              <SlidersHorizontal size={15} className="text-[var(--color-lavender)]" />
+              <SlidersHorizontal size={15} className="text-[var(--color-lavender)]" aria-hidden="true" />
               <span>{SORT_OPTIONS.find(o => o.key === sort)?.label}</span>
-              <ChevronDown size={14} className={clsx('ml-auto transition-transform', sortOpen && 'rotate-180')} />
+              <ChevronDown size={14} className={clsx('ml-auto transition-transform', sortOpen && 'rotate-180')} aria-hidden="true" />
             </button>
             {sortOpen && (
               <div className="absolute right-0 top-full mt-2 z-20 bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl shadow-xl overflow-hidden min-w-[220px]">
@@ -299,7 +299,7 @@ export default function Catalog() {
                         : 'text-[var(--color-cream-dim)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)]',
                     )}
                   >
-                    {opt.key === 'discount' && '🏷️ '}
+                    {opt.key === 'discount' && <span aria-hidden="true">🏷️ </span>}
                     {opt.label}
                   </button>
                 ))}
@@ -333,7 +333,7 @@ export default function Catalog() {
                   : 'bg-transparent text-[var(--color-mid)] border-[var(--color-card-hover)] hover:text-[var(--color-cream)] hover:border-[var(--color-brand-red)]/50',
               )}
             >
-              🏷️ Ofertas
+              <span aria-hidden="true">🏷️</span> Ofertas
             </button>
           )}
           {categories.map(cat => (
@@ -367,7 +367,7 @@ export default function Catalog() {
               onClick={clearAll}
               className="inline-flex items-center gap-1 text-xs text-[var(--color-mid)] hover:text-[var(--color-brand-red)] font-[var(--font-cond)] tracking-wide transition-colors"
             >
-              <X size={12} />
+              <X size={12} aria-hidden="true" />
               Limpiar todo
             </button>
           </div>

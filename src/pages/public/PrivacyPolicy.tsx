@@ -299,6 +299,37 @@ export default function PrivacyPolicy() {
             </p>
           </Section>
 
+          {/* 6 bis. Bitácora de consentimientos */}
+          <Section title="6 bis. Registro y prueba del consentimiento">
+            <p>
+              Para poder acreditar el cumplimiento del principio de{' '}
+              <strong className="text-[var(--color-cream)]">responsabilidad proactiva</strong> y la
+              obligación de demostrar que el consentimiento fue prestado válidamente{' '}
+              (<strong className="text-[var(--color-cream)]">art. 7.1 RGPD</strong>), mantenemos una
+              bitácora interna de auditoría de los consentimientos y confirmaciones de lectura que nos
+              facilitas (por ejemplo, al aceptar los términos en el checkout o al confirmar la lectura
+              de esta política para acceder a tus pedidos).
+            </p>
+            <p>
+              De cada acción registramos exclusivamente:
+            </p>
+            <ul className="list-disc list-inside space-y-1 pl-2">
+              <li><strong className="text-[var(--color-cream)]">Tipo de consentimiento</strong> (p. ej. términos de venta, política de privacidad).</li>
+              <li><strong className="text-[var(--color-cream)]">Acción</strong> realizada (otorgado, confirmación de lectura, retirada).</li>
+              <li><strong className="text-[var(--color-cream)]">Versión</strong> del documento legal vigente en ese momento.</li>
+              <li><strong className="text-[var(--color-cream)]">Dirección IP</strong> y <strong className="text-[var(--color-cream)]">agente de usuario</strong> (navegador) desde el que se prestó.</li>
+              <li><strong className="text-[var(--color-cream)]">Fecha y hora</strong> exactas de la acción.</li>
+            </ul>
+            <p>
+              Esta información se conserva únicamente como prueba del cumplimiento y no se utiliza para
+              ninguna otra finalidad. Si ejerces tu derecho de supresión, el{' '}
+              <strong className="text-[var(--color-cream)]">correo electrónico asociado a estos
+              registros se anonimiza</strong> tras completar la supresión, manteniéndose solo los datos
+              técnicos no identificativos estrictamente necesarios para acreditar el cumplimiento ante
+              la autoridad de control.
+            </p>
+          </Section>
+
           {/* 7. Encargados + cesión */}
           <Section title="7. Encargados del tratamiento y cesión de datos">
             <p>

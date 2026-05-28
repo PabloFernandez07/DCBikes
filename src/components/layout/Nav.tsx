@@ -8,7 +8,7 @@ import { useUiStore } from '@/stores/uiStore'
 interface NavLinkItem {
   to: string
   label: string
-  icon?: React.ComponentType<{ size?: number; className?: string }>
+  icon?: React.ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean }>
 }
 
 const links: NavLinkItem[] = [
@@ -48,7 +48,7 @@ export function Nav() {
                 )
               }
             >
-              {Icon && <Icon size={15} />}
+              {Icon && <Icon size={15} aria-hidden={true} />}
               {label}
             </NavLink>
           ))}
@@ -61,7 +61,7 @@ export function Nav() {
             className="relative p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[rgba(196,162,207,0.1)] transition-all duration-200"
             aria-label={`Abrir carrito${itemCount > 0 ? ` (${itemCount} ${itemCount === 1 ? 'artículo' : 'artículos'})` : ''}`}
           >
-            <ShoppingCart size={20} />
+            <ShoppingCart size={20} aria-hidden="true" />
             {itemCount > 0 && (
               <span
                 className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-brand-red)] text-white text-[10px] font-bold leading-[18px] text-center font-[var(--font-cond)] tabular-nums"
@@ -76,7 +76,7 @@ export function Nav() {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-[var(--font-cond)] text-sm font-medium tracking-wide text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[rgba(196,162,207,0.1)] transition-all duration-200"
             aria-label="Panel de administración"
           >
-            <Settings size={15} />
+            <Settings size={15} aria-hidden="true" />
             <span className="hidden sm:inline">Admin</span>
           </Link>
           <button
@@ -85,7 +85,7 @@ export function Nav() {
             aria-expanded={open}
             aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
           >
-            {open ? <X size={22} /> : <Menu size={22} />}
+            {open ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
           </button>
         </div>
       </div>

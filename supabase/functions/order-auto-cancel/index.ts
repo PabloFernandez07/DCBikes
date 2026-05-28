@@ -151,6 +151,6 @@ serve(async (req) => {
     return jsonOk({ scanned: pending.length, cancelled, failed, hours }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ order-auto-cancel:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

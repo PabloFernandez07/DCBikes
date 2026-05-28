@@ -68,7 +68,7 @@ export function ProductCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[var(--color-mid)]">
-            <Bike size={48} strokeWidth={1} />
+            <Bike size={48} strokeWidth={1} aria-hidden="true" />
           </div>
         )}
         {hasDiscount && (

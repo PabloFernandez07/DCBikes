@@ -1,4 +1,4 @@
--- 0026_customer_sessions_ip_idx.sql
+-- 0027_customer_sessions_ip_idx.sql
 --
 -- S-09 (auditoría legal V3): índice compuesto en customer_sessions(ip_address, created_at)
 -- para hacer eficiente el rate-limit por IP en customer-magic-link-request.

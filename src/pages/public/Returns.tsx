@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Download, FileText, AlertTriangle, Clock, Euro, Package, Shield, Scale } from 'lucide-react'
 import { SEO } from '@/components/layout/SEO'
 import { supabase } from '@/lib/supabase'
+import { RETURNS_VERSION } from '@/lib/legal-versions'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -79,7 +80,7 @@ export default function Returns() {
             DEVOLUCIONES
           </h1>
           <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">
-            Última actualización: mayo de 2026
+            Última actualización: {RETURNS_VERSION}
           </p>
         </section>
 

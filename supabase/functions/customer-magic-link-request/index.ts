@@ -50,6 +50,12 @@ serve(async (req) => {
   try {
     if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
+    // B-27: rechazo temprano de payloads desproporcionados (anti-DoS).
+    const cl = Number(req.headers.get('content-length') ?? '0')
+    if (Number.isFinite(cl) && cl > 8192) {
+      return jsonError('payload demasiado grande', 413, req)
+    }
+
     const body = (await req.json().catch(() => ({}))) as {
       email?: string
       // Sprint 1 V5 (Q-04): el frontend (MyOrdersRequestAccess.tsx) añadirá

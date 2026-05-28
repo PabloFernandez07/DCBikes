@@ -82,6 +82,6 @@ serve(async (req) => {
     return jsonOk({ email: session.email, orders: list }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-orders-list:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { CookieBanner } from "@/components/layout/CookieBanner";
@@ -33,8 +34,15 @@ const AdminRoutes  = lazy(() =>
 
 function SplashScreen({ onDone }: { onDone: () => void }) {
   const [exiting, setExiting] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // F-24 (V5): si el usuario pide reducir animaciones, no mostramos el splash
+    // en absoluto — desmontamos de inmediato sin transiciones (WCAG 2.3.3).
+    if (prefersReducedMotion) {
+      onDone();
+      return;
+    }
     // t1: el contenido se desvanece (1s en lugar de 2.2s para mejorar SI)
     const t1 = setTimeout(() => setExiting(true), 1000);
     // t2: la cortina ya subió, desmontamos
@@ -43,7 +51,9 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [onDone]);
+  }, [onDone, prefersReducedMotion]);
+
+  if (prefersReducedMotion) return null;
 
   return (
     /*
@@ -144,6 +154,32 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
           El Astillero · Cantabria
         </p>
       </div>
+
+      {/* F-24: permite saltar la animación de carga (accesibilidad / preferencia) */}
+      <button
+        type="button"
+        onClick={onDone}
+        style={{
+          position: "absolute",
+          bottom: "1.5rem",
+          right: "1.5rem",
+          pointerEvents: "auto",
+          padding: "0.4rem 0.9rem",
+          borderRadius: "0.5rem",
+          border: "1px solid rgba(196,162,207,0.3)",
+          background: "rgba(196,162,207,0.08)",
+          color: "rgba(196,162,207,0.9)",
+          fontFamily: '"Bebas Neue", sans-serif',
+          fontSize: "0.75rem",
+          letterSpacing: "0.15em",
+          textTransform: "uppercase",
+          cursor: "pointer",
+          opacity: exiting ? 0 : 1,
+          transition: "opacity 0.3s ease",
+        }}
+      >
+        Saltar animación
+      </button>
     </div>
   );
 }

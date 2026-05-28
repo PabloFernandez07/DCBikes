@@ -17,7 +17,7 @@ export function ThemeToggle() {
           transform: theme === 'dark' ? 'rotate(0deg) scale(1)' : 'rotate(90deg) scale(0.5)',
         }}
       >
-        <Moon size={18} />
+        <Moon size={18} aria-hidden="true" />
       </span>
       <span
         className="absolute transition-all duration-300"
@@ -26,7 +26,7 @@ export function ThemeToggle() {
           transform: theme === 'light' ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.5)',
         }}
       >
-        <Sun size={18} />
+        <Sun size={18} aria-hidden="true" />
       </span>
     </button>
   )

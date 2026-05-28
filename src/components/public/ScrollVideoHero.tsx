@@ -210,6 +210,7 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
                   size={12}
                   className="text-[var(--color-lavender)]"
                   fill="currentColor"
+                  aria-hidden="true"
                 />
               </div>
             </Reveal>
@@ -235,7 +236,7 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
                   className="font-[var(--font-display)] tracking-widest text-xl"
                 >
                   Ver catálogo
-                  <ArrowRight size={20} />
+                  <ArrowRight size={20} aria-hidden="true" />
                 </Button>
                 <Button
                   variant="secondary"

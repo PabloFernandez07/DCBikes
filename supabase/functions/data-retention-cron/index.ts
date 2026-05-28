@@ -170,7 +170,12 @@ async function purgeOldSearches(supabase: SupabaseClient): Promise<ActionResult>
   return { name: 'searches_deleted', count: data?.length ?? 0 }
 }
 
-/* ─── 7. orders >6 años → ANONIMIZAR (no borrar — contable) ──── */
+/* ─── 7. orders >6 años → ANONIMIZAR (no borrar — contable) ────
+ * B-23: además de la PII del propio pedido, anonimiza las tablas hijas que
+ * pueden contener datos personales en texto libre:
+ *   • order_status_history.reason  → '[anonimizado]'
+ *   • order_items.product_name     → '[anonimizado]'
+ * Solo sobre los pedidos que se acaban de anonimizar en esta ejecución. */
 async function anonymizeOldOrders(supabase: SupabaseClient): Promise<ActionResult> {
   const cutoff = new Date(Date.now() - SIX_YEARS_MS).toISOString()
   const { data, error } = await supabase
@@ -193,7 +198,28 @@ async function anonymizeOldOrders(supabase: SupabaseClient): Promise<ActionResul
     .is('anonymized_at', null)
     .select('id')
   if (error) return { name: 'orders_anonymized', count: 0, error: error.message }
-  return { name: 'orders_anonymized', count: data?.length ?? 0 }
+
+  const orderIds = (data ?? []).map((r) => (r as { id: string }).id)
+  if (orderIds.length > 0) {
+    const { error: histErr } = await supabase
+      .from('order_status_history')
+      .update({ reason: '[anonimizado]' })
+      .in('order_id', orderIds)
+      .not('reason', 'is', null)
+    if (histErr) {
+      console.warn(`[B-23] order_status_history.reason anonymize falló: ${histErr.message}`)
+    }
+
+    const { error: itemErr } = await supabase
+      .from('order_items')
+      .update({ product_name: '[anonimizado]' })
+      .in('order_id', orderIds)
+    if (itemErr) {
+      console.warn(`[B-23] order_items.product_name anonymize falló: ${itemErr.message}`)
+    }
+  }
+
+  return { name: 'orders_anonymized', count: orderIds.length }
 }
 
 serve(async (req) => {
@@ -258,6 +284,6 @@ serve(async (req) => {
     }, req)
   } catch (err) {
     console.error(`[${ts()}] FAIL data-retention-cron fatal:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

@@ -156,7 +156,7 @@ export default function PaymentOtp() {
         <SEO title="Verificación de pago" noIndex />
         <div className="max-w-xl mx-auto bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 sm:p-8 text-center">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[rgba(255,80,80,0.12)] text-red-300 mx-auto mb-4">
-            <AlertCircle size={28} strokeWidth={1.5} />
+            <AlertCircle size={28} strokeWidth={1.5} aria-hidden="true" />
           </div>
           <h1 className="font-[var(--font-display)] text-2xl text-[var(--color-cream)] tracking-wide mb-2">
             Enlace no válido
@@ -181,7 +181,7 @@ export default function PaymentOtp() {
       <div className="max-w-xl mx-auto">
         <header className="text-center space-y-3 mb-10">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[rgba(196,162,207,0.12)] border border-[var(--color-lavender)]/30 text-[var(--color-lavender)] mx-auto">
-            <ShieldCheck size={22} strokeWidth={1.5} />
+            <ShieldCheck size={22} strokeWidth={1.5} aria-hidden="true" />
           </div>
           <h1 className="font-[var(--font-display)] text-4xl sm:text-5xl text-[var(--color-cream)] tracking-wide">
             Verificación de pago
@@ -196,7 +196,7 @@ export default function PaymentOtp() {
           {phase === 'success' ? (
             <div className="space-y-4 text-center">
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[rgba(80,200,120,0.12)] text-green-400 mx-auto">
-                <ShieldCheck size={28} strokeWidth={1.5} />
+                <ShieldCheck size={28} strokeWidth={1.5} aria-hidden="true" />
               </div>
               <h2 className="font-[var(--font-display)] text-2xl text-[var(--color-cream)] tracking-wide">
                 Código verificado
@@ -298,7 +298,7 @@ export default function PaymentOtp() {
                     </>
                   ) : (
                     <>
-                      <ShieldCheck size={15} />
+                      <ShieldCheck size={15} aria-hidden="true" />
                       Verificar y continuar al pago
                     </>
                   )}

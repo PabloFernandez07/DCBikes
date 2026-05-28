@@ -390,6 +390,7 @@ export default function Checkout() {
                         <Icon
                           size={20}
                           className="text-[var(--color-lavender)] shrink-0"
+                          aria-hidden={true}
                         />
                         <div className="flex-1 min-w-0">
                           <p className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)]">
@@ -484,6 +485,7 @@ export default function Checkout() {
                 <Store
                   size={22}
                   className="text-[var(--color-lavender)] shrink-0 mt-0.5"
+                  aria-hidden="true"
                 />
                 <div className="flex-1 text-sm font-[var(--font-body)] text-[var(--color-cream-dim)] space-y-2">
                   <p>
@@ -491,7 +493,7 @@ export default function Checkout() {
                     recoger en nuestra tienda.
                   </p>
                   <div className="flex items-start gap-2 text-[var(--color-mid)]">
-                    <Clock size={14} className="mt-0.5 shrink-0" />
+                    <Clock size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
                     <ul className="space-y-0.5 text-xs">
                       {schedule.slice(0, 7).map(day => {
                         const slots = [day.morning, day.afternoon].filter(
@@ -534,7 +536,7 @@ export default function Checkout() {
               />
               <div className="flex-1">
                 <p className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)] flex items-center gap-2">
-                  <Receipt size={16} />
+                  <Receipt size={16} aria-hidden="true" />
                   Necesito factura para empresa
                 </p>
                 <p className="text-xs text-[var(--color-mid)] mt-0.5">
@@ -605,6 +607,7 @@ export default function Checkout() {
                         size={18}
                         strokeWidth={1}
                         className="text-[var(--color-mid)]"
+                        aria-hidden="true"
                       />
                     )}
                   </div>
@@ -737,7 +740,7 @@ export default function Checkout() {
             to="/carrito"
             className="inline-flex items-center gap-1.5 text-sm font-[var(--font-cond)] tracking-wide text-[var(--color-lavender)] hover:text-[var(--color-cream)] transition-colors"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={16} aria-hidden="true" />
             Volver al carrito
           </Link>
         </div>

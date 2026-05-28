@@ -217,6 +217,6 @@ serve(async (req) => {
     return jsonOk({ status: 'cancelled', mode: config.mode }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-order-cancel:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

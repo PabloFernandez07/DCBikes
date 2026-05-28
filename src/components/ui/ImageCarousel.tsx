@@ -34,7 +34,7 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
     return (
       <div className="w-full aspect-square bg-[var(--color-card)] rounded-2xl flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-[var(--color-mid)]">
-          <Bike size={64} strokeWidth={1} />
+          <Bike size={64} strokeWidth={1} aria-hidden="true" />
           <span className="font-[var(--font-cond)] text-sm tracking-widest uppercase">Sin imagen</span>
         </div>
       </div>
@@ -62,14 +62,14 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
               className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
               aria-label="Imagen anterior"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={20} aria-hidden="true" />
             </button>
             <button
               onClick={next}
               className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
               aria-label="Imagen siguiente"
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={20} aria-hidden="true" />
             </button>
 
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">

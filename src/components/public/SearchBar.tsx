@@ -52,7 +52,7 @@ export function SearchBar({ onSearch, placeholder = 'Buscar bicicletas...' }: Se
           className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)] hover:text-[var(--color-cream)] transition-colors"
           aria-label="Limpiar búsqueda"
         >
-          <X size={15} />
+          <X size={15} aria-hidden="true" />
         </button>
       )}
     </div>

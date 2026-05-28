@@ -98,7 +98,7 @@ export function OrderStatusBadge({ status, size = 'sm', className }: OrderStatus
         className,
       )}
     >
-      {meta.highlight && <Bell size={size === 'sm' ? 11 : 13} className="shrink-0" />}
+      {meta.highlight && <Bell size={size === 'sm' ? 11 : 13} className="shrink-0" aria-hidden="true" />}
       {meta.label}
     </span>
   )

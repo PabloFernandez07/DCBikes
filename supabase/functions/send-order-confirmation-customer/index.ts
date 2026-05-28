@@ -228,7 +228,28 @@ serve(async (req) => {
     }
 
     // a) Contrato del pedido (soporte duradero art. 98 RDL 1/2007 — hallazgo L-05)
-    const contractBase64 = await downloadPdf('order-contracts', `${order.id}.pdf`)
+    //    Los contratos se versionan ({order_number}-v{n}.pdf, B-26): localizamos
+    //    el de versión más alta dentro de la carpeta del pedido.
+    const resolveLatestContractPath = async (): Promise<string | null> => {
+      const { data: files, error } = await supabase.storage
+        .from('order-contracts')
+        .list(order.id, { limit: 1000 })
+      if (error || !files || files.length === 0) {
+        if (error) console.warn(`[${ts()}] [confirmation-customer] contract list failed:`, error.message)
+        return null
+      }
+      const re = /-v(\d+)\.pdf$/
+      let best: { name: string; n: number } | null = null
+      for (const f of files) {
+        const m = re.exec(f.name)
+        if (!m) continue
+        const n = parseInt(m[1], 10)
+        if (Number.isFinite(n) && (!best || n > best.n)) best = { name: f.name, n }
+      }
+      return best ? `${order.id}/${best.name}` : null
+    }
+    const contractPath = await resolveLatestContractPath()
+    const contractBase64 = contractPath ? await downloadPdf('order-contracts', contractPath) : null
 
     // b) Formulario oficial de desistimiento (C-07 / C-08)
     const withdrawalBase64 = await downloadPdf('legal-templates', 'devoluciones-formulario.pdf')
@@ -259,6 +280,6 @@ serve(async (req) => {
     return jsonOk({ email_id, contract_attached: !!contractBase64, withdrawal_attached: !!withdrawalBase64 }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ send-order-confirmation-customer:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

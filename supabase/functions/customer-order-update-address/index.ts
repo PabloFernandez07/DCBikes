@@ -104,16 +104,25 @@ interface OrderShipping {
   shipping_notes: string | null
 }
 
+interface DiffResult {
+  // Texto legible con valores (solo para el email al admin; NO persistir).
+  text: string
+  // Etiquetas de los campos modificados (sin valores) — apto para auditoría.
+  changedFields: string[]
+}
+
 function buildDiff(
   prev: OrderShipping,
   next: Required<ShippingInput>,
-): string {
+): DiffResult {
   const parts: string[] = []
+  const changedFields: string[] = []
   const cmp = (label: string, a: string | null, b: string) => {
     const aClean = (a ?? '').trim()
     const bClean = b.trim()
     if (aClean !== bClean) {
       parts.push(`${label}: "${aClean || '(vacío)'}" → "${bClean || '(vacío)'}"`)
+      changedFields.push(label)
     }
   }
   cmp('Dirección', prev.shipping_address, next.address)
@@ -121,7 +130,10 @@ function buildDiff(
   cmp('CP', prev.shipping_postal_code, next.postal_code)
   cmp('Provincia', prev.shipping_province, next.province)
   cmp('Notas', prev.shipping_notes, next.notes)
-  return parts.length > 0 ? parts.join(' · ') : 'sin cambios'
+  return {
+    text: parts.length > 0 ? parts.join(' · ') : 'sin cambios',
+    changedFields,
+  }
 }
 
 /* ─────────────────── Handler ─────────────────── */
@@ -228,13 +240,14 @@ serve(async (req) => {
       )
     }
 
-    // 6) Diff (para auditoría + email admin).
+    // 6) Diff. `diff.text` lleva valores (solo para el email al admin); el
+    //    historial de auditoría solo guarda los nombres de campo modificados.
     const diff = buildDiff(order, newShipping)
-    if (diff === 'sin cambios') {
+    if (diff.changedFields.length === 0) {
       // No hay nada que cambiar — no escribimos en BD pero respondemos OK
       // (idempotencia: el usuario podría haber pulsado guardar sin tocar nada).
       console.log(`[${ts()}] update-address sin cambios · ${order.order_number}`)
-      return jsonOk({ updated: false, diff }, req)
+      return jsonOk({ updated: false, diff: diff.text }, req)
     }
 
     // 7) UPDATE.
@@ -257,18 +270,20 @@ serve(async (req) => {
     }
 
     // 8) Historial. changed_by=NULL → identifica acción del cliente.
+    //    No persistimos la dirección en claro (RGPD: minimización de datos en
+    //    logs inmutables); solo el evento + qué campos cambiaron.
     await supabase.from('order_status_history').insert({
       order_id: order.id,
       from_status: order.status,
       to_status: order.status,
       changed_by: null,
-      reason: `Dirección actualizada por el cliente: ${diff}`,
+      reason: `address_changed (${diff.changedFields.join(', ')})`,
     })
 
-    // 9) Email admin (fire-and-forget).
+    // 9) Email admin (fire-and-forget). El email sí incluye los valores.
     supabase.functions
       .invoke('send-order-address-changed-admin', {
-        body: { order_id: order.id, diff },
+        body: { order_id: order.id, diff: diff.text },
         headers: internalSecretHeader(),
       })
       .catch((err) =>
@@ -279,11 +294,11 @@ serve(async (req) => {
       )
 
     console.log(
-      `[${ts()}] ✓ customer-order-update-address · ${order.order_number} · diff="${diff}"`,
+      `[${ts()}] ✓ customer-order-update-address · ${order.order_number} · fields=[${diff.changedFields.join(', ')}]`,
     )
-    return jsonOk({ updated: true, diff }, req)
+    return jsonOk({ updated: true, diff: diff.text }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-order-update-address:`, String(err))
-    return jsonError(String(err), 500, req)
+    return jsonError('internal error', 500, req)
   }
 })

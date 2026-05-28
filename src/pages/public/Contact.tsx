@@ -276,10 +276,14 @@ export default function Contact() {
                 <button
                   type="button"
                   onClick={() => { setThirdPartyConsent(true); setMapsEnabled(true) }}
+                  aria-describedby="map-load-desc"
                   className="px-5 py-2 rounded-xl bg-[var(--color-lavender)]/15 hover:bg-[var(--color-lavender)]/25 border border-[var(--color-lavender)]/30 text-[var(--color-lavender)] font-[var(--font-cond)] text-sm tracking-wide transition-colors"
                 >
                   Cargar mapa
                 </button>
+                <p id="map-load-desc" className="text-xs text-[var(--color-mid)] max-w-xs leading-relaxed">
+                  Al cargar el mapa, Google Maps recibirá tu dirección IP y datos del navegador (DPF — política Google).
+                </p>
                 <a
                   href={settings.maps_link ?? 'https://maps.app.goo.gl/E2dajUcN3rA2fvc57'}
                   target="_blank"

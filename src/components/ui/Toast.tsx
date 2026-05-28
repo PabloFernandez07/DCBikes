@@ -3,9 +3,9 @@ import { CheckCircle, XCircle, Info, X } from 'lucide-react'
 import type { Toast as ToastItem, ToastType } from '@/hooks/useToast'
 
 const icons: Record<ToastType, React.ReactNode> = {
-  success: <CheckCircle size={18} className="shrink-0" />,
-  error: <XCircle size={18} className="shrink-0" />,
-  info: <Info size={18} className="shrink-0" />,
+  success: <CheckCircle size={18} className="shrink-0" aria-hidden="true" />,
+  error: <XCircle size={18} className="shrink-0" aria-hidden="true" />,
+  info: <Info size={18} className="shrink-0" aria-hidden="true" />,
 }
 
 const colors: Record<ToastType, string> = {
@@ -37,7 +37,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
         className="ml-2 opacity-60 hover:opacity-100 transition-opacity"
         aria-label="Cerrar notificación"
       >
-        <X size={14} />
+        <X size={14} aria-hidden="true" />
       </button>
     </div>
   )

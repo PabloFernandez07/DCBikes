@@ -57,7 +57,7 @@ export default function RedsysRedirecting() {
             style={{ animation: 'wspin 0.9s linear infinite' }}
             aria-hidden="true"
           />
-          <CreditCard size={32} className="text-[var(--color-lavender)]" />
+          <CreditCard size={32} className="text-[var(--color-lavender)]" aria-hidden="true" />
         </div>
 
         <div className="space-y-3">
@@ -71,7 +71,7 @@ export default function RedsysRedirecting() {
         </div>
 
         <div className="flex items-center gap-2 text-xs font-[var(--font-cond)] uppercase tracking-widest text-[var(--color-mid)]">
-          <Lock size={12} />
+          <Lock size={12} aria-hidden="true" />
           <span>Conexión cifrada · 3D Secure</span>
         </div>
       </div>

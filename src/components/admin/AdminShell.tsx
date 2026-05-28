@@ -103,7 +103,7 @@ export function AdminShell() {
     >
       <div className="flex items-center gap-3 px-5 py-5 border-b border-[var(--color-card)]">
         <div className="w-8 h-8 rounded-lg bg-[var(--color-brand-red)] flex items-center justify-center shrink-0">
-          <Bike size={16} className="text-white" />
+          <Bike size={16} className="text-white" aria-hidden="true" />
         </div>
         <div>
           <p className="text-xs font-[var(--font-cond)] font-semibold text-[var(--color-lavender)] tracking-widest uppercase leading-tight">
@@ -134,7 +134,7 @@ export function AdminShell() {
                 )
               }
             >
-              <item.icon size={17} className="shrink-0" />
+              <item.icon size={17} className="shrink-0" aria-hidden={true} />
               <span className="flex-1">{item.label}</span>
               {item.badge && badgeValue > 0 && (
                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-brand-red)] text-white text-[10px] font-bold">
@@ -161,14 +161,14 @@ export function AdminShell() {
           to="/"
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-[var(--font-cond)] font-medium tracking-wide text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)] transition-all duration-150 mb-0.5"
         >
-          <ArrowLeft size={16} className="shrink-0" />
+          <ArrowLeft size={16} className="shrink-0" aria-hidden="true" />
           Volver a la tienda
         </Link>
         <button
           onClick={handleSignOut}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-[var(--font-cond)] font-medium tracking-wide text-[var(--color-mid)] hover:text-[var(--color-brand-red)] hover:bg-[var(--color-brand-red)]/10 transition-all duration-150"
         >
-          <LogOut size={16} className="shrink-0" />
+          <LogOut size={16} className="shrink-0" aria-hidden="true" />
           Cerrar sesión
         </button>
       </div>
@@ -196,7 +196,7 @@ export function AdminShell() {
             className="p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)] transition-colors"
             aria-label="Abrir menú"
           >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
           </button>
           <span className="text-sm font-[var(--font-cond)] font-semibold text-[var(--color-lavender)] tracking-widest uppercase">
             DC Bikes Admin
