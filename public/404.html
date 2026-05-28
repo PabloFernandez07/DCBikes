@@ -7,24 +7,176 @@
 <title>Página no encontrada · DC Bikes Cantabria</title>
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <style>
-*{box-sizing:border-box}
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0a0e1a;color:#e8eaf0;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;text-align:center;padding:24px;line-height:1.5}
-.box{max-width:520px}
-.code{font-size:96px;margin:0;color:#3b82f6;font-weight:800;letter-spacing:-2px}
-h2{margin:8px 0 16px;font-size:24px;font-weight:600}
-p{color:#8b95b3;margin:0 0 28px;font-size:16px}
-.cta{display:inline-block;padding:14px 28px;background:#3b82f6;color:#fff;text-decoration:none;border-radius:10px;font-weight:600;transition:background .2s}
-.cta:hover{background:#2563eb}
-.brand{margin-top:32px;font-size:14px;color:#5a6280}
+  @font-face {
+    font-family: "Bebas Neue";
+    src: url("/fonts/bebas-neue-latin-400-normal.woff2") format("woff2");
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Barlow Condensed";
+    src: url("/fonts/barlow-condensed-latin-600-normal.woff2") format("woff2");
+    font-weight: 600; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Barlow";
+    src: url("/fonts/barlow-latin-400-normal.woff2") format("woff2");
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Barlow";
+    src: url("/fonts/barlow-latin-600-normal.woff2") format("woff2");
+    font-weight: 600; font-style: normal; font-display: swap;
+  }
+
+  :root {
+    --ink:        #1A1620;
+    --ink-deep:   #100D14;
+    --cream:      #EEF3F8;
+    --cream-dim:  #D8DDE5;
+    --lavender:   #C4A2CF;
+    --brand-red:  #E5301E;
+    --mid:        #7E6E8A;
+    --display: "Bebas Neue", sans-serif;
+    --cond:    "Barlow Condensed", sans-serif;
+    --body:    "Barlow", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    font-family: var(--body);
+    background: var(--ink);
+    color: var(--cream);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Número gigante translúcido de fondo */
+  .ghost {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    font-family: var(--display);
+    line-height: 1;
+    color: rgba(196, 162, 207, 0.06);
+    font-size: clamp(10rem, 30vw, 20rem);
+    z-index: 0;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    max-width: 560px;
+  }
+
+  .eyebrow {
+    font-family: var(--cond);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--lavender);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    color: var(--cream);
+    letter-spacing: 0.03em;
+    line-height: 1;
+    margin: 4px 0 0;
+    font-size: clamp(2.75rem, 8vw, 5rem);
+  }
+
+  p.lead {
+    font-family: var(--body);
+    color: var(--mid);
+    font-size: 1.05rem;
+    margin: 16px 0 0;
+    max-width: 28rem;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 32px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--cond);
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 14px 30px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: filter .2s, background .2s, color .2s, border-color .2s;
+  }
+  .btn-primary {
+    background: var(--lavender);
+    color: var(--ink);
+    border: 1px solid var(--lavender);
+  }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--cream);
+    border: 1px solid rgba(196, 162, 207, 0.35);
+  }
+  .btn-ghost:hover {
+    border-color: var(--lavender);
+    color: var(--lavender);
+  }
+
+  .brand {
+    font-family: var(--cond);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.75rem;
+    color: var(--mid);
+    margin-top: 40px;
+  }
+  .brand .dot { color: var(--brand-red); }
 </style>
 </head>
 <body>
-<div class="box">
-<p class="code">404</p>
-<h2>Página no encontrada</h2>
-<p>La página que buscas no existe o ha sido movida.</p>
-<a class="cta" href="/">Volver al inicio</a>
-<p class="brand">DC Bikes Cantabria · El Astillero</p>
-</div>
+  <div class="wrap">
+    <span class="ghost" aria-hidden="true">404</span>
+    <div class="content">
+      <span class="eyebrow">Error 404</span>
+      <h1>Página no encontrada</h1>
+      <p class="lead">Parece que esta ruta no existe. Puede que la página haya cambiado de dirección.</p>
+      <div class="actions">
+        <a class="btn btn-primary" href="/">Volver al inicio</a>
+        <a class="btn btn-ghost" href="/catalogo">Ver catálogo</a>
+      </div>
+      <p class="brand">DC Bikes Cantabria <span class="dot">·</span> El Astillero</p>
+    </div>
+  </div>
 </body>
 </html>
