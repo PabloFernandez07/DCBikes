@@ -45,6 +45,7 @@ import {
   sanitizeWinAnsi,
 } from '../_shared/pdf-utils.ts'
 import { verifyInternalSecret } from '../_shared/security.ts'
+import { isValidSpanishTaxId } from '../_shared/spanish-id.ts'
 
 /* ─────────── Constantes layout A4 (puntos PDF, 72pt = 1in) ─────────── */
 const PAGE_W = 595.28
@@ -176,6 +177,21 @@ serve(async (req) => {
       return jsonError(
         'Falta configurar datos fiscales en /admin/settings → Facturación (razón social, CIF, dirección).',
         400,
+        req,
+      )
+    }
+
+    // Gate legal: el NIF/CIF del emisor debe ser VÁLIDO (dígito de control).
+    // Bloquea el placeholder "12345678X" y cualquier identificador falso. Emitir
+    // una factura con un NIF inválido la hace nula y, peor, quema un número
+    // correlativo que luego no se puede reutilizar (la serie debe ser continua).
+    // Hasta que el titular configure su NIF real, NO se emite ninguna factura.
+    if (!isValidSpanishTaxId(companyCif)) {
+      console.warn(`[${ts()}] generate-invoice-pdf: NIF/CIF emisor inválido (placeholder?) — emisión bloqueada`)
+      return jsonError(
+        'El NIF/CIF del emisor configurado no es válido (¿sigue el valor de ejemplo?). ' +
+          'Configura el NIF real del autónomo en /admin/configuración → Facturación antes de emitir facturas.',
+        409,
         req,
       )
     }

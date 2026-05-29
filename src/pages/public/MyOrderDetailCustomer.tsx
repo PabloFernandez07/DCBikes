@@ -172,6 +172,15 @@ export default function MyOrderDetailCustomer() {
   const [editOpen, setEditOpen] = useState(false)
   const [savingAddress, setSavingAddress] = useState(false)
 
+  // Factura (descarga / generación bajo demanda)
+  const [requestingInvoice, setRequestingInvoice] = useState(false)
+  const [invoiceFormOpen, setInvoiceFormOpen] = useState(false)
+  const [fiscalWantsFull, setFiscalWantsFull] = useState(false)
+  const [fiscalDni, setFiscalDni] = useState('')
+  const [fiscalBusinessName, setFiscalBusinessName] = useState('')
+  const [fiscalCif, setFiscalCif] = useState('')
+  const [fiscalAddress, setFiscalAddress] = useState('')
+
   const {
     register: registerAddress,
     handleSubmit: handleSubmitAddress,
@@ -255,6 +264,95 @@ export default function MyOrderDetailCustomer() {
       notes: order.shipping_notes ?? '',
     })
     setEditOpen(true)
+  }
+
+  // Solicita (y descarga) la factura. Si el backend responde que faltan datos
+  // fiscales, abre el formulario para completarlos y reintenta.
+  const requestInvoice = async (extra?: {
+    dni?: string
+    full_invoice?: boolean
+    business_name?: string
+    cif?: string
+    address?: string
+  }) => {
+    if (!order || requestingInvoice) return
+    const session = readSession()
+    if (!session) {
+      navigate('/mis-pedidos', { replace: true })
+      return
+    }
+    setRequestingInvoice(true)
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke<{
+        ok: boolean
+        error?: string
+        signed_url?: string | null
+        invoice_number?: string | null
+        fiscal_data_required?: boolean
+        need?: string[]
+        full_invoice?: boolean
+      }>('customer-request-invoice', {
+        body: { token: session.token, order_id: order.id, ...extra },
+      })
+
+      if (fnError) {
+        const ctx = (fnError as unknown as { context?: Response & { status?: number } }).context
+        if (ctx?.status === 401 || ctx?.status === 403) {
+          try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+          navigate('/mis-pedidos', { replace: true })
+          return
+        }
+        // Mensaje específico del backend (viene en el cuerpo JSON de la Response).
+        let detail = fnError.message
+        if (ctx && typeof ctx.json === 'function') {
+          try {
+            const b = (await ctx.json()) as { error?: string }
+            if (b?.error) detail = b.error
+          } catch { /* ignore */ }
+        }
+        toast.error(detail || 'No se pudo generar la factura')
+        return
+      }
+
+      if (data?.fiscal_data_required) {
+        setFiscalWantsFull(!!data.full_invoice)
+        setInvoiceFormOpen(true)
+        return
+      }
+      if (!data?.ok) {
+        toast.error(data?.error ?? 'No se pudo generar la factura')
+        return
+      }
+      if (data.signed_url) {
+        setOrder((prev) =>
+          prev
+            ? { ...prev, invoice_signed_url: data.signed_url!, invoice_number: data.invoice_number ?? prev.invoice_number }
+            : prev,
+        )
+        setInvoiceFormOpen(false)
+        window.open(data.signed_url, '_blank', 'noopener,noreferrer')
+        toast.success('Factura lista')
+      } else {
+        toast.error('La factura se generó pero no se pudo obtener el enlace. Refresca la página.')
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al generar la factura')
+    } finally {
+      setRequestingInvoice(false)
+    }
+  }
+
+  const submitFiscalForm = () => {
+    if (fiscalWantsFull) {
+      requestInvoice({
+        full_invoice: true,
+        business_name: fiscalBusinessName.trim(),
+        cif: fiscalCif.trim(),
+        address: fiscalAddress.trim(),
+      })
+    } else {
+      requestInvoice({ dni: fiscalDni.trim() })
+    }
   }
 
   const handleCancelOrder = async () => {
@@ -641,8 +739,10 @@ export default function MyOrderDetailCustomer() {
           </div>
         </section>
 
-        {/* Factura */}
-        {order.invoice_signed_url && (
+        {/* Factura — disponible para descargar en todo pedido facturable.
+            Si aún no se ha emitido, se genera bajo demanda (pidiendo los datos
+            fiscales que falten). */}
+        {(['accepted', 'ready_pickup', 'shipped', 'delivered', 'returned'].includes(order.status)) && (
           <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-5 flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[rgba(196,162,207,0.12)] text-[var(--color-lavender)] flex items-center justify-center shrink-0">
@@ -650,20 +750,31 @@ export default function MyOrderDetailCustomer() {
               </div>
               <div>
                 <p className="font-[var(--font-cond)] text-sm font-semibold text-[var(--color-cream)]">
-                  Factura disponible
+                  {order.invoice_signed_url ? 'Factura disponible' : 'Factura'}
                 </p>
-                {order.invoice_number && (
+                {order.invoice_number ? (
                   <p className="text-xs text-[var(--color-mid)]">{order.invoice_number}</p>
+                ) : (
+                  <p className="text-xs text-[var(--color-mid)]">Descárgala en PDF cuando la necesites</p>
                 )}
               </div>
             </div>
             <button
               type="button"
-              onClick={() => order.invoice_signed_url && window.open(order.invoice_signed_url, '_blank', 'noopener,noreferrer')}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-lavender)] text-[var(--color-ink)] font-[var(--font-cond)] font-semibold text-sm tracking-wide hover:brightness-110 transition-all"
+              disabled={requestingInvoice}
+              onClick={() =>
+                order.invoice_signed_url
+                  ? window.open(order.invoice_signed_url, '_blank', 'noopener,noreferrer')
+                  : requestInvoice()
+              }
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-lavender)] text-[var(--color-ink)] font-[var(--font-cond)] font-semibold text-sm tracking-wide hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Download size={14} aria-hidden="true" />
-              Descargar factura PDF
+              {requestingInvoice ? (
+                <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+              ) : (
+                <Download size={14} aria-hidden="true" />
+              )}
+              {order.invoice_signed_url ? 'Descargar factura PDF' : 'Descargar factura'}
             </button>
           </section>
         )}
@@ -845,6 +956,72 @@ export default function MyOrderDetailCustomer() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Datos fiscales para emitir la factura (cuando faltan en el pedido) */}
+      <Modal
+        open={invoiceFormOpen}
+        onClose={() => { if (!requestingInvoice) setInvoiceFormOpen(false) }}
+        title="Datos para la factura"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed">
+            {fiscalWantsFull
+              ? 'Para emitir la factura completa con tus datos fiscales, complétalos a continuación:'
+              : 'Para importes superiores a 400 € la factura debe incluir tu NIF/DNI (RD 1619/2012 art. 7.1). Introdúcelo para generarla:'}
+          </p>
+
+          {fiscalWantsFull ? (
+            <>
+              <Field
+                label="Razón social o nombre y apellidos"
+                required
+                value={fiscalBusinessName}
+                onChange={(e) => setFiscalBusinessName(e.target.value)}
+                placeholder="Empresa S.L. o tu nombre completo"
+              />
+              <Field
+                label="NIF / CIF"
+                required
+                value={fiscalCif}
+                onChange={(e) => setFiscalCif(e.target.value)}
+                placeholder="B12345678"
+              />
+              <Field
+                label="Dirección fiscal"
+                required
+                value={fiscalAddress}
+                onChange={(e) => setFiscalAddress(e.target.value)}
+                placeholder="Calle, nº, CP, ciudad"
+              />
+            </>
+          ) : (
+            <Field
+              label="NIF / DNI"
+              required
+              value={fiscalDni}
+              onChange={(e) => setFiscalDni(e.target.value)}
+              placeholder="12345678Z"
+            />
+          )}
+
+          <div className="flex justify-end gap-2 pt-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              onClick={() => { if (!requestingInvoice) setInvoiceFormOpen(false) }}
+              disabled={requestingInvoice}
+            >
+              Cancelar
+            </Button>
+            <Button variant="primary" size="sm" type="button" onClick={submitFiscalForm} disabled={requestingInvoice}>
+              {requestingInvoice ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <FileText size={13} aria-hidden="true" />}
+              Generar factura
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
