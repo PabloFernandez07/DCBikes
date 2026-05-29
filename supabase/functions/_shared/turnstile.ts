@@ -38,7 +38,16 @@ export async function verifyTurnstile(
 
   try {
     const res = await fetch(SITEVERIFY_URL, { method: 'POST', body: form })
-    const data = (await res.json()) as { success?: boolean }
+    const data = (await res.json()) as {
+      success?: boolean
+      'error-codes'?: string[]
+      hostname?: string
+    }
+    if (data.success !== true) {
+      console.warn(
+        `[${logTag}] siteverify rejected · error-codes=${JSON.stringify(data['error-codes'] ?? [])} · hostname=${data.hostname ?? 'n/a'} · tokenLen=${token.length}`,
+      )
+    }
     return data.success === true
   } catch (err) {
     // Fallo de red al llamar a Cloudflare → fail-closed (no podemos confirmar).

@@ -53,3 +53,61 @@ verify_jwt = false
 
 [functions.verifactu-send-cron]
 verify_jwt = false
+
+# ─────────────────────────────────────────────────────────────────
+# Funciones SOLO internas (auditoría V5 — fix email).
+# Se invocan vía supabase.functions.invoke con cabecera x-internal-secret
+# desde otras Edge Functions (order-place, redsys-notification, order-accept,
+# request-payment-otp, customer-magic-link-request, quote-submit, etc.).
+#
+# Desde la migración de claves de Supabase, el runtime inyecta como
+# SUPABASE_SERVICE_ROLE_KEY la nueva secret key `sb_secret_...`, que NO es un
+# JWT. Con verify_jwt=true el gateway rechazaba el Bearer con 401 ANTES de
+# llegar al handler → no se enviaba ningún email. Su seguridad real es el
+# header x-internal-secret (verifyInternalSecret, timing-safe, fail-closed),
+# no el JWT de plataforma. Por eso verify_jwt=false.
+#
+# NOTA: send-reply-email NO va aquí — lo invoca el admin desde el navegador
+# con su JWT real (auth.getUser + check is_admin), así que mantiene verify_jwt=true.
+# ─────────────────────────────────────────────────────────────────
+[functions.generate-order-contract]
+verify_jwt = false
+
+[functions.send-customer-magic-link]
+verify_jwt = false
+
+[functions.send-order-accepted-customer]
+verify_jwt = false
+
+[functions.send-order-address-changed-admin]
+verify_jwt = false
+
+[functions.send-order-auto-cancelled]
+verify_jwt = false
+
+[functions.send-order-cancelled-by-customer-admin]
+verify_jwt = false
+
+[functions.send-order-cancelled-by-customer-confirmation]
+verify_jwt = false
+
+[functions.send-order-confirmation-customer]
+verify_jwt = false
+
+[functions.send-order-new-admin]
+verify_jwt = false
+
+[functions.send-order-ready-pickup]
+verify_jwt = false
+
+[functions.send-order-rejected-customer]
+verify_jwt = false
+
+[functions.send-order-shipped]
+verify_jwt = false
+
+[functions.send-payment-otp]
+verify_jwt = false
+
+[functions.send-quote-email]
+verify_jwt = false
