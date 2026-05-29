@@ -969,7 +969,7 @@ export default function MyOrderDetailCustomer() {
           <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed">
             {fiscalWantsFull
               ? 'Para emitir la factura completa con tus datos fiscales, complétalos a continuación:'
-              : 'Para importes superiores a 400 € la factura debe incluir tu NIF/DNI (RD 1619/2012 art. 7.1). Introdúcelo para generarla:'}
+              : 'Necesitamos tu NIF/DNI para emitir la factura. Introdúcelo para generarla:'}
           </p>
 
           {fiscalWantsFull ? (

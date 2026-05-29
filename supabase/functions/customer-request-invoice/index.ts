@@ -33,10 +33,6 @@ import { verifyCustomerSession } from '../_shared/customer-session.ts'
 import { internalSecretHeader } from '../_shared/security.ts'
 import { isValidSpanishTaxId } from '../_shared/spanish-id.ts'
 
-// Importe a partir del cual la factura simplificada B2C exige NIF/DNI del
-// comprador (RD 1619/2012 art. 7.1): 400 € IVA incluido.
-const NIF_REQUIRED_THRESHOLD_CENTS = 400_00
-
 const BILLABLE_STATUSES = new Set([
   'accepted',
   'ready_pickup',
@@ -162,16 +158,15 @@ serve(async (req) => {
         if (body.address) updates.invoice_address = address
       }
     } else {
-      // 5b. Factura simplificada (B2C): solo exige NIF/DNI del comprador si el
-      // importe supera 400 € (RD 1619/2012 art. 7.1).
+      // 5b. Factura simplificada (B2C): el titular exige SIEMPRE el NIF/DNI del
+      // comprador para emitir la factura (más estricto que el mínimo legal de
+      // >400 € del RD 1619/2012 art. 7.1).
       const effectiveDni = (body.dni ?? order.customer_dni ?? '').trim()
-      if (order.total_cents > NIF_REQUIRED_THRESHOLD_CENTS) {
-        if (!effectiveDni) missing.push('dni')
-        else if (!isValidSpanishTaxId(effectiveDni)) {
-          return jsonError('El NIF/DNI introducido no es válido.', 400, req)
-        }
-      }
-      if (body.dni && effectiveDni && isValidSpanishTaxId(effectiveDni)) {
+      if (!effectiveDni) {
+        missing.push('dni')
+      } else if (!isValidSpanishTaxId(effectiveDni)) {
+        return jsonError('El NIF/DNI introducido no es válido.', 400, req)
+      } else if (body.dni) {
         updates.customer_dni = effectiveDni.toUpperCase()
       }
     }

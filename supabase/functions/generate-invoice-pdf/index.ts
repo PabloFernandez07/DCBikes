@@ -126,12 +126,15 @@ serve(async (req) => {
       return jsonError('order has no items', 400, req)
     }
 
-    /* ─── 1b. Gate C-09: NIF/DNI obligatorio en B2C > 400 € (RD 1619/2012 art. 7.1) ─── */
+    /* ─── 1b. Gate: NIF/DNI del comprador OBLIGATORIO en toda factura ─── */
+    // Decisión del titular: ninguna factura se emite sin identificar al
+    // comprador. En B2B el identificador es invoice_cif; en B2C, customer_dni.
+    // (El mínimo legal sería solo >400€ — RD 1619/2012 art. 7.1 — pero aquí se
+    // exige siempre.)
     const isB2BOrder = order.needs_invoice === true && !!order.invoice_cif
-    const isHighValueB2C = !isB2BOrder && order.total_cents > 40000
-    if (isHighValueB2C && !order.customer_dni) {
+    if (!isB2BOrder && !order.customer_dni) {
       return jsonError(
-        'Operación >400€ requiere NIF/DNI del comprador (RD 1619/2012 art. 7.1). El campo customer_dni está vacío en este pedido.',
+        'Falta el NIF/DNI del comprador. Es obligatorio para emitir la factura (campo customer_dni vacío).',
         400,
         req,
       )
