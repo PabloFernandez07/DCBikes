@@ -623,18 +623,40 @@ export function Settings() {
     s.kw.includes(normalizedQuery)
   const visibleSections = SETTINGS_SECTIONS.filter(sectionMatches)
 
-  // Oculta las tarjetas que no coinciden con la búsqueda (cada <section> tiene id).
+  // Oculta las tarjetas que no coinciden y resalta las que sí (cada <section>
+  // tiene id). Usamos boxShadow inline para el halo: una clase Tailwind añadida
+  // por classList en runtime no se generaría (JIT escanea el código fuente).
   useEffect(() => {
     if (loading) return
     for (const s of SETTINGS_SECTIONS) {
       const el = document.getElementById(s.id)
-      if (el) el.style.display = sectionMatches(s) ? '' : 'none'
+      if (!el) continue
+      const matched = sectionMatches(s)
+      el.style.display = matched ? '' : 'none'
+      el.style.boxShadow = normalizedQuery && matched ? '0 0 0 2px var(--color-lavender)' : ''
+      el.style.transition = 'box-shadow .2s'
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [normalizedQuery, loading])
 
   const jumpTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  // Resalta el fragmento coincidente dentro de una etiqueta (para los chips).
+  const highlightMatch = (label: string, query: string): React.ReactNode => {
+    if (!query) return label
+    const idx = label.toLowerCase().indexOf(query)
+    if (idx === -1) return label // coincidió por palabra clave, no por el título
+    return (
+      <>
+        {label.slice(0, idx)}
+        <mark className="bg-[var(--color-lavender)] text-[var(--color-ink)] rounded px-0.5">
+          {label.slice(idx, idx + query.length)}
+        </mark>
+        {label.slice(idx + query.length)}
+      </>
+    )
   }
 
   return (
@@ -743,7 +765,7 @@ export function Settings() {
                       onClick={() => jumpTo(s.id)}
                       className="px-3 py-1.5 rounded-full text-xs font-[var(--font-cond)] tracking-wide bg-[var(--color-ink)] border border-[var(--color-card-hover)] text-[var(--color-cream-dim)] hover:border-[var(--color-lavender)]/60 hover:text-[var(--color-lavender)] transition-colors"
                     >
-                      {s.label}
+                      {highlightMatch(s.label, normalizedQuery)}
                     </button>
                   ))
                 )}
