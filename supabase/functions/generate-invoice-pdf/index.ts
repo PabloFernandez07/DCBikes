@@ -393,7 +393,120 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
-  const page = pdfDoc.addPage([PAGE_W, PAGE_H])
+  // ─── Paginación: estado mutable compartido entre bloques ───
+  // totalPages se actualiza al final, cuando ya sabemos cuántas páginas hay.
+  // Cada página almacena su referencia para poder escribir el pie definitivo
+  // (con "Página X/N") en un segundo paso.
+  const pages: PDFPage[] = []
+  let currentPageNum = 0  // 1-based, se incrementa al crear cada página
+
+  /** Crea una nueva página A4 y la registra. Devuelve la página. */
+  function addNewPage(): PDFPage {
+    const pg = pdfDoc.addPage([PAGE_W, PAGE_H])
+    pages.push(pg)
+    currentPageNum++
+    return pg
+  }
+
+  // Columnas de la tabla (compartidas entre cabecera y filas)
+  const colX = {
+    concept: MARGIN_X + 8,
+    size: 290,
+    qty: 340,
+    base: 380,
+    iva: 440,
+    total: PAGE_W - MARGIN_X - 8,
+  }
+  const rowH = 18
+
+  /**
+   * Dibuja la cabecera de columnas de la tabla de artículos en la página dada,
+   * a partir de la posición vertical `atY`. Devuelve la `y` inicial para la
+   * primera fila de datos (ya descontando cabecera, línea separadora y hueco).
+   *
+   * Espaciado idéntico al original:
+   *   - fondo: de [atY - rowH + 6] altura rowH
+   *   - texto columnas: en headerY = atY - 8
+   *   - línea bajo cabecera: headerY - 9
+   *   - primera fila datos: headerY - 22
+   */
+  function drawTableHeader(pg: PDFPage, atY: number): number {
+    drawRect(pg, MARGIN_X, atY - rowH + 6, PAGE_W - 2 * MARGIN_X, rowH, COLOR_TABLE_HEAD_BG)
+    const headerY = atY - 8
+    drawText(pg, 'Concepto', colX.concept, headerY, {
+      font: fontBold, size: 8, color: COLOR_GRAY,
+    })
+    drawText(pg, 'Talla', colX.size, headerY, {
+      font: fontBold, size: 8, color: COLOR_GRAY, align: 'center',
+    })
+    drawText(pg, 'Cant.', colX.qty, headerY, {
+      font: fontBold, size: 8, color: COLOR_GRAY, align: 'center',
+    })
+    drawText(pg, 'Base', colX.base, headerY, {
+      font: fontBold, size: 8, color: COLOR_GRAY, align: 'right',
+    })
+    drawText(pg, 'IVA', colX.iva, headerY, {
+      font: fontBold, size: 8, color: COLOR_GRAY, align: 'right',
+    })
+    drawText(pg, 'Total', colX.total, headerY, {
+      font: fontBold, size: 8, color: COLOR_GRAY, align: 'right',
+    })
+    // Línea bajo la cabecera con el mismo margen que el original.
+    drawHLine(pg, MARGIN_X, PAGE_W - MARGIN_X, headerY - 9, COLOR_PRIMARY, 0.8)
+    // Primera fila bien separada de la cabecera.
+    return headerY - 22
+  }
+
+  /**
+   * Dibuja el pie mínimo de cada página (línea + "Factura {num} · {fecha} · Página X/N").
+   * Se llama UNA VEZ por página al final, cuando totalPages ya es conocido.
+   * El texto legal completo (desistimiento, devoluciones) solo va en la última página.
+   */
+  function drawPageFooter(
+    pg: PDFPage,
+    pageNum: number,
+    totalPages: number,
+    isLastPage: boolean,
+  ): void {
+    drawHLine(pg, MARGIN_X, PAGE_W - MARGIN_X, MARGIN_BOTTOM + 38, COLOR_LIGHT, 0.5)
+    let footerY = MARGIN_BOTTOM + 24
+
+    // Línea de identificación de factura presente en TODAS las páginas.
+    drawText(
+      pg,
+      `Factura ${invoiceNumber} · ${formatDateDMY(new Date())} · Página ${pageNum}/${totalPages}`,
+      MARGIN_X,
+      footerY,
+      { font, size: 7.5, color: COLOR_GRAY },
+    )
+    footerY -= 9
+
+    if (isLastPage) {
+      // Texto legal completo solo en la última página.
+      drawText(
+        pg,
+        sanitizeWinAnsi(
+          'Derecho de desistimiento de 14 días según art. 102 RDL 1/2007 (Ley General Defensa Consumidores y Usuarios).',
+        ),
+        MARGIN_X,
+        footerY,
+        { font, size: 7.5, color: COLOR_GRAY },
+      )
+      footerY -= 9
+
+      // Tarea 3: email de respaldo — solo storeEmail real, sin inventar dominio.
+      const devolucionesEmail = storeEmail || null
+      const devolucionesLine = devolucionesEmail
+        ? sanitizeWinAnsi(`Devoluciones: ${devolucionesEmail} · Consulta las condiciones en nuestra web.`)
+        : sanitizeWinAnsi('Devoluciones: consulta las condiciones en nuestra web.')
+      drawText(pg, devolucionesLine, MARGIN_X, footerY, {
+        font, size: 7.5, color: COLOR_GRAY,
+      })
+    }
+  }
+
+  // ─── Página 1 ───
+  let page = addNewPage()
   let y = PAGE_H - MARGIN_TOP
 
   /* ─── HEADER: marca + número factura ─── */
@@ -567,66 +680,38 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
   y = refBoxY - 42 - 18
 
   /* ─── TABLA DE LÍNEAS ─── */
-  // Columnas: Concepto / Talla / Cant. / Base unit / IVA unit / Total línea
-  const colX = {
-    concept: MARGIN_X + 8,
-    size: 290,
-    qty: 340,
-    base: 380,
-    iva: 440,
-    total: PAGE_W - MARGIN_X - 8,
-  }
-  const rowH = 18
+  // Dibuja la cabecera de columnas en la página actual y posiciona y en la
+  // primera fila de datos.
+  y = drawTableHeader(page, y)
 
-  // Header row
-  drawRect(page, MARGIN_X, y - rowH + 6, PAGE_W - 2 * MARGIN_X, rowH, COLOR_TABLE_HEAD_BG)
-  const headerY = y - 8
-  drawText(page, 'Concepto', colX.concept, headerY, {
-    font: fontBold,
-    size: 8,
-    color: COLOR_GRAY,
-  })
-  drawText(page, 'Talla', colX.size, headerY, {
-    font: fontBold,
-    size: 8,
-    color: COLOR_GRAY,
-    align: 'center',
-  })
-  drawText(page, 'Cant.', colX.qty, headerY, {
-    font: fontBold,
-    size: 8,
-    color: COLOR_GRAY,
-    align: 'center',
-  })
-  drawText(page, 'Base', colX.base, headerY, {
-    font: fontBold,
-    size: 8,
-    color: COLOR_GRAY,
-    align: 'right',
-  })
-  drawText(page, 'IVA', colX.iva, headerY, {
-    font: fontBold,
-    size: 8,
-    color: COLOR_GRAY,
-    align: 'right',
-  })
-  drawText(page, 'Total', colX.total, headerY, {
-    font: fontBold,
-    size: 8,
-    color: COLOR_GRAY,
-    align: 'right',
-  })
-  // Línea bajo la cabecera, anclada a headerY con margen suficiente: ni toca el
-  // texto de cabecera (que termina ~headerY-2) ni la primera fila.
-  drawHLine(page, MARGIN_X, PAGE_W - MARGIN_X, headerY - 9, COLOR_PRIMARY, 0.8)
-  // Primera fila bien separada de la cabecera (hueco fijo, NO en función de
-  // rowH) para que la línea quede en un espacio limpio.
-  y = headerY - 22
+  // ─── Filas de artículos con paginación real ───
+  // El umbral de corte de página reserva espacio para:
+  //   - la fila actual (~24pt si wrap, ~18pt si no)
+  //   - la línea de envío opcional (~18pt)
+  //   - el bloque de totales (~80pt)
+  //   - el bloque de pago (~35pt)
+  //   - el pie legal (~55pt sobre MARGIN_BOTTOM)
+  // Total de seguridad: MARGIN_BOTTOM + 60 puntos.
+  const PAGE_BREAK_THRESHOLD = MARGIN_BOTTOM + 60
 
-  // Filas
   const rate = taxRatePct / 100
   for (const item of order.order_items) {
-    if (y < MARGIN_BOTTOM + 200) break // protección por overflow (1 página normalmente basta)
+    // Altura estimada de esta fila (con posible wrap de concepto)
+    const conceptLines = wrapText(
+      sanitizeWinAnsi(item.product_name),
+      font,
+      9,
+      colX.size - colX.concept - 10,
+    )
+    const estimatedRowH = conceptLines.length > 1 ? 24 : rowH
+
+    // ─── Salto de página si no cabe la fila ───
+    if (y - estimatedRowH < PAGE_BREAK_THRESHOLD) {
+      // Crear nueva página y redibujar cabecera de columnas
+      page = addNewPage()
+      y = PAGE_H - MARGIN_TOP
+      y = drawTableHeader(page, y)
+    }
 
     const unitWithIVA = item.unit_price_cents
     const unitBase = Math.round(unitWithIVA / (1 + rate))
@@ -634,13 +719,6 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
     const baseLine = unitBase * item.quantity
     const ivaLine = unitIVA * item.quantity
 
-    // Concepto puede ser largo → wrap a 250pt
-    const conceptLines = wrapText(
-      sanitizeWinAnsi(item.product_name),
-      font,
-      9,
-      colX.size - colX.concept - 10,
-    )
     drawText(page, conceptLines[0] ?? '', colX.concept, y, {
       font,
       size: 9,
@@ -685,13 +763,18 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
       align: 'right',
     })
 
-    // Avance: si concepto wraps, dejar más espacio
-    y -= conceptLines.length > 1 ? 24 : rowH
+    y -= estimatedRowH
     drawHLine(page, MARGIN_X, PAGE_W - MARGIN_X, y + 11, COLOR_LIGHT, 0.4)
   }
 
-  // Línea de envío si aplica
+  // Línea de envío si aplica (se dibuja en la página actual, sin salto propio)
   if (order.shipping_cents > 0) {
+    // Si tampoco cabe la fila de envío, saltar página
+    if (y - rowH < PAGE_BREAK_THRESHOLD) {
+      page = addNewPage()
+      y = PAGE_H - MARGIN_TOP
+      y = drawTableHeader(page, y)
+    }
     const shipBase = Math.round(order.shipping_cents / (1 + rate))
     const shipIva = order.shipping_cents - shipBase
     drawText(page, 'Gastos de envío', colX.concept, y, {
@@ -733,7 +816,7 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
     drawHLine(page, MARGIN_X, PAGE_W - MARGIN_X, y + 11, COLOR_LIGHT, 0.4)
   }
 
-  /* ─── TOTALES ─── */
+  /* ─── TOTALES (solo en la última página) ─── */
   y -= 14
   const totalsX = PAGE_W - MARGIN_X - 220
   const totalsLabelX = totalsX
@@ -807,7 +890,7 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
   })
   y -= 30
 
-  /* ─── PAGO ─── */
+  /* ─── PAGO (solo en la última página) ─── */
   y -= 10
   drawText(page, 'Forma de pago', MARGIN_X, y, {
     font: fontBold,
@@ -815,10 +898,14 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
     color: COLOR_PRIMARY,
   })
   y -= 12
-  const paymentMethodLabel = order.payment_method === 'bizum' ? 'Bizum' : 'Tarjeta'
+
+  // Tarea 2: Redsys no procesa Bizum — siempre "Tarjeta".
+  // Tarea 4: estado derivado de order.status; solo "DEVUELTO" para returned,
+  // "PAGADO" para todos los demás estados facturables.
+  const paymentStatusLabel = order.status === 'returned' ? 'DEVUELTO' : 'PAGADO'
   drawText(
     page,
-    `${paymentMethodLabel} (Redsys) — Estado: PAGADO`,
+    `Tarjeta (Redsys) — Estado: ${paymentStatusLabel}`,
     MARGIN_X,
     y,
     { font, size: 9, color: COLOR_DARK },
@@ -826,6 +913,7 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
   y -= 20
 
   /* ─── VERIFACTU: QR + leyenda (solo si verifactu_mode === 'verifactu') ─── */
+  // El QR siempre se dibuja en la última página, sobre el pie legal.
   if (verifactuMode === 'verifactu') {
     // Generar QR como data URL PNG y embeber en esquina inferior derecha sobre el pie.
     const qrDataUrl: string = await QRCode.toDataURL(qrPayload, { width: 96, margin: 1 })
@@ -856,26 +944,11 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
     })
   }
 
-  /* ─── PIE LEGAL ─── */
-  drawHLine(page, MARGIN_X, PAGE_W - MARGIN_X, MARGIN_BOTTOM + 38, COLOR_LIGHT, 0.5)
-
-  const footerLines = [
-    `Factura ${invoiceNumber} · ${formatDateDMY(new Date())} · Página 1/1`,
-    sanitizeWinAnsi(
-      'Derecho de desistimiento de 14 días según art. 102 RDL 1/2007 (Ley General Defensa Consumidores y Usuarios).',
-    ),
-    sanitizeWinAnsi(
-      `Devoluciones: ${storeEmail || 'contacto@dc-bikes-cantabria.com'} · Consulta las condiciones en nuestra web.`,
-    ),
-  ]
-  let footerY = MARGIN_BOTTOM + 24
-  for (const line of footerLines) {
-    drawText(page, line, MARGIN_X, footerY, {
-      font,
-      size: 7.5,
-      color: COLOR_GRAY,
-    })
-    footerY -= 9
+  /* ─── PIE LEGAL: se dibuja en TODAS las páginas con "Página X/N" real ─── */
+  // En este punto ya conocemos el número total de páginas.
+  const totalPages = pages.length
+  for (let i = 0; i < pages.length; i++) {
+    drawPageFooter(pages[i], i + 1, totalPages, i === pages.length - 1)
   }
 
   return await pdfDoc.save()

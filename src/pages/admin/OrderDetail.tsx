@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Mail, Phone, FileText, Download, Save, Loader2, Package as PackageIcon, Store, MapPin, Receipt, Trash2, History, XCircle, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Mail, Phone, FileText, Download, Save, Loader2, Package as PackageIcon, Store, MapPin, Receipt, Trash2, History, XCircle, RefreshCw, FilePlus } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { OrderStatusBadge, ORDER_STATUS_META, type OrderStatus } from '@/components/admin/OrderStatusBadge'
@@ -18,6 +18,16 @@ type OrderItem = Database['public']['Tables']['order_items']['Row']
 type StatusHistoryRow = Database['public']['Tables']['order_status_history']['Row']
 type Invoice = Database['public']['Tables']['invoices']['Row']
 type ProductImage = Database['public']['Tables']['product_images']['Row']
+
+// Estados en los que el admin puede emitir factura (refleja BILLABLE_STATUSES
+// de la Edge Function admin-generate-invoice para habilitar el botón en el UI).
+const BILLABLE_STATUSES = new Set([
+  'accepted',
+  'ready_pickup',
+  'shipped',
+  'delivered',
+  'returned',
+])
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('es-ES', {
@@ -55,6 +65,19 @@ export default function OrderDetail() {
 
   // Invoice download
   const [downloadingInvoice, setDownloadingInvoice] = useState(false)
+
+  // Emisión de factura (modal admin)
+  const [emitOpen, setEmitOpen] = useState(false)
+  const [emitting, setEmitting] = useState(false)
+  // Tipo de factura seleccionado en el modal
+  const [emitType, setEmitType] = useState<'simplified' | 'full'>('simplified')
+  // Campos fiscales del formulario de emisión
+  const [emitDni, setEmitDni] = useState('')
+  const [emitBusinessName, setEmitBusinessName] = useState('')
+  const [emitCif, setEmitCif] = useState('')
+  const [emitAddress, setEmitAddress] = useState('')
+  // Campos que el backend indicó como faltantes (segunda pasada)
+  const [emitMissing, setEmitMissing] = useState<string[]>([])
 
   // Delete order modal
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -224,6 +247,72 @@ export default function OrderDetail() {
       toast.error(err instanceof Error ? err.message : 'Error al descargar')
     } finally {
       setDownloadingInvoice(false)
+    }
+  }
+
+  // Abre el modal de emisión de factura y prerellena con los datos fiscales
+  // que ya estén guardados en el pedido (customer_dni, invoice_*).
+  const handleOpenEmitModal = () => {
+    if (!order) return
+    // Prerelleno: tipo basado en needs_invoice del pedido
+    const defaultType = order.needs_invoice ? 'full' : 'simplified'
+    setEmitType(defaultType as 'simplified' | 'full')
+    setEmitDni((order as Order & { customer_dni?: string | null }).customer_dni ?? '')
+    setEmitBusinessName(
+      (order as Order & { invoice_business_name?: string | null }).invoice_business_name ?? '',
+    )
+    setEmitCif((order as Order & { invoice_cif?: string | null }).invoice_cif ?? '')
+    setEmitAddress((order as Order & { invoice_address?: string | null }).invoice_address ?? '')
+    setEmitMissing([])
+    setEmitOpen(true)
+  }
+
+  // Envía la solicitud de emisión a la Edge Function admin-generate-invoice.
+  const handleEmitInvoice = async () => {
+    if (!order || emitting) return
+    setEmitting(true)
+    setEmitMissing([])
+    try {
+      const body: Record<string, unknown> = { order_id: order.id }
+
+      if (emitType === 'full') {
+        body.full_invoice = true
+        if (emitBusinessName.trim()) body.business_name = emitBusinessName.trim()
+        if (emitCif.trim()) body.cif = emitCif.trim()
+        if (emitAddress.trim()) body.address = emitAddress.trim()
+      } else {
+        body.full_invoice = false
+        if (emitDni.trim()) body.dni = emitDni.trim()
+      }
+
+      const { data, error } = await supabase.functions.invoke('admin-generate-invoice', {
+        body,
+      })
+
+      if (error) throw new Error(error.message)
+
+      // El backend puede responder con fiscal_data_required si faltan campos.
+      if (data?.fiscal_data_required) {
+        setEmitMissing((data.need as string[]) ?? [])
+        return
+      }
+
+      if (!data?.ok) {
+        throw new Error(data?.error ?? 'No se pudo emitir la factura')
+      }
+
+      // Factura emitida: abrir el PDF y refrescar el panel.
+      if (data.signed_url) {
+        window.open(data.signed_url as string, '_blank', 'noopener,noreferrer')
+      }
+      toast.success(`Factura ${data.invoice_number ?? ''} emitida correctamente`)
+      setEmitOpen(false)
+      // Recargar datos del pedido para mostrar la sección de factura emitida.
+      await fetchAll(true)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al emitir la factura')
+    } finally {
+      setEmitting(false)
     }
   }
 
@@ -575,8 +664,8 @@ export default function OrderDetail() {
               </div>
             </Section>
 
-            {/* Invoice */}
-            {invoice && (
+            {/* Invoice: descarga si ya existe; botón de emisión si no */}
+            {invoice ? (
               <Section title="Factura" muted icon={<FileText size={15} aria-hidden="true" />}>
                 <p className="text-sm font-[var(--font-cond)] text-[var(--color-cream)] tracking-wide">
                   {invoice.invoice_number}
@@ -593,6 +682,21 @@ export default function OrderDetail() {
                 >
                   {downloadingInvoice ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <Download size={13} aria-hidden="true" />}
                   Descargar PDF
+                </Button>
+              </Section>
+            ) : BILLABLE_STATUSES.has(order.status) && (
+              <Section title="Factura" muted icon={<FileText size={15} aria-hidden="true" />}>
+                <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)] mb-3">
+                  No hay factura emitida para este pedido.
+                </p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleOpenEmitModal}
+                  className="w-full"
+                >
+                  <FilePlus size={13} aria-hidden="true" />
+                  Emitir factura
                 </Button>
               </Section>
             )}
@@ -649,6 +753,158 @@ export default function OrderDetail() {
           </aside>
         </div>
       </div>
+
+      {/* Modal de emisión de factura */}
+      <Modal
+        open={emitOpen}
+        onClose={() => { if (!emitting) { setEmitOpen(false); setEmitMissing([]) } }}
+        title="Emitir factura"
+        size="md"
+      >
+        <div className="space-y-4">
+          {/* Selector de tipo */}
+          <div>
+            <p className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-2">
+              Tipo de factura
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {(['simplified', 'full'] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => { setEmitType(t); setEmitMissing([]) }}
+                  className={clsx(
+                    'px-3 py-2 rounded-lg text-xs font-[var(--font-cond)] tracking-wide border transition-colors',
+                    emitType === t
+                      ? 'bg-[var(--color-lavender)]/20 border-[var(--color-lavender)]/60 text-[var(--color-cream)]'
+                      : 'bg-[var(--color-ink)] border-[var(--color-card-hover)] text-[var(--color-cream-dim)] hover:border-[var(--color-lavender)]/30 hover:text-[var(--color-cream)]',
+                  )}
+                >
+                  {t === 'simplified' ? 'Simplificada (B2C)' : 'Completa (B2B)'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Campos según tipo */}
+          {emitType === 'simplified' ? (
+            <div>
+              <label className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-1 block">
+                NIF / DNI del comprador
+                {emitMissing.includes('dni') && (
+                  <span className="ml-2 text-red-400 normal-case tracking-normal">— requerido</span>
+                )}
+              </label>
+              <input
+                type="text"
+                value={emitDni}
+                onChange={e => setEmitDni(e.target.value)}
+                placeholder="12345678Z"
+                maxLength={9}
+                className={clsx(
+                  'w-full text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-ink)] px-3 py-2 rounded-lg border focus:outline-none transition-colors uppercase',
+                  emitMissing.includes('dni')
+                    ? 'border-red-600/60 focus:border-red-500'
+                    : 'border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50',
+                )}
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-1 block">
+                  Razón social / Nombre
+                  {emitMissing.includes('business_name') && (
+                    <span className="ml-2 text-red-400 normal-case tracking-normal">— requerido</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  value={emitBusinessName}
+                  onChange={e => setEmitBusinessName(e.target.value)}
+                  placeholder="Empresa S.L."
+                  className={clsx(
+                    'w-full text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-ink)] px-3 py-2 rounded-lg border focus:outline-none transition-colors',
+                    emitMissing.includes('business_name')
+                      ? 'border-red-600/60 focus:border-red-500'
+                      : 'border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50',
+                  )}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-1 block">
+                  NIF / CIF
+                  {emitMissing.includes('cif') && (
+                    <span className="ml-2 text-red-400 normal-case tracking-normal">— requerido</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  value={emitCif}
+                  onChange={e => setEmitCif(e.target.value)}
+                  placeholder="B12345678"
+                  maxLength={9}
+                  className={clsx(
+                    'w-full text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-ink)] px-3 py-2 rounded-lg border focus:outline-none transition-colors uppercase',
+                    emitMissing.includes('cif')
+                      ? 'border-red-600/60 focus:border-red-500'
+                      : 'border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50',
+                  )}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-1 block">
+                  Dirección fiscal
+                  {emitMissing.includes('address') && (
+                    <span className="ml-2 text-red-400 normal-case tracking-normal">— requerido</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  value={emitAddress}
+                  onChange={e => setEmitAddress(e.target.value)}
+                  placeholder="Calle Mayor 1, 39600 El Astillero"
+                  className={clsx(
+                    'w-full text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-ink)] px-3 py-2 rounded-lg border focus:outline-none transition-colors',
+                    emitMissing.includes('address')
+                      ? 'border-red-600/60 focus:border-red-500'
+                      : 'border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50',
+                  )}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Aviso si el backend devolvió fiscal_data_required */}
+          {emitMissing.length > 0 && (
+            <p className="text-xs text-red-300 font-[var(--font-body)]">
+              Completa los campos marcados para poder emitir la factura.
+            </p>
+          )}
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setEmitOpen(false); setEmitMissing([]) }}
+              disabled={emitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleEmitInvoice}
+              disabled={emitting}
+            >
+              {emitting
+                ? <Loader2 size={13} className="animate-spin" aria-hidden="true" />
+                : <FilePlus size={13} aria-hidden="true" />}
+              {emitting ? 'Emitiendo…' : 'Emitir y descargar PDF'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         open={deleteOpen}
