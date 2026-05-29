@@ -11,30 +11,39 @@
 /** Reemplaza caracteres no-WinAnsi (smart quotes, em-dash, ellipsis, etc.) por equivalentes ASCII/WinAnsi. */
 export function sanitizeWinAnsi(input: string | null | undefined): string {
   if (input == null) return ''
+  // IMPORTANTE: las clases de caracteres usan SIEMPRE escapes \uXXXX, NUNCA
+  // caracteres literales. Una versión anterior tenía un rango literal corrupto
+  // que incluía el espacio normal (U+0020) y lo eliminaba → las palabras salían
+  // pegadas en el PDF ("FACTURAR A" -> "FACTURARA", "Base imponible" ->
+  // "Baseimponible"). Con escapes esto no puede volver a pasar.
   return String(input)
-    // smart single quotes / apostrophes (U+2018..U+201B)
+    // comillas simples tipográficas / apóstrofos (U+2018..U+201B)
     .replace(/[‘’‚‛]/g, "'")
-    // smart double quotes (U+201C..U+201F)
+    // comillas dobles tipográficas (U+201C..U+201F)
     .replace(/[“”„‟]/g, '"')
-    // dashes: en-dash (U+2013), em-dash (U+2014), minus (U+2212)
+    // guiones: en-dash (U+2013), em-dash (U+2014), signo menos (U+2212)
     .replace(/[–—−]/g, '-')
-    // ellipsis (U+2026)
+    // puntos suspensivos (U+2026)
     .replace(/…/g, '...')
-    // various unicode spaces (NBSP U+00A0, en/em quad/space U+2000-U+200A,
-    // narrow nbsp U+202F, medium math space U+205F, ideographic space U+3000)
-    .replace(/[  -    ]/g, ' ')
-    // bullets (U+2022, U+2023, U+25E6)
+    // espacios unicode -> espacio normal (NBSP U+00A0, ogham U+1680,
+    // U+2000-U+200A, narrow nbsp U+202F, medium math U+205F, ideographic U+3000)
+    .replace(/[   -   　]/g, ' ')
+    // viñetas (U+2022, U+2023, U+25E6)
     .replace(/[•‣◦]/g, '*')
-    // arrows (U+2190..U+21FF) → simple ascii
+    // flechas (U+2190..U+21FF) -> ascii simple
     .replace(/[←-⇿]/g, '->')
-    // soft hyphen (U+00AD) → remove
+    // guion suave (U+00AD) -> eliminar
     .replace(/­/g, '')
-    // zero-width chars (U+200B..U+200D, U+FEFF)
-    .replace(/[ -  ]/g, '')
-    // any remaining char outside WinAnsi-safe set → '?' as last resort
-    // (WinAnsi: ASCII 0x20-0x7E + Latin-1 Suppl 0xA0-0xFF + selected 0x80-0x9F)
-    // Keep €(U+20AC), Š(U+0160) etc. that are in CP-1252.
-    .replace(/[^\x20-\x7E -ÿ€ŠšŽžŒœŸ‰‹›™†‡ˆ˜ƒ]/g, '?')
+    // caracteres de ancho cero (U+200B..U+200D, U+FEFF) -> eliminar
+    .replace(/[​‌‍﻿]/g, '')
+    // Cualquier carácter fuera del conjunto seguro WinAnsi -> '?'.
+    // Permitidos: ASCII 0x20-0x7E (incluye el ESPACIO 0x20), Latin-1
+    // U+00A0-U+00FF y una selección CP-1252 (€, Š, š, Ž, ž, Œ, œ, Ÿ, ‰, ‹, ›,
+    // ™, †, ‡, ˆ, ˜, ƒ). El espacio NUNCA se elimina.
+    .replace(
+      /[^\x20-\x7E -ÿ€ŠšŽžŒœŸ‰‹›™†‡ˆ˜ƒ]/g,
+      '?',
+    )
 }
 
 /**
