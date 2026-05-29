@@ -576,7 +576,7 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
     iva: 440,
     total: PAGE_W - MARGIN_X - 8,
   }
-  const rowH = 22
+  const rowH = 18
 
   // Header row
   drawRect(page, MARGIN_X, y - rowH + 6, PAGE_W - 2 * MARGIN_X, rowH, COLOR_TABLE_HEAD_BG)
