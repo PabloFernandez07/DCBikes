@@ -460,7 +460,13 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
   const customerName = sanitizeWinAnsi(
     `${order.customer_first_name} ${order.customer_last_name}`.trim(),
   )
-  drawText(page, customerName, MARGIN_X, y, { font: fontBold, size: 11, color: COLOR_DARK })
+  // Factura completa: el nombre fiscal es la razón social/nombre aportado.
+  // Lo usamos como nombre principal para NO duplicarlo con el del pedido.
+  const isFullInvoice = order.needs_invoice === true && !!order.invoice_business_name
+  const primaryName = isFullInvoice
+    ? sanitizeWinAnsi(order.invoice_business_name as string)
+    : customerName
+  drawText(page, primaryName, MARGIN_X, y, { font: fontBold, size: 11, color: COLOR_DARK })
   y -= 13
 
   const contactLine = [order.customer_email, order.customer_phone]
@@ -470,24 +476,8 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
   drawText(page, contactLine, MARGIN_X, y, { font, size: 9, color: COLOR_GRAY })
   y -= 12
 
-  // C-09: mostrar NIF/DNI del receptor en facturas B2C con NIF aportado.
-  if (!order.needs_invoice && order.customer_dni) {
-    drawText(page, `NIF/DNI: ${sanitizeWinAnsi(order.customer_dni)}`, MARGIN_X, y, {
-      font,
-      size: 9,
-      color: COLOR_DARK,
-    })
-    y -= 12
-  }
-
-  if (order.needs_invoice && order.invoice_business_name) {
-    y -= 4
-    drawText(page, sanitizeWinAnsi(order.invoice_business_name), MARGIN_X, y, {
-      font: fontBold,
-      size: 10,
-      color: COLOR_DARK,
-    })
-    y -= 12
+  if (isFullInvoice) {
+    // Factura ordinaria completa: NIF/CIF + dirección fiscal del destinatario.
     if (order.invoice_cif) {
       drawText(page, `NIF/CIF: ${sanitizeWinAnsi(order.invoice_cif)}`, MARGIN_X, y, {
         font,
@@ -503,6 +493,14 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
         y -= 11
       }
     }
+  } else if (order.customer_dni) {
+    // Factura simplificada con identificación del comprador (NIF/DNI).
+    drawText(page, `NIF/DNI: ${sanitizeWinAnsi(order.customer_dni)}`, MARGIN_X, y, {
+      font,
+      size: 9,
+      color: COLOR_DARK,
+    })
+    y -= 12
   } else if (order.delivery_method === 'shipping' && order.shipping_address) {
     // En B2C, mostrar dirección de envío como referencia
     drawText(page, 'Dirección de envío:', MARGIN_X, y, {
