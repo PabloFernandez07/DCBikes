@@ -355,6 +355,17 @@ export default function MyOrderDetailCustomer() {
     }
   }
 
+  // Abre el formulario de factura dejando elegir el tipo (por defecto simplificada).
+  const openInvoiceForm = () => {
+    if (!order) return
+    setFiscalWantsFull(false)
+    // Prefill del nombre con el del pedido (útil para la factura completa).
+    if (!fiscalBusinessName) {
+      setFiscalBusinessName(`${order.customer_first_name} ${order.customer_last_name}`.trim())
+    }
+    setInvoiceFormOpen(true)
+  }
+
   const handleCancelOrder = async () => {
     if (!order || cancelling) return
     const session = readSession()
@@ -765,7 +776,7 @@ export default function MyOrderDetailCustomer() {
               onClick={() =>
                 order.invoice_signed_url
                   ? window.open(order.invoice_signed_url, '_blank', 'noopener,noreferrer')
-                  : requestInvoice()
+                  : openInvoiceForm()
               }
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-lavender)] text-[var(--color-ink)] font-[var(--font-cond)] font-semibold text-sm tracking-wide hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             >
@@ -966,10 +977,45 @@ export default function MyOrderDetailCustomer() {
         size="md"
       >
         <div className="space-y-4">
+          {/* Selector de tipo de factura */}
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-[var(--font-cond)] font-medium text-[var(--color-cream-dim)] tracking-wide">
+              Tipo de factura
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { value: false, label: 'Simplificada', desc: 'Con tu NIF/DNI' },
+                  { value: true, label: 'Completa', desc: 'Con todos tus datos fiscales' },
+                ] as const
+              ).map((opt) => {
+                const selected = fiscalWantsFull === opt.value
+                return (
+                  <button
+                    key={String(opt.value)}
+                    type="button"
+                    onClick={() => setFiscalWantsFull(opt.value)}
+                    aria-pressed={selected}
+                    className={`text-left rounded-xl border p-3 transition-colors ${
+                      selected
+                        ? 'border-[var(--color-lavender)] bg-[rgba(196,162,207,0.10)]'
+                        : 'border-[var(--color-card-hover)] hover:border-[var(--color-mid)]/60'
+                    }`}
+                  >
+                    <span className="block font-[var(--font-cond)] font-semibold text-sm text-[var(--color-cream)]">
+                      {opt.label}
+                    </span>
+                    <span className="block text-xs text-[var(--color-mid)] mt-0.5">{opt.desc}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed">
             {fiscalWantsFull
-              ? 'Para emitir la factura completa con tus datos fiscales, complétalos a continuación:'
-              : 'Necesitamos tu NIF/DNI para emitir la factura. Introdúcelo para generarla:'}
+              ? 'Factura completa: incluye tu razón social/nombre, NIF/CIF y dirección fiscal.'
+              : 'Factura simplificada: solo necesitamos tu NIF/DNI.'}
           </p>
 
           {fiscalWantsFull ? (

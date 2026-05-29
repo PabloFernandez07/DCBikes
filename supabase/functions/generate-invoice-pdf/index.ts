@@ -489,7 +489,7 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
     })
     y -= 12
     if (order.invoice_cif) {
-      drawText(page, `CIF: ${sanitizeWinAnsi(order.invoice_cif)}`, MARGIN_X, y, {
+      drawText(page, `NIF/CIF: ${sanitizeWinAnsi(order.invoice_cif)}`, MARGIN_X, y, {
         font,
         size: 9,
         color: COLOR_DARK,
