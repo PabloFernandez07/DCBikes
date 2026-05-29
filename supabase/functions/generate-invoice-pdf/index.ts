@@ -44,6 +44,7 @@ import {
   formatEuroCents,
   sanitizeWinAnsi,
 } from '../_shared/pdf-utils.ts'
+import { verifyInternalSecret } from '../_shared/security.ts'
 
 /* ─────────── Constantes layout A4 (puntos PDF, 72pt = 1in) ─────────── */
 const PAGE_W = 595.28
@@ -80,6 +81,16 @@ serve(async (req) => {
 
   try {
     if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
+
+    // Solo invocable internamente (order-accept) con x-internal-secret.
+    // Tras la migración de claves de Supabase el SERVICE_ROLE_KEY inyectado
+    // dejó de ser un JWT, así que verify_jwt=true rechazaba el invoke con 401
+    // y la factura nunca se generaba. Ahora verify_jwt=false + este check es
+    // la auth real (mismo patrón que generate-order-contract y send-*).
+    if (!verifyInternalSecret(req)) {
+      console.warn(`[${ts()}] generate-invoice-pdf: x-internal-secret inválido o ausente`)
+      return jsonError('forbidden', 403, req)
+    }
 
     const body = await req.json().catch(() => ({})) as { order_id?: string }
     const orderId = body.order_id
