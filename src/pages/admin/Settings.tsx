@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   ShoppingCart,
   FileText,
@@ -643,6 +643,60 @@ export function Settings() {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  // Resalta la palabra buscada dentro del contenido (CSS Custom Highlight API).
+  // No modifica el DOM (seguro con React); si el navegador no la soporta, se
+  // ignora silenciosamente.
+  const searchRootRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const HighlightCtor = (window as unknown as {
+      Highlight?: new (...ranges: Range[]) => unknown
+    }).Highlight
+    const cssHighlights = (CSS as unknown as {
+      highlights?: { set: (k: string, v: unknown) => void; delete: (k: string) => void }
+    }).highlights
+    if (!HighlightCtor || !cssHighlights) return
+    cssHighlights.delete('settings-search')
+
+    const q = normalizedQuery
+    const root = searchRootRef.current
+    if (loading || !root || q.length < 2) return
+
+    const ranges: Range[] = []
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement
+        if (!parent) return NodeFilter.FILTER_REJECT
+        // Excluir la propia barra de búsqueda y elementos no textuales.
+        if (parent.closest('[data-search-toolbar], input, textarea, script, style')) {
+          return NodeFilter.FILTER_REJECT
+        }
+        return node.nodeValue && node.nodeValue.trim()
+          ? NodeFilter.FILTER_ACCEPT
+          : NodeFilter.FILTER_REJECT
+      },
+    })
+
+    let node: Node | null
+    while ((node = walker.nextNode())) {
+      const text = node.nodeValue ?? ''
+      const lower = text.toLowerCase()
+      let from = lower.indexOf(q)
+      while (from !== -1) {
+        const range = document.createRange()
+        range.setStart(node, from)
+        range.setEnd(node, from + q.length)
+        ranges.push(range)
+        from = lower.indexOf(q, from + q.length)
+      }
+    }
+
+    if (ranges.length) {
+      cssHighlights.set('settings-search', new HighlightCtor(...ranges))
+    }
+    return () => cssHighlights.delete('settings-search')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedQuery, loading])
+
   // Resalta el fragmento coincidente dentro de una etiqueta (para los chips).
   const highlightMatch = (label: string, query: string): React.ReactNode => {
     if (!query) return label
@@ -661,7 +715,7 @@ export function Settings() {
 
   return (
     <>
-      <div className="space-y-6 max-w-2xl">
+      <div ref={searchRootRef} className="space-y-6 max-w-2xl">
         {/* Banner crítico — datos fiscales incompletos */}
         {fiscalIncomplete && (
           <div
@@ -726,7 +780,7 @@ export function Settings() {
 
         {/* Barra de búsqueda + navegación rápida */}
         {!loading && (
-          <div className="sticky top-0 z-20 bg-[var(--color-ink)] pt-1 pb-3">
+          <div data-search-toolbar className="sticky top-0 z-20 bg-[var(--color-ink)] pt-1 pb-3">
             <div className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl p-3 space-y-3">
               <div className="relative">
                 <Search

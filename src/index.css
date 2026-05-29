@@ -68,3 +68,11 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Resaltado de la palabra buscada (CSS Custom Highlight API).
+   Usado por el buscador del admin de Configuración. No modifica el DOM. */
+::highlight(settings-search) {
+  background-color: var(--color-lavender);
+  color: var(--color-ink);
+  border-radius: 2px;
+}
