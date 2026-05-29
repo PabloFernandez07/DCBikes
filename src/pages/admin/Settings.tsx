@@ -162,6 +162,13 @@ export function Settings() {
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({})
   const [savingPayment, setSavingPayment] = useState(false)
 
+  // ─── Verifactu (modo + entorno) ─────────────────────────────────────────
+  const [verifactuValues, setVerifactuValues] = useState<{
+    verifactu_mode: 'no_verifactu' | 'verifactu'
+    verifactu_environment: 'preproduccion' | 'produccion'
+  }>({ verifactu_mode: 'no_verifactu', verifactu_environment: 'preproduccion' })
+  const [savingVerifactu, setSavingVerifactu] = useState(false)
+
   // ─── Certificado digital (Verifactu) ───────────────────────────────────
   const [certFile, setCertFile] = useState<File | null>(null)
   const [certPassword, setCertPassword] = useState('')
@@ -245,6 +252,13 @@ export function Settings() {
         setPaymentValues({
           redsys_environment: env === 'prod' ? 'prod' : 'test',
           redsys_merchant_name: str('redsys_merchant_name', PAYMENT_DEFAULTS.redsys_merchant_name),
+        })
+
+        const vfMode = str('verifactu_mode', 'no_verifactu')
+        const vfEnv = str('verifactu_environment', 'preproduccion')
+        setVerifactuValues({
+          verifactu_mode: vfMode === 'verifactu' ? 'verifactu' : 'no_verifactu',
+          verifactu_environment: vfEnv === 'produccion' ? 'produccion' : 'preproduccion',
         })
 
         const certUploadedAt = str('verifactu_cert_uploaded_at', '')
@@ -524,6 +538,31 @@ export function Settings() {
       toast.error(err instanceof Error ? err.message : 'Error al guardar el certificado')
     } finally {
       setSavingCert(false)
+    }
+  }
+
+  const handleSaveVerifactu = async () => {
+    // No se puede activar el envío a la AEAT sin certificado digital configurado.
+    if (verifactuValues.verifactu_mode === 'verifactu' && !certStatus.configured) {
+      toast.error('Para activar Verifactu primero debes subir el certificado digital (más abajo).')
+      return
+    }
+    setSavingVerifactu(true)
+    const builder = getSettingsBuilder()
+    const results = await Promise.all([
+      builder.upsert({ key: 'verifactu_mode', value: JSON.stringify(verifactuValues.verifactu_mode) }),
+      builder.upsert({ key: 'verifactu_environment', value: JSON.stringify(verifactuValues.verifactu_environment) }),
+    ])
+    setSavingVerifactu(false)
+    const anyError = results.find((r) => r.error)
+    if (anyError?.error) {
+      toast.error('Error al guardar: ' + anyError.error.message)
+    } else {
+      toast.success(
+        verifactuValues.verifactu_mode === 'verifactu'
+          ? 'Verifactu activado'
+          : 'Verifactu desactivado',
+      )
     }
   }
 
@@ -1156,13 +1195,108 @@ export function Settings() {
               </div>
             </section>
 
-            {/* Section: Certificado digital (Verifactu) */}
+            {/* Section: Verifactu (facturación electrónica AEAT) */}
             <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
               <SectionHeader
                 icon={KeyRound}
-                title="Certificado digital (Verifactu)"
-                subtitle="Certificado del autónomo para firmar y enviar facturas a la AEAT"
+                title="Verifactu (facturación electrónica AEAT)"
+                subtitle="Activación del envío de facturas a Hacienda y certificado digital del autónomo."
               />
+
+              {/* Interruptor Activado / Desactivado */}
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-[var(--font-cond)] font-medium text-[var(--color-cream-dim)] tracking-wide">
+                  Envío a la AEAT
+                </span>
+                <div className="inline-flex rounded-lg border border-[var(--color-card-hover)] bg-[var(--color-ink)] p-1 w-fit">
+                  {(
+                    [
+                      { value: 'no_verifactu' as const, label: 'Desactivado' },
+                      { value: 'verifactu' as const, label: 'Activado' },
+                    ] as const
+                  ).map((opt) => {
+                    const selected = verifactuValues.verifactu_mode === opt.value
+                    const isOn = opt.value === 'verifactu'
+                    return (
+                      <button
+                        type="button"
+                        key={opt.value}
+                        onClick={() =>
+                          setVerifactuValues((prev) => ({ ...prev, verifactu_mode: opt.value }))
+                        }
+                        aria-pressed={selected}
+                        className={`px-4 py-1.5 rounded-md text-sm font-[var(--font-cond)] tracking-wide transition-colors ${
+                          selected
+                            ? isOn
+                              ? 'bg-green-500 text-[var(--color-ink)]'
+                              : 'bg-[var(--color-card-hover)] text-[var(--color-cream)]'
+                            : 'text-[var(--color-mid)] hover:text-[var(--color-cream)]'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Entorno AEAT */}
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-[var(--font-cond)] font-medium text-[var(--color-cream-dim)] tracking-wide">
+                  Entorno AEAT
+                </span>
+                <div className="inline-flex rounded-lg border border-[var(--color-card-hover)] bg-[var(--color-ink)] p-1 w-fit">
+                  {(
+                    [
+                      { value: 'preproduccion' as const, label: 'Preproducción' },
+                      { value: 'produccion' as const, label: 'Producción' },
+                    ] as const
+                  ).map((opt) => {
+                    const selected = verifactuValues.verifactu_environment === opt.value
+                    const isProd = opt.value === 'produccion'
+                    return (
+                      <button
+                        type="button"
+                        key={opt.value}
+                        onClick={() =>
+                          setVerifactuValues((prev) => ({ ...prev, verifactu_environment: opt.value }))
+                        }
+                        aria-pressed={selected}
+                        className={`px-4 py-1.5 rounded-md text-sm font-[var(--font-cond)] tracking-wide transition-colors ${
+                          selected
+                            ? isProd
+                              ? 'bg-[var(--color-brand-red)] text-[var(--color-cream)]'
+                              : 'bg-[var(--color-lavender)] text-[var(--color-ink)]'
+                            : 'text-[var(--color-mid)] hover:text-[var(--color-cream)]'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {verifactuValues.verifactu_mode === 'verifactu' && !certStatus.configured && (
+                <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-[rgba(245,200,80,0.06)] p-4 text-sm">
+                  <ShieldAlert size={18} className="text-amber-400 mt-0.5 shrink-0" aria-hidden={true} />
+                  <p className="text-[var(--color-cream-dim)]">
+                    Para activar Verifactu necesitas subir el certificado digital (más abajo). Sin él no se
+                    puede firmar el envío a la AEAT.
+                  </p>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-1">
+                <Button variant="primary" onClick={handleSaveVerifactu} loading={savingVerifactu}>
+                  Guardar Verifactu
+                </Button>
+              </div>
+
+              <div className="border-t border-[var(--color-card-hover)] pt-5">
+                <h3 className="text-sm font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-3">
+                  Certificado digital
+                </h3>
 
               {certStatus.configured ? (
                 <div className="flex items-start gap-3 rounded-xl border border-green-500/30 bg-[rgba(80,200,120,0.06)] p-4">
@@ -1243,6 +1377,7 @@ export function Settings() {
                 <Button variant="primary" onClick={handleSaveCertificate} loading={savingCert}>
                   {certStatus.configured ? 'Reemplazar certificado' : 'Guardar certificado'}
                 </Button>
+              </div>
               </div>
             </section>
           </div>
