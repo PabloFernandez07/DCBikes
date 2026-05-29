@@ -687,7 +687,7 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
 
     // Avance: si concepto wraps, dejar más espacio
     y -= conceptLines.length > 1 ? 24 : rowH
-    drawHLine(page, MARGIN_X, PAGE_W - MARGIN_X, y + 6, COLOR_LIGHT, 0.4)
+    drawHLine(page, MARGIN_X, PAGE_W - MARGIN_X, y + 11, COLOR_LIGHT, 0.4)
   }
 
   // Línea de envío si aplica
@@ -730,7 +730,7 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
       align: 'right',
     })
     y -= rowH
-    drawHLine(page, MARGIN_X, PAGE_W - MARGIN_X, y + 6, COLOR_LIGHT, 0.4)
+    drawHLine(page, MARGIN_X, PAGE_W - MARGIN_X, y + 11, COLOR_LIGHT, 0.4)
   }
 
   /* ─── TOTALES ─── */
