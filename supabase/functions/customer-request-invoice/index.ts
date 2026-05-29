@@ -197,22 +197,35 @@ serve(async (req) => {
     }
 
     // 7. Generar la factura (interno, con doble capa de auth).
-    const { data: genData, error: genErr } = await supabase.functions.invoke(
-      'generate-invoice-pdf',
-      {
+    // supabase-js lanza FunctionsHttpError en respuestas no-2xx; capturamos
+    // para leer el cuerpo de error de generate-invoice-pdf y propagar el motivo.
+    let genData: unknown = null
+    let genErr: unknown = null
+    try {
+      const res = await supabase.functions.invoke('generate-invoice-pdf', {
         body: { order_id: order.id },
         headers: internalSecretHeader(),
-      },
-    )
+      })
+      genData = res.data
+      genErr = res.error
+    } catch (e) {
+      genErr = e
+    }
 
     if (genErr) {
-      // generate-invoice-pdf devuelve 409 si el NIF del emisor no es válido,
-      // 400 si el pedido >400€ no tiene DNI, etc. Propagamos un mensaje claro.
-      const detail =
+      // Intentar extraer el mensaje real del cuerpo de la Response del error.
+      let detail =
         (genData as { error?: string } | null)?.error ??
-        genErr.message ??
+        (genErr as { message?: string })?.message ??
         'No se pudo generar la factura.'
-      console.warn(`[${ts()}] generate-invoice-pdf via customer falló:`, detail)
+      const ctx = (genErr as { context?: { json?: () => Promise<{ error?: string }> } }).context
+      if (ctx && typeof ctx.json === 'function') {
+        try {
+          const b = await ctx.json()
+          if (b?.error) detail = b.error
+        } catch { /* ignore */ }
+      }
+      console.warn(`[${ts()}] generate-invoice-pdf via customer falló: ${detail}`)
       return jsonError(detail, 502, req)
     }
 
