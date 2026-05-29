@@ -50,6 +50,7 @@ interface InputCustomer {
   last_name: string
   email: string
   phone: string
+  dni: string | null
 }
 
 interface InputShippingAddress {
@@ -132,6 +133,7 @@ function validateBody(raw: unknown): { ok: true; body: InputBody } | { ok: false
     last_name: asString(c.last_name).trim(),
     email: asString(c.email).trim().toLowerCase(),
     phone: asString(c.phone).trim(),
+    dni: asString(c.dni).trim().toUpperCase() || null,
   }
   if (!customer.first_name || !customer.last_name) {
     return { ok: false, error: 'nombre/apellidos requeridos' }
@@ -479,6 +481,7 @@ serve(async (req) => {
         customer_phone: body.customer.phone,
         customer_first_name: body.customer.first_name,
         customer_last_name: body.customer.last_name,
+        customer_dni: body.customer.dni,
         shipping_address: body.shipping_address?.address ?? null,
         shipping_city: body.shipping_address?.city ?? null,
         shipping_postal_code: body.shipping_address?.postal_code ?? null,
