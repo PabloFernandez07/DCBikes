@@ -5,6 +5,9 @@ import {
   CreditCard,
   ShieldAlert,
   Info,
+  KeyRound,
+  CheckCircle2,
+  Trash2,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -159,6 +162,18 @@ export function Settings() {
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({})
   const [savingPayment, setSavingPayment] = useState(false)
 
+  // ─── Certificado digital (Verifactu) ───────────────────────────────────
+  const [certFile, setCertFile] = useState<File | null>(null)
+  const [certPassword, setCertPassword] = useState('')
+  const [certNif, setCertNif] = useState('')
+  const [savingCert, setSavingCert] = useState(false)
+  const [certStatus, setCertStatus] = useState<{
+    configured: boolean
+    filename: string | null
+    uploaded_at: string | null
+    nif: string | null
+  }>({ configured: false, filename: null, uploaded_at: null, nif: null })
+
   useEffect(() => {
     supabase
       .from('settings')
@@ -230,6 +245,14 @@ export function Settings() {
         setPaymentValues({
           redsys_environment: env === 'prod' ? 'prod' : 'test',
           redsys_merchant_name: str('redsys_merchant_name', PAYMENT_DEFAULTS.redsys_merchant_name),
+        })
+
+        const certUploadedAt = str('verifactu_cert_uploaded_at', '')
+        setCertStatus({
+          configured: !!certUploadedAt,
+          filename: str('verifactu_cert_filename', '') || null,
+          uploaded_at: certUploadedAt || null,
+          nif: str('verifactu_cert_nif', '') || null,
         })
 
         setLoading(false)
@@ -425,6 +448,102 @@ export function Settings() {
       toast.error('Error al guardar: ' + anyError.error.message)
     } else {
       toast.success('Configuración de pago guardada')
+    }
+  }
+
+  // ─── Certificado digital (Verifactu) ───
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result as string
+        // result = "data:...;base64,XXXX" → quedarnos con la parte base64.
+        resolve(result.split(',')[1] ?? '')
+      }
+      reader.onerror = () => reject(new Error('No se pudo leer el archivo'))
+      reader.readAsDataURL(file)
+    })
+
+  const handleSaveCertificate = async () => {
+    if (!certFile) {
+      toast.error('Selecciona el archivo del certificado (.p12 o .pfx)')
+      return
+    }
+    if (!certPassword.trim()) {
+      toast.error('Introduce la contraseña del certificado')
+      return
+    }
+    if (!/\.(p12|pfx)$/i.test(certFile.name)) {
+      toast.error('El certificado debe ser un archivo .p12 o .pfx')
+      return
+    }
+    setSavingCert(true)
+    try {
+      const cert_base64 = await fileToBase64(certFile)
+      const { data, error } = await supabase.functions.invoke<{
+        ok: boolean
+        error?: string
+        configured?: boolean
+        filename?: string | null
+        uploaded_at?: string | null
+        nif?: string | null
+      }>('verifactu-cert-upload', {
+        body: {
+          cert_base64,
+          filename: certFile.name,
+          password: certPassword,
+          nif: certNif.trim(),
+        },
+      })
+      if (error) {
+        let detail = error.message
+        const ctx = (error as unknown as { context?: Response & { json?: () => Promise<{ error?: string }> } }).context
+        if (ctx && typeof ctx.json === 'function') {
+          try {
+            const b = await ctx.json()
+            if (b?.error) detail = b.error
+          } catch { /* ignore */ }
+        }
+        toast.error(detail || 'No se pudo guardar el certificado')
+        return
+      }
+      if (!data?.ok) {
+        toast.error(data?.error ?? 'No se pudo guardar el certificado')
+        return
+      }
+      setCertStatus({
+        configured: true,
+        filename: data.filename ?? certFile.name,
+        uploaded_at: data.uploaded_at ?? new Date().toISOString(),
+        nif: (data.nif ?? certNif.trim()) || null,
+      })
+      setCertFile(null)
+      setCertPassword('')
+      toast.success('Certificado guardado correctamente')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al guardar el certificado')
+    } finally {
+      setSavingCert(false)
+    }
+  }
+
+  const handleDeleteCertificate = async () => {
+    if (!confirm('¿Eliminar el certificado digital configurado?')) return
+    setSavingCert(true)
+    try {
+      const { error } = await supabase.functions.invoke('verifactu-cert-upload', {
+        method: 'DELETE',
+      })
+      if (error) {
+        toast.error('No se pudo eliminar el certificado')
+        return
+      }
+      setCertStatus({ configured: false, filename: null, uploaded_at: null, nif: null })
+      toast.success('Certificado eliminado')
+    } catch {
+      toast.error('Error al eliminar el certificado')
+    } finally {
+      setSavingCert(false)
     }
   }
 
@@ -1033,6 +1152,96 @@ export function Settings() {
                   loading={savingPayment}
                 >
                   Guardar pasarela de pago
+                </Button>
+              </div>
+            </section>
+
+            {/* Section: Certificado digital (Verifactu) */}
+            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+              <SectionHeader
+                icon={KeyRound}
+                title="Certificado digital (Verifactu)"
+                subtitle="Certificado del autónomo para firmar y enviar facturas a la AEAT"
+              />
+
+              {certStatus.configured ? (
+                <div className="flex items-start gap-3 rounded-xl border border-green-500/30 bg-[rgba(80,200,120,0.06)] p-4">
+                  <CheckCircle2 size={18} className="text-green-400 mt-0.5 shrink-0" aria-hidden={true} />
+                  <div className="text-sm">
+                    <p className="text-[var(--color-cream)] font-semibold font-[var(--font-cond)]">
+                      Certificado configurado
+                    </p>
+                    <p className="text-[var(--color-mid)]">
+                      {certStatus.filename}
+                      {certStatus.nif ? ` · ${certStatus.nif}` : ''}
+                      {certStatus.uploaded_at
+                        ? ` · subido el ${new Date(certStatus.uploaded_at).toLocaleDateString('es-ES')}`
+                        : ''}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3 rounded-xl border border-[var(--color-card-hover)] bg-[var(--color-ink)] p-4 text-sm">
+                  <Info size={18} className="text-[var(--color-lavender)] mt-0.5 shrink-0" aria-hidden={true} />
+                  <p className="text-[var(--color-mid)]">
+                    Aún no hay certificado. Súbelo para poder activar el envío de facturas a la AEAT
+                    (Verifactu), obligatorio para autónomos desde el 1 de julio de 2026.
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-[var(--font-cond)] font-medium text-[var(--color-cream-dim)] tracking-wide">
+                    Archivo del certificado (.p12 / .pfx)
+                  </label>
+                  <input
+                    type="file"
+                    accept=".p12,.pfx,application/x-pkcs12"
+                    onChange={(e) => setCertFile(e.target.files?.[0] ?? null)}
+                    className="block w-full text-sm text-[var(--color-cream-dim)] file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--color-lavender)] file:px-4 file:py-2 file:text-[var(--color-ink)] file:font-[var(--font-cond)] file:font-semibold file:cursor-pointer hover:file:brightness-110"
+                  />
+                  {certFile && (
+                    <p className="text-xs text-[var(--color-mid)]">Seleccionado: {certFile.name}</p>
+                  )}
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <Field
+                    label="Contraseña del certificado"
+                    type="password"
+                    value={certPassword}
+                    onChange={(e) => setCertPassword(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                  />
+                  <Field
+                    label="NIF del titular (opcional)"
+                    value={certNif}
+                    onChange={(e) => setCertNif(e.target.value)}
+                    placeholder="12345678Z"
+                  />
+                </div>
+
+                <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-[rgba(245,200,80,0.06)] p-4 text-sm">
+                  <ShieldAlert size={18} className="text-amber-400 mt-0.5 shrink-0" aria-hidden={true} />
+                  <p className="text-[var(--color-cream-dim)] leading-relaxed">
+                    El certificado y su contraseña se guardan en un almacén privado al que solo accede el
+                    servidor; nunca se muestran en el navegador. El envío real a la AEAT se activará en la
+                    fase de integración Verifactu.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                {certStatus.configured && (
+                  <Button variant="ghost" onClick={handleDeleteCertificate} disabled={savingCert}>
+                    <Trash2 size={15} aria-hidden={true} />
+                    Eliminar
+                  </Button>
+                )}
+                <Button variant="primary" onClick={handleSaveCertificate} loading={savingCert}>
+                  {certStatus.configured ? 'Reemplazar certificado' : 'Guardar certificado'}
                 </Button>
               </div>
             </section>
