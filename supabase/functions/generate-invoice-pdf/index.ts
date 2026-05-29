@@ -616,12 +616,12 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
     color: COLOR_GRAY,
     align: 'right',
   })
-  y -= rowH + 2
-
-  // Línea bajo la cabecera: anclada DEBAJO del texto de cabecera (headerY),
-  // no en función de rowH. Antes, al reducir rowH, la línea subía y tachaba el
-  // texto "Concepto / Talla / ...".
-  drawHLine(page, MARGIN_X, PAGE_W - MARGIN_X, headerY - 7, COLOR_PRIMARY, 0.8)
+  // Línea bajo la cabecera, anclada a headerY con margen suficiente: ni toca el
+  // texto de cabecera (que termina ~headerY-2) ni la primera fila.
+  drawHLine(page, MARGIN_X, PAGE_W - MARGIN_X, headerY - 9, COLOR_PRIMARY, 0.8)
+  // Primera fila bien separada de la cabecera (hueco fijo, NO en función de
+  // rowH) para que la línea quede en un espacio limpio.
+  y = headerY - 22
 
   // Filas
   const rate = taxRatePct / 100
