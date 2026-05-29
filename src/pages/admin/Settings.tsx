@@ -8,6 +8,8 @@ import {
   KeyRound,
   CheckCircle2,
   Trash2,
+  Search,
+  X as XIcon,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -98,10 +100,11 @@ interface SectionHeaderProps {
   icon: React.ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean }>
   title: string
   subtitle?: string
+  id?: string
 }
-function SectionHeader({ icon: Icon, title, subtitle }: SectionHeaderProps) {
+function SectionHeader({ icon: Icon, title, subtitle, id }: SectionHeaderProps) {
   return (
-    <div className="flex items-start gap-3">
+    <div id={id} className="flex items-start gap-3 scroll-mt-28">
       <span className="mt-0.5 inline-flex items-center justify-center w-9 h-9 rounded-lg bg-[var(--color-ink)] text-[var(--color-lavender)]">
         <Icon size={18} aria-hidden={true} />
       </span>
@@ -119,8 +122,24 @@ function SectionHeader({ icon: Icon, title, subtitle }: SectionHeaderProps) {
   )
 }
 
+// Índice de secciones para la barra de búsqueda + navegación rápida.
+// `kw` son palabras clave (en minúsculas) que permiten encontrar la sección
+// aunque no coincidan con el título exacto.
+const SETTINGS_SECTIONS: { id: string; label: string; kw: string }[] = [
+  { id: 'contacto', label: 'Contacto y ubicación', kw: 'nombre tienda direccion telefono email ubicacion mapa contacto' },
+  { id: 'horarios', label: 'Horarios', kw: 'horario apertura cierre dias semana jornada' },
+  { id: 'email', label: 'Email', kw: 'email correo notificaciones presupuesto destino remitente' },
+  { id: 'redes', label: 'Redes sociales', kw: 'instagram facebook redes sociales enlaces' },
+  { id: 'legales', label: 'Datos legales', kw: 'aviso legal privacidad cookies dpo proteccion datos' },
+  { id: 'ecommerce', label: 'E-commerce', kw: 'envio gratis carrito pedidos cancelacion recogida umbral notificaciones' },
+  { id: 'facturacion', label: 'Facturación', kw: 'factura cif nif razon social iva prefijo numeracion fiscal emisor' },
+  { id: 'pasarela', label: 'Pasarela de pago', kw: 'redsys tpv pago tarjeta entorno comercio' },
+  { id: 'verifactu', label: 'Verifactu', kw: 'verifactu aeat hacienda certificado digital p12 pfx factura electronica envio' },
+]
+
 export function Settings() {
   const { toasts, toast, dismiss } = useToast()
+  const [search, setSearch] = useState('')
   const [values, setValues] = useState<SettingsMap>({})
   const [original, setOriginal] = useState<SettingsMap>({})
   const [scheduleRows, setScheduleRows] = useState<DaySchedule[]>(SCHEDULE)
@@ -596,6 +615,28 @@ export function Settings() {
   ]
   const fiscalIncomplete = !loading && fiscalChecks.some(c => !c.value)
 
+  // ─── Barra de búsqueda / navegación rápida de ajustes ───
+  const normalizedQuery = search.trim().toLowerCase()
+  const sectionMatches = (s: { label: string; kw: string }) =>
+    !normalizedQuery ||
+    s.label.toLowerCase().includes(normalizedQuery) ||
+    s.kw.includes(normalizedQuery)
+  const visibleSections = SETTINGS_SECTIONS.filter(sectionMatches)
+
+  // Oculta las tarjetas que no coinciden con la búsqueda (cada <section> tiene id).
+  useEffect(() => {
+    if (loading) return
+    for (const s of SETTINGS_SECTIONS) {
+      const el = document.getElementById(s.id)
+      if (el) el.style.display = sectionMatches(s) ? '' : 'none'
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [normalizedQuery, loading])
+
+  const jumpTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   return (
     <>
       <div className="space-y-6 max-w-2xl">
@@ -661,6 +702,56 @@ export function Settings() {
           </p>
         </div>
 
+        {/* Barra de búsqueda + navegación rápida */}
+        {!loading && (
+          <div className="sticky top-0 z-20 bg-[var(--color-ink)] pt-1 pb-3">
+            <div className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl p-3 space-y-3">
+              <div className="relative">
+                <Search
+                  size={16}
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)]"
+                />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar ajuste… (envío, IVA, certificado, horarios…)"
+                  className="w-full bg-[var(--color-ink)] border border-[var(--color-card-hover)] rounded-lg pl-9 pr-9 py-2.5 text-sm text-[var(--color-cream)] placeholder-[var(--color-mid)] font-[var(--font-body)] focus:outline-none focus:ring-2 focus:ring-[var(--color-lavender)]/50 focus:border-[var(--color-lavender)]"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    aria-label="Limpiar búsqueda"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)] hover:text-[var(--color-cream)]"
+                  >
+                    <XIcon size={15} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {visibleSections.length === 0 ? (
+                  <span className="text-xs text-[var(--color-mid)] font-[var(--font-body)]">
+                    Sin resultados para «{search}»
+                  </span>
+                ) : (
+                  visibleSections.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => jumpTo(s.id)}
+                      className="px-3 py-1.5 rounded-full text-xs font-[var(--font-cond)] tracking-wide bg-[var(--color-ink)] border border-[var(--color-card-hover)] text-[var(--color-cream-dim)] hover:border-[var(--color-lavender)]/60 hover:text-[var(--color-lavender)] transition-colors"
+                    >
+                      {s.label}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-16">
             <div className="w-8 h-8 rounded-full border-2 border-[var(--color-lavender)] border-t-transparent animate-spin" />
@@ -668,7 +759,7 @@ export function Settings() {
         ) : (
           <div className="space-y-6">
             {/* Section 1: Store Info */}
-            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+            <section id="contacto" className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5 scroll-mt-28">
               <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
                 Contacto y ubicación
               </h2>
@@ -703,7 +794,7 @@ export function Settings() {
             </section>
 
             {/* Section: Horarios semanales */}
-            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+            <section id="horarios" className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5 scroll-mt-28">
               <div>
                 <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
                   Horarios semanales
@@ -743,7 +834,7 @@ export function Settings() {
             </section>
 
             {/* Section 2: Email */}
-            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+            <section id="email" className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5 scroll-mt-28">
               <div>
                 <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
                   Configuración de email
@@ -774,7 +865,7 @@ export function Settings() {
             </section>
 
             {/* Section 3: Social */}
-            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+            <section id="redes" className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5 scroll-mt-28">
               <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
                 Redes sociales
               </h2>
@@ -798,7 +889,7 @@ export function Settings() {
             </section>
 
             {/* Section 4: Datos legales (aparecen en /aviso-legal) */}
-            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+            <section id="legales" className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5 scroll-mt-28">
               <div>
                 <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
                   Datos legales
@@ -846,7 +937,7 @@ export function Settings() {
             {/* ─────────────────────────────────────────────────────────── */}
 
             {/* Section: E-commerce */}
-            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+            <section id="ecommerce" className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5 scroll-mt-28">
               <SectionHeader
                 icon={ShoppingCart}
                 title="E-commerce"
@@ -950,7 +1041,7 @@ export function Settings() {
             </section>
 
             {/* Section: Facturación */}
-            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+            <section id="facturacion" className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5 scroll-mt-28">
               <SectionHeader
                 icon={FileText}
                 title="Facturación"
@@ -1077,7 +1168,7 @@ export function Settings() {
             </section>
 
             {/* Section: Pasarela de pago Redsys */}
-            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+            <section id="pasarela" className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5 scroll-mt-28">
               <SectionHeader
                 icon={CreditCard}
                 title="Pasarela de pago Redsys"
@@ -1196,7 +1287,7 @@ export function Settings() {
             </section>
 
             {/* Section: Verifactu (facturación electrónica AEAT) */}
-            <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5">
+            <section id="verifactu" className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5 scroll-mt-28">
               <SectionHeader
                 icon={KeyRound}
                 title="Verifactu (facturación electrónica AEAT)"
