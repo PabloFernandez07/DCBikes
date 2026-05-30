@@ -6,6 +6,7 @@ import { trackProductView } from '@/lib/analytics'
 import { ImageCarousel } from '@/components/ui/ImageCarousel'
 import { Button } from '@/components/ui/Button'
 import { QuoteModal } from '@/components/public/QuoteModal'
+import { StockAlertModal } from '@/components/public/StockAlertModal'
 import { SizeSelector } from '@/components/public/SizeSelector'
 import { useProductGroup } from '@/hooks/useProductGroup'
 import { useCartStore } from '@/stores/cartStore'
@@ -44,6 +45,7 @@ export default function ProductDetail() {
   const [images, setImages] = useState<ProductImage[]>([])
   const [category, setCategory] = useState<Category | null>(null)
   const [quoteOpen, setQuoteOpen] = useState(false)
+  const [alertOpen, setAlertOpen] = useState(false)
   const [minPrice30d, setMinPrice30d] = useState<number | null>(null)
   const pageRef = useReveal([parentProduct, selectedVariant?.id])
 
@@ -409,7 +411,7 @@ export default function ProductDetail() {
                 Consultar en tienda
               </Button>
             ) : (
-              <div className="flex-1 flex flex-col gap-1">
+              <div className="flex-1 flex flex-col gap-2">
                 <Button
                   variant="primary"
                   size="lg"
@@ -418,9 +420,14 @@ export default function ProductDetail() {
                 >
                   Sin stock
                 </Button>
-                <span className="text-xs font-[var(--font-cond)] text-[var(--color-mid)] tracking-wide text-center">
-                  Consulta disponibilidad en tienda
-                </span>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => setAlertOpen(true)}
+                  className="w-full font-[var(--font-display)] tracking-widest text-lg"
+                >
+                  Avísame cuando esté disponible
+                </Button>
               </div>
             )}
             <Button
@@ -447,6 +454,15 @@ export default function ProductDetail() {
           onClose={() => setQuoteOpen(false)}
         />
       )}
+      <StockAlertModal
+        open={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        product={{
+          id: selectedVariant.id,
+          name: selectedVariant.name,
+          size_label: selectedVariant.size_label,
+        }}
+      />
     </div>
   )
 }

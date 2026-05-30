@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Bell } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { ProductForm } from '@/components/admin/ProductForm'
 import { ImageUploader } from '@/components/admin/ImageUploader'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
+import { Button } from '@/components/ui/Button'
 import type { Product, ProductImage, Database } from '@/lib/database.types'
 import type { ProductFormValues } from '@/components/admin/ProductForm'
 
@@ -25,6 +26,10 @@ export function ProductEdit() {
   // After creating a new product, store the new id here so ImageUploader can use it
   const [createdId, setCreatedId] = useState<string | null>(null)
 
+  // Stock alerts: número de suscriptores pendientes y estado de envío
+  const [alertCount, setAlertCount] = useState<number | null>(null)
+  const [notifying, setNotifying] = useState(false)
+
   useEffect(() => {
     if (isNew) return
     if (!id) return
@@ -41,6 +46,63 @@ export function ProductEdit() {
       setLoading(false)
     })
   }, [id, isNew])
+
+  // Carga el número de suscripciones de aviso pendientes para este producto
+  useEffect(() => {
+    const productId = isNew ? createdId : id
+    if (!productId) {
+      setAlertCount(null)
+      return
+    }
+
+    // La tabla stock_alerts no está en database.types aún → cast explícito
+    type StockAlertsTable = {
+      from: (table: 'stock_alerts') => {
+        select: (cols: string, opts: { count: 'exact'; head: boolean }) => {
+          eq: (col: string, val: string) => {
+            is: (col: string, val: null) => {
+              is: (col: string, val: null) => Promise<{ count: number | null; error: unknown }>
+            }
+          }
+        }
+      }
+    }
+    const db = supabase as unknown as StockAlertsTable
+
+    db
+      .from('stock_alerts')
+      .select('id', { count: 'exact', head: true })
+      .eq('product_id', productId)
+      .is('notified_at', null)
+      .is('revoked_at', null)
+      .then(({ count }) => {
+        setAlertCount(count ?? 0)
+      })
+  }, [isNew, createdId, id])
+
+  const handleNotifySubscribers = useCallback(async () => {
+    const productId = isNew ? createdId : id
+    if (!productId) return
+
+    setNotifying(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-notify-stock', {
+        body: { product_id: productId },
+      })
+      if (error) {
+        toast.error('Error al enviar avisos: ' + (error.message ?? String(error)))
+      } else {
+        const result = data as { ok?: boolean; sent?: number } | null
+        const sent = result?.sent ?? 0
+        toast.success(`Avisado a ${sent} interesado${sent !== 1 ? 's' : ''}`)
+        setAlertCount(0)
+      }
+    } catch (err) {
+      toast.error('Error inesperado al enviar avisos')
+    } finally {
+      setNotifying(false)
+    }
+  }, [isNew, createdId, id, toast])
 
   const handleSave = async (values: ProductFormValues) => {
     setSaving(true)
@@ -139,23 +201,56 @@ export function ProductEdit() {
               />
             </div>
 
-            {/* Right: Image Uploader */}
-            <div className="lg:col-span-2 bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6">
-              <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-5">
-                Imágenes
-              </h2>
-              {isNew && !createdId ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center space-y-2">
-                  <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)]">
-                    Guarda el producto primero para poder subir imágenes.
+            {/* Right: Image Uploader + Stock alerts */}
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              <div className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6">
+                <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide mb-5">
+                  Imágenes
+                </h2>
+                {isNew && !createdId ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center space-y-2">
+                    <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)]">
+                      Guarda el producto primero para poder subir imágenes.
+                    </p>
+                  </div>
+                ) : (
+                  <ImageUploader
+                    productId={uploaderProductId}
+                    productName={uploaderProductName}
+                    existingImages={images}
+                  />
+                )}
+              </div>
+
+              {/* Avisos de stock */}
+              {!isNew && id && (
+                <div className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 flex flex-col gap-4">
+                  <div className="flex items-center gap-2">
+                    <Bell size={16} className="text-[var(--color-lavender)]" aria-hidden="true" />
+                    <h2 className="text-base font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
+                      Avisos de stock
+                    </h2>
+                  </div>
+                  <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] leading-relaxed">
+                    {alertCount === null
+                      ? 'Cargando suscriptores...'
+                      : alertCount === 0
+                      ? 'No hay interesados pendientes de avisar.'
+                      : `${alertCount} persona${alertCount !== 1 ? 's' : ''} esperando disponibilidad.`}
                   </p>
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    onClick={handleNotifySubscribers}
+                    loading={notifying}
+                    disabled={notifying || alertCount === null || alertCount === 0}
+                    className="w-full"
+                  >
+                    <Bell size={16} aria-hidden="true" />
+                    Avisar a interesados
+                    {alertCount !== null && alertCount > 0 ? ` (${alertCount})` : ''}
+                  </Button>
                 </div>
-              ) : (
-                <ImageUploader
-                  productId={uploaderProductId}
-                  productName={uploaderProductName}
-                  existingImages={images}
-                />
               )}
             </div>
           </div>

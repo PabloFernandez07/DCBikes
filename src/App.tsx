@@ -28,6 +28,7 @@ const MyOrdersRequestAccess = lazy(() => import("@/pages/public/MyOrdersRequestA
 const MyOrdersSession = lazy(() => import("@/pages/public/MyOrdersSession"));
 const MyOrderDetailCustomer = lazy(() => import("@/pages/public/MyOrderDetailCustomer"));
 const NotFound     = lazy(() => import("@/pages/public/NotFound"));
+const StockAlertUnsubscribe = lazy(() => import("@/pages/public/StockAlertUnsubscribe"));
 const AdminRoutes  = lazy(() =>
   import("@/routes/AdminRoutes").then((m) => ({ default: m.AdminRoutes }))
 );
@@ -374,6 +375,14 @@ export default function App() {
           element={
             <PublicLayout>
               <MyOrderDetailCustomer />
+            </PublicLayout>
+          }
+        />
+        <Route
+          path="/avisos/baja"
+          element={
+            <PublicLayout>
+              <StockAlertUnsubscribe />
             </PublicLayout>
           }
         />

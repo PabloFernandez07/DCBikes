@@ -21,6 +21,10 @@
 //   6. `search_queries` con searched_at < hoy-24m → DELETE.
 //   7. `orders` con created_at < hoy-6a y `anonymized_at is null` →
 //      anonimizar PII (conservación contable AEAT impide borrar).
+//   8a. `stock_alerts` con revoked_at < hoy-7d y purged_at IS NULL →
+//      purga por revocación de consentimiento (art. 17.1.b RGPD).
+//   8b. `stock_alerts` con created_at < hoy-13m y purged_at IS NULL →
+//      anonimizar email + purged_at = now() (art. 5.1.e RGPD).
 //
 // Concurrencia:
 //   Antes de cualquier mutación se invoca RPC `try_data_retention_lock()`
@@ -170,6 +174,38 @@ async function purgeOldSearches(supabase: SupabaseClient): Promise<ActionResult>
   return { name: 'searches_deleted', count: data?.length ?? 0 }
 }
 
+/* ─── 8a. stock_alerts revocadas >7d → PURGAR email ───────────── */
+async function purgeRevokedStockAlerts(supabase: SupabaseClient): Promise<ActionResult> {
+  const cutoff = new Date(Date.now() - SEVEN_DAYS_MS).toISOString()
+  const { data, error } = await supabase
+    .from('stock_alerts')
+    .update({
+      email: '[purgado]',
+      purged_at: new Date().toISOString(),
+    })
+    .lt('revoked_at', cutoff)
+    .is('purged_at', null)
+    .select('id')
+  if (error) return { name: 'stock_alerts_revoked_purged', count: 0, error: error.message }
+  return { name: 'stock_alerts_revoked_purged', count: data?.length ?? 0 }
+}
+
+/* ─── 8b. stock_alerts >13 meses → ANONIMIZAR email ───────────── */
+async function purgeOldStockAlerts(supabase: SupabaseClient): Promise<ActionResult> {
+  const cutoff = new Date(Date.now() - THIRTEEN_MONTHS_MS).toISOString()
+  const { data, error } = await supabase
+    .from('stock_alerts')
+    .update({
+      email: '[purgado]',
+      purged_at: new Date().toISOString(),
+    })
+    .lt('created_at', cutoff)
+    .is('purged_at', null)
+    .select('id')
+  if (error) return { name: 'stock_alerts_aged_purged', count: 0, error: error.message }
+  return { name: 'stock_alerts_aged_purged', count: data?.length ?? 0 }
+}
+
 /* ─── 7. orders >6 años → ANONIMIZAR (no borrar — contable) ────
  * B-23: además de la PII del propio pedido, anonimiza las tablas hijas que
  * pueden contener datos personales en texto libre:
@@ -260,6 +296,9 @@ serve(async (req) => {
       purgeOldProductViews(supabase),
       purgeOldSearches(supabase),
       anonymizeOldOrders(supabase),
+      // Acciones 8a y 8b: stock_alerts (RGPD art. 5.1.e + 17.1.b)
+      purgeRevokedStockAlerts(supabase),
+      purgeOldStockAlerts(supabase),
     ])
 
     const counts: Record<string, number> = {}

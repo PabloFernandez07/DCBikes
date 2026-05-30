@@ -114,3 +114,16 @@ verify_jwt = false
 
 [functions.generate-invoice-pdf]
 verify_jwt = false
+
+# ─────────────────────────────────────────────────────────────────
+# Funciones de alertas de stock (feature "Avísame cuando esté disponible").
+# send-stock-alert: invocada internamente por stock-alert-cron y admin-notify-stock
+#   con x-internal-secret. Su seguridad la provee verifyInternalSecret, no el JWT.
+# stock-alert-cron: invocada por pg_cron con CRON_SECRET como Bearer.
+#   Mismo patrón que data-retention-cron y order-auto-cancel.
+# ─────────────────────────────────────────────────────────────────
+[functions.send-stock-alert]
+verify_jwt = false
+
+[functions.stock-alert-cron]
+verify_jwt = false
