@@ -153,11 +153,17 @@ Deno.serve(async (req) => {
     const productNameRaw = product.name
     const sizeLabelRaw = product.size_label ?? null
     const safeProductName = escapeHtml(productNameRaw)
-    const safeSizeLabel = sizeLabelRaw ? escapeHtml(sizeLabelRaw) : null
+    // El nombre del producto ya suele incluir la talla ("… — Talla M"); evitamos
+    // duplicarla. Solo se muestra la talla aparte (en mayúsculas) si el nombre NO
+    // la contiene ya.
+    const nameIncludesSize = /talla/i.test(productNameRaw)
+    const sizeForDisplay = sizeLabelRaw ? sizeLabelRaw.toUpperCase() : null
+    const showSize = !nameIncludesSize && !!sizeForDisplay
+    const safeSizeLabel = showSize ? escapeHtml(sizeForDisplay as string) : null
 
-    // Asunto: "Ya disponible: {producto} (talla {size_label})"
-    const subject = sizeLabelRaw
-      ? `Ya disponible: ${productNameRaw} (talla ${sizeLabelRaw})`
+    // Asunto: el nombre ya lleva la talla; solo se añade si no la incluía.
+    const subject = showSize
+      ? `Ya disponible: ${productNameRaw} (talla ${sizeForDisplay})`
       : `Ya disponible: ${productNameRaw}`
 
     // Cuerpo del email usando renderEmail (plantilla compartida de DC Bikes)
@@ -183,7 +189,7 @@ Deno.serve(async (req) => {
 
     const html = renderEmail({
       title: '¡Ya está disponible!',
-      preheader: `${productNameRaw}${sizeLabelRaw ? ` (talla ${sizeLabelRaw})` : ''} vuelve a estar en stock`,
+      preheader: `${productNameRaw}${showSize ? ` (talla ${sizeForDisplay})` : ''} vuelve a estar en stock`,
       bodyHtml,
       ctaButton: {
         label: 'Ver producto',

@@ -143,8 +143,8 @@ export function StockAlertModal({ open, onClose, product }: StockAlertModalProps
           <p className="text-[var(--color-mid)] text-sm">
             Te enviaremos un email cuando{' '}
             <strong className="text-[var(--color-cream-dim)]">{product.name}</strong>
-            {product.size_label ? (
-              <> (talla <strong className="text-[var(--color-cream-dim)]">{product.size_label}</strong>)</>
+            {product.size_label && !/talla/i.test(product.name) ? (
+              <> (talla <strong className="text-[var(--color-cream-dim)]">{product.size_label.toUpperCase()}</strong>)</>
             ) : null}{' '}
             vuelva a estar disponible. Cerrando...
           </p>
@@ -159,9 +159,9 @@ export function StockAlertModal({ open, onClose, product }: StockAlertModalProps
             <p className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] text-sm leading-tight">
               {product.name}
             </p>
-            {product.size_label && (
+            {product.size_label && !/talla/i.test(product.name) && (
               <p className="text-xs text-[var(--color-lavender)] font-[var(--font-cond)] tracking-wide mt-0.5">
-                Talla: {product.size_label}
+                Talla: {product.size_label.toUpperCase()}
               </p>
             )}
           </div>
@@ -169,8 +169,8 @@ export function StockAlertModal({ open, onClose, product }: StockAlertModalProps
           <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] leading-relaxed -mt-1">
             Te avisaremos por email cuando{' '}
             <strong className="text-[var(--color-cream-dim)]">{product.name}</strong>
-            {product.size_label ? (
-              <> (talla <strong className="text-[var(--color-cream-dim)]">{product.size_label}</strong>)</>
+            {product.size_label && !/talla/i.test(product.name) ? (
+              <> (talla <strong className="text-[var(--color-cream-dim)]">{product.size_label.toUpperCase()}</strong>)</>
             ) : null}{' '}
             vuelva a estar disponible.
           </p>
