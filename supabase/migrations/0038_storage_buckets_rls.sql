@@ -1,25 +1,14 @@
 -- 0038_storage_buckets_rls.sql
 -- Hallazgo Q-15 (auditoría V5): declarar buckets de Storage como código
--- versionado (no clic en Studio) y aplicar RLS sobre storage.objects.
+-- versionado (no clic en Studio).
 --
 -- Buckets:
---   invoices   → private. Solo admin (is_admin()) lee y escribe.
---   contracts  → private. Solo admin.
---   avatars    → public read (necesario para mostrar avatar de cliente en UI
---                pública), escritura restringida a admin (el upload real lo
---                hace una edge function con service_role; los admins pueden
---                gestionar manualmente).
+--   invoices   → PRIVADO. Facturas PDF.
+--   contracts  → PRIVADO. Contratos/justificantes PDF.
+--   avatars    → PÚBLICO (lectura). Avatares de reseñas/clientes en UI pública.
 --
--- Idempotente:
---   * INSERT con ON CONFLICT en storage.buckets.
---   * DROP POLICY IF EXISTS antes de CREATE POLICY.
---
--- Nota: la migración asume la función pública `is_admin()` declarada en
--- 0013_admin_users.sql.
+-- Idempotente: INSERT con ON CONFLICT en storage.buckets.
 
--- ════════════════════════════════════════════════════════════════
--- ─── Declaración de buckets ─────────────────────────────────────
--- ════════════════════════════════════════════════════════════════
 insert into storage.buckets (id, name, public) values
   ('invoices',  'invoices',  false),
   ('contracts', 'contracts', false),
@@ -28,50 +17,26 @@ on conflict (id) do update
   set public = excluded.public;
 
 -- ════════════════════════════════════════════════════════════════
--- ─── RLS storage.objects · invoices (admin only) ────────────────
+-- RLS sobre storage.objects — NO se aplica desde migración (decisión 2026-05-30)
 -- ════════════════════════════════════════════════════════════════
-drop policy if exists invoices_admin_select on storage.objects;
-create policy invoices_admin_select on storage.objects
-  for select to authenticated
-  using (bucket_id = 'invoices' and is_admin());
-
-drop policy if exists invoices_admin_modify on storage.objects;
-create policy invoices_admin_modify on storage.objects
-  for all to authenticated
-  using (bucket_id = 'invoices' and is_admin())
-  with check (bucket_id = 'invoices' and is_admin());
-
--- ════════════════════════════════════════════════════════════════
--- ─── RLS storage.objects · contracts (admin only) ───────────────
--- ════════════════════════════════════════════════════════════════
-drop policy if exists contracts_admin_select on storage.objects;
-create policy contracts_admin_select on storage.objects
-  for select to authenticated
-  using (bucket_id = 'contracts' and is_admin());
-
-drop policy if exists contracts_admin_modify on storage.objects;
-create policy contracts_admin_modify on storage.objects
-  for all to authenticated
-  using (bucket_id = 'contracts' and is_admin())
-  with check (bucket_id = 'contracts' and is_admin());
-
--- ════════════════════════════════════════════════════════════════
--- ─── RLS storage.objects · avatars (lectura pública, escritura admin)
--- ════════════════════════════════════════════════════════════════
-drop policy if exists avatars_public_read on storage.objects;
-create policy avatars_public_read on storage.objects
-  for select to anon, authenticated
-  using (bucket_id = 'avatars');
-
-drop policy if exists avatars_admin_modify on storage.objects;
-create policy avatars_admin_modify on storage.objects
-  for all to authenticated
-  using (bucket_id = 'avatars' and is_admin())
-  with check (bucket_id = 'avatars' and is_admin());
-
-comment on policy invoices_admin_select on storage.objects is
-  'Q-15: facturas privadas, lectura admin (is_admin()).';
-comment on policy contracts_admin_select on storage.objects is
-  'Q-15: contratos privados, lectura admin (is_admin()).';
-comment on policy avatars_public_read on storage.objects is
-  'Q-15: avatares públicos en lectura. Escritura restringida a admin (avatars_admin_modify).';
+-- `storage.objects` pertenece a `supabase_storage_admin`; ni `postgres` (que es
+-- quien ejecuta migraciones / Management API / SQL Editor) puede crear policies
+-- sobre ella ni asumir ese rol → "ERROR: must be owner of relation objects".
+--
+-- No es necesario aplicarlas porque el modelo de seguridad ya es correcto:
+--   1. RLS está ACTIVADO en storage.objects (deny-by-default).
+--   2. invoices/contracts son buckets PRIVADOS → sin política, NINGÚN cliente
+--      (anon/authenticated) puede leer ni escribir. Quedan totalmente cerrados.
+--   3. Todo acceso legítimo a esos buckets se hace desde Edge Functions con
+--      service_role (que bypassa RLS): generación de PDF, y descarga firmada
+--      vía customer-request-invoice / admin-generate-invoice. El navegador NUNCA
+--      firma URLs de estos buckets directamente.
+--   4. avatars es público → lectura pública (comportamiento deseado) sin policy.
+--
+-- Si en el futuro se quisiera permitir acceso directo de admins desde el
+-- navegador (createSignedUrl) a invoices/contracts, habría que crear estas
+-- policies MANUALMENTE en el Dashboard → Storage → [bucket] → Policies
+-- (la UI usa un servicio privilegiado), por ejemplo:
+--   - invoices/contracts: SELECT y ALL to authenticated  USING (is_admin())
+--   - avatars: SELECT to anon, authenticated  USING (true); ALL admin
+-- Hoy NO hace falta.

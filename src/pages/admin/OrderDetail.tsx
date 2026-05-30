@@ -235,14 +235,23 @@ export default function OrderDetail() {
   }
 
   const handleDownloadInvoice = async () => {
-    if (!invoice || downloadingInvoice) return
+    if (!invoice || downloadingInvoice || !order) return
     setDownloadingInvoice(true)
     try {
-      const { data, error } = await supabase.storage
-        .from('invoices')
-        .createSignedUrl(invoice.pdf_storage_path, 3600)
-      if (error || !data?.signedUrl) throw new Error(error?.message ?? 'No se pudo generar el enlace')
-      window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
+      // El bucket 'invoices' es PRIVADO (sin políticas RLS de cliente): el admin
+      // no puede firmar URLs desde el navegador. Pedimos la URL firmada a la edge
+      // function admin-generate-invoice, que usa service_role (bypassa RLS) y,
+      // si la factura ya existe, devuelve su signed_url sin regenerarla.
+      const { data, error } = await supabase.functions.invoke<{
+        ok: boolean
+        signed_url?: string | null
+        error?: string
+      }>('admin-generate-invoice', { body: { order_id: order.id } })
+      const signed = data?.signed_url
+      if (error || !data?.ok || !signed) {
+        throw new Error(data?.error ?? error?.message ?? 'No se pudo generar el enlace')
+      }
+      window.open(signed, '_blank', 'noopener,noreferrer')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error al descargar')
     } finally {
