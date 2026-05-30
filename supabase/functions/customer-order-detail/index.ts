@@ -103,51 +103,61 @@ serve(async (req) => {
       return jsonError('forbidden', 403, req)
     }
 
-    // Factura si aplica.
-    let invoice: { invoice_number: string; signed_url: string | null } | null = null
-    if (
-      ['accepted', 'ready_pickup', 'shipped', 'delivered'].includes(
-        String(order.status),
-      )
-    ) {
-      const { data: inv } = await supabase
-        .from('invoices')
-        .select('invoice_number, pdf_storage_path')
-        .eq('order_id', order.id)
-        .maybeSingle<{ invoice_number: string; pdf_storage_path: string }>()
-      if (inv) {
-        // TTL 1h (auditoría v2 N15): la URL firmada de factura caduca pronto;
-        // si el cliente la necesita de nuevo, vuelve a pedir un detalle.
-        const signedUrl = await getSignedInvoiceUrl(
-          supabase,
-          inv.pdf_storage_path,
-          60 * 60,
-        )
-        invoice = { invoice_number: inv.invoice_number, signed_url: signedUrl }
-      }
-    }
-
-    // Enriquece items con image_url: 1 query batch a product_images + getPublicUrl.
-    // Mantiene el snapshot si el producto fue eliminado (product_id puede ser null).
+    // Prepara las dos consultas independientes que vienen a continuación:
+    // (1) factura (condicional al status) y (2) imágenes de productos.
+    // Ambas dependen solo de `order`, ya cargado; no dependen entre sí.
     const rawItems = (order as { order_items?: Array<Record<string, unknown>> }).order_items ?? []
     const productIds = rawItems
       .map((i) => i.product_id as string | null)
       .filter((id): id is string => !!id)
+
+    const billableStatuses = ['accepted', 'ready_pickup', 'shipped', 'delivered']
+    const invoiceQueryPromise = billableStatuses.includes(String(order.status))
+      ? supabase
+          .from('invoices')
+          .select('invoice_number, pdf_storage_path')
+          .eq('order_id', order.id)
+          .maybeSingle<{ invoice_number: string; pdf_storage_path: string }>()
+      : Promise.resolve({ data: null, error: null })
+
+    const imagesQueryPromise = productIds.length > 0
+      ? supabase
+          .from('product_images')
+          .select('product_id, storage_path')
+          .in('product_id', productIds)
+          .order('sort_order', { ascending: true })
+      : Promise.resolve({ data: [] as Array<{ product_id: string; storage_path: string }>, error: null })
+
+    // Ejecutar en paralelo — factura e imágenes son totalmente independientes.
+    const [invoiceResult, imagesResult] = await Promise.all([
+      invoiceQueryPromise,
+      imagesQueryPromise,
+    ])
+
+    // Factura si aplica.
+    let invoice: { invoice_number: string; signed_url: string | null } | null = null
+    if (invoiceResult.data) {
+      const inv = invoiceResult.data
+      // TTL 1h (auditoría v2 N15): la URL firmada de factura caduca pronto;
+      // si el cliente la necesita de nuevo, vuelve a pedir un detalle.
+      const signedUrl = await getSignedInvoiceUrl(
+        supabase,
+        inv.pdf_storage_path,
+        60 * 60,
+      )
+      invoice = { invoice_number: inv.invoice_number, signed_url: signedUrl }
+    }
+
+    // Enriquece items con image_url: 1 query batch a product_images + getPublicUrl.
+    // Mantiene el snapshot si el producto fue eliminado (product_id puede ser null).
     const imageMap = new Map<string, string>()
-    if (productIds.length > 0) {
-      const { data: imgs } = await supabase
-        .from('product_images')
-        .select('product_id, storage_path')
-        .in('product_id', productIds)
-        .order('sort_order', { ascending: true })
-      for (const img of imgs ?? []) {
-        const pid = (img as { product_id: string }).product_id
-        if (imageMap.has(pid)) continue // primera imagen por producto
-        const { data: urlData } = supabase.storage
-          .from('product-images')
-          .getPublicUrl((img as { storage_path: string }).storage_path)
-        imageMap.set(pid, urlData.publicUrl)
-      }
+    for (const img of imagesResult.data ?? []) {
+      const pid = (img as { product_id: string }).product_id
+      if (imageMap.has(pid)) continue // primera imagen por producto
+      const { data: urlData } = supabase.storage
+        .from('product-images')
+        .getPublicUrl((img as { storage_path: string }).storage_path)
+      imageMap.set(pid, urlData.publicUrl)
     }
     const items = rawItems.map((i) => ({
       ...i,

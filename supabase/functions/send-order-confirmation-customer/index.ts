@@ -248,11 +248,15 @@ serve(async (req) => {
       }
       return best ? `${order.id}/${best.name}` : null
     }
-    const contractPath = await resolveLatestContractPath()
-    const contractBase64 = contractPath ? await downloadPdf('order-contracts', contractPath) : null
 
-    // b) Formulario oficial de desistimiento (C-07 / C-08)
-    const withdrawalBase64 = await downloadPdf('legal-templates', 'devoluciones-formulario.pdf')
+    // b) Formulario oficial de desistimiento (C-07 / C-08).
+    // resolveLatestContractPath() y el download del formulario de desistimiento
+    // son independientes entre sí — se lanzan en paralelo.
+    const [contractPath, withdrawalBase64] = await Promise.all([
+      resolveLatestContractPath(),
+      downloadPdf('legal-templates', 'devoluciones-formulario.pdf'),
+    ])
+    const contractBase64 = contractPath ? await downloadPdf('order-contracts', contractPath) : null
 
     const attachments = [
       ...(contractBase64

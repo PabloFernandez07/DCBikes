@@ -61,17 +61,18 @@ serve(async (req) => {
 
     if (oErr || !order) return jsonError('order not found', 404, req)
 
-    // Buscar factura asociada (puede no existir aún)
-    const { data: invoice } = await supabase
-      .from('invoices')
-      .select('invoice_number, pdf_storage_path, total_cents')
-      .eq('order_id', order.id)
-      .maybeSingle<InvoiceRow>()
-
-    const settings = await getSettings(supabase, [
-      'store_address',
-      'store_phone',
-      'quote_destination_email',
+    // Buscar factura y settings en paralelo — son independientes entre sí.
+    const [{ data: invoice }, settings] = await Promise.all([
+      supabase
+        .from('invoices')
+        .select('invoice_number, pdf_storage_path, total_cents')
+        .eq('order_id', order.id)
+        .maybeSingle<InvoiceRow>(),
+      getSettings(supabase, [
+        'store_address',
+        'store_phone',
+        'quote_destination_email',
+      ]),
     ])
 
     const storeAddress = asString(settings.store_address)
