@@ -37,8 +37,8 @@ async function requireAdmin(req: Request, supabase: SupabaseClient): Promise<boo
   if (error || !userData?.user) return false
   const { data: adminRow } = await supabase
     .from('admin_users')
-    .select('id')
-    .eq('id', userData.user.id)
+    .select('user_id')
+    .eq('user_id', userData.user.id)
     .maybeSingle()
   return !!adminRow
 }

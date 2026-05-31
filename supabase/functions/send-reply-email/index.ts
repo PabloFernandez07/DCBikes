@@ -47,8 +47,8 @@ serve(async (req) => {
     }
     const { data: adminRow } = await supabaseAuth
       .from('admin_users')
-      .select('id')
-      .eq('id', userData.user.id)
+      .select('user_id')
+      .eq('user_id', userData.user.id)
       .maybeSingle()
     if (!adminRow) {
       console.warn(`[${ts()}] ✗ send-reply-email: user ${userData.user.id} no es admin`)
