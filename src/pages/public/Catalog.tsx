@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SlidersHorizontal, X, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { clsx } from 'clsx'
@@ -184,6 +184,16 @@ export default function Catalog() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const catScrollRef = useRef<HTMLDivElement>(null)
   const scrollCats = (dx: number) => catScrollRef.current?.scrollBy({ left: dx, behavior: 'smooth' })
+  // Estado de scroll: si hay contenido desbordado a izquierda/derecha (para
+  // mostrar flechas y degradados solo cuando realmente hace falta desplazar).
+  const [catScroll, setCatScroll] = useState({ left: false, right: false })
+  const updateCatScroll = useCallback(() => {
+    const el = catScrollRef.current
+    if (!el) return
+    const left = el.scrollLeft > 4
+    const right = el.scrollLeft < el.scrollWidth - el.clientWidth - 4
+    setCatScroll(s => (s.left === left && s.right === right ? s : { left, right }))
+  }, [])
   const [sort, setSort] = useState<SortKey>('name')
   const [sortOpen, setSortOpen] = useState(false)
   const gridRef = useReveal([products, loading])
@@ -220,6 +230,18 @@ export default function Catalog() {
     () => categories.filter(c => activeCatIds.has(c.id)),
     [categories, activeCatIds],
   )
+
+  useEffect(() => {
+    updateCatScroll()
+    const el = catScrollRef.current
+    if (!el) return
+    el.addEventListener('scroll', updateCatScroll, { passive: true })
+    window.addEventListener('resize', updateCatScroll)
+    return () => {
+      el.removeEventListener('scroll', updateCatScroll)
+      window.removeEventListener('resize', updateCatScroll)
+    }
+  }, [updateCatScroll, visibleCategories, products])
 
   useEffect(() => {
     setLoading(true)
@@ -339,28 +361,36 @@ export default function Catalog() {
         </div>
 
         {/* Category pills — carrusel horizontal de una sola línea */}
-        <div className="relative mb-6 group/cats">
-          {/* Degradados en los bordes para indicar scroll */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-12 z-10 bg-gradient-to-r from-[var(--color-ink)] to-transparent" aria-hidden="true" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-12 z-10 bg-gradient-to-l from-[var(--color-ink)] to-transparent" aria-hidden="true" />
+        <div className="relative mb-6">
+          {/* Degradados en los bordes — solo cuando hay contenido desbordado */}
+          {catScroll.left && (
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-12 z-10 bg-gradient-to-r from-[var(--color-ink)] to-transparent" aria-hidden="true" />
+          )}
+          {catScroll.right && (
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-12 z-10 bg-gradient-to-l from-[var(--color-ink)] to-transparent" aria-hidden="true" />
+          )}
 
-          {/* Flechas de scroll (solo escritorio, aparecen al pasar el ratón) */}
-          <button
-            type="button"
-            aria-label="Categorías anteriores"
-            onClick={() => scrollCats(-320)}
-            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-8 h-8 rounded-full bg-[var(--color-card)] border border-[var(--color-card-hover)] text-[var(--color-cream-dim)] opacity-0 group-hover/cats:opacity-100 hover:border-[rgba(196,162,207,0.45)] hover:text-[var(--color-lavender)] transition-all duration-200"
-          >
-            <ChevronLeft size={16} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            aria-label="Categorías siguientes"
-            onClick={() => scrollCats(320)}
-            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-8 h-8 rounded-full bg-[var(--color-card)] border border-[var(--color-card-hover)] text-[var(--color-cream-dim)] opacity-0 group-hover/cats:opacity-100 hover:border-[rgba(196,162,207,0.45)] hover:text-[var(--color-lavender)] transition-all duration-200"
-          >
-            <ChevronRight size={16} aria-hidden="true" />
-          </button>
+          {/* Flechas de scroll (solo escritorio, solo si hay desbordamiento) */}
+          {catScroll.left && (
+            <button
+              type="button"
+              aria-label="Categorías anteriores"
+              onClick={() => scrollCats(-320)}
+              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-8 h-8 rounded-full bg-[var(--color-card)] border border-[var(--color-card-hover)] text-[var(--color-cream-dim)] shadow-md hover:border-[rgba(196,162,207,0.45)] hover:text-[var(--color-lavender)] transition-all duration-200"
+            >
+              <ChevronLeft size={16} aria-hidden="true" />
+            </button>
+          )}
+          {catScroll.right && (
+            <button
+              type="button"
+              aria-label="Categorías siguientes"
+              onClick={() => scrollCats(320)}
+              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-8 h-8 rounded-full bg-[var(--color-card)] border border-[var(--color-card-hover)] text-[var(--color-cream-dim)] shadow-md hover:border-[rgba(196,162,207,0.45)] hover:text-[var(--color-lavender)] transition-all duration-200"
+            >
+              <ChevronRight size={16} aria-hidden="true" />
+            </button>
+          )}
 
           <div
             ref={catScrollRef}
