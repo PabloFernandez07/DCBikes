@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SlidersHorizontal, X, ChevronDown } from 'lucide-react'
+import { SlidersHorizontal, X, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { trackSearch } from '@/lib/analytics'
@@ -182,6 +182,8 @@ export default function Catalog() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const catScrollRef = useRef<HTMLDivElement>(null)
+  const scrollCats = (dx: number) => catScrollRef.current?.scrollBy({ left: dx, behavior: 'smooth' })
   const [sort, setSort] = useState<SortKey>('name')
   const [sortOpen, setSortOpen] = useState(false)
   const gridRef = useReveal([products, loading])
@@ -308,49 +310,76 @@ export default function Catalog() {
           </div>
         </div>
 
-        {/* Category pills */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        {/* Category pills — carrusel horizontal de una sola línea */}
+        <div className="relative mb-6 group/cats">
+          {/* Degradados en los bordes para indicar scroll */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-12 z-10 bg-gradient-to-r from-[var(--color-ink)] to-transparent" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-12 z-10 bg-gradient-to-l from-[var(--color-ink)] to-transparent" aria-hidden="true" />
+
+          {/* Flechas de scroll (solo escritorio, aparecen al pasar el ratón) */}
           <button
             type="button"
-            onClick={() => setSelectedCategory(null)}
-            className={clsx(
-              'px-4 py-1.5 rounded-full text-sm font-[var(--font-cond)] tracking-wide transition-all duration-200 border',
-              selectedCategory === null
-                ? 'bg-[var(--color-lavender)] text-[var(--color-ink)] border-[var(--color-lavender)]'
-                : 'bg-transparent text-[var(--color-mid)] border-[var(--color-card-hover)] hover:text-[var(--color-cream)] hover:border-[rgba(196,162,207,0.3)]',
-            )}
+            aria-label="Categorías anteriores"
+            onClick={() => scrollCats(-320)}
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-8 h-8 rounded-full bg-[var(--color-card)] border border-[var(--color-card-hover)] text-[var(--color-cream-dim)] opacity-0 group-hover/cats:opacity-100 hover:border-[rgba(196,162,207,0.45)] hover:text-[var(--color-lavender)] transition-all duration-200"
           >
-            Todos
+            <ChevronLeft size={16} aria-hidden="true" />
           </button>
-          {hasOffers && (
+          <button
+            type="button"
+            aria-label="Categorías siguientes"
+            onClick={() => scrollCats(320)}
+            className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 items-center justify-center w-8 h-8 rounded-full bg-[var(--color-card)] border border-[var(--color-card-hover)] text-[var(--color-cream-dim)] opacity-0 group-hover/cats:opacity-100 hover:border-[rgba(196,162,207,0.45)] hover:text-[var(--color-lavender)] transition-all duration-200"
+          >
+            <ChevronRight size={16} aria-hidden="true" />
+          </button>
+
+          <div
+            ref={catScrollRef}
+            className="flex items-center gap-2 overflow-x-auto scroll-smooth snap-x px-0.5 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
             <button
               type="button"
-              onClick={() => { setSelectedCategory(null); setSort('discount') }}
+              onClick={() => setSelectedCategory(null)}
               className={clsx(
-                'px-4 py-1.5 rounded-full text-sm font-[var(--font-cond)] tracking-wide transition-all duration-200 border flex items-center gap-1.5',
-                sort === 'discount' && selectedCategory === null
-                  ? 'bg-[var(--color-brand-red)] text-white border-[var(--color-brand-red)]'
-                  : 'bg-transparent text-[var(--color-mid)] border-[var(--color-card-hover)] hover:text-[var(--color-cream)] hover:border-[var(--color-brand-red)]/50',
+                'shrink-0 snap-start whitespace-nowrap px-4 py-2 rounded-full text-sm font-[var(--font-cond)] tracking-wide border transition-all duration-200',
+                selectedCategory === null
+                  ? 'bg-[var(--color-lavender)] text-[var(--color-ink)] border-[var(--color-lavender)] shadow-[0_4px_16px_-6px_rgba(196,162,207,0.7)]'
+                  : 'bg-[var(--color-card)]/40 text-[var(--color-mid)] border-[var(--color-card-hover)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)] hover:border-[rgba(196,162,207,0.35)]',
               )}
             >
-              <span aria-hidden="true">🏷️</span> Ofertas
+              Todos
             </button>
-          )}
-          {categories.map(cat => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setSelectedCategory(cat.id)}
-              className={clsx(
-                'px-4 py-1.5 rounded-full text-sm font-[var(--font-cond)] tracking-wide transition-all duration-200 border',
-                selectedCategory === cat.id
-                  ? 'bg-[var(--color-lavender)] text-[var(--color-ink)] border-[var(--color-lavender)]'
-                  : 'bg-transparent text-[var(--color-mid)] border-[var(--color-card-hover)] hover:text-[var(--color-cream)] hover:border-[rgba(196,162,207,0.3)]',
-              )}
-            >
-              {cat.name}
-            </button>
-          ))}
+            {hasOffers && (
+              <button
+                type="button"
+                onClick={() => { setSelectedCategory(null); setSort('discount') }}
+                className={clsx(
+                  'shrink-0 snap-start whitespace-nowrap px-4 py-2 rounded-full text-sm font-[var(--font-cond)] tracking-wide border transition-all duration-200 flex items-center gap-1.5',
+                  sort === 'discount' && selectedCategory === null
+                    ? 'bg-[var(--color-brand-red)] text-white border-[var(--color-brand-red)] shadow-[0_4px_16px_-6px_rgba(214,69,69,0.75)]'
+                    : 'bg-[var(--color-card)]/40 text-[var(--color-mid)] border-[var(--color-card-hover)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)] hover:border-[var(--color-brand-red)]/50',
+                )}
+              >
+                <span aria-hidden="true">🏷️</span> Ofertas
+              </button>
+            )}
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={clsx(
+                  'shrink-0 snap-start whitespace-nowrap px-4 py-2 rounded-full text-sm font-[var(--font-cond)] tracking-wide border transition-all duration-200',
+                  selectedCategory === cat.id
+                    ? 'bg-[var(--color-lavender)] text-[var(--color-ink)] border-[var(--color-lavender)] shadow-[0_4px_16px_-6px_rgba(196,162,207,0.7)]'
+                    : 'bg-[var(--color-card)]/40 text-[var(--color-mid)] border-[var(--color-card-hover)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)] hover:border-[rgba(196,162,207,0.35)]',
+                )}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Active filters */}
