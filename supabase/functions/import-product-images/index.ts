@@ -54,11 +54,15 @@ Deno.serve(async (req) => {
     const jwt = authHeader.slice(7).trim()
     const { data: userData, error: userErr } = await service.auth.getUser(jwt)
     if (userErr || !userData?.user) return jsonError('unauthorized', 401, req)
-    const { data: adminRow } = await service
+    const { data: adminRow, error: adminErr } = await service
       .from('admin_users')
-      .select('id')
-      .eq('id', userData.user.id)
+      .select('user_id')
+      .eq('user_id', userData.user.id)
       .maybeSingle()
+    if (adminErr) {
+      console.error(`[${ts()}] import-product-images: admin lookup error:`, adminErr.message)
+      return jsonError('auth check failed', 500, req)
+    }
     if (!adminRow) return jsonError('forbidden', 403, req)
   } catch (err) {
     console.error(`[${ts()}] import-product-images: auth exception:`, String(err))
