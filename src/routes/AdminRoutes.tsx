@@ -6,6 +6,7 @@ import ProductsList from '@/pages/admin/ProductsList'
 import Login from '@/pages/admin/Login'
 import { ProductEdit } from '@/pages/admin/ProductEdit'
 import { Import } from '@/pages/admin/Import'
+import { Images } from '@/pages/admin/Images'
 import { Quotes } from '@/pages/admin/Quotes'
 import { Settings } from '@/pages/admin/Settings'
 import { Categories } from '@/pages/admin/Categories'
@@ -28,6 +29,7 @@ export function AdminRoutes() {
           <Route path="categorias" element={<Categories />} />
           <Route path="agrupaciones" element={<Groupings />} />
           <Route path="importar" element={<Import />} />
+          <Route path="imagenes" element={<Images />} />
           <Route path="consultas" element={<Quotes />} />
           <Route path="configuracion" element={<Settings />} />
           <Route path="brechas" element={<Brechas />} />
