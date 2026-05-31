@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Pencil, Archive } from 'lucide-react'
+import { Plus, Search, Pencil, Archive, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -12,7 +12,59 @@ import { ToastContainer } from '@/components/ui/Toast'
 import type { Product, Category } from '@/lib/database.types'
 import type { ProductFormValues } from '@/components/admin/ProductForm'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE_OPTIONS = [10, 50, 100] as const
+
+type StockFilter = '' | 'in' | 'out' | 'low'
+
+type SortKey =
+  | 'recent'
+  | 'name_asc'
+  | 'name_desc'
+  | 'price_asc'
+  | 'price_desc'
+  | 'stock_asc'
+  | 'stock_desc'
+  | 'category_asc'
+  | 'category_desc'
+  | 'online_asc'
+  | 'online_desc'
+  | 'active_asc'
+  | 'active_desc'
+
+interface SortOption {
+  value: SortKey
+  label: string
+  column: string
+  ascending: boolean
+  referencedTable?: string
+}
+
+const SORT_OPTIONS: SortOption[] = [
+  { value: 'recent', label: 'Más recientes', column: 'created_at', ascending: false },
+  { value: 'name_asc', label: 'Nombre A–Z', column: 'name', ascending: true },
+  { value: 'name_desc', label: 'Nombre Z–A', column: 'name', ascending: false },
+  { value: 'price_asc', label: 'Precio: menor a mayor', column: 'retail_price', ascending: true },
+  { value: 'price_desc', label: 'Precio: mayor a menor', column: 'retail_price', ascending: false },
+  { value: 'stock_asc', label: 'Stock: menor a mayor', column: 'stock', ascending: true },
+  { value: 'stock_desc', label: 'Stock: mayor a menor', column: 'stock', ascending: false },
+  { value: 'category_asc', label: 'Categoría A–Z', column: 'name', ascending: true, referencedTable: 'categories' },
+  { value: 'category_desc', label: 'Categoría Z–A', column: 'name', ascending: false, referencedTable: 'categories' },
+  { value: 'online_desc', label: 'Online primero', column: 'is_purchasable', ascending: false },
+  { value: 'online_asc', label: 'Sin online primero', column: 'is_purchasable', ascending: true },
+  { value: 'active_desc', label: 'Activos primero', column: 'active', ascending: false },
+  { value: 'active_asc', label: 'Inactivos primero', column: 'active', ascending: true },
+]
+
+// Cabeceras de tabla clicables → par de claves de orden (asc/desc) para alternar.
+type SortableField = 'name' | 'category' | 'price' | 'stock' | 'online' | 'active'
+const SORTABLE_COLUMNS: Record<SortableField, { asc: SortKey; desc: SortKey }> = {
+  name: { asc: 'name_asc', desc: 'name_desc' },
+  category: { asc: 'category_asc', desc: 'category_desc' },
+  price: { asc: 'price_asc', desc: 'price_desc' },
+  stock: { asc: 'stock_asc', desc: 'stock_desc' },
+  online: { asc: 'online_asc', desc: 'online_desc' },
+  active: { asc: 'active_asc', desc: 'active_desc' },
+}
 
 interface ProductWithCategory extends Product {
   categories: Pick<Category, 'name'> | null
@@ -86,6 +138,11 @@ export default function ProductsList() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [onlyOnline, setOnlyOnline] = useState(false)
   const [onlyGrouped, setOnlyGrouped] = useState(false)
+  const [minPrice, setMinPrice] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
+  const [stockFilter, setStockFilter] = useState<StockFilter>('')
+  const [sortKey, setSortKey] = useState<SortKey>('recent')
+  const [pageSize, setPageSize] = useState<number>(50)
   const [page, setPage] = useState(0)
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -97,11 +154,17 @@ export default function ProductsList() {
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
+    const sort = SORT_OPTIONS.find(s => s.value === sortKey) ?? SORT_OPTIONS[0]
     let query = supabase
       .from('products')
       .select('*, categories(name)', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+      .order(
+        sort.column,
+        sort.referencedTable
+          ? { ascending: sort.ascending, referencedTable: sort.referencedTable }
+          : { ascending: sort.ascending },
+      )
+      .range(page * pageSize, (page + 1) * pageSize - 1)
 
     if (search.trim()) {
       query = query.ilike('name', `%${search.trim()}%`)
@@ -116,11 +179,30 @@ export default function ProductsList() {
       query = query.not('model_group', 'is', null)
     }
 
+    // Rango de precio (PVP). Solo se aplica si el valor es un número válido.
+    const min = parseFloat(minPrice.replace(',', '.'))
+    const max = parseFloat(maxPrice.replace(',', '.'))
+    if (Number.isFinite(min)) {
+      query = query.gte('retail_price', min)
+    }
+    if (Number.isFinite(max)) {
+      query = query.lte('retail_price', max)
+    }
+
+    // Filtro de stock.
+    if (stockFilter === 'in') {
+      query = query.gt('stock', 0)
+    } else if (stockFilter === 'out') {
+      query = query.eq('stock', 0)
+    } else if (stockFilter === 'low') {
+      query = query.gt('stock', 0).lte('stock', 5)
+    }
+
     const { data, count } = await query
     setProducts((data as ProductWithCategory[]) ?? [])
     setTotal(count ?? 0)
     setLoading(false)
-  }, [page, search, categoryFilter, onlyOnline, onlyGrouped])
+  }, [page, pageSize, search, categoryFilter, onlyOnline, onlyGrouped, minPrice, maxPrice, stockFilter, sortKey])
 
   useEffect(() => {
     fetchProducts()
@@ -135,7 +217,7 @@ export default function ProductsList() {
   // Reset bulk selection when filters change (the visible page changed).
   useEffect(() => {
     setSelectedIds(new Set())
-  }, [page, search, categoryFilter, onlyOnline, onlyGrouped])
+  }, [page, pageSize, search, categoryFilter, onlyOnline, onlyGrouped, minPrice, maxPrice, stockFilter, sortKey])
 
   const handleToggleActive = async (product: Product) => {
     const { error } = await supabase
@@ -253,7 +335,14 @@ export default function ProductsList() {
     setPendingBulk(null)
   }
 
-  const totalPages = Math.ceil(total / PAGE_SIZE)
+  // Click en cabecera: primera vez ordena ascendente; siguiente click alterna.
+  const handleSort = (field: SortableField) => {
+    const { asc, desc } = SORTABLE_COLUMNS[field]
+    setSortKey(prev => (prev === asc ? desc : asc))
+    setPage(0)
+  }
+
+  const totalPages = Math.ceil(total / pageSize)
 
   return (
     <>
@@ -292,6 +381,58 @@ export default function ProductsList() {
             ))}
           </select>
 
+          {/* Rango de precio (PVP) */}
+          <div className="flex items-center gap-1.5">
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              placeholder="€ mín"
+              aria-label="Precio mínimo"
+              value={minPrice}
+              onChange={e => { setMinPrice(e.target.value); setPage(0) }}
+              className="w-24 bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-cream)] placeholder-[var(--color-mid)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+            />
+            <span className="text-[var(--color-mid)] text-sm" aria-hidden="true">–</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              placeholder="€ máx"
+              aria-label="Precio máximo"
+              value={maxPrice}
+              onChange={e => { setMaxPrice(e.target.value); setPage(0) }}
+              className="w-24 bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-cream)] placeholder-[var(--color-mid)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+            />
+          </div>
+
+          {/* Filtro de stock */}
+          <select
+            value={stockFilter}
+            onChange={e => { setStockFilter(e.target.value as StockFilter); setPage(0) }}
+            aria-label="Filtrar por stock"
+            className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+          >
+            <option value="">Cualquier stock</option>
+            <option value="in">Con stock</option>
+            <option value="out">Sin stock</option>
+            <option value="low">Stock bajo (≤5)</option>
+          </select>
+
+          {/* Ordenación */}
+          <select
+            value={sortKey}
+            onChange={e => { setSortKey(e.target.value as SortKey); setPage(0) }}
+            aria-label="Ordenar productos"
+            className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+          >
+            {SORT_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>Orden: {o.label}</option>
+            ))}
+          </select>
+
           <FilterToggle
             label="Solo online"
             checked={onlyOnline}
@@ -302,6 +443,18 @@ export default function ProductsList() {
             checked={onlyGrouped}
             onChange={v => { setOnlyGrouped(v); setPage(0) }}
           />
+
+          {/* Tamaño de página */}
+          <select
+            value={pageSize}
+            onChange={e => { setPageSize(Number(e.target.value)); setPage(0) }}
+            aria-label="Productos por página"
+            className="ml-auto bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+          >
+            {PAGE_SIZE_OPTIONS.map(n => (
+              <option key={n} value={n}>{n} por página</option>
+            ))}
+          </select>
         </div>
 
         {selectedIds.size > 0 && (
@@ -336,14 +489,14 @@ export default function ProductsList() {
                       />
                     </th>
                     <th className="px-3 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide w-14">Img</th>
-                    <th className="px-3 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Nombre</th>
-                    <th className="px-3 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden md:table-cell">Categoría</th>
+                    <SortTh label="Nombre" field="name" sortKey={sortKey} onSort={handleSort} />
+                    <SortTh label="Categoría" field="category" sortKey={sortKey} onSort={handleSort} className="hidden md:table-cell" />
                     <th className="px-3 py-3.5 text-center text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden lg:table-cell">Talla</th>
                     <th className="px-3 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden lg:table-cell">Grupo</th>
-                    <th className="px-3 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">PVP</th>
-                    <th className="px-3 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden sm:table-cell">Stock</th>
-                    <th className="px-3 py-3.5 text-center text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Online</th>
-                    <th className="px-3 py-3.5 text-center text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Activo</th>
+                    <SortTh label="PVP" field="price" sortKey={sortKey} onSort={handleSort} align="right" />
+                    <SortTh label="Stock" field="stock" sortKey={sortKey} onSort={handleSort} align="right" className="hidden sm:table-cell" />
+                    <SortTh label="Online" field="online" sortKey={sortKey} onSort={handleSort} align="center" />
+                    <SortTh label="Activo" field="active" sortKey={sortKey} onSort={handleSort} align="center" />
                     <th className="px-3 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Acciones</th>
                   </tr>
                 </thead>
@@ -445,6 +598,58 @@ export default function ProductsList() {
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </>
+  )
+}
+
+function SortTh({
+  label,
+  field,
+  sortKey,
+  onSort,
+  align = 'left',
+  className = '',
+}: {
+  label: string
+  field: SortableField
+  sortKey: SortKey
+  onSort: (field: SortableField) => void
+  align?: 'left' | 'center' | 'right'
+  className?: string
+}) {
+  const col = SORTABLE_COLUMNS[field]
+  const isAsc = sortKey === col.asc
+  const isDesc = sortKey === col.desc
+  const active = isAsc || isDesc
+
+  return (
+    <th
+      className={clsx(
+        'px-3 py-3.5 font-[var(--font-cond)] tracking-wide',
+        align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left',
+        className,
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(field)}
+        aria-label={`Ordenar por ${label}`}
+        className={clsx(
+          'inline-flex items-center gap-1 transition-colors hover:text-[var(--color-cream)]',
+          align === 'right' && 'flex-row-reverse',
+          align === 'center' && 'w-full justify-center',
+          active ? 'text-[var(--color-lavender)]' : 'text-[var(--color-mid)]',
+        )}
+      >
+        {label}
+        {isAsc ? (
+          <ChevronUp size={13} aria-hidden="true" />
+        ) : isDesc ? (
+          <ChevronDown size={13} aria-hidden="true" />
+        ) : (
+          <ChevronsUpDown size={13} aria-hidden="true" className="opacity-40" />
+        )}
+      </button>
+    </th>
   )
 }
 
