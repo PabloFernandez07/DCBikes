@@ -15,6 +15,25 @@ import type { ProductFormValues } from '@/components/admin/ProductForm'
 const PAGE_SIZE_OPTIONS = [10, 50, 100] as const
 
 type StockFilter = '' | 'in' | 'out' | 'low'
+type ImageFilter = '' | 'with' | 'without'
+
+// IDs (distinct) de productos que tienen al menos una imagen. Se usa para el
+// filtro "con/sin imágenes" (las imágenes viven en otra tabla, product_images).
+async function fetchImageProductIds(): Promise<string[]> {
+  const set = new Set<string>()
+  const size = 1000
+  for (let from = 0; ; from += size) {
+    const { data, error } = await supabase
+      .from('product_images')
+      .select('product_id')
+      .range(from, from + size - 1)
+    if (error) break
+    const rows = (data as { product_id: string | null }[]) ?? []
+    for (const r of rows) if (r.product_id) set.add(r.product_id)
+    if (rows.length < size) break
+  }
+  return Array.from(set)
+}
 
 type SortKey =
   | 'recent'
@@ -141,6 +160,7 @@ export default function ProductsList() {
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [stockFilter, setStockFilter] = useState<StockFilter>('')
+  const [imageFilter, setImageFilter] = useState<ImageFilter>('')
   const [sortKey, setSortKey] = useState<SortKey>('recent')
   const [pageSize, setPageSize] = useState<number>(50)
   const [page, setPage] = useState(0)
@@ -198,11 +218,28 @@ export default function ProductsList() {
       query = query.gt('stock', 0).lte('stock', 5)
     }
 
+    // Filtro por imágenes (con/sin foto). Se obtienen los IDs con imagen y se
+    // filtra por inclusión o exclusión sobre esa lista.
+    if (imageFilter) {
+      const idsWithImages = await fetchImageProductIds()
+      if (imageFilter === 'with') {
+        if (idsWithImages.length === 0) {
+          setProducts([])
+          setTotal(0)
+          setLoading(false)
+          return
+        }
+        query = query.in('id', idsWithImages)
+      } else if (idsWithImages.length > 0) {
+        query = query.not('id', 'in', `(${idsWithImages.join(',')})`)
+      }
+    }
+
     const { data, count } = await query
     setProducts((data as ProductWithCategory[]) ?? [])
     setTotal(count ?? 0)
     setLoading(false)
-  }, [page, pageSize, search, categoryFilter, onlyOnline, onlyGrouped, minPrice, maxPrice, stockFilter, sortKey])
+  }, [page, pageSize, search, categoryFilter, onlyOnline, onlyGrouped, minPrice, maxPrice, stockFilter, imageFilter, sortKey])
 
   useEffect(() => {
     fetchProducts()
@@ -217,7 +254,7 @@ export default function ProductsList() {
   // Reset bulk selection when filters change (the visible page changed).
   useEffect(() => {
     setSelectedIds(new Set())
-  }, [page, pageSize, search, categoryFilter, onlyOnline, onlyGrouped, minPrice, maxPrice, stockFilter, sortKey])
+  }, [page, pageSize, search, categoryFilter, onlyOnline, onlyGrouped, minPrice, maxPrice, stockFilter, imageFilter, sortKey])
 
   const handleToggleActive = async (product: Product) => {
     const { error } = await supabase
@@ -419,6 +456,18 @@ export default function ProductsList() {
             <option value="in">Con stock</option>
             <option value="out">Sin stock</option>
             <option value="low">Stock bajo (≤5)</option>
+          </select>
+
+          {/* Filtro por imágenes */}
+          <select
+            value={imageFilter}
+            onChange={e => { setImageFilter(e.target.value as ImageFilter); setPage(0) }}
+            aria-label="Filtrar por imágenes"
+            className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+          >
+            <option value="">Con y sin imágenes</option>
+            <option value="with">Con imágenes</option>
+            <option value="without">Sin imágenes</option>
           </select>
 
           {/* Ordenación */}
