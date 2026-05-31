@@ -193,6 +193,34 @@ export default function Catalog() {
       .then(({ data }) => setCategories(data ?? []))
   }, [])
 
+  // IDs de categorías que tienen al menos un producto ACTIVO (visible en web).
+  // Solo esas se muestran como filtro, para no saturar con categorías vacías.
+  const [activeCatIds, setActiveCatIds] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const set = new Set<string>()
+      const size = 1000
+      for (let from = 0; ; from += size) {
+        const { data } = await supabase
+          .from('products')
+          .select('category_id')
+          .eq('active', true)
+          .range(from, from + size - 1)
+        const rows = (data as { category_id: string | null }[]) ?? []
+        for (const r of rows) if (r.category_id) set.add(r.category_id)
+        if (rows.length < size) break
+      }
+      if (!cancelled) setActiveCatIds(set)
+    })()
+    return () => { cancelled = true }
+  }, [])
+
+  const visibleCategories = useMemo(
+    () => categories.filter(c => activeCatIds.has(c.id)),
+    [categories, activeCatIds],
+  )
+
   useEffect(() => {
     setLoading(true)
     let query = supabase.from('products').select('*').eq('active', true)
@@ -336,16 +364,16 @@ export default function Catalog() {
 
           <div
             ref={catScrollRef}
-            className="flex items-center gap-2 overflow-x-auto scroll-smooth snap-x px-0.5 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex items-center gap-1.5 overflow-x-auto scroll-smooth snap-x px-0.5 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             <button
               type="button"
               onClick={() => setSelectedCategory(null)}
               className={clsx(
-                'shrink-0 snap-start whitespace-nowrap px-4 py-2 rounded-full text-sm font-[var(--font-cond)] tracking-wide border transition-all duration-200',
+                'shrink-0 snap-start whitespace-nowrap px-4 py-2 rounded-full text-sm font-[var(--font-cond)] tracking-wide transition-all duration-200',
                 selectedCategory === null
-                  ? 'bg-[var(--color-lavender)] text-[var(--color-ink)] border-[var(--color-lavender)] shadow-[0_4px_16px_-6px_rgba(196,162,207,0.7)]'
-                  : 'bg-[var(--color-card)]/40 text-[var(--color-mid)] border-[var(--color-card-hover)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)] hover:border-[rgba(196,162,207,0.35)]',
+                  ? 'bg-[var(--color-lavender)] text-[var(--color-ink)] shadow-[0_6px_18px_-7px_rgba(196,162,207,0.55)]'
+                  : 'text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)]/60',
               )}
             >
               Todos
@@ -355,25 +383,25 @@ export default function Catalog() {
                 type="button"
                 onClick={() => { setSelectedCategory(null); setSort('discount') }}
                 className={clsx(
-                  'shrink-0 snap-start whitespace-nowrap px-4 py-2 rounded-full text-sm font-[var(--font-cond)] tracking-wide border transition-all duration-200 flex items-center gap-1.5',
+                  'shrink-0 snap-start whitespace-nowrap px-4 py-2 rounded-full text-sm font-[var(--font-cond)] tracking-wide transition-all duration-200 flex items-center gap-1.5',
                   sort === 'discount' && selectedCategory === null
-                    ? 'bg-[var(--color-brand-red)] text-white border-[var(--color-brand-red)] shadow-[0_4px_16px_-6px_rgba(214,69,69,0.75)]'
-                    : 'bg-[var(--color-card)]/40 text-[var(--color-mid)] border-[var(--color-card-hover)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)] hover:border-[var(--color-brand-red)]/50',
+                    ? 'bg-[var(--color-brand-red)] text-white shadow-[0_6px_18px_-7px_rgba(214,69,69,0.6)]'
+                    : 'text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)]/60',
                 )}
               >
                 <span aria-hidden="true">🏷️</span> Ofertas
               </button>
             )}
-            {categories.map(cat => (
+            {visibleCategories.map(cat => (
               <button
                 key={cat.id}
                 type="button"
                 onClick={() => setSelectedCategory(cat.id)}
                 className={clsx(
-                  'shrink-0 snap-start whitespace-nowrap px-4 py-2 rounded-full text-sm font-[var(--font-cond)] tracking-wide border transition-all duration-200',
+                  'shrink-0 snap-start whitespace-nowrap px-4 py-2 rounded-full text-sm font-[var(--font-cond)] tracking-wide transition-all duration-200',
                   selectedCategory === cat.id
-                    ? 'bg-[var(--color-lavender)] text-[var(--color-ink)] border-[var(--color-lavender)] shadow-[0_4px_16px_-6px_rgba(196,162,207,0.7)]'
-                    : 'bg-[var(--color-card)]/40 text-[var(--color-mid)] border-[var(--color-card-hover)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)] hover:border-[rgba(196,162,207,0.35)]',
+                    ? 'bg-[var(--color-lavender)] text-[var(--color-ink)] shadow-[0_6px_18px_-7px_rgba(196,162,207,0.55)]'
+                    : 'text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)]/60',
                 )}
               >
                 {cat.name}
