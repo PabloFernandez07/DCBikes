@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { ProductForm } from '@/components/admin/ProductForm'
-import { BulkActionsBar } from '@/components/admin/BulkActionsBar'
+import { BulkActionsBar, type BulkAction } from '@/components/admin/BulkActionsBar'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
 import type { Product, Category } from '@/lib/database.types'
@@ -18,7 +18,64 @@ interface ProductWithCategory extends Product {
   categories: Pick<Category, 'name'> | null
 }
 
-type BulkAction = 'enable' | 'disable'
+// Cada acción (salvo eliminar) se traduce en un UPDATE de un único campo.
+const BULK_PATCH: Record<Exclude<BulkAction, 'delete'>, Partial<Product>> = {
+  activate: { active: true },
+  deactivate: { active: false },
+  feature: { featured: true },
+  unfeature: { featured: false },
+  enable_online: { is_purchasable: true },
+  disable_online: { is_purchasable: false },
+}
+
+// Textos del modal de confirmación por acción.
+const BULK_META: Record<
+  BulkAction,
+  { title: string; message: (n: number) => string; confirmLabel: string; danger: boolean }
+> = {
+  activate: {
+    title: 'Activar productos',
+    message: n => `Se marcarán ${n} ${n === 1 ? 'producto' : 'productos'} como visibles en la web.`,
+    confirmLabel: 'Activar',
+    danger: false,
+  },
+  deactivate: {
+    title: 'Desactivar productos',
+    message: n => `Se ocultarán ${n} ${n === 1 ? 'producto' : 'productos'} de la web (dejarán de mostrarse a los clientes).`,
+    confirmLabel: 'Desactivar',
+    danger: false,
+  },
+  feature: {
+    title: 'Destacar productos',
+    message: n => `Se marcarán ${n} ${n === 1 ? 'producto' : 'productos'} como destacados.`,
+    confirmLabel: 'Destacar',
+    danger: false,
+  },
+  unfeature: {
+    title: 'Quitar destacado',
+    message: n => `Se quitará el destacado de ${n} ${n === 1 ? 'producto' : 'productos'}.`,
+    confirmLabel: 'Quitar destacado',
+    danger: false,
+  },
+  enable_online: {
+    title: 'Activar venta online',
+    message: n => `Se marcarán ${n} ${n === 1 ? 'producto' : 'productos'} como comprables online. Los clientes podrán añadirlos al carrito.`,
+    confirmLabel: 'Activar online',
+    danger: false,
+  },
+  disable_online: {
+    title: 'Desactivar venta online',
+    message: n => `Se desactivará "Comprar online" en ${n} ${n === 1 ? 'producto' : 'productos'}. Solo aparecerán como consulta para tienda.`,
+    confirmLabel: 'Desactivar online',
+    danger: false,
+  },
+  delete: {
+    title: 'Eliminar productos',
+    message: n => `Se eliminarán definitivamente ${n} ${n === 1 ? 'producto' : 'productos'}, junto con sus imágenes y avisos de stock. El histórico de pedidos y facturas se conserva. Esta acción no se puede deshacer.`,
+    confirmLabel: 'Eliminar',
+    danger: true,
+  },
+}
 
 export default function ProductsList() {
   const navigate = useNavigate()
@@ -162,23 +219,34 @@ export default function ProductsList() {
   const runBulk = async () => {
     if (!pendingBulk || selectedIds.size === 0) return
     const ids = Array.from(selectedIds)
-    const newValue = pendingBulk === 'enable'
     setBulkRunning(true)
-    const { error } = await supabase
-      .from('products')
-      .update({ is_purchasable: newValue })
-      .in('id', ids)
+
+    let error: { message: string } | null = null
+    if (pendingBulk === 'delete') {
+      const res = await supabase.from('products').delete().in('id', ids)
+      error = res.error
+    } else {
+      const res = await supabase.from('products').update(BULK_PATCH[pendingBulk]).in('id', ids)
+      error = res.error
+    }
+
     setBulkRunning(false)
     if (error) {
-      toast.error('Error en bulk: ' + error.message)
+      toast.error('Error en la acción en lote: ' + error.message)
+      setPendingBulk(null)
+      return
+    }
+
+    const n = ids.length
+    if (pendingBulk === 'delete') {
+      toast.success(`${n} ${n === 1 ? 'producto eliminado' : 'productos eliminados'}`)
+      setSelectedIds(new Set())
+      fetchProducts()
     } else {
-      toast.success(
-        `${ids.length} ${ids.length === 1 ? 'producto actualizado' : 'productos actualizados'}`,
-      )
+      const patch = BULK_PATCH[pendingBulk]
+      toast.success(`${n} ${n === 1 ? 'producto actualizado' : 'productos actualizados'}`)
       setProducts(prev =>
-        prev.map(p =>
-          selectedIds.has(p.id) ? { ...p, is_purchasable: newValue } : p,
-        ),
+        prev.map(p => (selectedIds.has(p.id) ? { ...p, ...patch } : p)),
       )
       setSelectedIds(new Set())
     }
@@ -239,8 +307,7 @@ export default function ProductsList() {
         {selectedIds.size > 0 && (
           <BulkActionsBar
             count={selectedIds.size}
-            onEnablePurchasable={() => setPendingBulk('enable')}
-            onDisablePurchasable={() => setPendingBulk('disable')}
+            onAction={setPendingBulk}
             onClear={() => setSelectedIds(new Set())}
             disabled={bulkRunning}
           />
@@ -346,34 +413,34 @@ export default function ProductsList() {
       <Modal
         open={pendingBulk !== null}
         onClose={() => (bulkRunning ? undefined : setPendingBulk(null))}
-        title="Confirmar acción en lote"
+        title={pendingBulk ? BULK_META[pendingBulk].title : 'Confirmar acción en lote'}
         size="sm"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed">
-            {pendingBulk === 'enable'
-              ? `Se marcarán ${selectedIds.size} ${selectedIds.size === 1 ? 'producto' : 'productos'} como comprables online. Los clientes podrán añadirlos al carrito.`
-              : `Se desactivará "Comprar online" en ${selectedIds.size} ${selectedIds.size === 1 ? 'producto' : 'productos'}. Solo aparecerán como consulta para tienda.`}
-          </p>
-          <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--color-card-hover)]">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setPendingBulk(null)}
-              disabled={bulkRunning}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              variant={pendingBulk === 'enable' ? 'primary' : 'danger'}
-              loading={bulkRunning}
-              onClick={runBulk}
-            >
-              Confirmar
-            </Button>
+        {pendingBulk && (
+          <div className="space-y-4">
+            <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed">
+              {BULK_META[pendingBulk].message(selectedIds.size)}
+            </p>
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--color-card-hover)]">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setPendingBulk(null)}
+                disabled={bulkRunning}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant={BULK_META[pendingBulk].danger ? 'danger' : 'primary'}
+                loading={bulkRunning}
+                onClick={runBulk}
+              >
+                {BULK_META[pendingBulk].confirmLabel}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </Modal>
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />

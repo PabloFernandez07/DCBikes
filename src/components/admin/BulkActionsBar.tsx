@@ -1,25 +1,28 @@
-import { ShoppingCart, Ban, X } from 'lucide-react'
+import { Eye, EyeOff, Star, ShoppingCart, Ban, Trash2, X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+
+export type BulkAction =
+  | 'activate'
+  | 'deactivate'
+  | 'feature'
+  | 'unfeature'
+  | 'enable_online'
+  | 'disable_online'
+  | 'delete'
 
 interface BulkActionsBarProps {
   count: number
-  onEnablePurchasable: () => void
-  onDisablePurchasable: () => void
+  onAction: (action: BulkAction) => void
   onClear: () => void
   disabled?: boolean
 }
 
 /**
  * Barra flotante que aparece cuando hay 1+ productos seleccionados en la lista.
- * Permite acciones en lote sobre `is_purchasable`.
+ * Ofrece acciones rápidas en lote: visibilidad web (active), destacado
+ * (featured), venta online (is_purchasable) y eliminación.
  */
-export function BulkActionsBar({
-  count,
-  onEnablePurchasable,
-  onDisablePurchasable,
-  onClear,
-  disabled,
-}: BulkActionsBarProps) {
+export function BulkActionsBar({ count, onAction, onClear, disabled }: BulkActionsBarProps) {
   return (
     <div
       role="region"
@@ -36,24 +39,48 @@ export function BulkActionsBar({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 ml-auto">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={onEnablePurchasable}
-          disabled={disabled}
-        >
+        {/* Visibilidad en la web */}
+        <Button variant="secondary" size="sm" onClick={() => onAction('activate')} disabled={disabled}>
+          <Eye size={14} aria-hidden="true" />
+          Activar
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => onAction('deactivate')} disabled={disabled}>
+          <EyeOff size={14} aria-hidden="true" />
+          Desactivar
+        </Button>
+
+        <Divider />
+
+        {/* Destacado */}
+        <Button variant="secondary" size="sm" onClick={() => onAction('feature')} disabled={disabled}>
+          <Star size={14} aria-hidden="true" />
+          Destacar
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => onAction('unfeature')} disabled={disabled}>
+          <Star size={14} aria-hidden="true" className="opacity-50" />
+          Quitar destacado
+        </Button>
+
+        <Divider />
+
+        {/* Venta online */}
+        <Button variant="secondary" size="sm" onClick={() => onAction('enable_online')} disabled={disabled}>
           <ShoppingCart size={14} aria-hidden="true" />
           Activar online
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onDisablePurchasable}
-          disabled={disabled}
-        >
+        <Button variant="ghost" size="sm" onClick={() => onAction('disable_online')} disabled={disabled}>
           <Ban size={14} aria-hidden="true" />
           Desactivar online
         </Button>
+
+        <Divider />
+
+        {/* Eliminar */}
+        <Button variant="danger" size="sm" onClick={() => onAction('delete')} disabled={disabled}>
+          <Trash2 size={14} aria-hidden="true" />
+          Eliminar
+        </Button>
+
         <button
           type="button"
           onClick={onClear}
@@ -66,4 +93,8 @@ export function BulkActionsBar({
       </div>
     </div>
   )
+}
+
+function Divider() {
+  return <span aria-hidden="true" className="hidden sm:block w-px h-5 bg-[var(--color-lavender)]/25" />
 }
