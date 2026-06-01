@@ -58,7 +58,7 @@ export function ProductCard({
       onKeyDown={e => e.key === 'Enter' && onClick()}
       aria-label={`Ver ${cardName}`}
     >
-      <div className="aspect-square bg-[var(--color-ink)] overflow-hidden relative">
+      <div className="aspect-square bg-white overflow-hidden relative">
         {mainImage ? (
           <img
             src={mainImage.publicUrl}

@@ -44,7 +44,7 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
   return (
     <div className="flex flex-col gap-3">
       <div
-        className="relative w-full aspect-square bg-[var(--color-card)] rounded-2xl overflow-hidden select-none"
+        className="relative w-full aspect-square bg-white rounded-2xl overflow-hidden select-none"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -105,7 +105,7 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
               )}
               aria-label={`Miniatura ${i + 1}`}
             >
-              <img src={img.url} alt={img.alt} className="w-full h-full object-contain bg-[var(--color-card)] p-1" />
+              <img src={img.url} alt={img.alt} className="w-full h-full object-contain bg-white p-1" />
             </button>
           ))}
         </div>
