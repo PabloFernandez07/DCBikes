@@ -333,14 +333,22 @@ export default function ProductDetail() {
             </div>
           )}
 
-          {/* Description */}
-          {(parentProduct.description ?? parentProduct.short_description) && (
-            <div className="border-t border-[var(--color-card)] pt-6">
-              <p className="text-[var(--color-mid)] font-[var(--font-body)] text-base leading-relaxed whitespace-pre-line">
-                {parentProduct.description ?? parentProduct.short_description}
-              </p>
-            </div>
-          )}
+          {/* Description — de la variante seleccionada (cambia al elegir otra
+              talla/color); fallback al padre del grupo si la variante no tiene. */}
+          {(() => {
+            const desc =
+              selectedVariant.description ??
+              selectedVariant.short_description ??
+              parentProduct.description ??
+              parentProduct.short_description
+            return desc ? (
+              <div className="border-t border-[var(--color-card)] pt-6">
+                <p className="text-[var(--color-mid)] font-[var(--font-body)] text-base leading-relaxed whitespace-pre-line">
+                  {desc}
+                </p>
+              </div>
+            ) : null
+          })()}
 
           {/* Conformidad y seguridad (X-04 · Reg. UE 2023/988) */}
           {(parentProduct.ce_marking ||
