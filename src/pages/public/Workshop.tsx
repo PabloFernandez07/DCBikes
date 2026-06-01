@@ -25,14 +25,14 @@ const services = [
     icon: <Wrench size={32} strokeWidth={1.5} aria-hidden="true" />,
     title: 'Reparación',
     text: 'Diagnóstico completo y reparación de cualquier avería, sea cual sea la marca o el tipo de bicicleta.',
-    items: ['Revisión y ajuste de frenos', 'Reparación y ajuste de cambios', 'Cambio de cables y fundas', 'Reparación de ruedas y pinchaduras', 'Reparación de cuadro y horquilla'],
+    items: ['Revisión y ajuste de frenos', 'Reparación y ajuste de cambios', 'Cambio de cables y fundas', 'Reparación de ruedas y pinchaduras', 'Mantenimiento de horquillas y suspensiones'],
     accent: 'from-[rgba(196,162,207,0.15)] to-transparent',
   },
   {
     icon: <Settings size={32} strokeWidth={1.5} aria-hidden="true" />,
     title: 'Mantenimiento',
     text: 'Revisiones periódicas para mantener tu bici en perfectas condiciones y alargar su vida útil al máximo.',
-    items: ['Revisión básica (puesta a punto)', 'Revisión completa (20 puntos)', 'Limpieza y desengrase profundo', 'Lubricación de transmisión', 'Comprobación de rodamientos'],
+    items: ['Revisión básica (puesta a punto)', 'Revisión completa (20 puntos)', 'Lavado de bicicletas', 'Limpieza y desengrase profundo', 'Lubricación de transmisión', 'Comprobación de rodamientos'],
     accent: 'from-[rgba(229,48,30,0.08)] to-transparent',
   },
   {
