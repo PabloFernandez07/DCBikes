@@ -58,6 +58,7 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
       size_label: product?.size_label ?? '',
       model_group: product?.model_group ?? '',
       color: product?.color ?? '',
+      flavor: product?.flavor ?? '',
       weight_grams:
         product?.weight_grams != null ? String(product.weight_grams) : '',
     },
@@ -249,6 +250,12 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
             helpText="Ej. Rojo, Negro, Blanco. Crea el selector de color en la ficha cuando el grupo tiene varios. Vacío si no aplica."
             error={errors.color?.message}
             {...register('color')}
+          />
+          <Field
+            label="Sabor"
+            helpText="Ej. Cola, Fresa, Limón. Crea el selector de sabor en la ficha (nutrición) cuando el grupo tiene varios. Vacío si no aplica."
+            error={errors.flavor?.message}
+            {...register('flavor')}
           />
           <Field
             label="Peso (gramos)"

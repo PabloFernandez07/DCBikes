@@ -125,6 +125,7 @@ export function ProductEdit() {
       size_label: values.size_label?.trim() ? values.size_label.trim() : null,
       model_group: values.model_group?.trim() ? values.model_group.trim() : null,
       color: values.color?.trim() ? values.color.trim() : null,
+      flavor: values.flavor?.trim() ? values.flavor.trim() : null,
       weight_grams: values.weight_grams ? Number(values.weight_grams) : null,
     }
 

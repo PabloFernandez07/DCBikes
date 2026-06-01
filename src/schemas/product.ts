@@ -48,6 +48,7 @@ export const productSchema = z.object({
   size_label: z.string().optional().nullable(),
   model_group: z.string().optional().nullable(),
   color: z.string().optional().nullable(),
+  flavor: z.string().optional().nullable(),
   weight_grams: z.number().int().positive().optional().nullable(),
 })
 
@@ -121,6 +122,7 @@ export const productFormSchema = z.object({
   size_label: z.string(),
   model_group: z.string(),
   color: z.string(),
+  flavor: z.string(),
   weight_grams: z.string().refine(
     (v) => {
       if (v.trim() === '') return true

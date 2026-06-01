@@ -54,9 +54,15 @@ export function isLightColor(name: string | null | undefined): boolean {
 const COLOR_WORDS =
   /\b(negr[oa]s?|blanc[oa]s?|gris(?:es)?|roj[oa]s?|azul(?:es)?|verdes?|amarill[oa]s?|naranja|rosa|burdeos|marr[oó]n|morad[oa]s?|celeste|lima|mostaza|berenjena|petr[oó]leo|antracita|sandia|titanium|plata|dorad[oa]|oro|black|white|silver|grey|gray|red|blue|green|yellow|golden|purple|pink|ice\s+(?:blue|grey)|frost\s+silver|panther\s+black)\b/gi
 
+// Sabores + cualificadores de cafeína para limpiar el título de nutrición.
+const FLAVOR_WORDS =
+  /\b(cola|fresa|lim[oó]n|cereza|cherry|manzana|pl[aá]tano|mel[oó]n|neutr[oa]|neutral|regaliz|frambuesa|raspberry|lemon|orange|berries|berry|mango|mojito|yogur(?:t)?|chocolate|choco|vainilla|menta|sandia|tropical|pi[ñn]a|arandanos|piruleta|tres\s+chocolates|frutos\s+rojos)\b/gi
+const CAF_WORDS = /\b(100\s*caf|off\s*caf|con\s+cafe[ií]na|sin\s+cafe[ií]na|\bcaf\b)\b/gi
+
 /**
- * Quita color + talla del nombre para mostrar el título limpio del grupo.
- * Ej: "MAILLOT ALDE THERMO ROJO S" → "MAILLOT ALDE THERMO".
+ * Quita color + talla + sabor/cafeína del nombre para mostrar el título limpio
+ * del grupo. Ej: "MAILLOT ALDE THERMO ROJO S" → "MAILLOT ALDE THERMO";
+ * "BARRITA GOMINOLA COLA" → "BARRITA GOMINOLA".
  */
 export function cleanGroupName(name: string, sizeLabel?: string | null): string {
   let n = name
@@ -65,6 +71,6 @@ export function cleanGroupName(name: string, sizeLabel?: string | null): string 
     n = n.replace(new RegExp(`\\b${esc}\\b`, 'i'), ' ')
     n = n.replace(new RegExp(`\\bT-?${esc}\\b`, 'i'), ' ')
   }
-  n = n.replace(/\btalla\b/gi, ' ').replace(COLOR_WORDS, ' ')
+  n = n.replace(/\btalla\b/gi, ' ').replace(CAF_WORDS, ' ').replace(COLOR_WORDS, ' ').replace(FLAVOR_WORDS, ' ')
   return n.replace(/\s+/g, ' ').replace(/\s*[-_,/]\s*$/, '').trim() || name
 }

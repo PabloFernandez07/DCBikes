@@ -58,6 +58,8 @@ export interface Database {
           ean: string | null
           // ── 0059_products_color ──
           color: string | null
+          // ── 0060_products_flavor ──
+          flavor: string | null
           // ── 0039_products_safety_compliance ──
           ce_marking: boolean
           safety_standards: string[]
@@ -87,6 +89,8 @@ export interface Database {
           ean?: string | null
           // ── 0059_products_color ──
           color?: string | null
+          // ── 0060_products_flavor ──
+          flavor?: string | null
           // ── 0039_products_safety_compliance ──
           ce_marking?: boolean
           safety_standards?: string[]
@@ -116,6 +120,8 @@ export interface Database {
           ean?: string | null
           // ── 0059_products_color ──
           color?: string | null
+          // ── 0060_products_flavor ──
+          flavor?: string | null
           // ── 0039_products_safety_compliance ──
           ce_marking?: boolean
           safety_standards?: string[]

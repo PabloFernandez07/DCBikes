@@ -27,15 +27,23 @@ export function SizeSelector({ variants, selectedVariant, onSelect }: SizeSelect
   for (const v of variants) if (v.color && !colors.includes(v.color)) colors.push(v.color)
   const sizes: string[] = []
   for (const v of variants) { const s = sz(v); if (s && !sizes.includes(s)) sizes.push(s) }
+  const flavors: string[] = []
+  for (const v of variants) if (v.flavor && !flavors.includes(v.flavor)) flavors.push(v.flavor)
 
   const hasColors = colors.length >= 2
   const hasSizes = sizes.length >= 2
+  const hasFlavors = flavors.length >= 2
 
   const selColor = selectedVariant?.color ?? null
   const selSize = sz(selectedVariant ?? ({} as Product))
 
   const find = (color: string | null, size: string | null) =>
     variants.find(v => (v.color ?? null) === color && sz(v) === size) ?? null
+
+  const flavorVariant = (f: string) =>
+    variants.find(v => v.flavor === f && (!hasColors || v.color === selColor) && (!hasSizes || sz(v) === selSize)) ??
+    variants.find(v => v.flavor === f) ??
+    null
 
   const colorHasStock = (c: string) => variants.some(v => v.color === c && v.stock > 0)
 
@@ -85,6 +93,47 @@ export function SizeSelector({ variants, selectedVariant, onSelect }: SizeSelect
                   {!avail && (
                     <span className="absolute left-1/2 top-1/2 w-[120%] h-[2px] bg-[var(--color-brand-red)] -translate-x-1/2 -translate-y-1/2 rotate-45 rounded" />
                   )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── SABOR ── */}
+      {hasFlavors && (
+        <div className="flex flex-col gap-3">
+          <span className="font-[var(--font-cond)] text-sm uppercase tracking-widest text-[var(--color-cream-dim)]">
+            Sabor{selectedVariant?.flavor ? <span className="text-[var(--color-mid)] normal-case tracking-normal">: {selectedVariant.flavor}</span> : null}
+          </span>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Sabor">
+            {flavors.map(f => {
+              const v = flavorVariant(f)
+              const exists = !!v
+              const inStock = !!v && v.stock > 0
+              const isSel = exists && selectedVariant?.id === v!.id
+              const title = !exists ? 'No disponible' : inStock ? '' : 'Sin stock'
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSel}
+                  aria-disabled={!exists}
+                  title={title}
+                  onClick={() => exists && onSelect(v!)}
+                  className={clsx(
+                    'px-4 py-2 rounded-xl text-sm font-[var(--font-cond)] tracking-wide border transition-all duration-200',
+                    isSel
+                      ? 'bg-[var(--color-lavender)] text-[var(--color-ink)] border-[var(--color-lavender)] font-semibold'
+                      : !exists
+                        ? 'bg-transparent text-[var(--color-mid)] border-[var(--color-card-hover)] opacity-30 cursor-not-allowed line-through'
+                        : !inStock
+                          ? 'bg-transparent text-[var(--color-mid)] border-[var(--color-card-hover)] opacity-45 cursor-pointer line-through'
+                          : 'bg-transparent text-[var(--color-cream)] border-[var(--color-card-hover)] hover:border-[rgba(196,162,207,0.5)] hover:text-[var(--color-lavender)] cursor-pointer',
+                  )}
+                >
+                  {f}
                 </button>
               )
             })}
