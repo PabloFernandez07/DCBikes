@@ -321,17 +321,21 @@ export default function ProductDetail() {
             </div>
           )}
 
-          {/* Stock (solo si NO hay selector — el selector ya muestra "X disponibles") */}
-          {!showSizeSelector && (
-            <div className="flex items-center gap-2">
-              <Package size={14} className={inStock ? 'text-green-400' : 'text-[var(--color-brand-red)]'} />
-              <span className={`font-[var(--font-cond)] text-sm tracking-wide ${inStock ? 'text-green-400' : 'text-[var(--color-brand-red)]'}`}>
-                {inStock
-                  ? `${selectedVariant.stock} unidad${selectedVariant.stock !== 1 ? 'es' : ''} disponible${selectedVariant.stock !== 1 ? 's' : ''}`
-                  : 'Sin stock'}
+          {/* Estado de stock de la variante seleccionada — claro y siempre visible */}
+          <div>
+            {inStock ? (
+              <span className="inline-flex items-center gap-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 px-3 py-1.5 font-[var(--font-cond)] text-sm font-semibold tracking-wide">
+                <Package size={15} aria-hidden="true" />
+                En stock
+                {selectedVariant.stock <= 5 && ` · últimas ${selectedVariant.stock} ud.`}
               </span>
-            </div>
-          )}
+            ) : (
+              <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--color-brand-red)]/10 border border-[var(--color-brand-red)]/40 text-[var(--color-brand-red)] px-3 py-1.5 font-[var(--font-cond)] text-sm font-bold tracking-widest uppercase">
+                <Package size={15} aria-hidden="true" />
+                Sin stock{showSizeSelector ? ' en esta opción' : ''}
+              </span>
+            )}
+          </div>
 
           {/* Description — de la variante seleccionada (cambia al elegir otra
               talla/color); fallback al padre del grupo si la variante no tiene. */}
