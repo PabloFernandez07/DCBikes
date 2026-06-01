@@ -51,7 +51,7 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
         <img
           src={images[current].url}
           alt={images[current].alt}
-          className="w-full h-full object-contain p-4 transition-opacity duration-300"
+          className="w-full h-full object-contain p-8 transition-opacity duration-300"
           key={current}
         />
 
