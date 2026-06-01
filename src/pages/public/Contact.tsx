@@ -84,8 +84,17 @@ export default function Contact() {
       })
   }, [])
 
+  // OJO: maps.google.com bloquea el framing (ERR_BLOCKED_BY_RESPONSE).
+  // El host que SÍ permite iframe es www.google.com/maps con output=embed.
   const defaultEmbedSrc =
-    'https://maps.google.com/maps?q=DC+Bikes+Cantabria%2C+C.+la+Cant%C3%A1brica%2C+39610+Astillero%2C+Cantabria&output=embed&z=17'
+    'https://www.google.com/maps?q=DC+Bikes+Cantabria%2C+C.+la+Cant%C3%A1brica%2C+39610+Astillero%2C+Cantabria&output=embed&z=17'
+
+  // Normaliza cualquier embed guardado en ajustes que use el host bloqueado.
+  const rawEmbed = settings.maps_embed ?? defaultEmbedSrc
+  const mapEmbedSrc = rawEmbed.replace(
+    /https?:\/\/maps\.google\.com\/maps/i,
+    'https://www.google.com/maps',
+  )
 
   const phone = settings.phone ?? null
   const address = settings.address ?? null
@@ -251,7 +260,7 @@ export default function Contact() {
           <div className="lg:col-span-2 rounded-2xl overflow-hidden bg-[var(--color-card)] h-[420px]">
             {mapsEnabled ? (
               <iframe
-                src={settings.maps_embed ?? defaultEmbedSrc}
+                src={mapEmbedSrc}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
