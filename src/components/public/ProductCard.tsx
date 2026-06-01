@@ -114,7 +114,7 @@ export function ProductCard({
           )}
           {hasMultipleSizes && (
             <span className="ml-auto text-[10px] font-[var(--font-cond)] uppercase tracking-widest text-[var(--color-cream-dim)] bg-[var(--color-card-hover)] px-1.5 py-0.5 rounded">
-              {variantCount} tallas
+              {variantCount} opciones
             </span>
           )}
         </div>

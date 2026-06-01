@@ -8,6 +8,7 @@ import { ProductCard } from '@/components/public/ProductCard'
 import { SearchBar } from '@/components/public/SearchBar'
 import type { Category, Product, ProductImage } from '@/lib/database.types'
 import { SEO } from '@/components/layout/SEO'
+import { cleanGroupName } from '@/lib/variant-colors'
 
 type SortKey = 'name' | 'price_asc' | 'price_desc' | 'discount' | 'newest'
 
@@ -46,35 +47,6 @@ function effectivePrice(p: Product): number {
     : p.retail_price
 }
 
-/**
- * Devuelve el prefijo común a un array de strings, recortado en límite de palabra.
- * Si no hay prefijo significativo (>=4 chars), devuelve null.
- */
-function commonNamePrefix(names: string[]): string | null {
-  if (names.length === 0) return null
-  if (names.length === 1) return names[0]
-  let prefix = names[0]
-  for (let i = 1; i < names.length; i++) {
-    let j = 0
-    while (j < prefix.length && j < names[i].length && prefix[j].toUpperCase() === names[i][j].toUpperCase()) {
-      j++
-    }
-    prefix = prefix.slice(0, j)
-    if (!prefix) return null
-  }
-  // recortar a límite de palabra y quitar separadores trailing
-  const trimmed = prefix.replace(/[\s\-_,/]+$/g, '').trim()
-  return trimmed.length >= 4 ? trimmed : null
-}
-
-/**
- * Quita un sufijo de talla del nombre, ej. "AGILIS M" → "AGILIS".
- */
-function stripSizeFromName(name: string, sizeLabel: string | null | undefined): string {
-  if (!sizeLabel) return name
-  const escaped = sizeLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return name.replace(new RegExp(`\\s*[-_,/]?\\s*${escaped}\\s*$`, 'i'), '').trim() || name
-}
 
 function buildCatalogCards(products: Product[]): CatalogCard[] {
   const grouped = new Map<string, Product[]>()
@@ -97,8 +69,7 @@ function buildCatalogCards(products: Product[]): CatalogCard[] {
     // aquí, usamos simplemente el primero por nombre (estable).
     const sortedByName = [...variants].sort((a, b) => a.name.localeCompare(b.name, 'es'))
     const parent = sortedByName[0]
-    const prefix = commonNamePrefix(variants.map(v => v.name))
-    const displayName = prefix ?? stripSizeFromName(parent.name, parent.size_label)
+    const displayName = cleanGroupName(parent.name, parent.size_label)
     const prices = variants.map(effectivePrice)
     const minPrice = Math.min(...prices)
     const maxPrice = Math.max(...prices)

@@ -9,6 +9,7 @@ import { QuoteModal } from '@/components/public/QuoteModal'
 import { StockAlertModal } from '@/components/public/StockAlertModal'
 import { SizeSelector } from '@/components/public/SizeSelector'
 import { useProductGroup } from '@/hooks/useProductGroup'
+import { cleanGroupName } from '@/lib/variant-colors'
 import { useCartStore } from '@/stores/cartStore'
 import { useUiStore } from '@/stores/uiStore'
 import type { ProductImage, Category } from '@/lib/database.types'
@@ -152,18 +153,11 @@ export default function ProductDetail() {
 
   const showSizeSelector = variants.length >= 2
 
-  // Nombre limpio: si hay grupo, parent.name suele venir con la talla del primer
-  // producto. Para la H1, si hay grupo y el padre tiene size_label, lo quitamos.
-  const displayName = (() => {
-    if (!showSizeSelector) return parentProduct.name
-    const size = parentProduct.size_label
-    if (!size) return parentProduct.name
-    const escaped = size.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    return (
-      parentProduct.name.replace(new RegExp(`\\s*[-_,/]?\\s*${escaped}\\s*$`, 'i'), '').trim() ||
-      parentProduct.name
-    )
-  })()
+  // Nombre limpio: si hay grupo, el nombre del padre trae color/talla del primer
+  // producto. Para la H1 quitamos ambos para mostrar solo el modelo.
+  const displayName = showSizeSelector
+    ? cleanGroupName(parentProduct.name, parentProduct.size_label)
+    : parentProduct.name
 
   const pct = selectedVariant.discount_percent
   const hasDiscount = pct != null && pct > 0

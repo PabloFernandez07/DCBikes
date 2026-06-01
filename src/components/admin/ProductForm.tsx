@@ -57,6 +57,7 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
       is_purchasable: product?.is_purchasable ?? false,
       size_label: product?.size_label ?? '',
       model_group: product?.model_group ?? '',
+      color: product?.color ?? '',
       weight_grams:
         product?.weight_grams != null ? String(product.weight_grams) : '',
     },
@@ -239,9 +240,15 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
           />
           <Field
             label="Grupo modelo"
-            helpText="Identificador para agrupar todas las tallas del mismo modelo en el catálogo público. Ej. `casco-met-aleph`. Vacío si producto individual."
+            helpText="Identificador para agrupar todas las tallas/colores del mismo modelo en el catálogo público. Ej. `maillot-alde-thermo`. Vacío si producto individual."
             error={errors.model_group?.message}
             {...register('model_group')}
+          />
+          <Field
+            label="Color"
+            helpText="Ej. Rojo, Negro, Blanco. Crea el selector de color en la ficha cuando el grupo tiene varios. Vacío si no aplica."
+            error={errors.color?.message}
+            {...register('color')}
           />
           <Field
             label="Peso (gramos)"

@@ -124,6 +124,7 @@ export function ProductEdit() {
       is_purchasable: values.is_purchasable,
       size_label: values.size_label?.trim() ? values.size_label.trim() : null,
       model_group: values.model_group?.trim() ? values.model_group.trim() : null,
+      color: values.color?.trim() ? values.color.trim() : null,
       weight_grams: values.weight_grams ? Number(values.weight_grams) : null,
     }
 

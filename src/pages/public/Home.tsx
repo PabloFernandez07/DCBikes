@@ -325,6 +325,7 @@ export default function Home() {
       model_group: null,
       weight_grams: null,
       ean: null,
+      color: null,
       // Campos añadidos en migración 0039 (X-04 conformidad/seguridad producto).
       ce_marking: false,
       safety_standards: [],

@@ -56,6 +56,8 @@ export interface Database {
           model_group: string | null
           weight_grams: number | null
           ean: string | null
+          // ── 0059_products_color ──
+          color: string | null
           // ── 0039_products_safety_compliance ──
           ce_marking: boolean
           safety_standards: string[]
@@ -83,6 +85,8 @@ export interface Database {
           model_group?: string | null
           weight_grams?: number | null
           ean?: string | null
+          // ── 0059_products_color ──
+          color?: string | null
           // ── 0039_products_safety_compliance ──
           ce_marking?: boolean
           safety_standards?: string[]
@@ -110,6 +114,8 @@ export interface Database {
           model_group?: string | null
           weight_grams?: number | null
           ean?: string | null
+          // ── 0059_products_color ──
+          color?: string | null
           // ── 0039_products_safety_compliance ──
           ce_marking?: boolean
           safety_standards?: string[]
