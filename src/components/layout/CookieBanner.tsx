@@ -160,13 +160,13 @@ export function CookieBanner() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0 w-full sm:w-auto">
             {/* Botones principales con MISMA prominencia visual (variant primary, mismo size, mismo peso). */}
             <Button
               variant="primary"
               size="sm"
               onClick={() => save('reject')}
-              className="flex-1 sm:flex-none text-xs font-[var(--font-cond)] tracking-wide"
+              className="w-full sm:w-auto sm:flex-none min-h-11 sm:min-h-0 text-xs font-[var(--font-cond)] tracking-wide"
             >
               Rechazar todas
             </Button>
@@ -174,7 +174,7 @@ export function CookieBanner() {
               variant="primary"
               size="sm"
               onClick={() => save('all')}
-              className="flex-1 sm:flex-none text-xs font-[var(--font-cond)] tracking-wide"
+              className="w-full sm:w-auto sm:flex-none min-h-11 sm:min-h-0 text-xs font-[var(--font-cond)] tracking-wide"
             >
               Aceptar todas
             </Button>
@@ -184,7 +184,7 @@ export function CookieBanner() {
               variant="secondary"
               size="sm"
               onClick={() => setExpanded(v => !v)}
-              className="flex-1 sm:flex-none text-xs font-[var(--font-cond)] tracking-wide"
+              className="col-span-2 w-full sm:w-auto sm:flex-none min-h-11 sm:min-h-0 text-xs font-[var(--font-cond)] tracking-wide"
               aria-expanded={expanded}
             >
               Configurar

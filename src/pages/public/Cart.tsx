@@ -110,7 +110,7 @@ export default function Cart() {
         <span className="text-[var(--color-lavender)]">Carrito</span>
       </nav>
 
-      <h1 className="font-[var(--font-display)] text-5xl text-[var(--color-cream)] tracking-wide mb-8">
+      <h1 className="font-[var(--font-display)] text-3xl md:text-5xl text-[var(--color-cream)] tracking-wide mb-8">
         Tu carrito
       </h1>
 

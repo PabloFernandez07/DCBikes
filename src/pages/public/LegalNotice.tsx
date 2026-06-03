@@ -31,7 +31,7 @@ function Section({
 }) {
   return (
     <section className="rv" id={id}>
-      <h2 className="font-[var(--font-display)] text-2xl text-[var(--color-cream)] tracking-widest mb-4">
+      <h2 className="font-[var(--font-display)] text-xl md:text-2xl text-[var(--color-cream)] tracking-widest mb-4">
         {title}
       </h2>
       <div className="text-[var(--color-mid)] font-[var(--font-body)] text-sm leading-relaxed space-y-3">
@@ -70,11 +70,11 @@ export default function LegalNotice() {
 
       <div ref={pageRef} className="w-full px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <section className="py-20">
+        <section className="py-12 md:py-20">
           <p className="rv font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-3">
             Legal
           </p>
-          <h1 className="rv font-[var(--font-display)] text-7xl text-[var(--color-cream)] tracking-wide leading-none mb-6">
+          <h1 className="rv font-[var(--font-display)] text-5xl md:text-7xl text-[var(--color-cream)] tracking-wide leading-none mb-6 break-words">
             AVISO LEGAL
           </h1>
           <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">

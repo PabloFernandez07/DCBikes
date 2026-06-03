@@ -436,7 +436,7 @@ export function ExcelImporter() {
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
         className={clsx(
-          'border-2 border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all duration-200',
+          'border-2 border-dashed rounded-2xl p-8 sm:p-16 text-center cursor-pointer transition-all duration-200',
           dragging
             ? 'border-[var(--color-lavender)] bg-[var(--color-lavender)]/10'
             : 'border-[var(--color-card)] hover:border-[var(--color-mid)]/60 hover:bg-[var(--color-card)]/20',

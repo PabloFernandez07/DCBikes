@@ -181,7 +181,7 @@ export function Quotes() {
       <div className="space-y-5">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
+          <h1 className="text-xl md:text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
             CONSULTAS
           </h1>
           <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
@@ -225,7 +225,7 @@ export function Quotes() {
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[440px] text-sm">
                 <thead>
                   <tr className="border-b border-[var(--color-card-hover)]">
                     <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Fecha</th>
@@ -289,7 +289,7 @@ export function Quotes() {
         {selected && (
           <div className="bg-[var(--color-card)] border border-[var(--color-lavender)]/20 rounded-2xl overflow-hidden">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-4 border-b border-[var(--color-card-hover)]">
+            <div className="flex items-start justify-between gap-4 px-4 sm:px-6 pt-6 pb-4 border-b border-[var(--color-card-hover)]">
               <div className="min-w-0">
                 <h3 className="font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
                   Consulta de{' '}
@@ -326,11 +326,11 @@ export function Quotes() {
             </div>
 
             {/* Message */}
-            <div className="px-6 py-4">
+            <div className="px-4 sm:px-6 py-4">
               <p className="text-xs font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-2">
                 Mensaje
               </p>
-              <div className="bg-[var(--color-ink)] rounded-xl px-5 py-4">
+              <div className="bg-[var(--color-ink)] rounded-xl px-4 sm:px-5 py-4">
                 <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed whitespace-pre-wrap">
                   {selected.message ?? <span className="italic text-[var(--color-mid)]">Sin mensaje.</span>}
                 </p>
@@ -338,7 +338,7 @@ export function Quotes() {
             </div>
 
             {/* Actions */}
-            <div className="px-6 pb-4 flex flex-wrap gap-2">
+            <div className="px-4 sm:px-6 pb-4 flex flex-wrap gap-2">
               {/* Reply button — primary action */}
               {selected.status !== 'archived' && (
                 <Button
@@ -388,7 +388,7 @@ export function Quotes() {
 
             {/* Compose reply area */}
             {replyOpen && (
-              <div className="border-t border-[var(--color-lavender)]/20 px-6 py-5 space-y-4 bg-[var(--color-ink)]/40">
+              <div className="border-t border-[var(--color-lavender)]/20 px-4 sm:px-6 py-5 space-y-4 bg-[var(--color-ink)]/40">
                 <p className="text-xs font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-lavender)]">
                   Redactar respuesta
                 </p>

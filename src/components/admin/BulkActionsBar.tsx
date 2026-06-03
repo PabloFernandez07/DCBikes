@@ -38,7 +38,7 @@ export function BulkActionsBar({ count, onAction, onClear, disabled }: BulkActio
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 ml-auto">
+      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:ml-auto">
         {/* Visibilidad en la web */}
         <Button variant="secondary" size="sm" onClick={() => onAction('activate')} disabled={disabled}>
           <Eye size={14} aria-hidden="true" />

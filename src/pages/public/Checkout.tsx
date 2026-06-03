@@ -240,7 +240,7 @@ export default function Checkout() {
         <span className="text-[var(--color-lavender)]">Checkout</span>
       </nav>
 
-      <h1 className="font-[var(--font-display)] text-5xl text-[var(--color-cream)] tracking-wide mb-8">
+      <h1 className="font-[var(--font-display)] text-3xl md:text-5xl text-[var(--color-cream)] tracking-wide mb-8">
         Finaliza tu pedido
       </h1>
 
@@ -251,7 +251,7 @@ export default function Checkout() {
         {/* Formulario (columna izquierda) */}
         <div className="space-y-8">
           {/* Sección 1: Datos cliente */}
-          <section className="bg-[var(--color-card)] rounded-2xl p-6 space-y-5">
+          <section className="bg-[var(--color-card)] rounded-2xl p-4 md:p-6 space-y-5">
             <header className="flex items-baseline gap-3">
               <span className="font-[var(--font-display)] text-2xl text-[var(--color-lavender)] tracking-wide">
                 1.
@@ -335,7 +335,7 @@ export default function Checkout() {
           </section>
 
           {/* Sección 2: Entrega */}
-          <section className="bg-[var(--color-card)] rounded-2xl p-6 space-y-5">
+          <section className="bg-[var(--color-card)] rounded-2xl p-4 md:p-6 space-y-5">
             <header className="flex items-baseline gap-3">
               <span className="font-[var(--font-display)] text-2xl text-[var(--color-lavender)] tracking-wide">
                 2.
@@ -518,7 +518,7 @@ export default function Checkout() {
           </section>
 
           {/* Sección 3: Facturación (collapsible) */}
-          <section className="bg-[var(--color-card)] rounded-2xl p-6 space-y-5">
+          <section className="bg-[var(--color-card)] rounded-2xl p-4 md:p-6 space-y-5">
             <header className="flex items-baseline gap-3">
               <span className="font-[var(--font-display)] text-2xl text-[var(--color-lavender)] tracking-wide">
                 3.
@@ -577,7 +577,7 @@ export default function Checkout() {
           </section>
 
           {/* Sección 4: Resumen items + consentimientos */}
-          <section className="bg-[var(--color-card)] rounded-2xl p-6 space-y-5">
+          <section className="bg-[var(--color-card)] rounded-2xl p-4 md:p-6 space-y-5">
             <header className="flex items-baseline gap-3">
               <span className="font-[var(--font-display)] text-2xl text-[var(--color-lavender)] tracking-wide">
                 4.

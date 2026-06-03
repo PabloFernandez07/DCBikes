@@ -288,7 +288,7 @@ export default function Groupings() {
       <div className="space-y-5">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
+            <h1 className="text-xl md:text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
               AGRUPACIONES
             </h1>
             <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)]">
@@ -297,9 +297,9 @@ export default function Groupings() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 min-h-[600px]">
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 lg:min-h-[600px]">
           {/* ─── Sidebar ──────────────────────────────────────── */}
-          <aside className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl flex flex-col overflow-hidden max-h-[calc(100vh-180px)]">
+          <aside className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl flex flex-col overflow-hidden max-h-[60vh] lg:max-h-[calc(100vh-180px)]">
             <div className="p-3 border-b border-[var(--color-card-hover)] space-y-2">
               <div className="relative">
                 <Search

@@ -59,14 +59,14 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
           <>
             <button
               onClick={prev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+              className="absolute left-3 top-1/2 -translate-y-1/2 p-3 md:p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
               aria-label="Imagen anterior"
             >
               <ChevronLeft size={20} aria-hidden="true" />
             </button>
             <button
               onClick={next}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-3 md:p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
               aria-label="Imagen siguiente"
             >
               <ChevronRight size={20} aria-hidden="true" />

@@ -294,8 +294,8 @@ export function BulkShipModal({
         </div>
 
         {/* Tabla de pedidos */}
-        <div className="max-h-[50vh] overflow-y-auto rounded-xl border border-[var(--color-card-hover)]">
-          <table className="w-full text-sm">
+        <div className="max-h-[50vh] overflow-y-auto overflow-x-auto rounded-xl border border-[var(--color-card-hover)]">
+          <table className="w-full min-w-[480px] text-sm">
             <thead className="sticky top-0 bg-[var(--color-card)] z-10">
               <tr className="border-b border-[var(--color-card-hover)]">
                 <th className="px-3 py-2 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Pedido</th>

@@ -439,7 +439,7 @@ export function Brechas() {
       <div className="space-y-6 max-w-5xl">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
+          <h1 className="text-xl md:text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
             BRECHAS DE SEGURIDAD
           </h1>
           <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
@@ -487,7 +487,7 @@ export function Brechas() {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap gap-3 justify-between items-center">
           <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)]">
             {items.length === 0
               ? 'Sin brechas registradas'
@@ -511,7 +511,8 @@ export function Brechas() {
           </div>
         ) : (
           <div className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl overflow-hidden">
-            <table className="w-full text-sm font-[var(--font-body)]">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm font-[var(--font-body)]">
               <thead>
                 <tr className="border-b border-[var(--color-card-hover)]">
                   <th className="text-left px-4 py-3 text-xs font-[var(--font-cond)] text-[var(--color-mid)] tracking-widest uppercase">
@@ -575,6 +576,7 @@ export function Brechas() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>

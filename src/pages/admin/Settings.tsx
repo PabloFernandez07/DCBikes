@@ -880,14 +880,14 @@ export function Settings() {
                 </p>
               </div>
               <div className="space-y-2">
-                <div className="grid grid-cols-[100px_1fr_1fr] gap-3 mb-1">
+                <div className="hidden sm:grid grid-cols-[100px_1fr_1fr] gap-3 mb-1">
                   <span className="text-xs font-[var(--font-cond)] text-[var(--color-mid)] tracking-widest uppercase">Día</span>
                   <span className="text-xs font-[var(--font-cond)] text-[var(--color-mid)] tracking-widest uppercase">Mañana</span>
                   <span className="text-xs font-[var(--font-cond)] text-[var(--color-mid)] tracking-widest uppercase">Tarde</span>
                 </div>
                 {scheduleRows.map((day, i) => (
-                  <div key={day.label} className="grid grid-cols-[100px_1fr_1fr] gap-3 items-center">
-                    <span className="text-sm font-[var(--font-cond)] text-[var(--color-cream)] tracking-wide">
+                  <div key={day.label} className="grid grid-cols-2 sm:grid-cols-[100px_1fr_1fr] gap-2 sm:gap-3 items-center">
+                    <span className="col-span-2 sm:col-span-1 text-sm font-[var(--font-cond)] text-[var(--color-cream)] tracking-wide">
                       {day.label}
                     </span>
                     <input

@@ -294,7 +294,7 @@ export function BulkImageUploader() {
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
           className={clsx(
-            'border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-200',
+            'border-2 border-dashed rounded-2xl p-8 sm:p-12 text-center transition-all duration-200',
             dragging
               ? 'border-[var(--color-lavender)] bg-[var(--color-lavender)]/10'
               : 'border-[var(--color-card)] hover:border-[var(--color-mid)]/60',

@@ -163,7 +163,7 @@ export default function OrderConfirmation() {
           <div className="w-20 h-20 rounded-full bg-[rgba(80,200,120,0.12)] flex items-center justify-center text-green-400 mx-auto">
             <CheckCircle size={42} strokeWidth={1.5} aria-hidden="true" />
           </div>
-          <h1 className="font-[var(--font-display)] text-5xl text-[var(--color-cream)] tracking-wide">
+          <h1 className="font-[var(--font-display)] text-3xl md:text-5xl text-[var(--color-cream)] tracking-wide">
             ¡Pedido recibido! <span role="img" aria-hidden="true">🎉</span>
           </h1>
           <p className="font-[var(--font-cond)] text-2xl text-[var(--color-lavender)] tracking-widest">

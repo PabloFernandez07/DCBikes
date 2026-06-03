@@ -271,7 +271,7 @@ export default function Catalog() {
         ]}
       />
       {/* Header */}
-      <section className="relative py-20 overflow-hidden border-b border-[var(--color-card)]">
+      <section className="relative py-12 md:py-20 overflow-hidden border-b border-[var(--color-card)]">
         <span className="absolute right-0 top-1/2 -translate-y-1/2 font-[var(--font-display)] text-[18vw] leading-none text-[rgba(196,162,207,0.03)] select-none pointer-events-none" aria-hidden="true">
           CATÁLOGO
         </span>
@@ -279,7 +279,7 @@ export default function Catalog() {
           <p className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-3">
             Bicicletas & Accesorios
           </p>
-          <h1 className="font-[var(--font-display)] text-8xl lg:text-[9rem] text-[var(--color-cream)] tracking-wide leading-none">
+          <h1 className="font-[var(--font-display)] text-6xl sm:text-7xl md:text-8xl lg:text-[9rem] text-[var(--color-cream)] tracking-wide leading-none">
             CATÁLOGO
           </h1>
           <p className="mt-4 text-[var(--color-mid)] font-[var(--font-body)] text-base">

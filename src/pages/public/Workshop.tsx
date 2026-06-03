@@ -69,7 +69,7 @@ export default function Workshop() {
         ]}
       />
       {/* Hero */}
-      <section className="relative py-28 overflow-hidden">
+      <section className="relative py-16 md:py-28 overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
           aria-hidden="true"
@@ -88,11 +88,11 @@ export default function Workshop() {
           <p className="rv font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-4">
             Nuestro taller
           </p>
-          <h1 className="rv font-[var(--font-display)] text-8xl lg:text-[10rem] text-[var(--color-cream)] tracking-wide leading-none">
+          <h1 className="rv font-[var(--font-display)] text-6xl sm:text-7xl md:text-8xl lg:text-[10rem] text-[var(--color-cream)] tracking-wide leading-none">
             TALLER<br />
             <span className="text-[var(--color-lavender)]">EXPERTO</span>
           </h1>
-          <p className="rv mt-8 text-[var(--color-mid)] font-[var(--font-body)] text-xl max-w-2xl leading-relaxed" style={{ transitionDelay: '100ms' }}>
+          <p className="rv mt-6 md:mt-8 text-[var(--color-mid)] font-[var(--font-body)] text-lg md:text-xl max-w-2xl leading-relaxed" style={{ transitionDelay: '100ms' }}>
             Mecánicos especializados con años de experiencia en todas las marcas y disciplinas.
             Tu bicicleta en las mejores manos, en El Astillero.
           </p>
@@ -131,13 +131,13 @@ export default function Workshop() {
       </section>
 
       {/* Services grid */}
-      <section className="py-24">
+      <section className="py-16 md:py-24">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="rv mb-12">
+          <div className="rv mb-10 md:mb-12">
             <p className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-2">
               Servicios
             </p>
-            <h2 className="font-[var(--font-display)] text-5xl text-[var(--color-cream)] tracking-wide">
+            <h2 className="font-[var(--font-display)] text-4xl md:text-5xl text-[var(--color-cream)] tracking-wide">
               ¿QUÉ HACEMOS?
             </h2>
           </div>
@@ -173,13 +173,13 @@ export default function Workshop() {
       </section>
 
       {/* Why us */}
-      <section className="py-24 bg-[var(--color-ink-deep)]">
+      <section className="py-16 md:py-24 bg-[var(--color-ink-deep)]">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="rv mb-12">
+          <div className="rv mb-10 md:mb-12">
             <p className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-2">
               Por qué elegirnos
             </p>
-            <h2 className="font-[var(--font-display)] text-5xl text-[var(--color-cream)] tracking-wide">
+            <h2 className="font-[var(--font-display)] text-4xl md:text-5xl text-[var(--color-cream)] tracking-wide">
               EL TALLER DE CONFIANZA<br />DE CANTABRIA
             </h2>
           </div>
@@ -204,13 +204,13 @@ export default function Workshop() {
       </section>
 
       {/* Process */}
-      <section className="py-24">
+      <section className="py-16 md:py-24">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="rv mb-12">
+          <div className="rv mb-10 md:mb-12">
             <p className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-2">
               Cómo funciona
             </p>
-            <h2 className="font-[var(--font-display)] text-5xl text-[var(--color-cream)] tracking-wide">
+            <h2 className="font-[var(--font-display)] text-4xl md:text-5xl text-[var(--color-cream)] tracking-wide">
               ASÍ DE SENCILLO
             </h2>
           </div>
@@ -240,9 +240,9 @@ export default function Workshop() {
       </section>
 
       {/* Condiciones del servicio de taller (X-27) */}
-      <section className="py-24 bg-[var(--color-ink-deep)]">
+      <section className="py-16 md:py-24 bg-[var(--color-ink-deep)]">
         <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="rv mb-12 flex items-center gap-3">
+          <div className="rv mb-10 md:mb-12 flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[rgba(196,162,207,0.12)] flex items-center justify-center shrink-0">
               <FileText size={20} className="text-[var(--color-lavender)]" aria-hidden="true" />
             </div>
@@ -359,7 +359,7 @@ export default function Workshop() {
       <section className="py-8 pb-24">
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div
-            className="rv rounded-3xl p-12 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden"
+            className="rv rounded-3xl p-6 sm:p-10 md:p-16 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden"
             style={{ background: 'linear-gradient(135deg, rgba(196,162,207,0.12) 0%, rgba(196,162,207,0.04) 100%)', border: '1px solid rgba(196,162,207,0.2)' }}
           >
             <div
@@ -368,8 +368,8 @@ export default function Workshop() {
             >
               GO
             </div>
-            <div className="relative">
-              <h2 className="font-[var(--font-display)] text-5xl md:text-6xl text-[var(--color-cream)] tracking-wide leading-tight mb-3">
+            <div className="relative text-center md:text-left">
+              <h2 className="font-[var(--font-display)] text-4xl sm:text-5xl md:text-6xl text-[var(--color-cream)] tracking-wide leading-tight mb-3">
                 ¿LISTA PARA RODAR?
               </h2>
               <div className="flex items-center gap-2 text-[var(--color-mid)] font-[var(--font-cond)] text-sm tracking-wide">

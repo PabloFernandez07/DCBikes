@@ -58,7 +58,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
         )}
       >
         {/* Header siempre presente: tiene el botón cerrar incluso sin title. */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--color-mid)]/20 shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 pt-5 pb-4 border-b border-[var(--color-mid)]/20 shrink-0">
           {title && (
             <h2
               id="modal-title"
@@ -75,7 +75,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
             <X size={18} aria-hidden="true" />
           </button>
         </div>
-        <div className="px-6 py-5 overflow-y-auto flex-1 min-h-0">{children}</div>
+        <div className="px-4 sm:px-6 py-5 overflow-y-auto flex-1 min-h-0">{children}</div>
       </div>
     </div>
   )

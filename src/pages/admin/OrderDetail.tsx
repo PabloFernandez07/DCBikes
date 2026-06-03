@@ -367,7 +367,7 @@ export default function OrderDetail() {
               <ArrowLeft size={13} aria-hidden="true" />
               Volver a pedidos
             </Link>
-            <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest flex items-center gap-3 flex-wrap">
+            <h1 className="text-xl md:text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest flex items-center gap-3 flex-wrap">
               Pedido {order.order_number}
               <OrderStatusBadge status={status} size="md" />
             </h1>

@@ -365,7 +365,7 @@ export default function OrdersList() {
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
+          <h1 className="text-xl md:text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
             PEDIDOS
           </h1>
           <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
@@ -440,7 +440,7 @@ export default function OrdersList() {
 
         {/* Row: date + delivery + search */}
         <div className="flex flex-wrap gap-3 items-end">
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 flex-1 min-w-[130px] sm:flex-none">
             <label className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)]">
               Desde
             </label>
@@ -448,10 +448,10 @@ export default function OrdersList() {
               type="date"
               value={dateFrom}
               onChange={e => setDateFrom(e.target.value)}
-              className="text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-card)] px-3 py-1.5 rounded-lg border border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50 focus:outline-none transition-colors"
+              className="w-full text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-card)] px-3 py-1.5 rounded-lg border border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50 focus:outline-none transition-colors"
             />
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 flex-1 min-w-[130px] sm:flex-none">
             <label className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)]">
               Hasta
             </label>
@@ -459,18 +459,18 @@ export default function OrdersList() {
               type="date"
               value={dateTo}
               onChange={e => setDateTo(e.target.value)}
-              className="text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-card)] px-3 py-1.5 rounded-lg border border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50 focus:outline-none transition-colors"
+              className="w-full text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-card)] px-3 py-1.5 rounded-lg border border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50 focus:outline-none transition-colors"
             />
           </div>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 flex-1 min-w-[130px] sm:flex-none">
             <label className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)]">
               Método entrega
             </label>
             <select
               value={deliveryFilter}
               onChange={e => setDeliveryFilter(e.target.value as DeliveryFilter)}
-              className="text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-card)] px-3 py-1.5 rounded-lg border border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50 focus:outline-none transition-colors"
+              className="w-full text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-card)] px-3 py-1.5 rounded-lg border border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50 focus:outline-none transition-colors"
             >
               <option value="all">Todos</option>
               <option value="shipping">Envío</option>
@@ -524,7 +524,7 @@ export default function OrdersList() {
             type="button"
             onClick={() => handleExportCsv(false)}
             disabled={exportingCsv}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-0.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-lavender)] border border-[var(--color-lavender)]/40 hover:bg-[var(--color-lavender)]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3 py-1.5 mb-0.5 rounded-lg text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-lavender)] border border-[var(--color-lavender)]/40 hover:bg-[var(--color-lavender)]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Exportar pedidos aceptados de envío como CSV (formato transportistas)"
           >
             <FileDown size={13} aria-hidden="true" />

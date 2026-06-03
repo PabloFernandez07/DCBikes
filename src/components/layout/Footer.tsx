@@ -80,9 +80,9 @@ export function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="bg-[var(--color-ink-deep)] border-t border-[var(--color-card)] mt-24">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+    <footer className="bg-[var(--color-ink-deep)] border-t border-[var(--color-card)] mt-16 md:mt-24">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
           <div className="flex flex-col gap-4">
             <img src="/DC_Bikes_Sin_Fondo.png" alt="DC Bikes" className="h-20 w-auto max-w-[200px] object-contain block" />
             <p className="text-[var(--color-mid)] font-[var(--font-body)] text-sm leading-relaxed">

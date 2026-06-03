@@ -253,7 +253,7 @@ export function Categories() {
       <div className="space-y-5">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
+          <h1 className="text-xl md:text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
             CATEGORÍAS
           </h1>
           <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
@@ -269,7 +269,7 @@ export function Categories() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[480px] text-sm">
                 <thead>
                   <tr className="border-b border-[var(--color-card-hover)]">
                     <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide w-20">

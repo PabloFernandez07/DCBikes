@@ -41,12 +41,13 @@ export function BulkShipBar({
           </span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 ml-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:ml-auto">
           <Button
             variant="primary"
             size="sm"
             onClick={onMarkShipped}
             disabled={disabled}
+            className="flex-1 sm:flex-none justify-center"
           >
             <Truck size={14} aria-hidden="true" />
             Marcar como enviados
@@ -56,6 +57,7 @@ export function BulkShipBar({
             size="sm"
             onClick={onExportSelected}
             disabled={disabled}
+            className="flex-1 sm:flex-none justify-center"
           >
             <FileDown size={14} aria-hidden="true" />
             Exportar CSV seleccionados

@@ -179,7 +179,7 @@ export function UrlImageImporter() {
       <div className="space-y-4">
         <div
           onClick={() => inputRef.current?.click()}
-          className="border-2 border-dashed border-[var(--color-card)] hover:border-[var(--color-mid)]/60 rounded-2xl p-12 text-center cursor-pointer transition-colors"
+          className="border-2 border-dashed border-[var(--color-card)] hover:border-[var(--color-mid)]/60 rounded-2xl p-8 sm:p-12 text-center cursor-pointer transition-colors"
         >
           <input
             ref={inputRef}

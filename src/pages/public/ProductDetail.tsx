@@ -256,7 +256,7 @@ export default function ProductDetail() {
           )}
 
           {/* Name */}
-          <h1 className="font-[var(--font-display)] text-5xl text-[var(--color-cream)] leading-tight tracking-wide">
+          <h1 className="font-[var(--font-display)] text-3xl md:text-5xl text-[var(--color-cream)] leading-tight tracking-wide">
             {displayName}
           </h1>
 
@@ -277,7 +277,7 @@ export default function ProductDetail() {
               </div>
             )}
             <div className="flex items-baseline gap-3">
-              <span className="font-[var(--font-display)] text-4xl text-[var(--color-lavender)] tracking-wide">
+              <span className="font-[var(--font-display)] text-3xl md:text-4xl text-[var(--color-lavender)] tracking-wide">
                 {fmt(finalPrice)} €
               </span>
               {hasDiscount && (

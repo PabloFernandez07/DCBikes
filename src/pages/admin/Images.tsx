@@ -20,7 +20,7 @@ export function Images() {
         </p>
       </div>
 
-      <div className="flex gap-2 border-b border-[var(--color-card-hover)]">
+      <div className="flex gap-2 border-b border-[var(--color-card-hover)] overflow-x-auto">
         <TabBtn active={tab === 'files'} onClick={() => setTab('files')} icon={FolderUp} label="Subir archivos" />
         <TabBtn active={tab === 'urls'} onClick={() => setTab('urls')} icon={Link2} label="Importar desde Excel de URLs" />
       </div>
@@ -45,7 +45,7 @@ function TabBtn({
       type="button"
       onClick={onClick}
       className={clsx(
-        '-mb-px flex items-center gap-2 px-4 py-2.5 text-sm font-[var(--font-cond)] tracking-wide border-b-2 transition-colors',
+        '-mb-px flex items-center gap-2 px-4 py-2.5 text-sm font-[var(--font-cond)] tracking-wide border-b-2 transition-colors whitespace-nowrap shrink-0',
         active
           ? 'border-[var(--color-lavender)] text-[var(--color-lavender)]'
           : 'border-transparent text-[var(--color-mid)] hover:text-[var(--color-cream)]',

@@ -84,7 +84,7 @@ function StatCounter({
   const { count, ref } = useCountUp(value);
   return (
     <div ref={ref} className="flex flex-col items-center gap-1 text-center">
-      <span className="font-[var(--font-display)] text-5xl lg:text-6xl text-[var(--color-lavender)] tracking-wide tabular-nums">
+      <span className="font-[var(--font-display)] text-4xl sm:text-5xl lg:text-6xl text-[var(--color-lavender)] tracking-wide tabular-nums">
         {count}
         {suffix}
       </span>

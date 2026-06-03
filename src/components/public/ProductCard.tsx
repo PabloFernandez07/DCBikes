@@ -63,7 +63,7 @@ export function ProductCard({
           <img
             src={mainImage.publicUrl}
             alt={mainImage.alt ?? cardName}
-            className="w-full h-full object-contain p-8 transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-contain p-4 sm:p-8 transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
         ) : (

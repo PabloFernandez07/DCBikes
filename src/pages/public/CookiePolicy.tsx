@@ -22,7 +22,7 @@ function useReveal() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="rv">
-      <h2 className="font-[var(--font-display)] text-2xl text-[var(--color-cream)] tracking-widest mb-4">
+      <h2 className="font-[var(--font-display)] text-xl md:text-2xl text-[var(--color-cream)] tracking-widest mb-4">
         {title}
       </h2>
       <div className="text-[var(--color-mid)] font-[var(--font-body)] text-sm leading-relaxed space-y-3">
@@ -93,11 +93,11 @@ export default function CookiePolicy() {
   return (
     <div ref={pageRef} className="w-full px-4 sm:px-6 lg:px-8">
       {/* Header */}
-      <section className="py-20">
+      <section className="py-12 md:py-20">
         <p className="rv font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-3">
           Legal
         </p>
-        <h1 className="rv font-[var(--font-display)] text-7xl text-[var(--color-cream)] tracking-wide leading-none mb-6">
+        <h1 className="rv font-[var(--font-display)] text-5xl md:text-7xl text-[var(--color-cream)] tracking-wide leading-none mb-6 break-words">
           POLÍTICA DE COOKIES
         </h1>
         <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">
@@ -129,7 +129,7 @@ export default function CookiePolicy() {
 
           <div className="space-y-4 mt-2">
             {/* A. Técnicas estrictamente necesarias */}
-            <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+            <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
               <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
                 <Shield size={18} className="text-green-400" />
               </div>
@@ -159,7 +159,7 @@ export default function CookiePolicy() {
             </div>
 
             {/* B. Terceros funcionales */}
-            <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+            <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
               <div className="w-9 h-9 rounded-lg bg-[var(--color-lavender)]/10 flex items-center justify-center shrink-0">
                 <Target size={18} className="text-[var(--color-lavender)]" />
               </div>
@@ -213,7 +213,7 @@ export default function CookiePolicy() {
             </div>
 
             {/* C. Analíticas */}
-            <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+            <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
               <div className="w-9 h-9 rounded-lg bg-[var(--color-lavender)]/10 flex items-center justify-center shrink-0">
                 <BarChart2 size={18} className="text-[var(--color-lavender)]" />
               </div>
@@ -233,7 +233,7 @@ export default function CookiePolicy() {
             </div>
 
             {/* D. Marketing */}
-            <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+            <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
               <div className="w-9 h-9 rounded-lg bg-[var(--color-brand-red)]/10 flex items-center justify-center shrink-0">
                 <Target size={18} className="text-[var(--color-brand-red)]" />
               </div>
@@ -252,7 +252,7 @@ export default function CookiePolicy() {
             </div>
 
             {/* E. Imágenes de Google */}
-            <div className="flex gap-4 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
+            <div className="flex gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
               <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
                 <Image size={18} className="text-blue-400" />
               </div>

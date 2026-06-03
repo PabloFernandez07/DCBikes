@@ -112,7 +112,7 @@ export default function Contact() {
         ]}
       />
       {/* Hero */}
-      <section className="relative py-28 overflow-hidden">
+      <section className="relative py-16 md:py-28 overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none"
           aria-hidden="true"
@@ -125,10 +125,10 @@ export default function Contact() {
           <p className="rv font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-4">
             Dónde estamos
           </p>
-          <h1 className="rv font-[var(--font-display)] text-8xl lg:text-[10rem] text-[var(--color-cream)] tracking-wide leading-none">
+          <h1 className="rv font-[var(--font-display)] text-7xl sm:text-8xl lg:text-[10rem] text-[var(--color-cream)] tracking-wide leading-none">
             VISÍTANOS
           </h1>
-          <p className="rv mt-8 text-[var(--color-mid)] font-[var(--font-body)] text-xl max-w-2xl leading-relaxed" style={{ transitionDelay: '100ms' }}>
+          <p className="rv mt-6 md:mt-8 text-[var(--color-mid)] font-[var(--font-body)] text-lg md:text-xl max-w-2xl leading-relaxed" style={{ transitionDelay: '100ms' }}>
             Estamos en El Astillero, Cantabria. Pásate por la tienda, llámanos o escríbenos Te atendemos con mucho gusto.
           </p>
           <div className="rv flex flex-wrap gap-4 mt-10" style={{ transitionDelay: '180ms' }}>
@@ -253,7 +253,7 @@ export default function Contact() {
       </section>
 
       {/* Map + social */}
-      <section className="py-20 w-full px-4 sm:px-6 lg:px-8">
+      <section className="py-12 md:py-20 w-full px-4 sm:px-6 lg:px-8">
         <div className="rv grid lg:grid-cols-3 gap-6">
 
           {/* Map — ocupa 2/3 */}
@@ -395,13 +395,13 @@ export default function Contact() {
       </section>
 
       {/* ─── STORE GALLERY ─── */}
-      <section className="py-20 w-full px-4 sm:px-6 lg:px-8">
+      <section className="py-12 md:py-20 w-full px-4 sm:px-6 lg:px-8">
         <div className="rv flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
             <p className="font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-brand-red)] mb-3">
               Fotos y vídeos
             </p>
-            <h2 className="font-[var(--font-display)] text-6xl md:text-7xl text-[var(--color-cream)] leading-none tracking-wide">
+            <h2 className="font-[var(--font-display)] text-5xl sm:text-6xl md:text-7xl text-[var(--color-cream)] leading-none tracking-wide">
               NUESTRA
               <br />
               <span className="text-[var(--color-lavender)]">TIENDA</span>

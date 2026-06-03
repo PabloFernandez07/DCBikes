@@ -26,7 +26,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
       aria-live="polite"
       className={clsx(
         'flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-sm',
-        'animate-[fadeup_0.3s_ease_forwards] min-w-[260px] max-w-sm',
+        'animate-[fadeup_0.3s_ease_forwards] w-full sm:w-auto sm:min-w-[260px] sm:max-w-sm',
         colors[toast.type],
       )}
     >
@@ -54,7 +54,7 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   return (
     <div
       aria-label="Notificaciones"
-      className="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none"
+      className="fixed bottom-4 right-4 left-4 sm:left-auto sm:bottom-6 sm:right-6 z-[100] flex flex-col gap-3 pointer-events-none"
     >
       {toasts.map(t => (
         <div key={t.id} className="pointer-events-auto">

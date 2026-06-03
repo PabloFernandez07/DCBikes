@@ -79,7 +79,7 @@ export function SizeSelector({ variants, selectedVariant, onSelect }: SizeSelect
                   aria-label={avail ? c : `${c}, sin stock`}
                   onClick={() => pickColor(c)}
                   className={clsx(
-                    'relative w-9 h-9 rounded-full p-0.5 border-2 transition-all duration-200 cursor-pointer',
+                    'relative w-11 h-11 md:w-9 md:h-9 rounded-full p-0.5 border-2 transition-all duration-200 cursor-pointer',
                     isSel
                       ? 'border-[var(--color-lavender)] ring-2 ring-[rgba(196,162,207,0.4)]'
                       : 'border-[var(--color-card-hover)] hover:border-[rgba(196,162,207,0.6)]',
@@ -123,7 +123,7 @@ export function SizeSelector({ variants, selectedVariant, onSelect }: SizeSelect
                   title={title}
                   onClick={() => exists && onSelect(v!)}
                   className={clsx(
-                    'px-4 py-2 rounded-xl text-sm font-[var(--font-cond)] tracking-wide border transition-all duration-200',
+                    'px-4 py-2.5 md:py-2 rounded-xl text-sm font-[var(--font-cond)] tracking-wide border transition-all duration-200',
                     isSel
                       ? 'bg-[var(--color-lavender)] text-[var(--color-ink)] border-[var(--color-lavender)] font-semibold'
                       : !exists
@@ -173,7 +173,7 @@ export function SizeSelector({ variants, selectedVariant, onSelect }: SizeSelect
                   title={title}
                   onClick={() => exists && onSelect(v!)}
                   className={clsx(
-                    'min-w-[3.5rem] px-4 py-2 rounded-xl text-sm font-[var(--font-cond)] tracking-wide border transition-all duration-200',
+                    'min-w-[3.5rem] px-4 py-2.5 md:py-2 rounded-xl text-sm font-[var(--font-cond)] tracking-wide border transition-all duration-200',
                     isSel
                       ? 'bg-[var(--color-lavender)] text-[var(--color-ink)] border-[var(--color-lavender)] font-semibold'
                       : !exists

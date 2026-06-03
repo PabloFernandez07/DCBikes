@@ -384,15 +384,15 @@ export default function ProductsList() {
   return (
     <>
       <div className="space-y-5">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
+            <h1 className="text-xl md:text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
               PRODUCTOS
             </h1>
             <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)]">{total} en total</p>
           </div>
-          <Button variant="primary" onClick={() => setModalOpen(true)}>
-            <Plus size={16} aria-hidden="true" /> Nuevo producto
+          <Button variant="primary" onClick={() => setModalOpen(true)} className="shrink-0">
+            <Plus size={16} aria-hidden="true" /> <span className="hidden sm:inline">Nuevo producto</span><span className="sm:hidden">Nuevo</span>
           </Button>
         </div>
 
@@ -410,7 +410,7 @@ export default function ProductsList() {
           <select
             value={categoryFilter}
             onChange={e => { setCategoryFilter(e.target.value); setPage(0) }}
-            className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+            className="w-full sm:w-auto bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
           >
             <option value="">Todas las categorías</option>
             {categories.map(c => (
@@ -429,7 +429,7 @@ export default function ProductsList() {
               aria-label="Precio mínimo"
               value={minPrice}
               onChange={e => { setMinPrice(e.target.value); setPage(0) }}
-              className="w-24 bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-cream)] placeholder-[var(--color-mid)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+              className="flex-1 sm:flex-none sm:w-24 bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-cream)] placeholder-[var(--color-mid)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
             />
             <span className="text-[var(--color-mid)] text-sm" aria-hidden="true">–</span>
             <input
@@ -441,7 +441,7 @@ export default function ProductsList() {
               aria-label="Precio máximo"
               value={maxPrice}
               onChange={e => { setMaxPrice(e.target.value); setPage(0) }}
-              className="w-24 bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-cream)] placeholder-[var(--color-mid)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+              className="flex-1 sm:flex-none sm:w-24 bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-3 py-2.5 text-sm text-[var(--color-cream)] placeholder-[var(--color-mid)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
             />
           </div>
 
@@ -450,7 +450,7 @@ export default function ProductsList() {
             value={stockFilter}
             onChange={e => { setStockFilter(e.target.value as StockFilter); setPage(0) }}
             aria-label="Filtrar por stock"
-            className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+            className="w-full sm:w-auto bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
           >
             <option value="">Cualquier stock</option>
             <option value="in">Con stock</option>
@@ -463,7 +463,7 @@ export default function ProductsList() {
             value={imageFilter}
             onChange={e => { setImageFilter(e.target.value as ImageFilter); setPage(0) }}
             aria-label="Filtrar por imágenes"
-            className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+            className="w-full sm:w-auto bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
           >
             <option value="">Con y sin imágenes</option>
             <option value="with">Con imágenes</option>
@@ -475,7 +475,7 @@ export default function ProductsList() {
             value={sortKey}
             onChange={e => { setSortKey(e.target.value as SortKey); setPage(0) }}
             aria-label="Ordenar productos"
-            className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+            className="w-full sm:w-auto bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
           >
             {SORT_OPTIONS.map(o => (
               <option key={o.value} value={o.value}>Orden: {o.label}</option>
@@ -498,7 +498,7 @@ export default function ProductsList() {
             value={pageSize}
             onChange={e => { setPageSize(Number(e.target.value)); setPage(0) }}
             aria-label="Productos por página"
-            className="ml-auto bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
+            className="w-full sm:w-auto sm:ml-auto bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl px-4 py-2.5 text-sm text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
           >
             {PAGE_SIZE_OPTIONS.map(n => (
               <option key={n} value={n}>{n} por página</option>
@@ -522,7 +522,7 @@ export default function ProductsList() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full min-w-[600px] text-sm">
                 <thead>
                   <tr className="border-b border-[var(--color-card-hover)]">
                     <th className="px-3 py-3.5 w-10">
