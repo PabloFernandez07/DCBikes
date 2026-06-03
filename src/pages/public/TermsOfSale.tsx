@@ -105,7 +105,7 @@ export default function TermsOfSale() {
   const address =
     legal?.address ?? s.store_address ?? STORE_ADDRESS_FALLBACK
   const phone = s.store_phone ?? null
-  const email = s.quote_destination_email ?? 'info@dcbikescantabria.es'
+  const email = s.quote_destination_email ?? 'info@dcbikescantabria.com'
   const pickupDays = s.pickup_retention_days ?? '15'
 
   return (
@@ -191,7 +191,7 @@ export default function TermsOfSale() {
             </p>
             <p>
               Las presentes condiciones generales regulan la venta de los productos ofrecidos por {companyName}{' '}
-              a través del sitio web <strong className="text-[var(--color-cream)]">dcbikescantabria.es</strong>.
+              a través del sitio web <strong className="text-[var(--color-cream)]">dcbikescantabria.com</strong>.
               La realización de un pedido implica la aceptación expresa y sin reservas de las presentes condiciones.
             </p>
             <p>

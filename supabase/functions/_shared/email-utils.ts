@@ -13,8 +13,6 @@ const ALLOWED_ORIGINS = new Set<string>([
   'https://dcbikescantabria.com',
   'https://www.dcbikescantabria.com',
   'https://dc-bikes-cantabria.vercel.app',
-  'https://dcbikescantabria.es',
-  'https://www.dcbikescantabria.es',
   'http://localhost:5173',
   'http://localhost:4173',
 ])

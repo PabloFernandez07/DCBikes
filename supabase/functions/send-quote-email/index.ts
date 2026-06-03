@@ -75,7 +75,7 @@ serve(async (req) => {
       console.warn(`[${ts()}] ⚠ No se encontró quote_destination_email en settings:`, sErr.message, '— usando fallback')
     }
 
-    const rawDestination = (setting?.value as string | null) ?? '"info@dcbikescantabria.es"'
+    const rawDestination = (setting?.value as string | null) ?? '"info@dcbikescantabria.com"'
     const destination    = rawDestination.replace(/^"|"$/g, '')
     console.log(`[${ts()}] [3/5] Email destino:`, maskEmail(destination))
 

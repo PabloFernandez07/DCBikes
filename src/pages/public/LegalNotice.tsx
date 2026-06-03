@@ -118,8 +118,8 @@ export default function LegalNotice() {
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Correo electrónico:</strong>{' '}
-                <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
-                  info@dcbikescantabria.es
+                <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
+                  info@dcbikescantabria.com
                 </a>
               </p>
               <p className="flex flex-wrap items-center gap-2">
@@ -137,7 +137,7 @@ export default function LegalNotice() {
           <Section title="2. Objeto y ámbito de aplicación">
             <p>
               El presente Aviso Legal regula el acceso y uso del sitio web{' '}
-              <strong className="text-[var(--color-cream)]">dcbikescantabria.es</strong> (en adelante, «el sitio web»),
+              <strong className="text-[var(--color-cream)]">dcbikescantabria.com</strong> (en adelante, «el sitio web»),
               del que es titular {companyName}. El sitio web ofrece información sobre los servicios de
               taller y, además, permite la <strong className="text-[var(--color-cream)]">contratación y venta
               online</strong> de los productos descritos en la sección 3.
@@ -250,8 +250,8 @@ export default function LegalNotice() {
             </p>
             <p>
               Si encuentras una barrera de accesibilidad, escríbenos a{' '}
-              <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
-                info@dcbikescantabria.es
+              <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
+                info@dcbikescantabria.com
               </a>
               ; responderemos en un plazo máximo de 14 días naturales. También puedes presentar una
               reclamación ante la{' '}
@@ -284,10 +284,10 @@ export default function LegalNotice() {
               <li>
                 <strong className="text-[var(--color-cream)]">Email:</strong>{' '}
                 <a
-                  href="mailto:dsa@dcbikescantabria.es"
+                  href="mailto:dsa@dcbikescantabria.com"
                   className="text-[var(--color-lavender)] underline underline-offset-2"
                 >
-                  dsa@dcbikescantabria.es
+                  dsa@dcbikescantabria.com
                 </a>
               </li>
               <li>

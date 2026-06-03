@@ -203,7 +203,7 @@ function ReviewCarousel({ reviews }: { reviews: import("@/hooks/useGoogleReviews
                 </div>
               </div>
               <a
-                href={`mailto:dsa@dcbikescantabria.es?subject=${reportSubject}`}
+                href={`mailto:dsa@dcbikescantabria.com?subject=${reportSubject}`}
                 className="mt-4 inline-block text-[10px] uppercase tracking-widest text-[var(--color-mid)] hover:text-[var(--color-lavender)] underline underline-offset-4 transition-colors self-start"
                 aria-label={`Reportar reseña de ${review.author_name} conforme al Reglamento (UE) 2022/2065 (DSA)`}
               >
@@ -790,10 +790,10 @@ export default function Home() {
               vulnera la ley o las políticas de la plataforma, puedes
               comunicárnoslo escribiendo a{" "}
               <a
-                href="mailto:dsa@dcbikescantabria.es?subject=DSA%20notice%20%E2%80%94%20rese%C3%B1a"
+                href="mailto:dsa@dcbikescantabria.com?subject=DSA%20notice%20%E2%80%94%20rese%C3%B1a"
                 className="underline underline-offset-2 hover:text-[var(--color-lavender)] transition-colors"
               >
-                dsa@dcbikescantabria.es
+                dsa@dcbikescantabria.com
               </a>{" "}
               conforme al art. 16 del Reglamento (UE) 2022/2065.
             </p>

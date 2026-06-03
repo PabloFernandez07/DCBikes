@@ -287,8 +287,8 @@ export default function CookiePolicy() {
           <p>
             De acuerdo con el RGPD y la Ley Orgánica 3/2018 (LOPDGDD) tienes derecho a acceder, rectificar, suprimir,
             oponerte y solicitar la portabilidad de tus datos. Para ejercerlos escríbenos a{' '}
-            <a href="mailto:info@dcbikescantabria.es" className="text-[var(--color-lavender)] underline underline-offset-2">
-              info@dcbikescantabria.es
+            <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
+              info@dcbikescantabria.com
             </a>{' '}
             o visítanos en {storeAddress}.
           </p>

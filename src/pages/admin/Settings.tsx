@@ -933,7 +933,7 @@ export function Settings() {
               <Field
                 label="Email de respuesta al cliente (Reply-To)"
                 type="email"
-                placeholder="info@dcbikescantabria.es"
+                placeholder="info@dcbikescantabria.com"
                 helpText="Cuando respondas a un cliente desde el panel, este email aparece como remitente de respuesta. El cliente podrá responder directamente aquí."
                 value={v('reply_from_email')}
                 onChange={e => set('reply_from_email', (e.target as HTMLInputElement).value)}
@@ -1093,7 +1093,7 @@ export function Settings() {
               <Field
                 label="Emails que reciben notificación de nuevos pedidos"
                 type="text"
-                placeholder="admin@dcbikescantabria.es, ventas@dcbikescantabria.es"
+                placeholder="admin@dcbikescantabria.com, ventas@dcbikescantabria.com"
                 value={ecommerceValues.order_notification_emails}
                 onChange={e =>
                   setEcommerceValues(prev => ({

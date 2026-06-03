@@ -120,7 +120,7 @@ insert into categories (slug, name, sort_order) values
 
 -- ─── Seed: settings defaults ─────────────────────────────────
 insert into settings (key, value) values
-  ('quote_destination_email', '"info@dcbikescantabria.es"'),
+  ('quote_destination_email', '"info@dcbikescantabria.com"'),
   ('store_name',              '"DC Bikes Cantabria"'),
   ('store_address',           '"C/ La Cantábrica nº1, El Astillero, Cantabria"'),
   ('store_phone',             '"+34 942 054 501"'),

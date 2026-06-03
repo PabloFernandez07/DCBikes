@@ -34,11 +34,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /**
- * Lee el email de contacto desde settings. Fallback a info@dcbikescantabria.es si
+ * Lee el email de contacto desde settings. Fallback a info@dcbikescantabria.com si
  * la key no existe todavía o está vacía (L-04 auditoría legal V3).
  */
 function useContactEmail() {
-  const [email, setEmail] = useState<string>('info@dcbikescantabria.es')
+  const [email, setEmail] = useState<string>('info@dcbikescantabria.com')
   useEffect(() => {
     supabase
       .from('settings')

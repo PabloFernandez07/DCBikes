@@ -151,7 +151,7 @@ serve(async (req) => {
     const supportEmail =
       asString(settings.store_contact_email).trim() ||
       asString(settings.quote_destination_email).trim() ||
-      'info@dcbikescantabria.es'
+      'info@dcbikescantabria.com'
     const termsVersion = asString(settings.terms_version).trim() || new Date().toISOString().slice(0, 10)
 
     /* ─── 3. Generar PDF ─── */

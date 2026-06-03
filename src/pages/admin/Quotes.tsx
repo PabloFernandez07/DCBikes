@@ -63,7 +63,7 @@ function buildReplyTemplate(quote: QuoteWithProduct): { subject: string; body: s
     '---',
     'DC Bikes Cantabria',
     'El Astillero, Cantabria',
-    'dcbikescantabria.es',
+    'dcbikescantabria.com',
     '',
     '--- Mensaje original ---',
     contextLines,

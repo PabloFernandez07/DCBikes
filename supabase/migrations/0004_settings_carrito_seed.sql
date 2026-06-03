@@ -22,7 +22,7 @@ insert into settings (key, value) values
   -- Datos legales (legal_company_*) NO se siembran como string vacío:
   -- el cliente debe rellenarlos en /admin/configuracion antes de aceptar pedidos.
   -- order-place/index.ts hace gate y devuelve 503 si están vacíos.
-  ('store_contact_email',           '"info@dcbikescantabria.es"'::jsonb),
+  ('store_contact_email',           '"info@dcbikescantabria.com"'::jsonb),
 
   -- ─── Pasarela Redsys (no credenciales) ───────────────────────
   ('redsys_environment',            '"test"'::jsonb),      -- 'test' | 'prod'

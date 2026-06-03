@@ -105,7 +105,7 @@ serve(async (req) => {
       .eq('key', 'reply_from_email')
       .single()
 
-    const replyTo = ((replySetting?.value as string | null) ?? '"info@dcbikescantabria.es"')
+    const replyTo = ((replySetting?.value as string | null) ?? '"info@dcbikescantabria.com"')
       .replace(/^"|"$/g, '')
 
     // Convertir saltos de línea del body de texto plano a HTML
@@ -141,7 +141,7 @@ serve(async (req) => {
 
         <div style="background:#f5f5f5;padding:20px 32px;border-top:1px solid #e8e8e8">
           <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#333">DC Bikes Cantabria</p>
-          <p style="margin:0;font-size:12px;color:#999">El Astillero, Cantabria · dcbikescantabria.es</p>
+          <p style="margin:0;font-size:12px;color:#999">El Astillero, Cantabria · dcbikescantabria.com</p>
           <p style="margin:8px 0 0;font-size:11px;color:#bbb">
             Para responder a este mensaje, escríbenos a
             <a href="mailto:${replyTo}" style="color:#C4A2CF">${replyTo}</a>
