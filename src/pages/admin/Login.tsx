@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bike } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -56,9 +55,11 @@ export default function Login() {
     <div className="min-h-screen bg-[var(--color-ink-deep)] flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--color-brand-red)] mx-auto">
-            <Bike size={32} className="text-white" aria-hidden="true" />
-          </div>
+          <img
+            src="/DC_Bikes_Sin_Fondo.png"
+            alt="DC Bikes"
+            className="h-20 w-auto mx-auto"
+          />
           <div>
             <h1 className="text-3xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
               DC BIKES
