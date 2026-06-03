@@ -188,7 +188,7 @@ export default function ProductDetail() {
     openCart()
   }
 
-  const productUrl = `https://dc-bikes-cantabria.vercel.app/producto/${parentProduct.slug}`
+  const productUrl = `https://dcbikescantabria.com/producto/${parentProduct.slug}`
   const productJsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -216,9 +216,9 @@ export default function ProductDetail() {
         url={productUrl}
         type="product"
         breadcrumbs={[
-          { name: "Inicio", url: "https://dc-bikes-cantabria.vercel.app" },
-          { name: "Catálogo", url: "https://dc-bikes-cantabria.vercel.app/catalogo" },
-          ...(category ? [{ name: category.name, url: "https://dc-bikes-cantabria.vercel.app/catalogo" }] : []),
+          { name: "Inicio", url: "https://dcbikescantabria.com" },
+          { name: "Catálogo", url: "https://dcbikescantabria.com/catalogo" },
+          ...(category ? [{ name: category.name, url: "https://dcbikescantabria.com/catalogo" }] : []),
           { name: displayName, url: productUrl },
         ]}
         jsonLd={productJsonLd}

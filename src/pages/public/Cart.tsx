@@ -61,7 +61,7 @@ export default function Cart() {
         <SEO
           title="Tu carrito"
           description="Tu carrito de compra en DC Bikes Cantabria."
-          url="https://dc-bikes-cantabria.vercel.app/carrito"
+          url="https://dcbikescantabria.com/carrito"
           noIndex={true}
         />
         <div className="max-w-md mx-auto text-center flex flex-col items-center gap-6">
@@ -94,7 +94,7 @@ export default function Cart() {
       <SEO
         title="Tu carrito"
         description="Revisa los productos de tu carrito antes de tramitar el pedido."
-        url="https://dc-bikes-cantabria.vercel.app/carrito"
+        url="https://dcbikescantabria.com/carrito"
         noIndex={true}
       />
 

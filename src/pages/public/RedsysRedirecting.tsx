@@ -41,7 +41,7 @@ export default function RedsysRedirecting() {
       <SEO
         title="Redirigiendo a la pasarela de pago"
         description="Te estamos redirigiendo a Redsys para completar tu pago de forma segura."
-        url="https://dc-bikes-cantabria.vercel.app/pedido/redirigiendo"
+        url="https://dcbikescantabria.com/pedido/redirigiendo"
         noIndex={true}
       />
 

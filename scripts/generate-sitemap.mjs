@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url'
 const __dir = dirname(fileURLToPath(import.meta.url))
 const out = join(__dir, '..', 'public', 'sitemap.xml')
 
-const BASE = process.env.SITE_URL || 'https://dc-bikes-cantabria.vercel.app'
+const BASE = process.env.SITE_URL || 'https://dcbikescantabria.com'
 const today = new Date().toISOString().split('T')[0]
 
 // URLs indexables del sitio. Excluimos las páginas con <meta robots="noindex">

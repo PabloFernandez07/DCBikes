@@ -113,7 +113,7 @@ export default function TermsOfSale() {
       <SEO
         title="Términos y condiciones de venta"
         description="Términos y condiciones generales de la venta online en DC Bikes Cantabria conforme a la LSSI-CE y al RDL 1/2007."
-        url="https://dc-bikes-cantabria.vercel.app/terminos-venta"
+        url="https://dcbikescantabria.com/terminos-venta"
       />
 
       <div ref={pageRef} className="w-full px-4 sm:px-6 lg:px-8">

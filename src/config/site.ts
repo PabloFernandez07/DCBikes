@@ -2,7 +2,7 @@
  * Constantes globales del sitio.
  *
  * El dominio se controla con la variable de entorno `VITE_SITE_URL`.
- * Si no se define, se usa el actual `dc-bikes-cantabria.vercel.app`.
+ * Si no se define, se usa el actual `dcbikescantabria.com`.
  *
  * Cuando llegue Fase 3 (compra de `dcbikescantabria.com`):
  *   1. En Vercel → Project Settings → Environment Variables → añadir
@@ -17,7 +17,7 @@
  *     `process.env.SITE_URL` directamente (corren en Node, no Vite).
  */
 
-const FALLBACK = 'https://dc-bikes-cantabria.vercel.app'
+const FALLBACK = 'https://dcbikescantabria.com'
 
 export const SITE_URL: string =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SITE_URL) || FALLBACK

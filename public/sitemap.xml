@@ -2,45 +2,45 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://dc-bikes-cantabria.vercel.app/</loc>
+    <loc>https://dcbikescantabria.com/</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/"/>
   </url>
   <url>
-    <loc>https://dc-bikes-cantabria.vercel.app/catalogo</loc>
+    <loc>https://dcbikescantabria.com/catalogo</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/catalogo"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/catalogo"/>
   </url>
   <url>
-    <loc>https://dc-bikes-cantabria.vercel.app/taller</loc>
+    <loc>https://dcbikescantabria.com/taller</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/taller"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/taller"/>
   </url>
   <url>
-    <loc>https://dc-bikes-cantabria.vercel.app/contacto</loc>
+    <loc>https://dcbikescantabria.com/contacto</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/contacto"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/contacto"/>
   </url>
   <url>
-    <loc>https://dc-bikes-cantabria.vercel.app/devoluciones</loc>
+    <loc>https://dcbikescantabria.com/devoluciones</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
-    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/devoluciones"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/devoluciones"/>
   </url>
   <url>
-    <loc>https://dc-bikes-cantabria.vercel.app/terminos-venta</loc>
+    <loc>https://dcbikescantabria.com/terminos-venta</loc>
     <lastmod>2026-05-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
-    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dc-bikes-cantabria.vercel.app/terminos-venta"/>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/terminos-venta"/>
   </url>
 </urlset>

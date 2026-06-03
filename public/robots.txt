@@ -14,4 +14,4 @@ Disallow: /mis-pedidos/
 Allow: /
 Allow: /assets/
 
-Sitemap: https://dc-bikes-cantabria.vercel.app/sitemap.xml
+Sitemap: https://dcbikescantabria.com/sitemap.xml

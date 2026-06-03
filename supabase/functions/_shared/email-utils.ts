@@ -10,6 +10,8 @@ import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // CORS dinámico por origen. Permite solo dominios propios.
 const ALLOWED_ORIGINS = new Set<string>([
+  'https://dcbikescantabria.com',
+  'https://www.dcbikescantabria.com',
   'https://dc-bikes-cantabria.vercel.app',
   'https://dcbikescantabria.es',
   'https://www.dcbikescantabria.es',

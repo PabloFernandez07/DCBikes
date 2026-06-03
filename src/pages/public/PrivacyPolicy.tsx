@@ -43,7 +43,7 @@ export default function PrivacyPolicy() {
       <SEO
         title="Política de privacidad"
         description="Información sobre el tratamiento de datos personales en DC Bikes Cantabria conforme al RGPD."
-        url="https://dc-bikes-cantabria.vercel.app/privacidad"
+        url="https://dcbikescantabria.com/privacidad"
       />
 
       <div ref={pageRef} className="w-full px-4 sm:px-6 lg:px-8">

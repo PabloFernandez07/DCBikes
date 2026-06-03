@@ -65,7 +65,7 @@ export default function LegalNotice() {
       <SEO
         title="Aviso legal"
         description="Información legal e identificación del titular del sitio web DC Bikes Cantabria conforme a la LSSI-CE."
-        url="https://dc-bikes-cantabria.vercel.app/aviso-legal"
+        url="https://dcbikescantabria.com/aviso-legal"
       />
 
       <div ref={pageRef} className="w-full px-4 sm:px-6 lg:px-8">

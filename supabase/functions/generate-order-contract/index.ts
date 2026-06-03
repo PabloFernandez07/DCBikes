@@ -147,7 +147,7 @@ serve(async (req) => {
     const companyName = asString(settings.legal_company_name, '[PENDIENTE]').trim() || '[PENDIENTE]'
     const companyCif = asString(settings.legal_company_cif).trim() || '[PENDIENTE]'
     const companyAddress = asString(settings.legal_company_address).trim() || '[PENDIENTE]'
-    const storeUrl = asString(settings.store_url, 'https://dcbikescantabria.es').trim() || 'https://dcbikescantabria.es'
+    const storeUrl = asString(settings.store_url, 'https://dcbikescantabria.com').trim() || 'https://dcbikescantabria.com'
     const supportEmail =
       asString(settings.store_contact_email).trim() ||
       asString(settings.quote_destination_email).trim() ||

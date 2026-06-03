@@ -67,7 +67,7 @@ export default function Returns() {
       <SEO
         title="Política de devoluciones"
         description="Información sobre el derecho de desistimiento, devoluciones y garantía conforme al Real Decreto Legislativo 1/2007 (Ley General Defensa Consumidores y Usuarios)."
-        url="https://dc-bikes-cantabria.vercel.app/devoluciones"
+        url="https://dcbikescantabria.com/devoluciones"
       />
 
       <div ref={pageRef} className="w-full px-4 sm:px-6 lg:px-8">

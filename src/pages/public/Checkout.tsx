@@ -217,7 +217,7 @@ export default function Checkout() {
       <SEO
         title="Checkout"
         description="Finaliza tu pedido — datos de envío, facturación y pago."
-        url="https://dc-bikes-cantabria.vercel.app/checkout"
+        url="https://dcbikescantabria.com/checkout"
         noIndex={true}
       />
 

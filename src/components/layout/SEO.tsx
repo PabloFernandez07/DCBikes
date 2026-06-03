@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 
 const SITE_NAME = "DC Bikes Cantabria";
-const BASE_URL = "https://dc-bikes-cantabria.vercel.app";
+const BASE_URL = "https://dcbikescantabria.com";
 const DEFAULT_IMAGE = `${BASE_URL}/DC_Bikes_Sin_Fondo.png`;
 const DEFAULT_IMAGE_ALT = "DC Bikes Cantabria — Tienda de bicicletas en El Astillero";
 const DEFAULT_DESCRIPTION =

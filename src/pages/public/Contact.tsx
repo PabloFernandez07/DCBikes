@@ -105,10 +105,10 @@ export default function Contact() {
       <SEO
         title="Contacto y horarios"
         description="Visítanos en El Astillero, Cantabria. Horarios, dirección, teléfono y mapa de DC Bikes Cantabria. Distribuidores Giant y Liv."
-        url="https://dc-bikes-cantabria.vercel.app/contacto"
+        url="https://dcbikescantabria.com/contacto"
         breadcrumbs={[
-          { name: "Inicio", url: "https://dc-bikes-cantabria.vercel.app" },
-          { name: "Contacto", url: "https://dc-bikes-cantabria.vercel.app/contacto" },
+          { name: "Inicio", url: "https://dcbikescantabria.com" },
+          { name: "Contacto", url: "https://dcbikescantabria.com/contacto" },
         ]}
       />
       {/* Hero */}

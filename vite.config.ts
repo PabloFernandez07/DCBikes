@@ -21,7 +21,7 @@ function htmlVars(vars: Record<string, string>) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const SITE_URL = env.VITE_SITE_URL || 'https://dc-bikes-cantabria.vercel.app'
+  const SITE_URL = env.VITE_SITE_URL || 'https://dcbikescantabria.com'
 
   return {
     plugins: [react(), tailwindcss(), htmlVars({ SITE_URL })],
