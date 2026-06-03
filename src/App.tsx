@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useTheme } from "@/hooks/useTheme";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Nav } from "@/components/layout/Nav";
@@ -392,6 +393,7 @@ export default function App() {
       </Suspense>
       <CartDrawer />
       <CookieBanner />
+      <SpeedInsights />
     </BrowserRouter>
   );
 }
