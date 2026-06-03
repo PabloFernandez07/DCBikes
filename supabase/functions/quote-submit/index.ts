@@ -98,14 +98,18 @@ Deno.serve(async (req) => {
     }
   }
 
+  // La tabla quote_requests NO tiene columna `name` (minimización de PII; la
+  // retención purga `message`). Conservamos el nombre dentro del mensaje para que
+  // el comercio sepa quién consulta, y se purga junto con el resto.
+  const composedMessage = `Nombre: ${name}\n\n${message}`.slice(0, 5000)
+
   // Inserta
   const { data: inserted, error: insertErr } = await supabase
     .from('quote_requests')
     .insert({
-      name: name.slice(0, 200),
       email: email.slice(0, 200),
       phone: phone?.slice(0, 50) ?? null,
-      message: message.slice(0, 5000),
+      message: composedMessage,
       product_id: product_id ?? null,
       consent_ip: ip,
       consent_user_agent: ua,
