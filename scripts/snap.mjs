@@ -44,6 +44,16 @@ const ROUTES = [
   { path: '/aviso-legal', file: 'aviso-legal/index.html' },
   { path: '/privacidad',  file: 'privacidad/index.html' },
   { path: '/cookies',     file: 'cookies/index.html' },
+  // Landings SEO
+  { path: '/bicicletas-giant',                 file: 'bicicletas-giant/index.html' },
+  { path: '/bicicletas-liv',                   file: 'bicicletas-liv/index.html' },
+  { path: '/bicicletas-stevens',               file: 'bicicletas-stevens/index.html' },
+  { path: '/bicicletas-electricas',            file: 'bicicletas-electricas/index.html' },
+  { path: '/bicicletas-montana',               file: 'bicicletas-montana/index.html' },
+  { path: '/bicicletas-carretera',             file: 'bicicletas-carretera/index.html' },
+  { path: '/tienda-bicicletas-el-astillero',   file: 'tienda-bicicletas-el-astillero/index.html' },
+  { path: '/tienda-bicicletas-santander',      file: 'tienda-bicicletas-santander/index.html' },
+  { path: '/preguntas-frecuentes',             file: 'preguntas-frecuentes/index.html' },
 ]
 
 const MIME = {

@@ -2,8 +2,7 @@
  * Genera el set completo de iconos + OG image desde los PNG source.
  *
  * Source:
- *   public/DC_Bikes_Giratorio.png  (logo principal, 401KB)  -> favicons
- *   public/DC_Bikes_Sin_Fondo.png  (logo OG, 437KB)         -> og-image (1200x630 letterbox)
+ *   public/Logo_DC_Bikes_Circular.png  (logo circular)  -> favicons + og-image (1200x630 letterbox)
  *
  * Out (todos en public/):
  *   favicon-16.png, favicon-32.png, favicon-192.png, favicon-512.png
@@ -22,8 +21,9 @@ import { fileURLToPath } from 'node:url'
 const __dir = dirname(fileURLToPath(import.meta.url))
 const PUB   = join(__dir, '..', 'public')
 
-const SRC_LOGO = join(PUB, 'DC_Bikes_Giratorio.png')
-const SRC_OG   = join(PUB, 'DC_Bikes_Sin_Fondo.png')
+// Fuente única: el logo circular de marca (favicons de la pestaña/PWA + og-image).
+const SRC_LOGO = join(PUB, 'Logo_DC_Bikes_Circular.png')
+const SRC_OG   = join(PUB, 'Logo_DC_Bikes_Circular.png')
 
 if (!existsSync(SRC_LOGO)) {
   console.error(`[generate-images] Falta el source: ${SRC_LOGO}`)

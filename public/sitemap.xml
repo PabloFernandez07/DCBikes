@@ -3,42 +3,105 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://dcbikescantabria.com/</loc>
-    <lastmod>2026-05-26</lastmod>
+    <lastmod>2026-06-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/"/>
   </url>
   <url>
     <loc>https://dcbikescantabria.com/catalogo</loc>
-    <lastmod>2026-05-26</lastmod>
+    <lastmod>2026-06-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
     <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/catalogo"/>
   </url>
   <url>
     <loc>https://dcbikescantabria.com/taller</loc>
-    <lastmod>2026-05-26</lastmod>
+    <lastmod>2026-06-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/taller"/>
   </url>
   <url>
     <loc>https://dcbikescantabria.com/contacto</loc>
-    <lastmod>2026-05-26</lastmod>
+    <lastmod>2026-06-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/contacto"/>
   </url>
   <url>
+    <loc>https://dcbikescantabria.com/bicicletas-giant</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/bicicletas-giant"/>
+  </url>
+  <url>
+    <loc>https://dcbikescantabria.com/bicicletas-liv</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/bicicletas-liv"/>
+  </url>
+  <url>
+    <loc>https://dcbikescantabria.com/bicicletas-stevens</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/bicicletas-stevens"/>
+  </url>
+  <url>
+    <loc>https://dcbikescantabria.com/bicicletas-electricas</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/bicicletas-electricas"/>
+  </url>
+  <url>
+    <loc>https://dcbikescantabria.com/bicicletas-montana</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/bicicletas-montana"/>
+  </url>
+  <url>
+    <loc>https://dcbikescantabria.com/bicicletas-carretera</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/bicicletas-carretera"/>
+  </url>
+  <url>
+    <loc>https://dcbikescantabria.com/tienda-bicicletas-el-astillero</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/tienda-bicicletas-el-astillero"/>
+  </url>
+  <url>
+    <loc>https://dcbikescantabria.com/tienda-bicicletas-santander</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/tienda-bicicletas-santander"/>
+  </url>
+  <url>
+    <loc>https://dcbikescantabria.com/preguntas-frecuentes</loc>
+    <lastmod>2026-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/preguntas-frecuentes"/>
+  </url>
+  <url>
     <loc>https://dcbikescantabria.com/devoluciones</loc>
-    <lastmod>2026-05-26</lastmod>
+    <lastmod>2026-06-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
     <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/devoluciones"/>
   </url>
   <url>
     <loc>https://dcbikescantabria.com/terminos-venta</loc>
-    <lastmod>2026-05-26</lastmod>
+    <lastmod>2026-06-05</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
     <xhtml:link rel="alternate" hreflang="es-ES" href="https://dcbikescantabria.com/terminos-venta"/>

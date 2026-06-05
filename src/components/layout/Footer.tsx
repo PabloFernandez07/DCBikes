@@ -82,7 +82,7 @@ export function Footer() {
   return (
     <footer className="bg-[var(--color-ink-deep)] border-t border-[var(--color-card)] mt-16 md:mt-24">
       <div className="w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-12">
           <div className="flex flex-col gap-4">
             <img src="/DC_Bikes_Sin_Fondo.png" alt="DC Bikes" className="h-20 w-auto max-w-[200px] object-contain block" />
             <p className="text-[var(--color-mid)] font-[var(--font-body)] text-sm leading-relaxed">
@@ -168,12 +168,39 @@ export function Footer() {
 
           <div className="flex flex-col gap-3">
             <h3 className="font-[var(--font-cond)] text-base font-semibold text-[var(--color-cream)] tracking-widest uppercase">
+              Bicicletas
+            </h3>
+            <nav className="flex flex-col gap-2" aria-label="Tipos y marcas de bicicletas">
+              {[
+                { to: '/bicicletas-giant', label: 'Giant' },
+                { to: '/bicicletas-liv', label: 'Liv' },
+                { to: '/bicicletas-stevens', label: 'Stevens' },
+                { to: '/bicicletas-electricas', label: 'Eléctricas' },
+                { to: '/bicicletas-montana', label: 'De montaña (MTB)' },
+                { to: '/bicicletas-carretera', label: 'De carretera' },
+              ].map(({ to, label }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="text-[var(--color-mid)] text-sm hover:text-[var(--color-lavender)] transition-colors font-[var(--font-body)]"
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <h3 className="font-[var(--font-cond)] text-base font-semibold text-[var(--color-cream)] tracking-widest uppercase">
               Tienda
             </h3>
             <nav className="flex flex-col gap-2" aria-label="Links del footer">
               {[
                 { to: '/catalogo', label: 'Catálogo' },
                 { to: '/taller', label: 'Taller & Servicio' },
+                { to: '/tienda-bicicletas-el-astillero', label: 'Tienda en El Astillero' },
+                { to: '/tienda-bicicletas-santander', label: 'Cerca de Santander' },
+                { to: '/preguntas-frecuentes', label: 'Preguntas frecuentes' },
                 { to: '/contacto', label: 'Contacto' },
                 { to: '/mis-pedidos', label: 'Mis pedidos' },
               ].map(({ to, label }) => (

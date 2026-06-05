@@ -12,6 +12,16 @@ const Catalog      = lazy(() => import("@/pages/public/Catalog"));
 const ProductDetail = lazy(() => import("@/pages/public/ProductDetail"));
 const Workshop     = lazy(() => import("@/pages/public/Workshop"));
 const Contact      = lazy(() => import("@/pages/public/Contact"));
+// Landings SEO (marca / tipo / local) + FAQ
+const BicicletasGiant      = lazy(() => import("@/pages/public/BicicletasGiant"));
+const BicicletasLiv        = lazy(() => import("@/pages/public/BicicletasLiv"));
+const BicicletasStevens    = lazy(() => import("@/pages/public/BicicletasStevens"));
+const BicicletasElectricas = lazy(() => import("@/pages/public/BicicletasElectricas"));
+const BicicletasMontana    = lazy(() => import("@/pages/public/BicicletasMontana"));
+const BicicletasCarretera  = lazy(() => import("@/pages/public/BicicletasCarretera"));
+const TiendaElAstillero    = lazy(() => import("@/pages/public/TiendaElAstillero"));
+const TiendaSantander      = lazy(() => import("@/pages/public/TiendaSantander"));
+const PreguntasFrecuentes  = lazy(() => import("@/pages/public/PreguntasFrecuentes"));
 const Cart         = lazy(() => import("@/pages/public/Cart"));
 const Checkout     = lazy(() => import("@/pages/public/Checkout"));
 const RedsysRedirecting = lazy(() => import("@/pages/public/RedsysRedirecting"));
@@ -258,6 +268,18 @@ export default function App() {
             </PublicLayout>
           }
         />
+        {/* Landings SEO — marcas */}
+        <Route path="/bicicletas-giant" element={<PublicLayout><BicicletasGiant /></PublicLayout>} />
+        <Route path="/bicicletas-liv" element={<PublicLayout><BicicletasLiv /></PublicLayout>} />
+        <Route path="/bicicletas-stevens" element={<PublicLayout><BicicletasStevens /></PublicLayout>} />
+        {/* Landings SEO — tipos */}
+        <Route path="/bicicletas-electricas" element={<PublicLayout><BicicletasElectricas /></PublicLayout>} />
+        <Route path="/bicicletas-montana" element={<PublicLayout><BicicletasMontana /></PublicLayout>} />
+        <Route path="/bicicletas-carretera" element={<PublicLayout><BicicletasCarretera /></PublicLayout>} />
+        {/* Landings SEO — local + FAQ */}
+        <Route path="/tienda-bicicletas-el-astillero" element={<PublicLayout><TiendaElAstillero /></PublicLayout>} />
+        <Route path="/tienda-bicicletas-santander" element={<PublicLayout><TiendaSantander /></PublicLayout>} />
+        <Route path="/preguntas-frecuentes" element={<PublicLayout><PreguntasFrecuentes /></PublicLayout>} />
         <Route
           path="/carrito"
           element={

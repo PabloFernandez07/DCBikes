@@ -217,6 +217,108 @@ const routes = [
       { name: 'Contacto', url: `${SITE}/contacto` },
     ]),
   },
+  // ─── Landings SEO — marcas ───
+  {
+    dir: 'bicicletas-giant',
+    title: `Bicicletas Giant en Cantabria — Distribuidor Oficial | ${NAME}`,
+    desc: 'Bicicletas Giant en El Astillero, Cantabria: montaña, carretera, gravel, urbana y eléctrica. Distribuidor oficial con taller y asesoramiento de tallaje.',
+    canonical: `${SITE}/bicicletas-giant`,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Bicicletas Giant', url: `${SITE}/bicicletas-giant` },
+    ]),
+  },
+  {
+    dir: 'bicicletas-liv',
+    title: `Bicicletas Liv en Cantabria — Distribuidor Oficial | ${NAME}`,
+    desc: 'Bicicletas Liv en El Astillero, Cantabria: la marca diseñada exclusivamente para mujeres. Distribuidor oficial con taller y asesoramiento personalizado.',
+    canonical: `${SITE}/bicicletas-liv`,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Bicicletas Liv', url: `${SITE}/bicicletas-liv` },
+    ]),
+  },
+  {
+    dir: 'bicicletas-stevens',
+    title: `Bicicletas Stevens en Cantabria — Distribuidor Oficial | ${NAME}`,
+    desc: 'Bicicletas Stevens en El Astillero, Cantabria: ciclocross, gravel, carretera y MTB con ingeniería alemana. Distribuidor oficial con taller propio.',
+    canonical: `${SITE}/bicicletas-stevens`,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Bicicletas Stevens', url: `${SITE}/bicicletas-stevens` },
+    ]),
+  },
+  // ─── Landings SEO — tipos ───
+  {
+    dir: 'bicicletas-electricas',
+    title: `Bicicletas Eléctricas en Cantabria | ${NAME}`,
+    desc: 'Bicicletas eléctricas (e-bikes) en El Astillero, Cantabria: urbanas, trekking y eMTB de Giant, Liv y Stevens. Pruébalas en tienda. Taller especializado.',
+    canonical: `${SITE}/bicicletas-electricas`,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Bicicletas eléctricas', url: `${SITE}/bicicletas-electricas` },
+    ]),
+  },
+  {
+    dir: 'bicicletas-montana',
+    title: `Bicicletas de Montaña (MTB) en Cantabria | ${NAME}`,
+    desc: 'Bicicletas de montaña en El Astillero, Cantabria: XC, trail y enduro, rígidas y dobles. Giant, Liv y Stevens. Asesoramiento de tallaje y taller propio.',
+    canonical: `${SITE}/bicicletas-montana`,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Bicicletas de montaña', url: `${SITE}/bicicletas-montana` },
+    ]),
+  },
+  {
+    dir: 'bicicletas-carretera',
+    title: `Bicicletas de Carretera en Cantabria | ${NAME}`,
+    desc: 'Bicicletas de carretera en El Astillero, Cantabria: aluminio y carbono, endurance y competición, también gravel. Giant, Liv y Stevens. Taller y ajuste.',
+    canonical: `${SITE}/bicicletas-carretera`,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Bicicletas de carretera', url: `${SITE}/bicicletas-carretera` },
+    ]),
+  },
+  // ─── Landings SEO — local + FAQ ───
+  {
+    dir: 'tienda-bicicletas-el-astillero',
+    title: `Tienda de Bicicletas en El Astillero | ${NAME}`,
+    desc: 'Tu tienda de bicicletas en El Astillero, Cantabria: venta de Giant, Liv y Stevens, taller propio, asesoramiento y recogida en tienda. Ven a vernos.',
+    canonical: `${SITE}/tienda-bicicletas-el-astillero`,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Tienda en El Astillero', url: `${SITE}/tienda-bicicletas-el-astillero` },
+    ]),
+  },
+  {
+    dir: 'tienda-bicicletas-santander',
+    title: `Tienda de Bicicletas cerca de Santander | ${NAME}`,
+    desc: 'Tienda de bicicletas a 10 minutos de Santander, en El Astillero: Giant, Liv y Stevens, taller y trato cercano. Mejor que comprar online. Cómo llegar.',
+    canonical: `${SITE}/tienda-bicicletas-santander`,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Tienda cerca de Santander', url: `${SITE}/tienda-bicicletas-santander` },
+    ]),
+  },
+  {
+    dir: 'preguntas-frecuentes',
+    title: `Preguntas Frecuentes | ${NAME}`,
+    desc: 'Resolvemos tus dudas sobre DC Bikes Cantabria: marcas, ubicación, horarios, taller, bicicletas eléctricas, garantía, devoluciones y cómo pedir presupuesto.',
+    canonical: `${SITE}/preguntas-frecuentes`,
+    noIndex: false,
+    schema: schemaBreadcrumb([
+      { name: 'Inicio', url: SITE },
+      { name: 'Preguntas frecuentes', url: `${SITE}/preguntas-frecuentes` },
+    ]),
+  },
   {
     dir: 'cookies',
     title: `Política de Cookies | ${NAME}`,

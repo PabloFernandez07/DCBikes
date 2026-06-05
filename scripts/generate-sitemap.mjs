@@ -29,6 +29,18 @@ const urls = [
   { loc: '/catalogo',      changefreq: 'weekly',  priority: '0.9' },
   { loc: '/taller',        changefreq: 'monthly', priority: '0.7' },
   { loc: '/contacto',      changefreq: 'monthly', priority: '0.7' },
+  // Landings SEO — marcas
+  { loc: '/bicicletas-giant',   changefreq: 'monthly', priority: '0.8' },
+  { loc: '/bicicletas-liv',     changefreq: 'monthly', priority: '0.8' },
+  { loc: '/bicicletas-stevens', changefreq: 'monthly', priority: '0.8' },
+  // Landings SEO — tipos
+  { loc: '/bicicletas-electricas', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/bicicletas-montana',    changefreq: 'monthly', priority: '0.8' },
+  { loc: '/bicicletas-carretera',  changefreq: 'monthly', priority: '0.8' },
+  // Landings SEO — local + FAQ
+  { loc: '/tienda-bicicletas-el-astillero', changefreq: 'monthly', priority: '0.8' },
+  { loc: '/tienda-bicicletas-santander',    changefreq: 'monthly', priority: '0.8' },
+  { loc: '/preguntas-frecuentes',           changefreq: 'monthly', priority: '0.6' },
   { loc: '/devoluciones',  changefreq: 'yearly',  priority: '0.4' },
   { loc: '/terminos-venta', changefreq: 'yearly', priority: '0.4' },
 ]
