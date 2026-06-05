@@ -4,6 +4,7 @@ import { Mountain, Activity, Gauge, Wrench, ArrowRight, CheckCircle, ShieldCheck
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
 import { FaqSection, faqJsonLd } from '@/components/public/FaqSection'
+import { StoreContactStrip } from '@/components/public/StoreContactStrip'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -266,6 +267,8 @@ export default function BicicletasMontana() {
         title="DUDAS SOBRE MTB"
         subtitle="Las preguntas más habituales antes de elegir tu bicicleta de montaña."
       />
+
+      <StoreContactStrip />
 
       {/* CTA */}
       <section className="py-8 pb-24">

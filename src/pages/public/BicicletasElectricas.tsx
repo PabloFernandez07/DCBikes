@@ -4,6 +4,7 @@ import { Zap, Battery, Bike, Wrench, ArrowRight, CheckCircle, ShieldCheck, MapPi
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
 import { FaqSection, faqJsonLd } from '@/components/public/FaqSection'
+import { StoreContactStrip } from '@/components/public/StoreContactStrip'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -265,6 +266,8 @@ export default function BicicletasElectricas() {
         title="DUDAS SOBRE BICIS ELÉCTRICAS"
         subtitle="Resolvemos las preguntas más habituales antes de dar el paso a una e-bike."
       />
+
+      <StoreContactStrip />
 
       {/* CTA */}
       <section className="py-8 pb-24">

@@ -4,6 +4,7 @@ import { Mountain, Bike, Zap, MapPin, Ruler, ShieldCheck, Wrench, ArrowRight, Ph
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
 import { FaqSection, faqJsonLd, type FaqItem } from '@/components/public/FaqSection'
+import { StoreContactStrip } from '@/components/public/StoreContactStrip'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -241,6 +242,8 @@ export default function BicicletasGiant() {
         title="PREGUNTAS SOBRE GIANT"
         subtitle="Todo lo que necesitas saber antes de elegir tu bicicleta Giant en DC Bikes Cantabria."
       />
+
+      <StoreContactStrip />
 
       {/* CTA final */}
       <section className="py-8 pb-24">

@@ -4,6 +4,7 @@ import { Mountain, Bike, Zap, MapPin, Ruler, ShieldCheck, Wrench, Heart, ArrowRi
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
 import { FaqSection, faqJsonLd, type FaqItem } from '@/components/public/FaqSection'
+import { StoreContactStrip } from '@/components/public/StoreContactStrip'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -240,6 +241,8 @@ export default function BicicletasLiv() {
         title="PREGUNTAS SOBRE LIV"
         subtitle="Resolvemos las dudas más habituales sobre las bicicletas Liv y por qué están diseñadas específicamente para mujeres."
       />
+
+      <StoreContactStrip />
 
       {/* CTA final */}
       <section className="py-8 pb-24">

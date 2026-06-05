@@ -4,6 +4,7 @@ import { Mountain, Bike, Route, Trophy, MapPin, Ruler, ShieldCheck, Wrench, Arro
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
 import { FaqSection, faqJsonLd, type FaqItem } from '@/components/public/FaqSection'
+import { StoreContactStrip } from '@/components/public/StoreContactStrip'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -241,6 +242,8 @@ export default function BicicletasStevens() {
         title="PREGUNTAS SOBRE STEVENS"
         subtitle="Lo esencial sobre las bicicletas Stevens, su calidad alemana y para qué ciclista encajan mejor."
       />
+
+      <StoreContactStrip />
 
       {/* CTA final */}
       <section className="py-8 pb-24">

@@ -4,6 +4,7 @@ import { Feather, Trophy, Route, Wrench, ArrowRight, CheckCircle, ShieldCheck, M
 import { Button } from '@/components/ui/Button'
 import { SEO } from '@/components/layout/SEO'
 import { FaqSection, faqJsonLd } from '@/components/public/FaqSection'
+import { StoreContactStrip } from '@/components/public/StoreContactStrip'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -265,6 +266,8 @@ export default function BicicletasCarretera() {
         title="DUDAS SOBRE CARRETERA"
         subtitle="Las preguntas más habituales antes de elegir tu bicicleta de carretera."
       />
+
+      <StoreContactStrip />
 
       {/* CTA */}
       <section className="py-8 pb-24">
