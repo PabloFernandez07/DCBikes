@@ -7,6 +7,7 @@ export interface LegalIdentity {
   address: string | null
   formaJuridica: string | null
   inscripcion: string | null
+  contactEmail: string | null
 }
 
 const LEGAL_KEYS = [
@@ -15,6 +16,7 @@ const LEGAL_KEYS = [
   'legal_company_address',
   'legal_forma_juridica',
   'legal_inscripcion',
+  'legal_contact_email',
 ] as const
 
 type LegalKey = (typeof LEGAL_KEYS)[number]
@@ -25,6 +27,7 @@ const KEY_TO_FIELD: Record<LegalKey, keyof LegalIdentity> = {
   legal_company_address: 'address',
   legal_forma_juridica: 'formaJuridica',
   legal_inscripcion: 'inscripcion',
+  legal_contact_email: 'contactEmail',
 }
 
 function normalize(raw: unknown): string | null {
@@ -64,6 +67,7 @@ export function useLegalIdentity(): LegalIdentity | null {
           address: null,
           formaJuridica: null,
           inscripcion: null,
+          contactEmail: null,
         }
         for (const row of data ?? []) {
           const field = KEY_TO_FIELD[row.key as LegalKey]

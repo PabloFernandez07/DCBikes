@@ -37,6 +37,7 @@ export default function PrivacyPolicy() {
   const pageRef = useReveal()
   const storeAddress = useStoreAddress()
   const legal = useLegalIdentity()
+  const contactEmail = legal?.contactEmail ?? 'info@dcbikescantabria.com'
 
   return (
     <>
@@ -102,8 +103,8 @@ export default function PrivacyPolicy() {
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Correo electrónico:</strong>{' '}
-                <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
-                  info@dcbikescantabria.com
+                <a href={`mailto:${contactEmail}`} className="text-[var(--color-lavender)] underline underline-offset-2">
+                  {contactEmail}
                 </a>
               </p>
             </div>
@@ -182,8 +183,8 @@ export default function PrivacyPolicy() {
             <p>
               Puedes retirar tu consentimiento (cuando éste sea la base legal aplicable) en cualquier momento
               enviándonos un correo a{' '}
-              <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
-                info@dcbikescantabria.com
+              <a href={`mailto:${contactEmail}`} className="text-[var(--color-lavender)] underline underline-offset-2">
+                {contactEmail}
               </a>.
               La retirada del consentimiento no afecta a la licitud del tratamiento realizado con anterioridad.
             </p>
@@ -255,8 +256,8 @@ export default function PrivacyPolicy() {
             </p>
             <p>
               Para ejercer este derecho envíanos un correo a{' '}
-              <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
-                info@dcbikescantabria.com
+              <a href={`mailto:${contactEmail}`} className="text-[var(--color-lavender)] underline underline-offset-2">
+                {contactEmail}
               </a>{' '}
               indicando que solicitas la supresión de tus datos. El{' '}
               <strong className="text-[var(--color-cream)]">plazo legal de respuesta es de 1 mes</strong> desde
@@ -281,8 +282,8 @@ export default function PrivacyPolicy() {
             </ul>
             <p>
               Para ejercer cualquiera de estos derechos, escríbenos a{' '}
-              <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
-                info@dcbikescantabria.com
+              <a href={`mailto:${contactEmail}`} className="text-[var(--color-lavender)] underline underline-offset-2">
+                {contactEmail}
               </a>{' '}
               o visítanos en {storeAddress}.
             </p>
@@ -453,8 +454,8 @@ export default function PrivacyPolicy() {
               <strong className="text-[var(--color-cream)]">interés legítimo</strong> en compartir valoraciones
               reales de nuestros clientes (<strong className="text-[var(--color-cream)]">art. 6.1.f RGPD</strong>).
               Si eres autor de una reseña y deseas que retiremos su visualización en nuestra web, escríbenos a{' '}
-              <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
-                info@dcbikescantabria.com
+              <a href={`mailto:${contactEmail}`} className="text-[var(--color-lavender)] underline underline-offset-2">
+                {contactEmail}
               </a>{' '}
               y procederemos a su retirada en plazo razonable.
             </p>
@@ -484,8 +485,8 @@ export default function PrivacyPolicy() {
             <p>
               Para cualquier cuestión relacionada con tus datos personales, puedes contactar directamente
               con el responsable del tratamiento a través del email{' '}
-              <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
-                info@dcbikescantabria.com
+              <a href={`mailto:${contactEmail}`} className="text-[var(--color-lavender)] underline underline-offset-2">
+                {contactEmail}
               </a>
               .
             </p>
@@ -501,8 +502,8 @@ export default function PrivacyPolicy() {
             <p>
               Si eres padre, madre o tutor legal y has detectado que un menor a tu cargo ha proporcionado
               sus datos personales sin tu autorización, contacta inmediatamente con{' '}
-              <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
-                info@dcbikescantabria.com
+              <a href={`mailto:${contactEmail}`} className="text-[var(--color-lavender)] underline underline-offset-2">
+                {contactEmail}
               </a>{' '}
               para proceder a su supresión.
             </p>

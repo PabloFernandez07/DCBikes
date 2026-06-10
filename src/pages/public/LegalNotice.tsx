@@ -59,6 +59,7 @@ export default function LegalNotice() {
   const inscripcion = legal?.inscripcion ?? null
   const address = legal?.address ?? storeAddress
   const companyName = legal?.companyName ?? 'DC Bikes Cantabria'
+  const contactEmail = legal?.contactEmail ?? 'info@dcbikescantabria.com'
 
   return (
     <>
@@ -118,8 +119,8 @@ export default function LegalNotice() {
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Correo electrónico:</strong>{' '}
-                <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
-                  info@dcbikescantabria.com
+                <a href={`mailto:${contactEmail}`} className="text-[var(--color-lavender)] underline underline-offset-2">
+                  {contactEmail}
                 </a>
               </p>
               <p className="flex flex-wrap items-center gap-2">
@@ -250,8 +251,8 @@ export default function LegalNotice() {
             </p>
             <p>
               Si encuentras una barrera de accesibilidad, escríbenos a{' '}
-              <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
-                info@dcbikescantabria.com
+              <a href={`mailto:${contactEmail}`} className="text-[var(--color-lavender)] underline underline-offset-2">
+                {contactEmail}
               </a>
               ; responderemos en un plazo máximo de 14 días naturales. También puedes presentar una
               reclamación ante la{' '}

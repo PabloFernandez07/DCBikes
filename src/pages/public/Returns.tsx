@@ -34,8 +34,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /**
- * Lee el email de contacto desde settings. Fallback a info@dcbikescantabria.com si
- * la key no existe todavía o está vacía (L-04 auditoría legal V3).
+ * Lee el email de contacto público desde settings (clave canónica
+ * `legal_contact_email`, editable en Admin → Configuración → Datos legales).
+ * Fallback a info@dcbikescantabria.com si la key no existe o está vacía.
  */
 function useContactEmail() {
   const [email, setEmail] = useState<string>('info@dcbikescantabria.com')
@@ -43,7 +44,7 @@ function useContactEmail() {
     supabase
       .from('settings')
       .select('value')
-      .eq('key', 'quote_destination_email')
+      .eq('key', 'legal_contact_email')
       .maybeSingle()
       .then(({ data }) => {
         if (!data?.value) return

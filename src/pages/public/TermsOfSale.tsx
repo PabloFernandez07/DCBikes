@@ -105,7 +105,7 @@ export default function TermsOfSale() {
   const address =
     legal?.address ?? s.store_address ?? STORE_ADDRESS_FALLBACK
   const phone = s.store_phone ?? null
-  const email = s.quote_destination_email ?? 'info@dcbikescantabria.com'
+  const email = legal?.contactEmail ?? 'info@dcbikescantabria.com'
   const pickupDays = s.pickup_retention_days ?? '15'
 
   return (

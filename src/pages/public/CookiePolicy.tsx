@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Cookie, Shield, BarChart2, Target, Trash2, Image } from 'lucide-react'
 import { useStoreAddress } from '@/hooks/useStoreAddress'
+import { useLegalIdentity } from '@/hooks/useLegalIdentity'
 import { COOKIES_VERSION } from '@/lib/legal-versions'
 
 function useReveal() {
@@ -83,6 +84,8 @@ function CookieTable({
 export default function CookiePolicy() {
   const pageRef = useReveal()
   const storeAddress = useStoreAddress()
+  const legal = useLegalIdentity()
+  const contactEmail = legal?.contactEmail ?? 'info@dcbikescantabria.com'
 
   const resetConsent = () => {
     if (!confirm('Esto recargará la página y borrará tu preferencia de cookies. ¿Continuar?')) return
@@ -287,8 +290,8 @@ export default function CookiePolicy() {
           <p>
             De acuerdo con el RGPD y la Ley Orgánica 3/2018 (LOPDGDD) tienes derecho a acceder, rectificar, suprimir,
             oponerte y solicitar la portabilidad de tus datos. Para ejercerlos escríbenos a{' '}
-            <a href="mailto:info@dcbikescantabria.com" className="text-[var(--color-lavender)] underline underline-offset-2">
-              info@dcbikescantabria.com
+            <a href={`mailto:${contactEmail}`} className="text-[var(--color-lavender)] underline underline-offset-2">
+              {contactEmail}
             </a>{' '}
             o visítanos en {storeAddress}.
           </p>

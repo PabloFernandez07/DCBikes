@@ -46,6 +46,7 @@ const SETTINGS_KEYS = [
   'social_facebook',
   'legal_forma_juridica',
   'legal_inscripcion',
+  'legal_contact_email',
 ] as const
 
 type SettingKey = typeof SETTINGS_KEYS[number]
@@ -998,6 +999,14 @@ export function Settings() {
                 helpText="Solo si eres sociedad mercantil (S.L./S.A.). Si eres autónomo, escribe 'No aplica'."
                 value={v('legal_inscripcion')}
                 onChange={e => set('legal_inscripcion', (e.target as HTMLInputElement).value)}
+              />
+
+              <Field
+                label="Correo electrónico de contacto"
+                placeholder="info@dcbikescantabria.com"
+                helpText="Email público que aparece en Aviso Legal, Privacidad, Cookies, Términos y Devoluciones. Si lo dejas vacío se usa info@dcbikescantabria.com. (Es distinto del correo donde te llegan los presupuestos.)"
+                value={v('legal_contact_email')}
+                onChange={e => set('legal_contact_email', (e.target as HTMLInputElement).value)}
               />
             </section>
 
