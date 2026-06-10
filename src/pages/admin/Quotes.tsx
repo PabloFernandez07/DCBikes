@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { clsx } from 'clsx'
-import { X, Mail, Send, RotateCcw, CheckCheck, Archive, Loader2 } from 'lucide-react'
+import { X, Mail, Send, RotateCcw, CheckCheck, Archive, Loader2, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/hooks/useToast'
@@ -80,6 +80,11 @@ export function Quotes() {
   const [selected, setSelected] = useState<QuoteWithProduct | null>(null)
   const [newCount, setNewCount] = useState(0)
 
+  // ── Selección múltiple + papelera ──────────────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showTrash, setShowTrash] = useState(false)
+  const [bulkBusy, setBulkBusy] = useState(false)
+
   // Reply compose state
   const [replyOpen, setReplyOpen] = useState(false)
   const [replySubject, setReplySubject] = useState('')
@@ -94,7 +99,7 @@ export function Quotes() {
       .order('created_at', { ascending: false })
     const rows = (data as QuoteWithProduct[]) ?? []
     setQuotes(rows)
-    setNewCount(rows.filter(q => q.status === 'new').length)
+    setNewCount(rows.filter(q => q.status === 'new' && !q.deleted_at).length)
     setLoading(false)
   }, [])
 
@@ -107,7 +112,45 @@ export function Quotes() {
     setReplyBody('')
   }, [selected?.id])
 
-  const filtered = filter === 'all' ? quotes : quotes.filter(q => q.status === filter)
+  // Bandeja activa vs papelera. En la papelera mostramos TODAS las eliminadas
+  // (las pestañas de estado no aplican ahí); en la bandeja filtramos por estado.
+  const filtered = showTrash
+    ? quotes.filter(q => q.deleted_at)
+    : filter === 'all'
+      ? quotes.filter(q => !q.deleted_at)
+      : quotes.filter(q => !q.deleted_at && q.status === filter)
+
+  const trashCount = quotes.filter(q => q.deleted_at).length
+
+  // ── Selección ──────────────────────────────────────────────────
+  const allVisibleSelected = filtered.length > 0 && filtered.every(q => selectedIds.has(q.id))
+  const someVisibleSelected = filtered.some(q => selectedIds.has(q.id)) && !allVisibleSelected
+
+  const toggleOne = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const toggleAllVisible = useCallback(() => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      const allSelected = filtered.length > 0 && filtered.every(q => next.has(q.id))
+      if (allSelected) {
+        for (const q of filtered) next.delete(q.id)
+      } else {
+        for (const q of filtered) next.add(q.id)
+      }
+      return next
+    })
+  }, [filtered])
+
+  const clearSelection = useCallback(() => setSelectedIds(new Set()), [])
+
+  const selectedCount = selectedIds.size
 
   const updateStatus = useCallback(async (quote: QuoteWithProduct, newStatus: string) => {
     type QuoteBuilder = {
@@ -129,6 +172,63 @@ export function Quotes() {
         return prev
       })
       if (selected?.id === quote.id) setSelected(updated)
+    }
+  }, [toast, selected])
+
+  // ── Acciones en lote ───────────────────────────────────────────
+  // Todas se apoyan en la policy UPDATE existente (auth_quotes_u). "Eliminar" es
+  // un borrado lógico (deleted_at), reversible desde la papelera.
+  type QuoteBulkBuilder = {
+    update: (v: Record<string, unknown>) => {
+      in: (col: string, vals: string[]) => Promise<{ error: { message: string } | null }>
+    }
+  }
+  const runBulk = useCallback(async (patch: Record<string, unknown>, successMsg: string) => {
+    const ids = [...selectedIds]
+    if (ids.length === 0) return
+    setBulkBusy(true)
+    const builder = supabase.from('quote_requests') as unknown as QuoteBulkBuilder
+    const { error } = await builder.update(patch).in('id', ids)
+    setBulkBusy(false)
+    if (error) {
+      toast.error('Error al actualizar: ' + error.message)
+      return
+    }
+    toast.success(successMsg)
+    if (selected && ids.includes(selected.id)) setSelected(null)
+    clearSelection()
+    fetchQuotes()
+  }, [selectedIds, toast, clearSelection, selected, fetchQuotes])
+
+  const bulkMarkRead      = () => runBulk({ status: 'read' }, `${selectedCount} marcada(s) como leída(s)`)
+  const bulkArchive       = () => runBulk({ status: 'archived' }, `${selectedCount} archivada(s)`)
+  const bulkRestoreStatus = () => runBulk({ status: 'new' }, `${selectedCount} restaurada(s) a Nueva`)
+  const bulkDelete        = () => runBulk({ deleted_at: new Date().toISOString() }, `${selectedCount} enviada(s) a la papelera`)
+  const bulkRestoreTrash  = () => runBulk({ deleted_at: null }, `${selectedCount} restaurada(s) de la papelera`)
+
+  // ── Borrado / restauración por fila (papelera reversible) ──────
+  const setDeleted = useCallback(async (quote: QuoteWithProduct, deleted: boolean) => {
+    type QuoteBuilder = {
+      update: (v: { deleted_at: string | null }) => { eq: (col: string, val: string) => Promise<{ error: { message: string } | null }> }
+    }
+    const builder = supabase.from('quote_requests') as unknown as QuoteBuilder
+    const newVal = deleted ? new Date().toISOString() : null
+    const { error } = await builder.update({ deleted_at: newVal }).eq('id', quote.id)
+    if (error) {
+      toast.error('Error: ' + error.message)
+      return
+    }
+    toast.success(deleted ? 'Consulta enviada a la papelera' : 'Consulta restaurada')
+    setQuotes(prev => prev.map(q => (q.id === quote.id ? { ...q, deleted_at: newVal } : q)))
+    setNewCount(prev => {
+      if (quote.status !== 'new') return prev
+      if (deleted && !quote.deleted_at) return prev - 1
+      if (!deleted && quote.deleted_at) return prev + 1
+      return prev
+    })
+    if (selected?.id === quote.id) {
+      if (deleted) setSelected(null)
+      else setSelected({ ...quote, deleted_at: newVal })
     }
   }, [toast, selected])
 
@@ -189,28 +289,65 @@ export function Quotes() {
           </p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-1 bg-[var(--color-card)] rounded-xl p-1 w-fit">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setFilter(tab.key)}
+        {/* Tabs + toggle papelera */}
+        <div className="flex flex-wrap items-center gap-3">
+          {!showTrash && (
+            <div className="flex flex-wrap gap-1 bg-[var(--color-card)] rounded-xl p-1 w-fit">
+              {tabs.map(tab => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => { setFilter(tab.key); clearSelection() }}
+                  className={clsx(
+                    'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-[var(--font-cond)] font-medium tracking-wide transition-all duration-150',
+                    filter === tab.key
+                      ? 'bg-[var(--color-lavender)]/15 text-[var(--color-lavender)]'
+                      : 'text-[var(--color-mid)] hover:text-[var(--color-cream)]',
+                  )}
+                >
+                  {tab.label}
+                  {tab.badge != null && tab.badge > 0 && (
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-brand-red)] text-white text-[10px] font-bold">
+                      {tab.badge > 99 ? '99+' : tab.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {showTrash && (
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-card)] text-sm font-[var(--font-cond)] font-medium tracking-wide text-[var(--color-cream)]">
+              <Trash2 size={15} aria-hidden="true" />
+              Papelera
+            </span>
+          )}
+
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showTrash}
+            onClick={() => { setShowTrash(v => !v); clearSelection() }}
+            className="flex items-center gap-2 cursor-pointer select-none group ml-auto sm:ml-0"
+          >
+            <span
               className={clsx(
-                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-[var(--font-cond)] font-medium tracking-wide transition-all duration-150',
-                filter === tab.key
-                  ? 'bg-[var(--color-lavender)]/15 text-[var(--color-lavender)]'
-                  : 'text-[var(--color-mid)] hover:text-[var(--color-cream)]',
+                'relative inline-block h-5 w-10 shrink-0 rounded-full transition-colors',
+                showTrash ? 'bg-[var(--color-brand-red)]/60' : 'bg-[var(--color-card-hover)]',
               )}
+              aria-hidden="true"
             >
-              {tab.label}
-              {tab.badge != null && tab.badge > 0 && (
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--color-brand-red)] text-white text-[10px] font-bold">
-                  {tab.badge > 99 ? '99+' : tab.badge}
-                </span>
-              )}
-            </button>
-          ))}
+              <span
+                className={clsx(
+                  'absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full bg-[var(--color-cream)] transition-all',
+                  showTrash ? 'left-[1.375rem]' : 'left-[0.125rem]',
+                )}
+              />
+            </span>
+            <span className="text-xs font-[var(--font-cond)] tracking-wide text-[var(--color-cream-dim)] whitespace-nowrap group-hover:text-[var(--color-cream)] transition-colors">
+              {showTrash ? 'Ver bandeja' : `Papelera${trashCount > 0 ? ` (${trashCount})` : ''}`}
+            </span>
+          </button>
         </div>
 
         {/* Table */}
@@ -221,13 +358,23 @@ export function Quotes() {
             </div>
           ) : filtered.length === 0 ? (
             <p className="px-5 py-10 text-center text-sm text-[var(--color-mid)] font-[var(--font-body)]">
-              No hay consultas en esta categoría.
+              {showTrash ? 'La papelera está vacía.' : 'No hay consultas en esta categoría.'}
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[440px] text-sm">
+              <table className="w-full min-w-[480px] text-sm">
                 <thead>
                   <tr className="border-b border-[var(--color-card-hover)]">
+                    <th className="px-3 py-3.5 w-10 text-left">
+                      <input
+                        type="checkbox"
+                        aria-label="Seleccionar todas las consultas visibles"
+                        checked={allVisibleSelected}
+                        ref={el => { if (el) el.indeterminate = someVisibleSelected }}
+                        onChange={toggleAllVisible}
+                        className="accent-[var(--color-lavender)] cursor-pointer"
+                      />
+                    </th>
                     <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Fecha</th>
                     <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Email</th>
                     <th className="px-4 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden sm:table-cell">Teléfono</th>
@@ -237,18 +384,31 @@ export function Quotes() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map(q => (
+                  {filtered.map(q => {
+                    const checked = selectedIds.has(q.id)
+                    return (
                     <tr
                       key={q.id}
                       onClick={() => setSelected(prev => prev?.id === q.id ? null : q)}
                       className={clsx(
                         'border-b border-[var(--color-card-hover)]/40 last:border-0 cursor-pointer transition-colors',
-                        q.status === 'new'
-                          ? 'bg-[var(--color-lavender)]/5 hover:bg-[var(--color-lavender)]/10'
-                          : 'hover:bg-[var(--color-card-hover)]/30',
+                        checked
+                          ? 'bg-[var(--color-lavender)]/10'
+                          : q.status === 'new' && !q.deleted_at
+                            ? 'bg-[var(--color-lavender)]/5 hover:bg-[var(--color-lavender)]/10'
+                            : 'hover:bg-[var(--color-card-hover)]/30',
                         selected?.id === q.id && 'ring-1 ring-inset ring-[var(--color-lavender)]/30',
                       )}
                     >
+                      <td className="px-3 py-3 w-10" onClick={e => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          aria-label={`Seleccionar consulta de ${q.email}`}
+                          checked={checked}
+                          onChange={() => toggleOne(q.id)}
+                          className="accent-[var(--color-lavender)] cursor-pointer"
+                        />
+                      </td>
                       <td className="px-4 py-3 text-[var(--color-cream-dim)] font-[var(--font-body)] whitespace-nowrap">
                         {formatDate(q.created_at)}
                       </td>
@@ -278,7 +438,7 @@ export function Quotes() {
                         </span>
                       </td>
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
             </div>
@@ -339,50 +499,73 @@ export function Quotes() {
 
             {/* Actions */}
             <div className="px-4 sm:px-6 pb-4 flex flex-wrap gap-2">
-              {/* Reply button — primary action */}
-              {selected.status !== 'archived' && (
+              {selected.deleted_at ? (
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={() => replyOpen ? setReplyOpen(false) : openReplyCompose(selected)}
-                  className="gap-2"
-                >
-                  <Mail size={14} aria-hidden="true" />
-                  {replyOpen ? 'Cancelar respuesta' : 'Responder por email'}
-                </Button>
-              )}
-              {selected.status === 'new' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => updateStatus(selected, 'read')}
-                  className="gap-2"
-                >
-                  <CheckCheck size={14} aria-hidden="true" />
-                  Marcar leída
-                </Button>
-              )}
-              {selected.status !== 'archived' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => updateStatus(selected, 'archived')}
-                  className="gap-2"
-                >
-                  <Archive size={14} aria-hidden="true" />
-                  Archivar
-                </Button>
-              )}
-              {selected.status === 'archived' && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => updateStatus(selected, 'new')}
+                  onClick={() => setDeleted(selected, false)}
                   className="gap-2"
                 >
                   <RotateCcw size={14} aria-hidden="true" />
-                  Restaurar
+                  Restaurar de la papelera
                 </Button>
+              ) : (
+                <>
+                  {/* Reply button — primary action */}
+                  {selected.status !== 'archived' && (
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => replyOpen ? setReplyOpen(false) : openReplyCompose(selected)}
+                      className="gap-2"
+                    >
+                      <Mail size={14} aria-hidden="true" />
+                      {replyOpen ? 'Cancelar respuesta' : 'Responder por email'}
+                    </Button>
+                  )}
+                  {selected.status === 'new' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => updateStatus(selected, 'read')}
+                      className="gap-2"
+                    >
+                      <CheckCheck size={14} aria-hidden="true" />
+                      Marcar leída
+                    </Button>
+                  )}
+                  {selected.status !== 'archived' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => updateStatus(selected, 'archived')}
+                      className="gap-2"
+                    >
+                      <Archive size={14} aria-hidden="true" />
+                      Archivar
+                    </Button>
+                  )}
+                  {selected.status === 'archived' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => updateStatus(selected, 'new')}
+                      className="gap-2"
+                    >
+                      <RotateCcw size={14} aria-hidden="true" />
+                      Restaurar
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDeleted(selected, true)}
+                    className="gap-2 text-[var(--color-brand-red)] hover:bg-[var(--color-brand-red)]/10 ml-auto"
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
+                    Eliminar
+                  </Button>
+                </>
               )}
             </div>
 
@@ -450,7 +633,97 @@ export function Quotes() {
             )}
           </div>
         )}
+
+        {/* Espacio extra para que la barra flotante no tape contenido */}
+        {selectedCount > 0 && <div aria-hidden="true" className="h-20" />}
       </div>
+
+      {/* Barra de acciones en lote (sticky bottom) */}
+      {selectedCount > 0 && (
+        <div
+          role="region"
+          aria-label="Acciones en lote sobre consultas"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-4xl"
+        >
+          <div className="flex flex-wrap items-center gap-3 bg-[var(--color-card)]/95 backdrop-blur-md border border-[var(--color-lavender)]/50 rounded-2xl px-4 py-3 shadow-2xl shadow-black/40">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center min-w-7 h-7 px-2 rounded-full bg-[var(--color-lavender)] text-[var(--color-ink)] text-xs font-bold">
+                {selectedCount}
+              </span>
+              <span className="text-sm font-[var(--font-cond)] text-[var(--color-cream)] tracking-wide">
+                {selectedCount === 1 ? 'consulta seleccionada' : 'consultas seleccionadas'}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:ml-auto">
+              {showTrash ? (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={bulkRestoreTrash}
+                  disabled={bulkBusy}
+                  className="flex-1 sm:flex-none justify-center gap-1.5"
+                >
+                  <RotateCcw size={14} aria-hidden="true" />
+                  Restaurar
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={bulkMarkRead}
+                    disabled={bulkBusy}
+                    className="flex-1 sm:flex-none justify-center gap-1.5"
+                  >
+                    <CheckCheck size={14} aria-hidden="true" />
+                    Marcar leídas
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={bulkArchive}
+                    disabled={bulkBusy}
+                    className="flex-1 sm:flex-none justify-center gap-1.5"
+                  >
+                    <Archive size={14} aria-hidden="true" />
+                    Archivar
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={bulkRestoreStatus}
+                    disabled={bulkBusy}
+                    className="flex-1 sm:flex-none justify-center gap-1.5"
+                  >
+                    <RotateCcw size={14} aria-hidden="true" />
+                    Restaurar a Nueva
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={bulkDelete}
+                    disabled={bulkBusy}
+                    className="flex-1 sm:flex-none justify-center gap-1.5"
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
+                    Eliminar
+                  </Button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={clearSelection}
+                disabled={bulkBusy}
+                className="p-1.5 rounded-md text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card-hover)] transition-colors disabled:opacity-50"
+                aria-label="Limpiar selección"
+              >
+                <X size={16} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </>

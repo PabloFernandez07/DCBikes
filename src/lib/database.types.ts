@@ -224,6 +224,7 @@ export interface Database {
           message: string | null
           status: string
           created_at: string
+          deleted_at: string | null
         }
         Insert: {
           id?: string
@@ -233,6 +234,7 @@ export interface Database {
           message?: string | null
           status?: string
           created_at?: string
+          deleted_at?: string | null
         }
         Update: {
           id?: string
@@ -242,6 +244,7 @@ export interface Database {
           message?: string | null
           status?: string
           created_at?: string
+          deleted_at?: string | null
         }
         Relationships: [
           {
