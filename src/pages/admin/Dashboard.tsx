@@ -233,17 +233,18 @@ export default function Dashboard() {
           period={period}
           onPeriodChange={setPeriod}
         >
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={Math.max(240, topProducts.length * 34 + 48)}>
             <BarChart data={topProducts} layout="vertical" margin={{ left: 0, right: 16 }}>
-              <XAxis type="number" tick={{ fill: '#7E6E8A', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <XAxis type="number" allowDecimals={false} tick={{ fill: '#7E6E8A', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis
                 type="category"
                 dataKey="name"
-                width={120}
+                width={150}
+                interval={0}
                 tick={{ fill: '#D8DDE5', fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v: string) => v.length > 16 ? v.slice(0, 16) + '…' : v}
+                tickFormatter={(v: string) => v.length > 22 ? v.slice(0, 22) + '…' : v}
               />
               <Tooltip
                 contentStyle={{
