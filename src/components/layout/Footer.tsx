@@ -223,7 +223,8 @@ export function Footer() {
             </p>
             {(legal?.companyName || legal?.cif || legal?.address) && (
               <p className="text-[var(--color-mid)] text-xs font-[var(--font-body)] opacity-70">
-                {[legal?.companyName, legal?.cif && `CIF: ${legal.cif}`, legal?.address].filter(Boolean).join(' · ')}
+                {/* B-1 auditoría V6: titular autónomo → su identificador fiscal es NIF, no CIF */}
+                {[legal?.companyName, legal?.cif && `NIF: ${legal.cif}`, legal?.address].filter(Boolean).join(' · ')}
               </p>
             )}
             <p className="text-[var(--color-mid)] text-xs font-[var(--font-body)] opacity-70">

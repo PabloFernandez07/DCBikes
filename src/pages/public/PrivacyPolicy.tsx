@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { SEO } from '@/components/layout/SEO'
 import { useStoreAddress } from '@/hooks/useStoreAddress'
 import { useLegalIdentity } from '@/hooks/useLegalIdentity'
-import { PRIVACY_VERSION } from '@/lib/legal-versions'
+import { LAST_UPDATED_DISPLAY } from '@/lib/legal-versions'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -57,7 +57,7 @@ export default function PrivacyPolicy() {
             POLÍTICA DE PRIVACIDAD
           </h1>
           <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">
-            Última actualización: {PRIVACY_VERSION}
+            Última actualización: {LAST_UPDATED_DISPLAY}
           </p>
         </section>
 
@@ -82,7 +82,7 @@ export default function PrivacyPolicy() {
                 {legal?.cif ? (
                   <span className="text-[var(--color-cream)]">{legal.cif}</span>
                 ) : (
-                  <span className="text-red-600 font-bold">[Pendiente]</span>
+                  <span className="text-[var(--color-mid)] italic">En proceso de actualización</span>
                 )}
               </p>
               <p>
@@ -90,7 +90,7 @@ export default function PrivacyPolicy() {
                 {legal?.formaJuridica ? (
                   <span className="text-[var(--color-cream)]">{legal.formaJuridica}</span>
                 ) : (
-                  <span className="text-red-600 font-bold">[Pendiente]</span>
+                  <span className="text-[var(--color-mid)] italic">En proceso de actualización</span>
                 )}
               </p>
               <p>
@@ -132,6 +132,26 @@ export default function PrivacyPolicy() {
               <li><strong className="text-[var(--color-cream)]">DNI/NIF</strong> (cuando sea exigible para la facturación).</li>
               <li><strong className="text-[var(--color-cream)]">Datos del pedido</strong> (productos, importe, fecha).</li>
             </ul>
+            {/* A-4 auditoría V6: tratamientos adicionales declarados */}
+            <p>
+              <strong className="text-[var(--color-cream)]">A través de otras funciones del sitio:</strong>
+            </p>
+            <ul className="list-disc list-inside space-y-1 pl-2">
+              <li>
+                <strong className="text-[var(--color-cream)]">Avisos de disponibilidad</strong> («Avísame cuando
+                esté disponible») — tu correo electrónico y el producto/talla sobre el que solicitas el aviso.
+              </li>
+              <li>
+                <strong className="text-[var(--color-cream)]">Sesiones de acceso de cliente</strong> («Mis
+                pedidos») — dirección IP y agente de usuario (navegador) registrados al utilizar el enlace de
+                acceso que te enviamos por correo, con fines exclusivos de seguridad.
+              </li>
+              <li>
+                <strong className="text-[var(--color-cream)]">Analítica interna propia</strong> — páginas de
+                producto visitadas y búsquedas realizadas en el catálogo, asociadas a un identificador de sesión
+                anónimo. No interviene ningún tercero y solo se activa si aceptas las cookies analíticas.
+              </li>
+            </ul>
             <p>
               No almacenamos en ningún momento los datos completos de tu tarjeta bancaria: el pago se procesa
               íntegramente en el entorno cifrado de la pasarela <strong className="text-[var(--color-cream)]">Redsys</strong>{' '}
@@ -152,6 +172,10 @@ export default function PrivacyPolicy() {
                 envío, facturación, atención posventa y devoluciones.
               </li>
               <li>Cumplir las obligaciones legales contables, fiscales y mercantiles derivadas de la venta.</li>
+              {/* A-4 auditoría V6: finalidades de los tratamientos adicionales */}
+              <li>Enviarte el <strong className="text-[var(--color-cream)]">aviso de disponibilidad</strong> que hayas solicitado para un producto agotado.</li>
+              <li>Garantizar la <strong className="text-[var(--color-cream)]">seguridad del acceso</strong> a la sección «Mis pedidos».</li>
+              <li>Elaborar <strong className="text-[var(--color-cream)]">estadísticas internas anónimas</strong> de uso del catálogo (solo con tu consentimiento de cookies analíticas).</li>
             </ul>
             <p>
               No utilizamos tus datos para elaborar perfiles comerciales ni para enviarte comunicaciones no solicitadas.
@@ -178,6 +202,26 @@ export default function PrivacyPolicy() {
                 <strong className="text-[var(--color-cream)]">Conservación de facturas y registros contables</strong>:{' '}
                 <strong className="text-[var(--color-cream)]">cumplimiento de obligación legal</strong> (art. 6.1.c RGPD), conforme al
                 art. 30 del Código de Comercio y al art. 29 de la Ley General Tributaria.
+              </li>
+              {/* A-4 auditoría V6: bases legales de los tratamientos adicionales */}
+              <li>
+                <strong className="text-[var(--color-cream)]">Avisos de disponibilidad</strong>:{' '}
+                tu <strong className="text-[var(--color-cream)]">consentimiento</strong> (art. 6.1.a RGPD), que
+                otorgas al solicitar el aviso. Puedes darte de baja en cualquier momento mediante el{' '}
+                <strong className="text-[var(--color-cream)]">enlace de cancelación</strong> incluido en cada
+                correo de aviso. Estos datos no se ceden a terceros.
+              </li>
+              <li>
+                <strong className="text-[var(--color-cream)]">Sesiones de acceso de cliente («Mis pedidos»)</strong>:{' '}
+                nuestro <strong className="text-[var(--color-cream)]">interés legítimo</strong> (art. 6.1.f RGPD)
+                en garantizar la seguridad del acceso a tus pedidos y prevenir usos fraudulentos del enlace de
+                acceso.
+              </li>
+              <li>
+                <strong className="text-[var(--color-cream)]">Analítica interna propia</strong>:{' '}
+                tu <strong className="text-[var(--color-cream)]">consentimiento</strong> (art. 6.1.a RGPD), que
+                otorgas al aceptar las cookies analíticas en el banner. Los datos se tratan exclusivamente por
+                nosotros, sin cesión a terceros.
               </li>
             </ul>
             <p>
@@ -206,11 +250,25 @@ export default function PrivacyPolicy() {
                 <tbody className="divide-y divide-[var(--color-card-hover)]">
                   <tr className="bg-[var(--color-ink)]">
                     <td className="px-4 py-3 text-[var(--color-cream)]">Solicitudes de presupuesto / contacto</td>
-                    <td className="px-4 py-3 text-[var(--color-mid)]">Hasta la finalización de la consulta + 1 año (atención al cliente)</td>
+                    {/* B-5 auditoría V6: el proceso automático de retención aplica 13 meses, no 1 año */}
+                    <td className="px-4 py-3 text-[var(--color-mid)]"><strong className="text-[var(--color-cream)]">13 meses</strong> desde la finalización de la consulta (atención al cliente)</td>
                   </tr>
                   <tr className="bg-[var(--color-ink)]">
                     <td className="px-4 py-3 text-[var(--color-cream)]">Datos de pedido y facturación</td>
                     <td className="px-4 py-3 text-[var(--color-mid)]"><strong className="text-[var(--color-cream)]">6 años</strong> (art. 30 Código de Comercio y art. 29 LGT)</td>
+                  </tr>
+                  {/* A-4 auditoría V6: plazos de los tratamientos adicionales declarados */}
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Avisos de disponibilidad (email + producto)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]"><strong className="text-[var(--color-cream)]">13 meses</strong> desde la solicitud, o antes si te das de baja mediante el enlace de cancelación</td>
+                  </tr>
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Sesiones de acceso de cliente (IP y navegador)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]">Entre <strong className="text-[var(--color-cream)]">30 y 90 días</strong> (seguridad del acceso)</td>
+                  </tr>
+                  <tr className="bg-[var(--color-ink)]">
+                    <td className="px-4 py-3 text-[var(--color-cream)]">Analítica interna propia (vistas de producto y búsquedas)</td>
+                    <td className="px-4 py-3 text-[var(--color-mid)]"><strong className="text-[var(--color-cream)]">24 meses</strong></td>
                   </tr>
                   {/* P-10 auditoría V3: fila "Comunicaciones comerciales" eliminada porque no existe tratamiento real (sin newsletter activo). Reintroducir solo cuando haya doble opt-in declarado. */}
                 </tbody>

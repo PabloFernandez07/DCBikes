@@ -10,7 +10,16 @@
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { signRedsysPayload } from './redsys-sign.ts'
 import { loadRedsysConfig, type RedsysConfig } from './redsys-config.ts'
-import { maskEmail } from './email-utils.ts'
+import {
+  asString,
+  buildFromAddress,
+  escapeHtml,
+  formatPriceCents,
+  getSettings,
+  maskEmail,
+  parseEmailCsv,
+  sendViaResend,
+} from './email-utils.ts'
 
 /* ─────────── Auth admin ─────────── */
 
@@ -170,8 +179,20 @@ export async function runRedsysOperation(opts: {
   const responseCode = String(decoded['Ds_Response'] ?? '') || null
   const authCode = String(decoded['Ds_AuthorisationCode'] ?? '') || null
   const n = responseCode ? parseInt(responseCode, 10) : NaN
-  const ok = op.kind === 'capture' ? Number.isFinite(n) && n >= 0 && n <= 99 : true
-  // cancel: Redsys devuelve "0900" (anulación correcta). Aceptamos cualquier 0xxx.
+
+  // 4.2 (auditoría 2026-06-11): antes `ok = true` incondicional para cancel —
+  // un KO de Redsys (red caída, firma inválida, pre-auth inexistente) pasaba
+  // como éxito y la retención del cliente quedaba viva sin que nadie lo viera.
+  // Ahora validamos también la anulación:
+  //   0..99 → autorizada (rango OK genérico de Redsys)
+  //   0900  → "transacción autorizada para devoluciones y confirmaciones"
+  //   0400  → "transacción anulada" (respuesta de anulación correcta)
+  //   9222  → "ya existe una anulación asociada" → idempotente: la pre-auth
+  //           ya estaba liberada, lo tratamos como OK.
+  const captureOk = Number.isFinite(n) && n >= 0 && n <= 99
+  const cancelOk =
+    Number.isFinite(n) && (n <= 99 ? n >= 0 : n === 400 || n === 900 || n === 9222)
+  const ok = op.kind === 'capture' ? captureOk : cancelOk
 
   return {
     ok,
@@ -180,6 +201,78 @@ export async function runRedsysOperation(opts: {
     raw: { ...raw, decoded },
     signatureValid: null,
     simulated: false,
+  }
+}
+
+/* ─────────── Alerta admin: anulación Redsys KO (4.2) ─────────── */
+
+/**
+ * 4.2 (auditoría 2026-06-11): cuando una anulación de pre-autorización
+ * devuelve KO, además del log enviamos email de alerta al admin para que
+ * libere la retención manualmente desde el portal de Redsys. Sin esta
+ * alerta el dinero del cliente quedaba retenido hasta la caducidad de la
+ * pre-auth sin que nadie se enterase (riesgo de reclamación / AEPD).
+ *
+ * Destinatarios: settings.order_notification_emails (CSV), con fallback a
+ * quote_destination_email — mismo patrón que send-order-new-admin.
+ * Best-effort: nunca lanza (el flujo de cancelación ya terminó para el
+ * cliente; un fallo de email no debe romperlo).
+ */
+export async function alertAdminCancelKo(
+  supabase: SupabaseClient,
+  opts: {
+    orderId: string
+    orderNumber: string
+    redsysOrderId: string | null
+    amountCents: number
+    responseCode: string | null
+    /** Origen de la anulación: 'rechazo admin' | 'cancelación cliente' | 'auto-cancel cron'. */
+    context: string
+  },
+): Promise<void> {
+  try {
+    const settings = await getSettings(supabase, [
+      'order_notification_emails',
+      'quote_destination_email',
+    ])
+    let recipients = parseEmailCsv(settings.order_notification_emails)
+    if (recipients.length === 0) {
+      const fallback = asString(settings.quote_destination_email)
+      if (fallback) recipients = [fallback]
+    }
+    if (recipients.length === 0) {
+      console.warn('[order-admin] alertAdminCancelKo: sin destinatarios admin (settings.order_notification_emails)')
+      return
+    }
+
+    const html = `
+      <div style="background:#fef2f2;border-left:3px solid #dc2626;padding:12px 16px;margin:0 0 20px 0;border-radius:4px">
+        <p style="margin:0;color:#7f1d1d;font-size:13px;line-height:1.6">
+          <strong>Acción requerida:</strong> la anulación de la pre-autorización en Redsys
+          ha fallado. El pedido ya figura como cancelado para el cliente, pero la retención
+          del importe sigue activa. Anula la operación manualmente desde el portal de Redsys.
+        </p>
+      </div>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:0 0 20px 0;font-size:14px;border-collapse:collapse">
+        <tr><td style="padding:6px 0;color:#666;width:160px">Pedido</td><td style="padding:6px 0;color:#222;font-weight:600">${escapeHtml(opts.orderNumber)}</td></tr>
+        <tr><td style="padding:6px 0;color:#666">Importe retenido</td><td style="padding:6px 0;color:#222;font-weight:600">${escapeHtml(formatPriceCents(opts.amountCents))}</td></tr>
+        <tr><td style="padding:6px 0;color:#666">Ds_Merchant_Order</td><td style="padding:6px 0;color:#222">${escapeHtml(opts.redsysOrderId ?? '(desconocido)')}</td></tr>
+        <tr><td style="padding:6px 0;color:#666">Código respuesta Redsys</td><td style="padding:6px 0;color:#222">${escapeHtml(opts.responseCode ?? '(sin respuesta / error de red)')}</td></tr>
+        <tr><td style="padding:6px 0;color:#666">Origen de la anulación</td><td style="padding:6px 0;color:#222">${escapeHtml(opts.context)}</td></tr>
+      </table>
+      <p style="margin:0;color:#666;font-size:13px">
+        El intento KO ha quedado registrado en payments_log para auditoría.
+      </p>`
+
+    await sendViaResend({
+      from: buildFromAddress(),
+      to: recipients,
+      subject: `⚠️ Anulación Redsys KO — pedido ${opts.orderNumber}`,
+      html,
+    })
+    console.log(`[order-admin] alertAdminCancelKo enviada · ${opts.orderNumber} · code=${opts.responseCode}`)
+  } catch (err) {
+    console.warn(`[order-admin] alertAdminCancelKo fallo (non-blocking) · ${opts.orderNumber}:`, String(err))
   }
 }
 

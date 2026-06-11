@@ -107,7 +107,7 @@ export default function Checkout() {
     // C-09: NIF/DNI obligatorio en pedidos > 400 € (RD 1619/2012 art. 7.1).
     // Solo aplica a B2C — si pide factura empresa ya lleva CIF en invoice_cif.
     if (isHighValue && !data.needs_invoice && !data.customer_dni?.trim()) {
-      toast.error('Para operaciones superiores a 400 € es obligatorio el NIF/DNI del comprador (RD 1619/2012 art. 7.1).')
+      toast.error('NIF/DNI obligatorio para compras superiores a 400 € — requisito de facturación (RD 1619/2012 art. 7.1).')
       return
     }
 
@@ -321,9 +321,16 @@ export default function Checkout() {
                     : 'border-[var(--color-card)] hover:border-[var(--color-mid)]/60'
                 }`}
               />
-              {isHighValue && !customerDni && (
+              {/* Helper text: explica el porqué del campo en ambos tramos (RD 1619/2012 art. 7.1) */}
+              {isHighValue ? (
+                !customerDni && (
+                  <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)]">
+                    Obligatorio para compras superiores a 400 € — requisito de facturación (RD 1619/2012 art. 7.1).
+                  </p>
+                )
+              ) : (
                 <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)]">
-                  Obligatorio para operaciones superiores a 400 € (RD 1619/2012 art. 7.1).
+                  Opcional. Necesario solo si quieres factura nominativa.
                 </p>
               )}
               {errors.customer_dni && (

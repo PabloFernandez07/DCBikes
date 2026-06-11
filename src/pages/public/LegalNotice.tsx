@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { SEO } from '@/components/layout/SEO'
 import { useLegalIdentity } from '@/hooks/useLegalIdentity'
 import { useStoreAddress } from '@/hooks/useStoreAddress'
-import { LAST_AUDIT_DATE } from '@/lib/legal-versions'
+import { LAST_UPDATED_DISPLAY } from '@/lib/legal-versions'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -79,7 +79,7 @@ export default function LegalNotice() {
             AVISO LEGAL
           </h1>
           <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">
-            Última actualización: {LAST_AUDIT_DATE}
+            Última actualización: {LAST_UPDATED_DISPLAY}
           </p>
         </section>
 
@@ -102,7 +102,7 @@ export default function LegalNotice() {
                 {cif ? (
                   <span className="text-[var(--color-cream)]">{cif}</span>
                 ) : (
-                  <PendingValue label="Pendiente de configuración — rellena en Admin → Configuración → Facturación" />
+                  <PendingValue label="En proceso de actualización" />
                 )}
               </p>
               <p>
@@ -110,7 +110,7 @@ export default function LegalNotice() {
                 {formaJuridica ? (
                   <span className="text-[var(--color-cream)]">{formaJuridica}</span>
                 ) : (
-                  <PendingValue label="Pendiente — p. ej. Empresario individual (autónomo)" />
+                  <PendingValue label="En proceso de actualización" />
                 )}
               </p>
               <p>
@@ -128,7 +128,7 @@ export default function LegalNotice() {
                 {inscripcion ? (
                   <span className="text-[var(--color-cream)]">{inscripcion}</span>
                 ) : (
-                  <PendingValue label="Pendiente — Registro Mercantil, o 'No aplica' si autónomo" />
+                  <PendingValue label="En proceso de actualización" />
                 )}
               </p>
             </div>
@@ -242,32 +242,42 @@ export default function LegalNotice() {
           </Section>
 
           {/* 8. Declaración de accesibilidad */}
+          {/* M-9 auditoría V6: eliminada la referencia a AESIA (organismo de IA, sin
+              competencia en accesibilidad). Declaración acogida a la exención de
+              microempresa (art. 4.5 EAA / Ley 11/2023) con compromiso voluntario. */}
           <Section title="8. Declaración de accesibilidad" id="accesibilidad">
             <p>
-              {companyName} trabaja para cumplir progresivamente los requisitos de accesibilidad WCAG 2.1 AA
-              exigidos por el Reglamento (UE) 2019/882 (European Accessibility Act) y la Ley 11/2023 de
-              accesibilidad universal, que entran en vigor para servicios de comercio electrónico desde el
-              28 de junio de 2025. Esta web está actualmente en proceso de adaptación.
+              {companyName}, en su condición de <strong className="text-[var(--color-cream)]">microempresa</strong>,
+              está exenta de los requisitos de accesibilidad aplicables a los servicios de comercio electrónico
+              conforme al artículo 4.5 del Reglamento (UE) 2019/882 (European Accessibility Act) y a la
+              Ley 11/2023, de 8 de mayo.
+            </p>
+            <p>
+              No obstante, asumimos el <strong className="text-[var(--color-cream)]">compromiso voluntario</strong>{' '}
+              de mejorar progresivamente la accesibilidad de esta web conforme a las pautas{' '}
+              <strong className="text-[var(--color-cream)]">WCAG 2.1 nivel AA</strong>, porque creemos que
+              cualquier persona debe poder usar nuestra tienda online sin barreras.
             </p>
             <p>
               Si encuentras una barrera de accesibilidad, escríbenos a{' '}
               <a href={`mailto:${contactEmail}`} className="text-[var(--color-lavender)] underline underline-offset-2">
                 {contactEmail}
               </a>
-              ; responderemos en un plazo máximo de 14 días naturales. También puedes presentar una
-              reclamación ante la{' '}
+              ; responderemos en un plazo máximo de <strong className="text-[var(--color-cream)]">14 días
+              naturales</strong>. También puedes presentar una reclamación ante las autoridades de consumo de
+              Cantabria (
               <a
-                href="https://www.defensordelpueblo.es"
+                href="https://www.cantabria.es/web/direccion-general-consumo"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[var(--color-lavender)] underline underline-offset-2"
               >
-                Defensoría del Pueblo
-              </a>{' '}
-              o ante la Agencia Española de Supervisión de la Inteligencia Artificial (AESIA) cuando aplique.
+                Dirección General de Consumo del Gobierno de Cantabria
+              </a>
+              ).
             </p>
             <p>
-              <strong className="text-[var(--color-cream)]">Plan de remediación:</strong>{' '}
+              <strong className="text-[var(--color-cream)]">Plan de mejora:</strong>{' '}
               estamos auditando contraste, navegación por teclado, ARIA, foco visible y{' '}
               <code className="text-[var(--color-cream)]">prefers-reduced-motion</code>. Las mejoras se
               publican progresivamente en cada despliegue.

@@ -19,6 +19,7 @@ import { buildCorsHeaders, jsonError, jsonOk,
 } from '../_shared/email-utils.ts'
 import { internalSecretHeader } from '../_shared/security.ts'
 import {
+  alertAdminCancelKo,
   loadConfig,
   loadOrder,
   logPayment,
@@ -95,10 +96,22 @@ serve(async (req) => {
       op: { kind: 'cancel', amountCents: order.total_cents },
     })
 
-    // Para cancel toleramos si Redsys ya canceló o el código no es estrictamente OK;
-    // el efecto final es liberar la reserva. Marcamos pero logueamos.
+    // 4.2: si la anulación devolvió KO real (no mock), además del log se
+    // alerta al admin por email — la retención del cliente sigue viva y debe
+    // liberarse manualmente en el portal de Redsys. No revertimos el rechazo:
+    // el pedido ya está rechazado y el stock se restaura igualmente.
     if (!cancelResult.ok) {
       console.warn(`[${ts()}] cancel devolvió no-ok · ${order.order_number} · code=${cancelResult.responseCode}`)
+      if (!cancelResult.simulated) {
+        await alertAdminCancelKo(supabase, {
+          orderId,
+          orderNumber: order.order_number,
+          redsysOrderId: order.payment_pre_auth_id,
+          amountCents: order.total_cents,
+          responseCode: cancelResult.responseCode,
+          context: 'rechazo de pedido por admin (order-reject)',
+        })
+      }
     }
 
     await restoreStockFor(supabase, orderId)

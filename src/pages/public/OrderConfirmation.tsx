@@ -355,15 +355,8 @@ export default function OrderConfirmation() {
             </li>
             <li>
               <strong className="text-[var(--color-cream-dim)]">Resolución de litigios:</strong>{' '}
-              plataforma ODR{' '}
-              <a
-                href="https://ec.europa.eu/consumers/odr/"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[var(--color-lavender)] underline underline-offset-2"
-              >
-                ec.europa.eu/consumers/odr/
-              </a>.
+              entidades de resolución alternativa acreditadas (Ley 7/2017) y Junta Arbitral
+              de Consumo del Gobierno de Cantabria.
             </li>
             <li>
               <strong className="text-[var(--color-cream-dim)]">Idioma del contrato:</strong>{' '}

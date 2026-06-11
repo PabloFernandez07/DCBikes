@@ -229,8 +229,27 @@ interface StockedProduct {
   sku: string | null
   size_label: string | null
   retail_price: number
+  /** Descuento vigente en % (0-100) o null si no hay oferta. */
+  discount_percent: number | null
   is_purchasable: boolean
   decremented: number
+}
+
+/**
+ * 4.1 (auditoría 2026-06-11): precio final por unidad en céntimos APLICANDO
+ * el descuento vigente. Antes el servidor cobraba retail_price sin descuento
+ * mientras el frontend mostraba el precio rebajado (infracción art. 20 LSSI /
+ * art. 60 RDL 1/2007: el precio mostrado debe ser el cobrado).
+ *
+ * MISMA fórmula y redondeo que el frontend (ProductDetail.tsx):
+ *   finalPrice = retail_price * (1 - pct/100)        (en euros)
+ *   unit_price_cents = Math.round(finalPrice * 100)  (un solo redondeo final)
+ */
+function unitPriceCents(p: StockedProduct): number {
+  const pct = p.discount_percent
+  const hasDiscount = pct != null && pct > 0
+  const finalPrice = hasDiscount ? p.retail_price * (1 - pct / 100) : p.retail_price
+  return Math.round(finalPrice * 100)
 }
 
 /* ─────────────── Cálculo totales ─────────────── */
@@ -249,11 +268,14 @@ function computeTotals(
   settings: Record<string, unknown>,
 ): Totals {
   // retail_price está en euros (numeric(10,2)). Convertir a céntimos.
+  // 4.1: el precio unitario aplica discount_percent (ver unitPriceCents) —
+  // mismo redondeo que el frontend para que el total cobrado coincida
+  // exactamente con el mostrado en la ficha de producto y el carrito.
   let subtotalCents = 0
   for (let i = 0; i < items.length; i++) {
     const it = items[i]
     const p = products[i]
-    const unitCents = Math.round(p.retail_price * 100)
+    const unitCents = unitPriceCents(p)
     subtotalCents += unitCents * it.quantity
   }
 
@@ -377,7 +399,7 @@ serve(async (req) => {
     const productIds = body.items.map((it) => it.product_id)
     const { data: prodRows, error: prodErr } = await supabase
       .from('products')
-      .select('id, name, sku, size_label, retail_price, is_purchasable, active')
+      .select('id, name, sku, size_label, retail_price, discount_percent, is_purchasable, active')
       .in('id', productIds)
     if (prodErr || !prodRows || prodRows.length !== productIds.length) {
       await supabase.rpc('restore_stock', { p_items: reserveItems })
@@ -393,6 +415,7 @@ serve(async (req) => {
         sku: p.sku,
         size_label: p.size_label,
         retail_price: Number(p.retail_price),
+        discount_percent: p.discount_percent == null ? null : Number(p.discount_percent),
         is_purchasable: p.is_purchasable,
         decremented: it.quantity,
       }
@@ -441,6 +464,22 @@ serve(async (req) => {
     }
     const totals = computeTotals(products, body.items, body.delivery_method, settings)
     const orderPrefix = asString(settings.order_series_prefix, 'ORD')
+
+    // 4.3 (auditoría 2026-06-11): validación servidor del NIF/DNI en B2C.
+    // RD 1619/2012 art. 7.1: la factura simplificada no es válida por encima
+    // de 400 € — a partir de ese importe la factura completa exige identificar
+    // al destinatario. Si el total supera 400,00 € (40000 céntimos) y el
+    // cliente no aportó DNI (ni datos B2B con CIF), rechazamos el pedido aquí
+    // para no descubrirlo después al intentar emitir la factura.
+    const hasB2BId = body.needs_invoice && !!body.invoice_b2b?.cif
+    if (totals.total_cents > 40000 && !body.customer.dni && !hasB2BId) {
+      await supabase.rpc('restore_stock', { p_items: reserveItems })
+      return jsonError(
+        'Para pedidos superiores a 400 € necesitamos tu NIF/DNI: la normativa de facturación (RD 1619/2012) nos obliga a identificarte en la factura. Añádelo en el formulario de compra.',
+        400,
+        req,
+      )
+    }
 
     // 3. Numeración correlativa.
     const year = new Date().getUTCFullYear()
@@ -517,7 +556,8 @@ serve(async (req) => {
     // 7. INSERT order_items (snapshot).
     const itemsRows = body.items.map((it, i) => {
       const p = products[i]
-      const unitCents = Math.round(p.retail_price * 100)
+      // 4.1: snapshot con el precio CON descuento — el mismo que se cobra.
+      const unitCents = unitPriceCents(p)
       return {
         order_id: orderId,
         product_id: it.product_id,

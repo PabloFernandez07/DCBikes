@@ -113,15 +113,17 @@ export function CookieBanner() {
 
   if (!visible) return null
 
+  // B-7: el banner no bloquea la página (no es modal), así que role="region"
+  // con aria-label descriptivo es lo correcto; role="dialog" + aria-modal="false"
+  // confundía a los lectores de pantalla.
   return (
     <div
       className={clsx(
         'fixed bottom-0 left-0 right-0 z-50',
         'animate-[fadeUp_0.4s_ease_forwards]',
       )}
-      role="dialog"
-      aria-label="Aviso de cookies"
-      aria-modal="false"
+      role="region"
+      aria-label="Aviso de cookies y preferencias de consentimiento"
     >
       <div className="w-full bg-[var(--color-card)] border-t border-[var(--color-lavender)]/20 shadow-[0_-8px_40px_rgba(0,0,0,0.4)] overflow-hidden">
         {/* Main row */}
@@ -188,10 +190,12 @@ export function CookieBanner() {
               aria-expanded={expanded}
             >
               Configurar
+              {/* B-7: chevron coherente con el estado — contraído apunta hacia abajo
+                  (se puede expandir), expandido apunta hacia arriba (se puede contraer). */}
               {expanded ? (
-                <ChevronDown size={14} className="ml-1" aria-hidden="true" />
-              ) : (
                 <ChevronUp size={14} className="ml-1" aria-hidden="true" />
+              ) : (
+                <ChevronDown size={14} className="ml-1" aria-hidden="true" />
               )}
             </Button>
           </div>

@@ -357,7 +357,9 @@ async function buildContractPdf(args: ContractArgs): Promise<Uint8Array> {
     '4.5 Resolución de litigios: el comprador puede acudir a la plataforma europea de',
     '    resolución de litigios en línea (ODR): https://ec.europa.eu/consumers/odr/',
     '',
-    `4.6 Texto completo y vigente de las condiciones: ${storeUrl}/terminos`,
+    // M-4 (auditoría 2026-06-11): la ruta real del frontend es /terminos-venta
+    // (/terminos no existe y daba 404 en un documento contractual).
+    `4.6 Texto completo y vigente de las condiciones: ${storeUrl}/terminos-venta`,
   ]
 
   for (const l of conditions) {

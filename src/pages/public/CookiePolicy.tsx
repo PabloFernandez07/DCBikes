@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Cookie, Shield, BarChart2, Target, Trash2, Image } from 'lucide-react'
 import { useStoreAddress } from '@/hooks/useStoreAddress'
 import { useLegalIdentity } from '@/hooks/useLegalIdentity'
-import { COOKIES_VERSION } from '@/lib/legal-versions'
+import { LAST_UPDATED_DISPLAY } from '@/lib/legal-versions'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -104,7 +104,7 @@ export default function CookiePolicy() {
           POLÍTICA DE COOKIES
         </h1>
         <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">
-          Última actualización: {COOKIES_VERSION}
+          Última actualización: {LAST_UPDATED_DISPLAY}
         </p>
       </section>
 
@@ -150,9 +150,10 @@ export default function CookiePolicy() {
                   { nombre: 'dcbikes_pending_order', tipo: 'localStorage', titular: 'Propia', duracion: 'Sesión', finalidad: 'Persiste el pedido durante el proceso de checkout' },
                   { nombre: 'dcbikes_last_order', tipo: 'localStorage', titular: 'Propia', duracion: '30 días', finalidad: 'Token técnico para recuperar tu último pedido sin tener que solicitar magic link cada vez. Duración 30 días: equilibra comodidad con minimización de datos (art. 5.1.c RGPD). Se borra al cerrar sesión o desde la configuración del navegador.' /* P-08 auditoría V3: justifica duración 30d */ },
                   { nombre: 'dcbikes_customer_session', tipo: 'localStorage', titular: 'Propia', duracion: '24 horas', finalidad: 'Token temporal de "Mis pedidos" (magic link)' },
-                  { nombre: 'cart-store', tipo: 'localStorage', titular: 'Propia', duracion: 'Indefinida hasta vaciado', finalidad: 'Mantiene tu carrito de compra entre sesiones' },
-                  { nombre: 'dcb_session', tipo: 'sessionStorage', titular: 'Propia', duracion: 'Sesión', finalidad: 'Identificador de sesión para analítica anónima' },
-                  { nombre: 'dcb_groupings_confirmed', tipo: 'localStorage', titular: 'Propia', duracion: 'Indefinida', finalidad: 'Uso exclusivo del panel administrativo' },
+                  // B-6 auditoría V6: duración acotada y nota de minimización (art. 5.1.c RGPD)
+                  { nombre: 'cart-store', tipo: 'localStorage', titular: 'Propia', duracion: 'Hasta que vacíes el carrito o borres los datos del navegador', finalidad: 'Mantiene tu carrito de compra entre sesiones. No contiene datos personales, solo identificadores de producto (minimización, art. 5.1.c RGPD).' },
+                  // M-6 auditoría V6: dcb_session reclasificada como analítica (categoría C) — el banner ya pide consentimiento para ella
+                  { nombre: 'dcb_groupings_confirmed', tipo: 'localStorage', titular: 'Propia', duracion: 'Hasta que borres los datos del navegador', finalidad: 'Uso exclusivo del panel administrativo. No contiene datos personales.' },
                   { nombre: 'sb-*', tipo: 'localStorage', titular: 'Propia (Supabase Auth)', duracion: 'Sesión administrativa', finalidad: 'Autenticación del administrador de la tienda' },
                   // P-04: Cloudflare Turnstile — técnicas imprescindibles, exentas de consentimiento (art. 22.2 LSSI)
                   { nombre: '__cf_bm', tipo: 'Cookie HTTP', titular: 'Cloudflare, Inc.', duracion: '30 min (sesión)', finalidad: 'Filtro de bots — Cloudflare Bot Management. Prevención de fraude en formularios de contacto y presupuesto.' },
@@ -226,12 +227,17 @@ export default function CookiePolicy() {
                 </p>
                 <p>
                   Actualmente <strong className="text-[var(--color-cream)]">no</strong> se utilizan cookies
-                  analíticas de terceros (Google Analytics, Hotjar, Matomo, etc.). La analítica interna se
-                  realiza mediante <code className="text-[var(--color-lavender)]">dcb_session</code>, que es
-                  un identificador anónimo de sesión almacenado en{' '}
-                  <code className="text-[var(--color-lavender)]">sessionStorage</code> y descrito en la
-                  categoría A.
+                  analíticas de terceros (Google Analytics, Hotjar, Matomo, etc.). La analítica interna es{' '}
+                  <strong className="text-[var(--color-cream)]">propia</strong> (vistas de producto y búsquedas
+                  en el catálogo, sin cesión a terceros) y{' '}
+                  <strong className="text-[var(--color-cream)]">solo se activa si aceptas las cookies
+                  analíticas</strong> en el banner de consentimiento:
                 </p>
+                {/* M-6 auditoría V6: dcb_session movida desde la categoría A — es analítica
+                    y el banner pide consentimiento para ella, no está exenta del art. 22.2 LSSI */}
+                <CookieTable rows={[
+                  { nombre: 'dcb_session', tipo: 'sessionStorage', titular: 'Propia', duracion: 'Sesión', finalidad: 'Identificador anónimo de sesión para la analítica interna propia (vistas de producto y búsquedas). Solo se instala tras tu consentimiento.' },
+                ]} />
               </div>
             </div>
 
@@ -276,12 +282,27 @@ export default function CookiePolicy() {
         </Section>
 
         {/* Base legal */}
+        {/* M-6 auditoría V6: las esenciales se amparan en la exención del art. 22.2 LSSI,
+            no en el "interés legítimo / Considerando 47" */}
         <Section title="Base legal">
           <p>
-            El tratamiento de datos a través de cookies analíticas se basa en tu <strong className="text-[var(--color-cream)]">consentimiento expreso</strong>{' '}
-            (art. 6.1.a RGPD), que puedes retirar en cualquier momento. Las cookies esenciales se amparan en el{' '}
-            <strong className="text-[var(--color-cream)]">interés legítimo</strong> del responsable para mantener el funcionamiento
-            básico del sitio (Considerando 47 RGPD).
+            Las cookies y almacenamientos <strong className="text-[var(--color-cream)]">estrictamente
+            necesarios</strong> (categoría A) están <strong className="text-[var(--color-cream)]">exentos de
+            consentimiento</strong> conforme a la excepción del{' '}
+            <strong className="text-[var(--color-cream)]">artículo 22.2 de la Ley 34/2002 (LSSI)</strong>, al ser
+            imprescindibles para prestar el servicio expresamente solicitado por el usuario.
+          </p>
+          <p>
+            Las cookies <strong className="text-[var(--color-cream)]">analíticas</strong> (categoría C) se basan
+            en tu <strong className="text-[var(--color-cream)]">consentimiento expreso</strong> (art. 22.2 LSSI y
+            art. 6.1.a RGPD), que prestas a través del banner de cookies y puedes retirar en cualquier momento.
+          </p>
+          <p>
+            Las cookies <strong className="text-[var(--color-cream)]">funcionales de terceros</strong>{' '}
+            (categoría B, Google Maps) también se basan en tu{' '}
+            <strong className="text-[var(--color-cream)]">consentimiento previo</strong>: el mapa de la tienda
+            solo se carga, y las cookies de Google solo se instalan, después de que aceptes las cookies
+            funcionales en el banner.
           </p>
         </Section>
 

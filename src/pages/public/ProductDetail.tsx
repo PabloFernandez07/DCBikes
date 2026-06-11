@@ -164,6 +164,10 @@ export default function ProductDetail() {
   const finalPrice = hasDiscount
     ? selectedVariant.retail_price * (1 - pct / 100)
     : selectedVariant.retail_price
+  // M-2 (Ómnibus, art. 20.1 TRLGDCU): solo "anunciamos" la rebaja (badge + precio
+  // tachado) cuando podemos acompañarla del precio mínimo de los últimos 30 días.
+  // Si la RPC falla o devuelve null, mostramos únicamente el precio final.
+  const showDiscountUI = hasDiscount && minPrice30d != null
   const fmt = (n: number) => n.toLocaleString('es-ES', { minimumFractionDigits: 0 })
 
   const isPurchasable = selectedVariant.is_purchasable
@@ -269,7 +273,7 @@ export default function ProductDetail() {
 
           {/* Price */}
           <div className="flex flex-col gap-1">
-            {hasDiscount && (
+            {showDiscountUI && (
               <div className="flex items-center gap-2">
                 <span className="bg-[var(--color-brand-red)] text-white text-sm font-[var(--font-cond)] font-bold tracking-wide px-2.5 py-1 rounded-lg">
                   -{pct}% DESCUENTO
@@ -280,17 +284,18 @@ export default function ProductDetail() {
               <span className="font-[var(--font-display)] text-3xl md:text-4xl text-[var(--color-lavender)] tracking-wide">
                 {fmt(finalPrice)} €
               </span>
-              {hasDiscount && (
+              {showDiscountUI && (
                 <span className="font-[var(--font-cond)] text-xl text-[var(--color-mid)] line-through">
                   {fmt(selectedVariant.retail_price)} €
                 </span>
               )}
             </div>
-            {!hasDiscount && (
+            {!showDiscountUI && (
               <span className="text-[var(--color-mid)] font-[var(--font-cond)] text-sm tracking-wide">PVP</span>
             )}
-            {/* Omnibus / RDL 1/2007 art. 20.1 — precio de referencia obligatorio */}
-            {hasDiscount && minPrice30d != null && (
+            {/* Omnibus / RDL 1/2007 art. 20.1 — precio de referencia obligatorio.
+                (minPrice30d != null repetido para que TS estreche el tipo dentro del bloque) */}
+            {showDiscountUI && minPrice30d != null && (
               <div className="mt-2 space-y-1 text-sm font-[var(--font-cond)]">
                 <div className="text-[var(--color-mid)] tracking-wide">
                   Precio anterior (mín. últimos 30 días):{' '}

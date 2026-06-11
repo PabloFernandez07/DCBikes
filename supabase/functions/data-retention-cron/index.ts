@@ -14,9 +14,10 @@
 //   3. `payments_log.raw_payload` con created_at < hoy-6a → anonimizar
 //      payload (registro contable se conserva).
 //   4a. `quote_requests` con revoked_at < hoy-7d y purged_at IS NULL →
-//      purga inmediata por revocación de consentimiento (Q-14).
+//      purga inmediata por revocación de consentimiento (Q-14 + A-1:
+//      message/email/phone/consent_ip/consent_user_agent).
 //   4b. `quote_requests` con created_at < hoy-13m y purged_at IS NULL →
-//      anonimizar message + purged_at = now() (Q-14).
+//      anonimizar PII completa + purged_at = now() (Q-14 + A-1).
 //   5. `product_views` con viewed_at < hoy-24m → DELETE.
 //   6. `search_queries` con searched_at < hoy-24m → DELETE.
 //   7. `orders` con created_at < hoy-6a y `anonymized_at is null` →
@@ -117,12 +118,20 @@ async function anonymizePayments(supabase: SupabaseClient): Promise<ActionResult
 }
 
 /* ─── 4a. quote_requests revocadas >7d → PURGAR inmediato ─────── */
+// A-1 (auditoría 2026-06-11): además de message, se purga TODA la PII
+// (email/phone/consent_ip/consent_user_agent) — el email identifica al
+// interesado igual que el mensaje (RGPD art. 5.1.e + 17.1.b). Mismo patrón
+// que stock_alerts: email NOT NULL → '[purgado]'; nullables → null.
 async function purgeRevokedQuotes(supabase: SupabaseClient): Promise<ActionResult> {
   const cutoff = new Date(Date.now() - SEVEN_DAYS_MS).toISOString()
   const { data, error } = await supabase
     .from('quote_requests')
     .update({
       message: '[purgado]',
+      email: '[purgado]',
+      phone: null,
+      consent_ip: null,
+      consent_user_agent: null,
       purged_at: new Date().toISOString(),
     })
     .lt('revoked_at', cutoff)
@@ -132,13 +141,19 @@ async function purgeRevokedQuotes(supabase: SupabaseClient): Promise<ActionResul
   return { name: 'quotes_revoked_purged', count: data?.length ?? 0 }
 }
 
-/* ─── 4b. quote_requests >13 meses → ANONIMIZAR message ───────── */
+/* ─── 4b. quote_requests >13 meses → ANONIMIZAR PII completa ──── */
+// A-1: idéntica ampliación que 4a — antes solo se anonimizaba message y la
+// PII de contacto se conservaba sine die (incumplía art. 5.1.e RGPD).
 async function purgeOldQuotes(supabase: SupabaseClient): Promise<ActionResult> {
   const cutoff = new Date(Date.now() - THIRTEEN_MONTHS_MS).toISOString()
   const { data, error } = await supabase
     .from('quote_requests')
     .update({
       message: '[purgado]',
+      email: '[purgado]',
+      phone: null,
+      consent_ip: null,
+      consent_user_agent: null,
       purged_at: new Date().toISOString(),
     })
     .lt('created_at', cutoff)

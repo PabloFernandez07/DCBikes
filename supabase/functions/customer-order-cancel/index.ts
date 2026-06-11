@@ -28,6 +28,7 @@ import { buildCorsHeaders, jsonError, jsonOk,
 import { verifyCustomerSession } from '../_shared/customer-session.ts'
 import { internalSecretHeader } from '../_shared/security.ts'
 import {
+  alertAdminCancelKo,
   loadConfig,
   loadOrder,
   logPayment,
@@ -177,6 +178,16 @@ serve(async (req) => {
       await logPayment(supabase, order.id, 'cancel', cancelResult, '9')
       // No revertimos la cancelación: el cliente ya recibió "cancelado" de la
       // RPC. El admin debe resolver el reembolso manualmente.
+      // 4.2: email de alerta al admin — sin él la retención KO pasaba
+      // desapercibida hasta que el cliente reclamase.
+      await alertAdminCancelKo(supabase, {
+        orderId: order.id,
+        orderNumber: order.order_number,
+        redsysOrderId: order.payment_pre_auth_id ?? null,
+        amountCents: order.total_cents,
+        responseCode: cancelResult.responseCode,
+        context: 'cancelación por el cliente (customer-order-cancel)',
+      })
     }
 
     // 6) Auditoría + restauración de stock + log de pago.

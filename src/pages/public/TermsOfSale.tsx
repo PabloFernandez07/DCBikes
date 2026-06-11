@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabase'
 import { useSchedule } from '@/hooks/useSchedule'
 import { STORE_ADDRESS_FALLBACK } from '@/hooks/useStoreAddress'
 import { useLegalIdentity } from '@/hooks/useLegalIdentity'
-import { TERMS_VERSION } from '@/lib/legal-versions'
+import { useShopSettings } from '@/hooks/useShopSettings'
+import { LAST_UPDATED_DISPLAY } from '@/lib/legal-versions'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -57,9 +58,13 @@ function Value({
 }
 
 /**
- * Lee los settings comerciales relevantes para los términos de venta.
+ * Lee los settings de contacto relevantes para los términos de venta.
  * Los datos legales (denominación, CIF, dirección fiscal, forma jurídica,
  * inscripción) se leen del hook único `useLegalIdentity`.
+ * Los settings comerciales (tarifas de envío, plazo de recogida) se leen
+ * del hook `useShopSettings` (M-5 auditoría V6: las keys reales son
+ * shipping_flat_rate_cents, shipping_free_threshold_cents y
+ * pickup_deadline_days, en céntimos).
  */
 function useSaleSettings() {
   const [s, setS] = useState<Record<string, string | null>>({})
@@ -71,10 +76,6 @@ function useSaleSettings() {
       .in('key', [
         'store_address',
         'store_phone',
-        'quote_destination_email',
-        'shipping_flat_rate',
-        'shipping_free_threshold',
-        'pickup_retention_days',
       ])
       .then(({ data }) => {
         const obj: Record<string, string | null> = {}
@@ -99,6 +100,7 @@ export default function TermsOfSale() {
   const s = useSaleSettings()
   const legal = useLegalIdentity()
   const { schedule } = useSchedule()
+  const { settings: shop } = useShopSettings()
 
   const companyName = legal?.companyName ?? 'DC Bikes Cantabria'
   const cif = legal?.cif ?? null
@@ -106,7 +108,13 @@ export default function TermsOfSale() {
     legal?.address ?? s.store_address ?? STORE_ADDRESS_FALLBACK
   const phone = s.store_phone ?? null
   const email = legal?.contactEmail ?? 'info@dcbikescantabria.com'
-  const pickupDays = s.pickup_retention_days ?? '15'
+  const pickupDays = shop.pickupDeadlineDays || 15
+
+  // Céntimos → euros con formato español (p. ej. 690 → "6,90")
+  const formatEuros = (cents: number) =>
+    (cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const shippingFlatRate = formatEuros(shop.shippingFlatRateCents)
+  const shippingFreeThreshold = formatEuros(shop.shippingFreeThresholdCents)
 
   return (
     <>
@@ -126,7 +134,7 @@ export default function TermsOfSale() {
             TÉRMINOS DE VENTA
           </h1>
           <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">
-            Última actualización: {TERMS_VERSION}
+            Última actualización: {LAST_UPDATED_DISPLAY}
           </p>
         </section>
 
@@ -146,11 +154,11 @@ export default function TermsOfSale() {
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">NIF / CIF:</strong>{' '}
-                <Value value={cif} pendingLabel="pendiente — rellena en Admin → Configuración" />
+                <Value value={cif} pendingLabel="En proceso de actualización" />
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Forma jurídica:</strong>{' '}
-                <Value value={legal?.formaJuridica ?? null} pendingLabel="pendiente — p. ej. Autónomo / S.L." />
+                <Value value={legal?.formaJuridica ?? null} pendingLabel="En proceso de actualización" />
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Domicilio fiscal:</strong>{' '}
@@ -169,12 +177,12 @@ export default function TermsOfSale() {
                     {phone}
                   </a>
                 ) : (
-                  <Pending label="pendiente — rellena 'Teléfono' en Admin → Configuración" />
+                  <Pending label="En proceso de actualización" />
                 )}
               </p>
               <p>
                 <strong className="text-[var(--color-cream)] font-[var(--font-cond)]">Inscripción registral:</strong>{' '}
-                <Value value={legal?.inscripcion ?? null} pendingLabel="pendiente — Registro Mercantil, o 'No aplica' si autónomo" />
+                <Value value={legal?.inscripcion ?? null} pendingLabel="En proceso de actualización" />
               </p>
             </div>
           </Section>
@@ -265,8 +273,8 @@ export default function TermsOfSale() {
           <Section title="5. Medios de pago">
             <p>
               Aceptamos los siguientes medios de pago a través de la pasarela segura{' '}
-              <strong className="text-[var(--color-cream)]">Redsys</strong> (Servired Sistemas de Procesamiento, S.A.),
-              entidad líder en procesamiento de pagos en España:
+              <strong className="text-[var(--color-cream)]">Redsys</strong> (Redsys Servicios de Procesamiento,
+              S.L., CIF B85955367), entidad líder en procesamiento de pagos en España:
             </p>
             <ul className="list-disc list-inside space-y-1 pl-2">
               <li><strong className="text-[var(--color-cream)]">Tarjeta bancaria</strong> Visa y Mastercard (crédito y débito).</li>
@@ -280,24 +288,23 @@ export default function TermsOfSale() {
           {/* 6. Envíos */}
           <Section title="6. Envíos">
             <p>
-              Realizamos envíos únicamente a <strong className="text-[var(--color-cream)]">Península y
-              Cantabria</strong>. No realizamos envíos a Baleares, Canarias, Ceuta, Melilla ni territorios fuera del
-              ámbito peninsular.
+              Realizamos envíos únicamente a <strong className="text-[var(--color-cream)]">España
+              peninsular</strong> (incluida Cantabria). El checkout no admite direcciones de entrega en
+              Baleares, Canarias, Ceuta o Melilla; si resides en alguno de estos territorios,{' '}
+              <strong className="text-[var(--color-cream)]">contáctanos antes de realizar el pedido</strong>{' '}
+              para solicitar un presupuesto de envío personalizado.
             </p>
             <p>
               El coste de envío se calcula en el checkout en función de la dirección de entrega. Los pedidos
               superiores a un determinado importe disfrutan de envío gratuito; el umbral y la tarifa plana se
               indican claramente antes de confirmar la compra.
-              {s.shipping_flat_rate && (
-                <> Tarifa plana actual: <strong className="text-[var(--color-cream)]">{s.shipping_flat_rate}€</strong>.</>
-              )}
-              {s.shipping_free_threshold && (
-                <> Envío gratuito a partir de <strong className="text-[var(--color-cream)]">{s.shipping_free_threshold}€</strong>.</>
-              )}
+              {' '}Tarifa plana actual: <strong className="text-[var(--color-cream)]">{shippingFlatRate}€</strong>.
+              {' '}Envío gratuito a partir de <strong className="text-[var(--color-cream)]">{shippingFreeThreshold}€</strong>.
             </p>
             <p>
               <strong className="text-[var(--color-cream)]">Tarifa plana de envío válida para paquetes hasta 30 kg y dimensiones máximas 120×80×60 cm (peso volumétrico).</strong>{' '}
-              Para envíos fuera de Península Ibérica (Baleares, Canarias, Ceuta, Melilla) o que excedan dimensiones, contacta antes de finalizar el pedido para presupuesto personalizado.
+              Para pedidos que excedan estos límites, o para envíos a Baleares, Canarias, Ceuta o Melilla,
+              contacta con nosotros antes de realizar el pedido para obtener un presupuesto personalizado.
               Sin sobrecostes adicionales no informados antes de la confirmación del pedido.
             </p>
             <p>
@@ -379,23 +386,20 @@ export default function TermsOfSale() {
           </Section>
 
           {/* 10. Resolución de conflictos */}
+          {/* M-1 auditoría V6: la plataforma europea ODR cesó el 20-07-2025
+              (Reglamento UE 2024/3228 derogó el Reglamento 524/2013). */}
           <Section title="10. Resolución de conflictos">
             <p>
-              Conforme al artículo 14 del Reglamento (UE) nº 524/2013, informamos al cliente de la existencia de la{' '}
-              <strong className="text-[var(--color-cream)]">Plataforma europea de resolución de litigios en línea (ODR)</strong>{' '}
-              de la Comisión Europea:{' '}
-              <a
-                href="https://ec.europa.eu/consumers/odr/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[var(--color-lavender)] underline underline-offset-2 break-all"
-              >
-                https://ec.europa.eu/consumers/odr/
-              </a>
+              Conforme a la <strong className="text-[var(--color-cream)]">Ley 7/2017, de 2 de noviembre</strong>,
+              el cliente puede acudir, para la resolución alternativa de litigios de consumo, a las{' '}
+              <strong className="text-[var(--color-cream)]">entidades de resolución alternativa de litigios
+              (RAL) acreditadas</strong> e incluidas en el listado oficial de la Comisión Europea y del
+              Ministerio competente en materia de consumo.
             </p>
             <p>
               <strong className="text-[var(--color-cream)]">{companyName} no está actualmente adherido al Sistema
               Arbitral de Consumo</strong>. Sin perjuicio de ello, el cliente puede ejercer sus derechos ante la{' '}
+              <strong className="text-[var(--color-cream)]">Junta Arbitral de Consumo</strong> competente y ante la{' '}
               <a
                 href="https://www.cantabria.es/web/direccion-general-consumo"
                 target="_blank"
@@ -403,8 +407,14 @@ export default function TermsOfSale() {
                 className="text-[var(--color-lavender)] underline underline-offset-2"
               >
                 Dirección General de Consumo del Gobierno de Cantabria
-              </a>{' '}
-              y/o utilizar la plataforma europea de resolución de litigios en línea (ODR) mencionada anteriormente.
+              </a>
+              .
+            </p>
+            <p className="text-xs">
+              La plataforma europea de resolución de litigios en línea (ODR) cesó su actividad el{' '}
+              <strong className="text-[var(--color-cream)]">20 de julio de 2025</strong>, al haber sido derogado
+              el Reglamento (UE) nº 524/2013 por el Reglamento (UE) 2024/3228, por lo que ya no es posible
+              presentar reclamaciones a través de dicha plataforma.
             </p>
             <p className="text-xs">
               Conforme al artículo 90 del RDL 1/2007, se consideran abusivas las cláusulas que impongan al

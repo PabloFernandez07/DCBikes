@@ -107,11 +107,10 @@ export function ProductCard({
           <span className="font-[var(--font-display)] text-xl text-[var(--color-lavender)] tracking-wide">
             {fmt(finalPrice)} €
           </span>
-          {hasDiscount && !showFromPrice && (
-            <span className="font-[var(--font-cond)] text-sm text-[var(--color-mid)] line-through">
-              {fmt(product.retail_price)} €
-            </span>
-          )}
+          {/* M-2 (Ómnibus, art. 20.1 TRLGDCU): en el card NO se muestra precio tachado
+              porque no disponemos del precio mínimo de 30 días por producto (sería N+1
+              llamadas a get_min_price_last_30d). El badge "-X%" + precio final es legal;
+              el precio de referencia completo se muestra en la ficha del producto. */}
           {hasMultipleSizes && (
             <span className="ml-auto text-[10px] font-[var(--font-cond)] uppercase tracking-widest text-[var(--color-cream-dim)] bg-[var(--color-card-hover)] px-1.5 py-0.5 rounded">
               {variantCount} opciones

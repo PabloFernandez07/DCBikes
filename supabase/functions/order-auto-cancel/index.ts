@@ -23,6 +23,7 @@ import { buildCorsHeaders, asInt, getSettings, jsonError, jsonOk,
 } from '../_shared/email-utils.ts'
 import { internalSecretHeader } from '../_shared/security.ts'
 import {
+  alertAdminCancelKo,
   loadConfig,
   logPayment,
   logStatusChange,
@@ -102,6 +103,23 @@ serve(async (req) => {
           redsysOrderId: order.payment_pre_auth_id,
           op: { kind: 'cancel', amountCents: order.total_cents },
         })
+
+        // 4.2: anulación KO real → alerta al admin. Seguimos cancelando el
+        // pedido (el cron debe liberar el stock igualmente); la retención
+        // queda pendiente de resolución manual en el portal de Redsys.
+        if (!cancelResult.ok && !cancelResult.simulated) {
+          console.warn(
+            `[${ts()}] auto-cancel Redsys KO · ${order.order_number} · code=${cancelResult.responseCode}`,
+          )
+          await alertAdminCancelKo(supabase, {
+            orderId: order.id,
+            orderNumber: order.order_number,
+            redsysOrderId: order.payment_pre_auth_id,
+            amountCents: order.total_cents,
+            responseCode: cancelResult.responseCode,
+            context: 'auto-cancelación por inactividad (order-auto-cancel cron)',
+          })
+        }
 
         const now = new Date().toISOString()
         const { error: uErr } = await supabase

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Download, FileText, AlertTriangle, Clock, Euro, Package, Shield, Scale } from 'lucide-react'
 import { SEO } from '@/components/layout/SEO'
 import { supabase } from '@/lib/supabase'
-import { RETURNS_VERSION } from '@/lib/legal-versions'
+import { LAST_UPDATED_DISPLAY } from '@/lib/legal-versions'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -81,7 +81,7 @@ export default function Returns() {
             DEVOLUCIONES
           </h1>
           <p className="rv text-[var(--color-mid)] font-[var(--font-body)] text-sm">
-            Última actualización: {RETURNS_VERSION}
+            Última actualización: {LAST_UPDATED_DISPLAY}
           </p>
         </section>
 
@@ -186,20 +186,31 @@ export default function Returns() {
           </Section>
 
           {/* 4. Estado del producto */}
-          <Section title="4. Estado en el que debe devolverse el producto">
+          {/* M-3 auditoría V6: el art. 108.2 TRLGDCU no permite denegar la
+              devolución por falta de embalaje o etiquetas; solo cabe deducir
+              la disminución de valor. Se reformula como recomendación. */}
+          <Section title="4. Estado del producto y disminución de valor">
             <p>
-              Para que aceptemos la devolución, el producto debe encontrarse en su estado original:
+              Puedes devolver el producto aunque lo hayas manipulado para comprobar su naturaleza,
+              características y funcionamiento, igual que lo harías en una tienda física.
+            </p>
+            <p>
+              Para facilitar la gestión y evitar deducciones,{' '}
+              <strong className="text-[var(--color-cream)]">te recomendamos</strong> devolver el producto
+              preferiblemente:
             </p>
             <ul className="list-disc list-inside space-y-1 pl-2">
-              <li><strong className="text-[var(--color-cream)]">Sin uso</strong>, salvo la manipulación imprescindible para comprobar la naturaleza, características y funcionamiento del producto.</li>
               <li>Con su <strong className="text-[var(--color-cream)]">embalaje original</strong> en buen estado.</li>
               <li>Con todas sus <strong className="text-[var(--color-cream)]">etiquetas y accesorios</strong> originales.</li>
               <li>Acompañado del comprobante de compra o número de pedido.</li>
             </ul>
             <p className="text-xs text-[var(--color-mid)]">
-              Conforme al art. 108 RDL 1/2007, podrás ser responsable de la disminución de valor de los bienes
-              resultante de una manipulación distinta a la necesaria para establecer su naturaleza, características o
-              funcionamiento.
+              Conforme al art. 108.2 RDL 1/2007, solo podrás ser responsable de la{' '}
+              <strong className="text-[var(--color-cream)]">disminución de valor</strong> de los bienes resultante
+              de una manipulación distinta a la necesaria para establecer su naturaleza, características o
+              funcionamiento. La ausencia de embalaje o etiquetas no impide en ningún caso ejercer el derecho de
+              desistimiento, aunque podrá dar lugar a una deducción proporcional en el reembolso si supone una
+              disminución de valor del producto.
             </p>
           </Section>
 
@@ -285,32 +296,25 @@ export default function Returns() {
             </p>
           </Section>
 
-          {/* 8. ODR */}
+          {/* 8. Resolución alternativa de litigios */}
+          {/* M-1 auditoría V6: la plataforma europea ODR cesó el 20-07-2025
+              (Reglamento UE 2024/3228 derogó el Reglamento 524/2013). */}
           <Section title="8. Resolución alternativa de litigios">
             <div className="flex items-start gap-3 p-4 rounded-xl bg-[var(--color-card)] border border-[var(--color-card-hover)]">
               <Scale size={20} className="text-[var(--color-lavender)] shrink-0 mt-0.5" />
               <div>
                 <p className="font-[var(--font-cond)] text-[var(--color-cream)] tracking-wide mb-1">
-                  Plataforma europea de resolución de litigios en línea (ODR)
+                  Resolución alternativa de litigios de consumo (Ley 7/2017)
                 </p>
                 <p className="text-[var(--color-mid)]">
-                  Conforme al artículo 14 del Reglamento (UE) nº 524/2013, te informamos de que la Comisión Europea
-                  facilita una plataforma de resolución de litigios en línea disponible en el siguiente enlace:
+                  Conforme a la Ley 7/2017, de 2 de noviembre, puedes acudir para la resolución alternativa de
+                  tus litigios de consumo a las entidades de resolución alternativa de litigios (RAL)
+                  acreditadas e incluidas en el listado oficial del Ministerio competente en materia de consumo.
                 </p>
               </div>
             </div>
             <p>
-              <a
-                href="https://ec.europa.eu/consumers/odr/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[var(--color-lavender)] underline underline-offset-2 break-all"
-              >
-                https://ec.europa.eu/consumers/odr/
-              </a>
-            </p>
-            <p>
-              Como consumidor también puedes dirigir tus reclamaciones a la{' '}
+              Como consumidor puedes dirigir tus reclamaciones a la{' '}
               <a
                 href="https://www.cantabria.es/web/direccion-general-consumo"
                 target="_blank"
@@ -320,6 +324,12 @@ export default function Returns() {
                 Dirección General de Consumo del Gobierno de Cantabria
               </a>{' '}
               o a la Junta Arbitral de Consumo competente.
+            </p>
+            <p className="text-xs text-[var(--color-mid)]">
+              La plataforma europea de resolución de litigios en línea (ODR) cesó su actividad el{' '}
+              <strong className="text-[var(--color-cream)]">20 de julio de 2025</strong>, al haber sido derogado
+              el Reglamento (UE) nº 524/2013 por el Reglamento (UE) 2024/3228, por lo que ya no es posible
+              presentar reclamaciones a través de dicha plataforma.
             </p>
           </Section>
 

@@ -126,15 +126,17 @@ serve(async (req) => {
       return jsonError('order has no items', 400, req)
     }
 
-    /* ─── 1b. Gate: NIF/DNI del comprador OBLIGATORIO en toda factura ─── */
-    // Decisión del titular: ninguna factura se emite sin identificar al
-    // comprador. En B2B el identificador es invoice_cif; en B2C, customer_dni.
-    // (El mínimo legal sería solo >400€ — RD 1619/2012 art. 7.1 — pero aquí se
-    // exige siempre.)
+    /* ─── 1b. Gate: NIF/DNI del comprador B2C solo si total > 400 € ─── */
+    // 4.3 (auditoría 2026-06-11): se relaja el gate anterior (DNI obligatorio
+    // en TODA factura) al mínimo legal del RD 1619/2012 art. 7.1: por debajo
+    // de 400 € basta factura simplificada sin identificar al destinatario;
+    // por encima, la factura completa exige NIF/DNI. En B2B el identificador
+    // es invoice_cif y no aplica este gate. order-place valida lo mismo en el
+    // checkout, así que este es el cinturón de seguridad para pedidos previos.
     const isB2BOrder = order.needs_invoice === true && !!order.invoice_cif
-    if (!isB2BOrder && !order.customer_dni) {
+    if (!isB2BOrder && !order.customer_dni && order.total_cents > 40000) {
       return jsonError(
-        'Falta el NIF/DNI del comprador. Es obligatorio para emitir la factura (campo customer_dni vacío).',
+        'Falta el NIF/DNI del comprador. Es obligatorio para facturas de más de 400 € (RD 1619/2012 art. 7.1; campo customer_dni vacío).',
         400,
         req,
       )
@@ -912,9 +914,16 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
   )
   y -= 20
 
-  /* ─── VERIFACTU: QR + leyenda (solo si verifactu_mode === 'verifactu') ─── */
-  // El QR siempre se dibuja en la última página, sobre el pie legal.
-  if (verifactuMode === 'verifactu') {
+  /* ─── QR TRIBUTARIO: SIEMPRE en ambas modalidades (C-3) ─── */
+  // C-3 (auditoría 2026-06-11): el RRSIF (RD 1007/2023 art. 21 + OM
+  // HAC/1177/2024) exige el QR tributario en TODAS las facturas emitidas por
+  // el SIF, tanto en modalidad VERI*FACTU como en NO VERI*FACTU. Antes solo
+  // se dibujaba en modalidad 'verifactu'. La LEYENDA "VERI*FACTU" /
+  // "Factura verificable en la sede electrónica de la AEAT" sí es exclusiva
+  // de la modalidad 'verifactu' (remisión voluntaria de registros).
+  // verifactuMode llega tipado 'verifactu' | 'no_verifactu' (gate en el
+  // handler garantiza que está definido antes de renderizar).
+  {
     // Generar QR como data URL PNG y embeber en esquina inferior derecha sobre el pie.
     const qrDataUrl: string = await QRCode.toDataURL(qrPayload, { width: 96, margin: 1 })
     // Extraer bytes PNG desde data URL base64
@@ -929,19 +938,29 @@ async function renderInvoicePdf(args: RenderArgs): Promise<Uint8Array> {
 
     page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize })
 
-    // Leyenda AEAT obligatoria bajo el QR
-    drawText(page, 'VERI*FACTU', qrX + qrSize / 2, qrY - 10, {
-      font: fontBold,
-      size: 7,
-      color: COLOR_DARK,
-      align: 'center',
-    })
-    drawText(page, 'Factura verificable en sede.agenciatributaria.gob.es', qrX + qrSize / 2, qrY - 20, {
-      font,
-      size: 6,
-      color: COLOR_GRAY,
-      align: 'center',
-    })
+    if (verifactuMode === 'verifactu') {
+      // Leyenda AEAT — SOLO en modalidad VERI*FACTU (art. 21.2 RRSIF)
+      drawText(page, 'VERI*FACTU', qrX + qrSize / 2, qrY - 10, {
+        font: fontBold,
+        size: 7,
+        color: COLOR_DARK,
+        align: 'center',
+      })
+      drawText(page, 'Factura verificable en sede.agenciatributaria.gob.es', qrX + qrSize / 2, qrY - 20, {
+        font,
+        size: 6,
+        color: COLOR_GRAY,
+        align: 'center',
+      })
+    } else {
+      // Modalidad NO VERI*FACTU: QR sin leyenda de verificación en sede.
+      drawText(page, 'QR tributario (RD 1007/2023)', qrX + qrSize / 2, qrY - 10, {
+        font,
+        size: 6,
+        color: COLOR_GRAY,
+        align: 'center',
+      })
+    }
   }
 
   /* ─── PIE LEGAL: se dibuja en TODAS las páginas con "Página X/N" real ─── */
