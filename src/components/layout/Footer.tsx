@@ -84,7 +84,7 @@ export function Footer() {
       <div className="w-full px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-12">
           <div className="flex flex-col gap-4">
-            <img src="/DC_Bikes_Sin_Fondo.png" alt="DC Bikes" className="h-20 w-auto max-w-[200px] object-contain block" />
+            <img src="/DC_Bikes_Sin_Fondo_320.webp" alt="DC Bikes" width={320} height={321} loading="lazy" className="h-20 w-auto max-w-[200px] object-contain block" />
             <p className="text-[var(--color-mid)] font-[var(--font-body)] text-sm leading-relaxed">
               DC Bikes Cantabria · El Astillero
               <br />

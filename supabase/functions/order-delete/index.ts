@@ -23,6 +23,7 @@ import { buildCorsHeaders, jsonError, jsonOk,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
 import { requireAdmin, logStatusChange } from '../_shared/order-admin.ts'
+import { restoreStockOnce } from '../_shared/stock-restore.ts'
 
 const DELETABLE_STATUSES = new Set(['pending', 'payment_failed'])
 
@@ -78,15 +79,31 @@ serve(async (req) => {
     }
 
     const now = new Date().toISOString()
-    const { error: uErr } = await supabase
+    const { error: uErr, count: uCount } = await supabase
       .from('orders')
-      .update({ deleted_at: now })
+      .update({ deleted_at: now }, { count: 'exact' })
       .eq('id', orderId)
       .is('deleted_at', null) // race-safety: si otro admin lo borró en el mismo instante, no pisamos.
 
     if (uErr) {
       console.error(`[${ts()}] order-delete update error:`, uErr.message)
       return jsonError(`error eliminando el pedido: ${uErr.message}`, 500, req)
+    }
+
+    // BUG-C2 (auditoría técnica 2026-06-12): liberar el stock reservado en
+    // order-place. Los pedidos pending/payment_failed conservaban su stock
+    // comprometido para siempre tras el soft-delete. Idempotente: si
+    // redsys-notification ya restauró al marcar payment_failed (o el cron
+    // lo hizo antes), es noop. Solo si ESTA request ganó la carrera del
+    // soft-delete (count > 0) — si la perdió, el otro admin ya restauró.
+    if ((uCount ?? 0) > 0) {
+      const restoreResult = await restoreStockOnce(supabase, orderId)
+      if (restoreResult === 'failed') {
+        // No revertimos el borrado: queda log claro para revisión manual.
+        console.error(
+          `[${ts()}] order-delete · ${order.order_number}: restauración de stock FALLÓ — revisar manualmente`,
+        )
+      }
     }
 
     const cleanReason =

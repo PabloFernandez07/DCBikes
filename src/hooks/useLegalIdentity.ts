@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSettings, parseSettingValue } from '@/lib/settings-cache'
 
 export interface LegalIdentity {
   companyName: string | null
@@ -31,14 +31,7 @@ const KEY_TO_FIELD: Record<LegalKey, keyof LegalIdentity> = {
 }
 
 function normalize(raw: unknown): string | null {
-  let v: unknown = raw
-  if (typeof v === 'string') {
-    try {
-      v = JSON.parse(v)
-    } catch {
-      // valor literal sin JSON, lo usamos tal cual
-    }
-  }
+  const v = parseSettingValue(raw)
   if (v === null || v === undefined) return null
   const s = String(v).trim()
   return s.length > 0 ? s : null
@@ -46,8 +39,11 @@ function normalize(raw: unknown): string | null {
 
 /**
  * Fuente única de verdad para la identidad fiscal/legal del titular.
- * Lee las 5 claves canónicas de `settings`. Devuelve `null` mientras carga;
+ * Lee las claves canónicas de `settings`. Devuelve `null` mientras carga;
  * cada campo individual será `null` si no está configurado.
+ *
+ * PERF-M1: consume la caché compartida de `settings`
+ * (src/lib/settings-cache.ts) en vez de lanzar su propia query.
  */
 export function useLegalIdentity(): LegalIdentity | null {
   const [identity, setIdentity] = useState<LegalIdentity | null>(null)
@@ -55,26 +51,29 @@ export function useLegalIdentity(): LegalIdentity | null {
   useEffect(() => {
     let cancelled = false
 
-    supabase
-      .from('settings')
-      .select('key, value')
-      .in('key', LEGAL_KEYS as unknown as string[])
-      .then(({ data }) => {
+    const EMPTY: LegalIdentity = {
+      companyName: null,
+      cif: null,
+      address: null,
+      formaJuridica: null,
+      inscripcion: null,
+      contactEmail: null,
+    }
+
+    getSettings()
+      .then(byKey => {
         if (cancelled) return
-        const result: LegalIdentity = {
-          companyName: null,
-          cif: null,
-          address: null,
-          formaJuridica: null,
-          inscripcion: null,
-          contactEmail: null,
-        }
-        for (const row of data ?? []) {
-          const field = KEY_TO_FIELD[row.key as LegalKey]
-          if (!field) continue
-          result[field] = normalize(row.value)
+        const result: LegalIdentity = { ...EMPTY }
+        for (const key of LEGAL_KEYS) {
+          if (!byKey.has(key)) continue
+          result[KEY_TO_FIELD[key]] = normalize(byKey.get(key))
         }
         setIdentity(result)
+      })
+      .catch(() => {
+        // Error de red/RLS: resolvemos con todos los campos a null, igual
+        // que hacía la versión anterior (data null → resultado vacío).
+        if (!cancelled) setIdentity({ ...EMPTY })
       })
 
     return () => {

@@ -54,10 +54,11 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
       onDone();
       return;
     }
-    // t1: el contenido se desvanece (1s en lugar de 2.2s para mejorar SI)
-    const t1 = setTimeout(() => setExiting(true), 1000);
-    // t2: la cortina ya subió, desmontamos
-    const t2 = setTimeout(onDone, 2500);
+    // t1: el contenido se desvanece (300ms — el splash solo se ve la primera
+    // vez por sesión, así que prima liberar el contenido cuanto antes)
+    const t1 = setTimeout(() => setExiting(true), 300);
+    // t2: la cortina ya subió, desmontamos (total ≤800ms)
+    const t2 = setTimeout(onDone, 800);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -70,7 +71,8 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
     /*
      * Capa exterior: es la "cortina" que sube (translateY -100%)
      * con un cubic-bezier de aceleración cinematográfica.
-     * El delay de 0.35s permite que el contenido se desvanezca primero.
+     * El delay de 0.05s permite que el contenido se desvanezca primero
+     * (timings comprimidos para que todo el splash quepa en ≤800ms).
      */
     <div
       style={{
@@ -81,7 +83,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
         pointerEvents: "none",
         transform: exiting ? "translateY(-100%)" : "translateY(0)",
         transition: exiting
-          ? "transform 1.1s cubic-bezier(0.76, 0, 0.24, 1) 0.35s"
+          ? "transform 0.45s cubic-bezier(0.76, 0, 0.24, 1) 0.05s"
           : "none",
       }}
     >
@@ -112,7 +114,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
           opacity: exiting ? 0 : 1,
           transform: exiting ? "translateY(-1.2rem) scale(0.94)" : "translateY(0) scale(1)",
           transition: exiting
-            ? "opacity 0.4s ease, transform 0.45s ease"
+            ? "opacity 0.25s ease, transform 0.3s ease"
             : "none",
         }}
       >
@@ -145,7 +147,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
             height: 32,
             background:
               "linear-gradient(to bottom, rgba(196,162,207,0.4), transparent)",
-            animation: "fadeUp 0.5s ease forwards 0.3s",
+            animation: "fadeUp 0.3s ease forwards 0.05s",
             opacity: 0,
           }}
         />
@@ -158,7 +160,7 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
             letterSpacing: "0.4em",
             color: "rgba(126,110,138,0.7)",
             textTransform: "uppercase",
-            animation: "fadeUp 0.5s ease forwards 0.4s",
+            animation: "fadeUp 0.3s ease forwards 0.1s",
             opacity: 0,
           }}
         >
@@ -217,10 +219,33 @@ function PublicLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Clave de sessionStorage: el splash solo se muestra una vez por sesión.
+// try/catch por si el storage está bloqueado (modo privado estricto, iframes).
+const SPLASH_SEEN_KEY = "dcb_splash_seen";
+
+function hasSeenSplash(): boolean {
+  try {
+    return sessionStorage.getItem(SPLASH_SEEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markSplashSeen() {
+  try {
+    sessionStorage.setItem(SPLASH_SEEN_KEY, "1");
+  } catch {
+    // Sin storage no persistimos — el splash volvería a verse, no es crítico
+  }
+}
+
 export default function App() {
   useTheme();
-  const [splashDone, setSplashDone] = useState(false);
-  const handleSplashDone = useCallback(() => setSplashDone(true), []);
+  const [splashDone, setSplashDone] = useState(hasSeenSplash);
+  const handleSplashDone = useCallback(() => {
+    markSplashSeen();
+    setSplashDone(true);
+  }, []);
 
   return (
     <BrowserRouter>

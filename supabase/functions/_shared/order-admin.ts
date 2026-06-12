@@ -278,32 +278,11 @@ export async function alertAdminCancelKo(
 
 /* ─────────── Restaurar stock ─────────── */
 
-// B-07 (Sprint 1 V5): delega en la RPC atómica restore_stock(p_items jsonb)
-// definida en 0031_atomic_order_transitions.sql. Antes hacíamos un SELECT
-// stock + UPDATE en loop por item, lo que abría una ventana race condition
-// si dos restauraciones simultáneas afectaban al mismo producto. Ahora cada
-// UPDATE es atómico (stock = stock + qty) dentro de la transacción de la RPC.
-export async function restoreStockFor(
-  supabase: SupabaseClient,
-  orderId: string,
-): Promise<void> {
-  const { data: items, error } = await supabase
-    .from('order_items')
-    .select('product_id, quantity')
-    .eq('order_id', orderId)
-  if (error || !items) {
-    console.warn('[order-admin] restoreStockFor: no se pudieron leer items:', error?.message)
-    return
-  }
-  const payload = items
-    .filter((it) => it.product_id && typeof it.quantity === 'number' && it.quantity > 0)
-    .map((it) => ({ product_id: it.product_id, qty: it.quantity }))
-  if (payload.length === 0) return
-  const { error: rpcErr } = await supabase.rpc('restore_stock', { p_items: payload })
-  if (rpcErr) {
-    console.warn('[order-admin] restoreStockFor: restore_stock RPC falló:', rpcErr.message)
-  }
-}
+// BUG-C2 (auditoría técnica 2026-06-12): el antiguo restoreStockFor() vivía
+// aquí y llamaba a restore_stock sin candado, permitiendo doble-restore si
+// dos caminos coincidían. Sustituido por restoreStockOnce() en
+// _shared/stock-restore.ts (idempotente vía orders.stock_restored_at).
+// Importar desde allí — NO reimplementar restauración directa aquí.
 
 /* ─────────── Historial + log helper ─────────── */
 

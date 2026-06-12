@@ -30,7 +30,7 @@ export function Nav() {
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 shrink-0" aria-label="DC Bikes Cantabria — inicio">
-          <img src="/DC_Bikes_Sin_Fondo.png" alt="DC Bikes" className="h-14 w-auto" />
+          <img src="/DC_Bikes_Sin_Fondo_320.webp" alt="DC Bikes" width={320} height={321} className="h-14 w-auto" />
           <span className="font-[var(--font-display)] text-xl tracking-widest text-[var(--color-cream)]">DC BIKES</span>
         </Link>
 

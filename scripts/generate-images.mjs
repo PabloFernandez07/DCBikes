@@ -3,12 +3,14 @@
  *
  * Source:
  *   public/Logo_DC_Bikes_Circular.png  (logo circular)  -> favicons + og-image (1200x630 letterbox)
+ *   public/DC_Bikes_Sin_Fondo.png      (logo horizontal) -> logo webp 320px (Nav/Footer/Login)
  *
  * Out (todos en public/):
  *   favicon-16.png, favicon-32.png, favicon-192.png, favicon-512.png
  *   apple-touch-icon.png  (180x180)
  *   og-image.webp         (1200x630, q82, ~50KB)
  *   og-image.jpg          (1200x630, q82, fallback)
+ *   DC_Bikes_Sin_Fondo_320.webp  (320px ancho, logo de cabecera)
  *
  * Se ejecuta en `prebuild` para que Vite los copie a dist/ en `vite build`.
  */
@@ -24,6 +26,9 @@ const PUB   = join(__dir, '..', 'public')
 // Fuente única: el logo circular de marca (favicons de la pestaña/PWA + og-image).
 const SRC_LOGO = join(PUB, 'Logo_DC_Bikes_Circular.png')
 const SRC_OG   = join(PUB, 'Logo_DC_Bikes_Circular.png')
+// Logo horizontal del header/footer: el PNG original (437KB) se renderiza a
+// ~56-80px de alto, así que servimos una versión webp de 320px de ancho.
+const SRC_NAV  = join(PUB, 'DC_Bikes_Sin_Fondo.png')
 
 if (!existsSync(SRC_LOGO)) {
   console.error(`[generate-images] Falta el source: ${SRC_LOGO}`)
@@ -31,6 +36,10 @@ if (!existsSync(SRC_LOGO)) {
 }
 if (!existsSync(SRC_OG)) {
   console.error(`[generate-images] Falta el source: ${SRC_OG}`)
+  process.exit(1)
+}
+if (!existsSync(SRC_NAV)) {
+  console.error(`[generate-images] Falta el source: ${SRC_NAV}`)
   process.exit(1)
 }
 
@@ -83,10 +92,22 @@ async function buildOgImage() {
   console.log(`  og-image  og-image.jpg            1200x630  ${kbJpg}KB`)
 }
 
+async function buildNavLogo() {
+  // 320px de ancho basta para los ~56-80px CSS a los que se renderiza (2-4x DPR)
+  const target = join(PUB, 'DC_Bikes_Sin_Fondo_320.webp')
+  const info = await sharp(SRC_NAV)
+    .resize({ width: 320 })
+    .webp({ quality: 82, effort: 6 })
+    .toFile(target)
+  const kb = (statSync(target).size / 1024).toFixed(1)
+  console.log(`  logo      DC_Bikes_Sin_Fondo_320.webp ${info.width}x${info.height}  ${kb}KB`)
+}
+
 try {
   console.log('\nGenerando assets de marca...')
   await buildFavicons()
   await buildOgImage()
+  await buildNavLogo()
   console.log('OK\n')
 } catch (err) {
   console.error('\n[generate-images] FAIL:', err.message)

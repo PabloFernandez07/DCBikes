@@ -16,6 +16,20 @@ import { z } from 'zod'
 const slugRegex = /^[a-z0-9-]+$/
 const ean13Regex = /^\d{13}$/
 
+/**
+ * Normaliza un decimal escrito "a la española" antes de validar/convertir:
+ *   "12,50"    → "12.50"
+ *   "1.299,95" → "1299.95"  (los puntos son separadores de miles)
+ *   "12.50"    → "12.50"    (sin coma se deja igual)
+ * Sin esto, el form rechazaba la coma decimal sin un mensaje útil (BUG-B5).
+ * Úsala también al convertir a número al guardar: `Number(normalizeDecimalEs(v))`.
+ */
+export function normalizeDecimalEs(v: string): string {
+  const s = v.trim()
+  if (!s.includes(',')) return s
+  return s.replace(/\./g, '').replace(',', '.')
+}
+
 // ─── Producto completo (BD) ─────────────────────────────────────────────
 export const productSchema = z.object({
   id: z.string().uuid().optional(),
@@ -88,19 +102,20 @@ export const productFormSchema = z.object({
     .min(1, 'PVP requerido')
     .refine(
       (v) => {
-        const n = Number(v)
+        // Acepta coma decimal ("12,50") normalizando es-ES antes de validar.
+        const n = Number(normalizeDecimalEs(v))
         return Number.isFinite(n) && n > 0
       },
-      { message: 'PVP debe ser mayor que 0' },
+      { message: 'PVP debe ser mayor que 0 (usa punto o coma decimal: 12,50)' },
     ),
 
   discount_percent: z.string().refine(
     (v) => {
       if (v.trim() === '') return true
-      const n = Number(v)
+      const n = Number(normalizeDecimalEs(v))
       return Number.isFinite(n) && n >= 0 && n <= 100
     },
-    { message: 'Entre 0 y 100' },
+    { message: 'Entre 0 y 100 (admite coma decimal: 12,5)' },
   ),
 
   stock: z

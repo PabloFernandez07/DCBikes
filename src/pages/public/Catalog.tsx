@@ -12,6 +12,18 @@ import { cleanGroupName } from '@/lib/variant-colors'
 
 type SortKey = 'name' | 'price_asc' | 'price_desc' | 'discount' | 'newest'
 
+/**
+ * PERF-M2a: columnas que el catálogo usa de verdad, en vez de `select('*')`.
+ * - ProductCard lee: name, brand, retail_price, discount_percent.
+ * - El agrupado/orden (buildCatalogCards/sortCards) usa: id, slug, name,
+ *   size_label, model_group, retail_price, discount_percent, stock,
+ *   is_purchasable, created_at.
+ * - category_id se usa para derivar las categorías activas (PERF-M2b).
+ * Evita arrastrar description, safety_standards, ean, etc. en el payload.
+ */
+const CATALOG_COLUMNS =
+  'id,slug,name,brand,retail_price,discount_percent,stock,is_purchasable,size_label,model_group,created_at,category_id'
+
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'name',       label: 'Nombre A–Z' },
   { key: 'price_asc',  label: 'Precio: menor a mayor' },
@@ -176,26 +188,15 @@ export default function Catalog() {
 
   // IDs de categorías que tienen al menos un producto ACTIVO (visible en web).
   // Solo esas se muestran como filtro, para no saturar con categorías vacías.
+  //
+  // PERF-M2b: en vez del antiguo bucle paginado extra que recorría TODOS los
+  // productos solo para leer category_id, derivamos el set de la carga SIN
+  // filtros (la inicial trae el catálogo completo; ver query de productos más
+  // abajo). Solo se recalcula cuando no hay filtros activos para que las
+  // pills no desaparezcan al filtrar. Limitación: cubre los primeros 1000
+  // productos (límite por defecto de PostgREST), el mismo que ya aplicaba a
+  // la query principal del grid.
   const [activeCatIds, setActiveCatIds] = useState<Set<string>>(new Set())
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      const set = new Set<string>()
-      const size = 1000
-      for (let from = 0; ; from += size) {
-        const { data } = await supabase
-          .from('products')
-          .select('category_id')
-          .eq('active', true)
-          .range(from, from + size - 1)
-        const rows = (data as { category_id: string | null }[]) ?? []
-        for (const r of rows) if (r.category_id) set.add(r.category_id)
-        if (rows.length < size) break
-      }
-      if (!cancelled) setActiveCatIds(set)
-    })()
-    return () => { cancelled = true }
-  }, [])
 
   const visibleCategories = useMemo(
     () => categories.filter(c => activeCatIds.has(c.id)),
@@ -214,15 +215,33 @@ export default function Catalog() {
     }
   }, [updateCatScroll, visibleCategories, products])
 
+  // PERF-M5: contador de secuencia para descartar respuestas obsoletas. Si
+  // el usuario cambia término/categoría con una query en vuelo, la respuesta
+  // antigua puede llegar DESPUÉS de la nueva y pisar el estado. El debounce
+  // de la búsqueda (400 ms) ya lo aplica SearchBar antes de llamar a
+  // onSearch, así que aquí solo llega un término "asentado" por tecleo.
+  const requestSeqRef = useRef(0)
+
   useEffect(() => {
     setLoading(true)
-    let query = supabase.from('products').select('*').eq('active', true)
+    const seq = ++requestSeqRef.current
+    let query = supabase.from('products').select(CATALOG_COLUMNS).eq('active', true)
     if (selectedCategory) query = query.eq('category_id', selectedCategory)
     if (search.trim()) query = query.ilike('name', `%${search.trim()}%`)
     query.then(({ data }) => {
-      const prods = data ?? []
+      if (seq !== requestSeqRef.current) return // respuesta obsoleta: descartada
+      const prods = ((data as unknown) as Product[] | null) ?? []
       setProducts(prods)
       setLoading(false)
+      // PERF-M2b: con la carga completa (sin filtros) derivamos qué
+      // categorías tienen productos activos, sin query extra.
+      if (!selectedCategory && !search.trim()) {
+        const set = new Set<string>()
+        for (const p of prods) if (p.category_id) set.add(p.category_id)
+        setActiveCatIds(set)
+      }
+      // Solo se registra la búsqueda de la respuesta vigente → trackSearch
+      // queda debounced de serie (una inserción por término asentado).
       if (search.trim()) trackSearch(search.trim(), prods.length)
     })
   }, [search, selectedCategory])
@@ -237,16 +256,30 @@ export default function Catalog() {
   const cards = useMemo(() => buildCatalogCards(products), [products])
   const sortedCards = useMemo(() => sortCards(cards, sort), [cards, sort])
 
+  // PERF-M2c: pre-indexamos las imágenes por product_id (ya ordenadas por
+  // sort_order) UNA vez por cambio de `images`, en vez de filtrar + ordenar
+  // el array global por cada card en cada render (O(cards × imágenes)).
+  const imagesByProduct = useMemo(() => {
+    const map = new Map<string, ProductImage[]>()
+    for (const img of images) {
+      const list = map.get(img.product_id)
+      if (list) list.push(img)
+      else map.set(img.product_id, [img])
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => a.sort_order - b.sort_order)
+    }
+    return map
+  }, [images])
+
   // Para que la imagen del card pueda venir de cualquier variante del grupo
   // (no solo del padre), permitimos buscar imágenes entre todas las variantes
   // y, si el padre no tiene foto, devolver las del primer producto del grupo
   // que tenga.
   const getProductImagesForCard = (card: CatalogCard) => {
     for (const variant of card.variants) {
-      const imgs = images
-        .filter(img => img.product_id === variant.id)
-        .sort((a, b) => a.sort_order - b.sort_order)
-      if (imgs.length > 0) return imgs
+      const imgs = imagesByProduct.get(variant.id)
+      if (imgs && imgs.length > 0) return imgs
     }
     return []
   }

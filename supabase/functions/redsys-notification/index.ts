@@ -36,6 +36,7 @@ import { escapeHtml, getSettings, asString, jsonError, jsonOk, sendViaResend, bu
 import { loadRedsysConfig } from '../_shared/redsys-config.ts'
 import { verifyRedsysSignature } from '../_shared/redsys-sign.ts'
 import { internalSecretHeader } from '../_shared/security.ts'
+import { restoreStockOnce } from '../_shared/stock-restore.ts'
 
 interface NotificationOutcome {
   authorized: boolean
@@ -219,6 +220,28 @@ serve(async (req) => {
   // Hoisted so catch block can reference them for S-12 error logging.
   let supabase: ReturnType<typeof createClient> | null = null
   let rawBody: string | null = null
+  // BUG-A3: hash insertado en redsys_notification_dedup durante ESTA request.
+  // Si respondemos error tras insertarlo, hay que borrarlo para que el
+  // reintento de Redsys no choque con el dedup y el pago se procese.
+  let insertedDedupHash: string | null = null
+
+  // BUG-A3: libera la fila de dedup insertada en esta request (best-effort).
+  // Se llama en los caminos que devuelven 5xx tras el insert temprano — el
+  // insert temprano se MANTIENE como protección anti-replay durante el
+  // procesamiento; solo se revierte si el procesamiento no llegó a término.
+  const releaseDedup = async () => {
+    if (!supabase || !insertedDedupHash) return
+    try {
+      await supabase
+        .from('redsys_notification_dedup')
+        .delete()
+        .eq('merchant_params_hash', insertedDedupHash)
+      console.log(`[${ts()}] dedup liberado para reintento · hash=${insertedDedupHash.slice(0, 12)}...`)
+      insertedDedupHash = null
+    } catch (delErr) {
+      console.error(`[${ts()}] CRÍTICO: no se pudo liberar dedup (el reintento de Redsys será ignorado):`, String(delErr))
+    }
+  }
 
   try {
     if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
@@ -277,6 +300,10 @@ serve(async (req) => {
           `[${ts()}] redsys_notification_dedup insert error (non-blocking):`,
           dedupErr.message,
         )
+      } else {
+        // Insert OK: recordamos el hash para poder liberarlo si esta misma
+        // request acaba en error 5xx (BUG-A3).
+        insertedDedupHash = outcome.merchantParamsHash
       }
     }
 
@@ -403,7 +430,12 @@ serve(async (req) => {
       .eq('status', 'pending')
     if (uErr) {
       console.error(`[${ts()}] update order error:`, uErr.message)
-      return jsonError(uErr.message, 500, req)
+      // BUG-A3: vamos a responder 5xx → Redsys reintentará. Liberar la fila
+      // de dedup insertada arriba o el reintento chocaría con el unique y
+      // el pago no se procesaría NUNCA.
+      await releaseDedup()
+      // SEC-M3: detalle interno solo en logs; cuerpo genérico.
+      return jsonError('error interno', 500, req)
     }
     if (uCount === 0) {
       console.warn(
@@ -421,6 +453,23 @@ serve(async (req) => {
         signature_valid: outcome.signatureValid,
       })
       return jsonOk({ ok: true, status: 'race_lost' }, req)
+    }
+
+    // 4-bis. BUG-C2 (auditoría técnica 2026-06-12): pago rechazado →
+    // liberar el stock reservado en order-place. Antes el stock quedaba
+    // comprometido para siempre en pedidos payment_failed (nadie lo
+    // restauraba). Idempotente vía orders.stock_restored_at; si el admin
+    // borra después el pedido (order-delete) o el cron lo cancela, esos
+    // caminos verán el sello y no duplicarán.
+    if (!outcome.authorized) {
+      const restoreResult = await restoreStockOnce(supabase, order.id)
+      if (restoreResult === 'failed') {
+        // No bloqueamos la respuesta a Redsys: el cron order-auto-cancel
+        // reintentará la restauración al cancelar el pedido payment_failed.
+        console.error(
+          `[${ts()}] restore stock tras payment_failed FALLÓ · ${order.order_number} — el cron lo reintentará`,
+        )
+      }
     }
 
     // 5. Log + history.
@@ -473,6 +522,11 @@ serve(async (req) => {
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err)
     console.error(`[${ts()}] ✗ redsys-notification FATAL:`, errMsg)
+
+    // BUG-A3: aunque respondemos 200 (Redsys no reintenta automáticamente),
+    // liberamos el dedup para que un REENVÍO MANUAL desde el portal de
+    // Redsys (acción que pedirá la alerta DPO de abajo) sí pueda procesarse.
+    await releaseDedup()
 
     // S-12: persistir en payments_log con operation_type='notification' + warning flag.
     // (El CHECK constraint solo permite preauth/capture/cancel/refund/notification.)

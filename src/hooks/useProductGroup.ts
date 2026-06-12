@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Product } from '@/lib/database.types'
+import type { Product, ProductImage } from '@/lib/database.types'
 
 const LETTER_SIZE_ORDER: Record<string, number> = {
   XXS: 0,
@@ -53,6 +53,26 @@ export function sortVariantsBySize(variants: Product[]): Product[] {
   return [...letterVariants, ...numericVariants, ...otherVariants, ...noSizeVariants]
 }
 
+/** Categoría mínima embebida en la query del grupo (PERF-M3). */
+export interface ProductGroupCategory {
+  name: string
+  slug: string
+}
+
+/**
+ * PERF-M3: embeds de PostgREST — las imágenes y la categoría viajan EN la
+ * misma query de productos en vez de en round-trips separados. Pasamos de
+ * ~4 viajes secuenciales (producto → variantes → imágenes → categoría) a
+ * 1-2 (producto suelto / grupo de variantes).
+ */
+const GROUP_SELECT = '*, product_images(*), categories(name,slug)'
+
+/** Fila de `products` con los embeds de GROUP_SELECT. */
+type ProductRowWithEmbeds = Product & {
+  product_images: ProductImage[] | null
+  categories: ProductGroupCategory | null
+}
+
 export interface UseProductGroupResult {
   parentProduct: Product | null
   variants: Product[]
@@ -60,6 +80,10 @@ export interface UseProductGroupResult {
   setSelectedVariant: (variant: Product) => void
   loading: boolean
   error: string | null
+  /** Imágenes de TODAS las variantes del grupo, ordenadas por sort_order. */
+  images: ProductImage[]
+  /** Categoría del grupo (embebida en la query de variantes). */
+  category: ProductGroupCategory | null
 }
 
 /**
@@ -70,11 +94,15 @@ export interface UseProductGroupResult {
  * - Si `model_group` es null, devuelve un grupo de una sola variante.
  * - `selectedVariant` por defecto = primera variante con stock > 0, o la
  *   primera si todas están sin stock.
+ * - Las imágenes y la categoría vienen embebidas en las mismas queries
+ *   (PERF-M3), sin round-trips extra.
  */
 export function useProductGroup(slug: string | undefined): UseProductGroupResult {
   const [parentProduct, setParentProduct] = useState<Product | null>(null)
   const [rawVariants, setRawVariants] = useState<Product[]>([])
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
+  const [images, setImages] = useState<ProductImage[]>([])
+  const [category, setCategory] = useState<ProductGroupCategory | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -83,6 +111,8 @@ export function useProductGroup(slug: string | undefined): UseProductGroupResult
       setParentProduct(null)
       setRawVariants([])
       setSelectedVariantId(null)
+      setImages([])
+      setCategory(null)
       setLoading(false)
       return
     }
@@ -93,54 +123,78 @@ export function useProductGroup(slug: string | undefined): UseProductGroupResult
 
     ;(async () => {
       try {
-        // 1. Fetch producto base por slug
-        const { data: baseProduct, error: baseErr } = await supabase
+        // 1. Fetch producto base por slug, con imágenes + categoría embebidas
+        const { data: baseData, error: baseErr } = await supabase
           .from('products')
-          .select('*')
+          .select(GROUP_SELECT)
           .eq('slug', slug)
           .eq('active', true)
           .single()
 
-        if (baseErr || !baseProduct) {
+        const baseRow = baseData as ProductRowWithEmbeds | null
+
+        if (baseErr || !baseRow) {
           if (!cancelled) {
             setError(baseErr?.message ?? 'Producto no encontrado')
             setParentProduct(null)
             setRawVariants([])
             setSelectedVariantId(null)
+            setImages([])
+            setCategory(null)
             setLoading(false)
           }
           return
         }
 
-        // 2. Si tiene model_group, fetch todas las variantes del grupo
-        let groupVariants: Product[] = [baseProduct]
-        if (baseProduct.model_group) {
+        // 2. Si tiene model_group, fetch todas las variantes del grupo (con
+        //    los mismos embeds, así no hay viaje extra por imágenes/categoría)
+        let groupRows: ProductRowWithEmbeds[] = [baseRow]
+        if (baseRow.model_group) {
           const { data: variantsData, error: vErr } = await supabase
             .from('products')
-            .select('*')
-            .eq('model_group', baseProduct.model_group)
+            .select(GROUP_SELECT)
+            .eq('model_group', baseRow.model_group)
             .eq('active', true)
 
           if (vErr) {
             console.warn('[useProductGroup] error fetching variants', vErr)
           } else if (variantsData && variantsData.length > 0) {
-            groupVariants = variantsData
+            groupRows = variantsData as unknown as ProductRowWithEmbeds[]
           }
         }
 
         if (cancelled) return
 
-        const sorted = sortVariantsBySize(groupVariants)
+        // Separamos los embeds del producto plano (el estado sigue siendo
+        // Product[], igual que antes del cambio).
+        const groupImages: ProductImage[] = []
+        const categoryByProductId = new Map<string, ProductGroupCategory>()
+        const plainProducts: Product[] = groupRows.map(row => {
+          const { product_images, categories, ...product } = row
+          if (product_images) groupImages.push(...product_images)
+          if (categories) categoryByProductId.set(product.id, categories)
+          return product as Product
+        })
+        groupImages.sort((a, b) => a.sort_order - b.sort_order)
+
+        const sorted = sortVariantsBySize(plainProducts)
         // Parent product: el primero del grupo ordenado (lo usamos para imagen
         // / descripción / nombre limpio).
-        const parent = sorted[0] ?? baseProduct
+        const parent = sorted[0] ?? plainProducts[0]
         // Default selected = primera con stock, o si ninguna tiene, la primera.
         const defaultSelected =
-          sorted.find(v => v.stock > 0) ?? sorted[0] ?? baseProduct
+          sorted.find(v => v.stock > 0) ?? sorted[0] ?? plainProducts[0]
+        // Categoría: la del padre; fallback a la primera no nula del grupo.
+        const parentCategory =
+          categoryByProductId.get(parent.id) ??
+          categoryByProductId.values().next().value ??
+          null
 
         setParentProduct(parent)
         setRawVariants(sorted)
         setSelectedVariantId(defaultSelected.id)
+        setImages(groupImages)
+        setCategory(parentCategory)
         setLoading(false)
       } catch (e) {
         if (!cancelled) {
@@ -167,5 +221,7 @@ export function useProductGroup(slug: string | undefined): UseProductGroupResult
     setSelectedVariant: variant => setSelectedVariantId(variant.id),
     loading,
     error,
+    images,
+    category,
   }
 }

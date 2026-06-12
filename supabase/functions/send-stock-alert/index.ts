@@ -31,12 +31,18 @@ interface StockAlertRow {
   id: string
   email: string
   unsubscribe_token: string
+  /** BUG-M3: intentos de envío previos fallidos (migración 0065). */
+  send_attempts: number
   products: {
     name: string
     slug: string
     size_label: string | null
   } | null
 }
+
+// BUG-M3: máximo de intentos de envío antes de abandonar la alerta
+// (notified_at queda sellado definitivamente).
+const MAX_SEND_ATTEMPTS = 5
 
 // Helper interno para respuestas JSON con CORS dinámico
 function jsonRes(body: unknown, status: number, req: Request): Response {
@@ -87,6 +93,7 @@ Deno.serve(async (req) => {
       id,
       email,
       unsubscribe_token,
+      send_attempts,
       products!inner (
         name,
         slug,
@@ -133,8 +140,10 @@ Deno.serve(async (req) => {
     }
 
     // SELLAR notified_at ANTES de enviar para evitar reenvíos en caso de
-    // ejecuciones concurrentes del cron. Si el envío falla después, la alerta
-    // queda sellada igualmente (loguamos el fallo pero no reabrimos).
+    // ejecuciones concurrentes del cron (anti-carrera, correcto). BUG-M3:
+    // si el envío falla después, se REVIERTE notified_at a NULL y se
+    // incrementa send_attempts para reintentar en el siguiente cron; tras
+    // MAX_SEND_ATTEMPTS intentos la alerta se abandona (queda sellada).
     const { error: sealErr } = await supabase
       .from('stock_alerts')
       .update({ notified_at: new Date().toISOString() })
@@ -200,7 +209,8 @@ Deno.serve(async (req) => {
       ],
     })
 
-    // Envío vía Resend (loguamos el fallo pero no reabrimos notified_at)
+    // Envío vía Resend. BUG-M3: si falla, reabrimos notified_at (salvo que
+    // se hayan agotado los intentos) para que el siguiente cron reintente.
     try {
       const emailId = await sendViaResend({
         from: buildFromAddress(),
@@ -211,9 +221,39 @@ Deno.serve(async (req) => {
       console.log(`[${ts()}] send-stock-alert: email enviado — alert=${alert.id} resend_id=${emailId}`)
       sent++
     } catch (sendErr) {
-      // La alerta quedó sellada; el fallo de envío se registra en log pero no
-      // se revierte notified_at (evita bucle de reenvíos).
       console.error(`[${ts()}] send-stock-alert: FALLO al enviar email para alert=${alert.id}:`, String(sendErr))
+      const attempts = (alert.send_attempts ?? 0) + 1
+      if (attempts >= MAX_SEND_ATTEMPTS) {
+        // Abandono: dejamos notified_at sellado para no reintentar jamás
+        // (email probablemente inválido o bloqueado por Resend).
+        console.error(
+          `[${ts()}] send-stock-alert: alerta ${alert.id} ABANDONADA tras ${attempts} intentos — notified_at queda sellado`,
+        )
+        await supabase
+          .from('stock_alerts')
+          .update({ send_attempts: attempts })
+          .eq('id', alert.id)
+      } else {
+        // Revertir el sello + contar el intento → el cron (cada 5 min)
+        // volverá a recogerla. Nota: si el mismo email se re-suscribió al
+        // producto mientras tanto, el índice único parcial puede rechazar
+        // la reapertura; en ese caso la dejamos sellada (la nueva
+        // suscripción cubrirá el aviso).
+        const { error: reopenErr } = await supabase
+          .from('stock_alerts')
+          .update({ notified_at: null, send_attempts: attempts })
+          .eq('id', alert.id)
+        if (reopenErr) {
+          console.error(
+            `[${ts()}] send-stock-alert: no se pudo reabrir la alerta ${alert.id} (queda sellada):`,
+            reopenErr.message,
+          )
+        } else {
+          console.warn(
+            `[${ts()}] send-stock-alert: alerta ${alert.id} reabierta para reintento (${attempts}/${MAX_SEND_ATTEMPTS})`,
+          )
+        }
+      }
     }
   }
 

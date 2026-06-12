@@ -76,6 +76,9 @@ export default function OrdersList() {
   const [dateFrom, setDateFrom] = useState<string>(initialDate === 'today' ? new Date().toISOString().slice(0, 10) : '')
   const [dateTo, setDateTo] = useState<string>('')
   const [deliveryFilter, setDeliveryFilter] = useState<DeliveryFilter>('all')
+  // `searchInput` refleja lo tecleado; `search` (con debounce de 300 ms) es lo
+  // que dispara la query. Sin esto se lanzaba 1 query por tecla (PERF-M5).
+  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [showDeleted, setShowDeleted] = useState(false)
 
@@ -93,11 +96,13 @@ export default function OrdersList() {
   })
 
   const fetchCounters = useCallback(async () => {
+    // Los contadores excluyen pedidos soft-deleted, igual que la lista por
+    // defecto; si no, las cards mostraban más pedidos de los visibles (BUG-B1).
     const [totalRes, authRes, accRes, readyRes] = await Promise.all([
-      supabase.from('orders').select('id', { count: 'exact', head: true }),
-      supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'authorized'),
-      supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
-      supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'ready_pickup'),
+      supabase.from('orders').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+      supabase.from('orders').select('id', { count: 'exact', head: true }).is('deleted_at', null).eq('status', 'authorized'),
+      supabase.from('orders').select('id', { count: 'exact', head: true }).is('deleted_at', null).eq('status', 'accepted'),
+      supabase.from('orders').select('id', { count: 'exact', head: true }).is('deleted_at', null).eq('status', 'ready_pickup'),
     ])
     setCounters({
       total: totalRes.count ?? 0,
@@ -125,12 +130,14 @@ export default function OrdersList() {
       query = query.eq('delivery_method', deliveryFilter)
     }
     if (dateFrom) {
-      query = query.gte('created_at', new Date(dateFrom).toISOString())
+      // 'YYYY-MM-DD' a secas se interpreta como medianoche UTC; con horario
+      // de verano eso excluía pedidos de 00:00–02:00 locales (BUG-B2).
+      // Añadiendo la hora, el Date se construye en hora LOCAL.
+      query = query.gte('created_at', new Date(`${dateFrom}T00:00:00`).toISOString())
     }
     if (dateTo) {
-      // inclusive end of day
-      const end = new Date(dateTo)
-      end.setHours(23, 59, 59, 999)
+      // Fin de día inclusivo, también construido en hora local.
+      const end = new Date(`${dateTo}T23:59:59.999`)
       query = query.lte('created_at', end.toISOString())
     }
     const term = search.trim()
@@ -156,6 +163,13 @@ export default function OrdersList() {
 
   useEffect(() => { fetchOrders() }, [fetchOrders])
   useEffect(() => { fetchCounters() }, [fetchCounters])
+
+  // Debounce de la búsqueda: confirma el término cuando el usuario deja de
+  // teclear durante 300 ms (el reset de página ya depende de `search`).
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput), 300)
+    return () => clearTimeout(t)
+  }, [searchInput])
 
   // Sync filters into URL (only status for shareable links).
   useEffect(() => {
@@ -486,8 +500,8 @@ export default function OrdersList() {
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)]" aria-hidden="true" />
               <input
                 type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
                 placeholder="Nº pedido, email, teléfono…"
                 className="w-full text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-card)] pl-9 pr-3 py-1.5 rounded-lg border border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50 focus:outline-none transition-colors"
               />

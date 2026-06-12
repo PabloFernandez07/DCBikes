@@ -33,9 +33,9 @@ import {
   loadOrder,
   logPayment,
   logStatusChange,
-  restoreStockFor,
   runRedsysOperation,
 } from '../_shared/order-admin.ts'
+import { restoreStockOnce } from '../_shared/stock-restore.ts'
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
@@ -164,6 +164,19 @@ serve(async (req) => {
       ? String((rpcRow as { prev_status?: string }).prev_status ?? 'authorized')
       : 'authorized'
 
+    // BUG-A5 (auditoría técnica 2026-06-12): si la RPC indica que el pedido
+    // YA estaba 'cancelled' (doble clic / dos pestañas concurrentes que
+    // pasaron el check de status a la vez), cortocircuitar: la primera
+    // llamada ya anuló en Redsys, restauró stock, logueó y envió emails.
+    // Repetir aquí duplicaba la anulación Redsys (KO espurio → alerta falsa
+    // al admin), el restore de stock y los logs.
+    if (prevStatus === 'cancelled') {
+      console.log(
+        `[${ts()}] customer-order-cancel · ${order.order_number} ya estaba cancelled (concurrencia) — noop`,
+      )
+      return jsonOk({ status: 'cancelled', mode: config.mode }, req)
+    }
+
     const cancelResult = await runRedsysOperation({
       config,
       redsysOrderId: order.payment_pre_auth_id ?? '',
@@ -174,8 +187,9 @@ serve(async (req) => {
       console.error(
         `[${ts()}] cancel Redsys KO POST-RPC · ${order.order_number} · code=${cancelResult.responseCode}`,
       )
-      // Loguea el intento aunque haya fallado (auditoría).
-      await logPayment(supabase, order.id, 'cancel', cancelResult, '9')
+      // BUG-A5: el logPayment del camino KO se eliminó — abajo (paso 6) se
+      // loguea SIEMPRE el resultado; mantener ambos duplicaba la fila en
+      // payments_log para el mismo intento.
       // No revertimos la cancelación: el cliente ya recibió "cancelado" de la
       // RPC. El admin debe resolver el reembolso manualmente.
       // 4.2: email de alerta al admin — sin él la retención KO pasaba
@@ -190,9 +204,9 @@ serve(async (req) => {
       })
     }
 
-    // 6) Auditoría + restauración de stock + log de pago.
+    // 6) Auditoría + restauración de stock (idempotente — BUG-C2) + log de pago.
     const reason = 'Cancelado por el cliente'
-    await restoreStockFor(supabase, order.id)
+    await restoreStockOnce(supabase, order.id)
     await logPayment(supabase, order.id, 'cancel', cancelResult, '9')
     await logStatusChange(supabase, order.id, prevStatus, 'cancelled', null, reason)
 

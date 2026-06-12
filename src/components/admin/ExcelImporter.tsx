@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react'
-import { read as xlsxRead, utils } from 'xlsx'
 import { clsx } from 'clsx'
 import { Upload, AlertTriangle, CheckCircle, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
+import type { Database } from '@/lib/database.types'
+
+type ProductUpdate = Database['public']['Tables']['products']['Update']
 
 type Step = 'drop' | 'map' | 'validate' | 'import'
 
@@ -125,12 +127,54 @@ function toStr(v: unknown): string {
   if (v == null) return ''
   return String(v).trim()
 }
+/**
+ * Parsea números en formato es-ES (TPVinforpyme) sin corromper precios.
+ * El bug clásico: "1.299,95" → replace(',','.') → "1.299.95" → parseFloat →
+ * 1.299 (una bici de 1.300 € se importaba a 1,30 €).
+ *
+ * Casos de prueba:
+ *   "1.299,95" → 1299.95  (punto = miles, coma = decimal)
+ *   "12,5"     → 12.5     (coma decimal simple)
+ *   "1.299"    → 1299     (patrón claro de miles: grupos de 3)
+ *   "12.50"    → 12.5     (un único punto con ≤2 decimales = decimal)
+ *   "0.123"    → 0.123    (no puede ser miles: parte entera "0")
+ *   "1.299.95" → null     (incoherente: mejor rechazar que corromper)
+ */
 function toNum(v: unknown): number | null {
   if (v == null || v === '') return null
   if (typeof v === 'number') return Number.isFinite(v) ? v : null
-  const cleaned = String(v).replace(/[€\s]/g, '').replace(',', '.')
-  const n = parseFloat(cleaned)
+  let s = String(v).replace(/[€\s]/g, '')
+  if (s === '') return null
+  if (s.includes(',')) {
+    // Hay coma → formato es-ES: la coma es el decimal y TODOS los puntos
+    // son separadores de miles. Más de una coma es inválido.
+    if ((s.match(/,/g) ?? []).length > 1) return null
+    s = s.replace(/\./g, '').replace(',', '.')
+  } else if (s.includes('.')) {
+    // Sin coma: decidir si los puntos son miles o decimal.
+    if (/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(s)) {
+      // Patrón inequívoco de miles es-ES ("1.299", "1.234.567").
+      s = s.replace(/\./g, '')
+    } else if ((s.match(/\./g) ?? []).length > 1) {
+      // Varios puntos que no cuadran como miles ("1.299.95") → inválido.
+      return null
+    }
+    // Un único punto que no es miles ("12.50", "0.123") → decimal, se deja.
+  }
+  const n = parseFloat(s)
   return Number.isFinite(n) ? n : null
+}
+/**
+ * Normaliza un EAN para comparar/guardar. Los EAN llegan a veces como número
+ * desde el Excel (pierden los ceros a la izquierda), por eso forzamos String,
+ * nos quedamos solo con dígitos y, si quedaron 12 (EAN-13 sin su cero
+ * inicial), lo restauramos.
+ */
+function normalizeEan(v: unknown): string {
+  if (v == null) return ''
+  const digits = String(v).trim().replace(/\D/g, '')
+  if (digits.length === 12) return digits.padStart(13, '0')
+  return digits
 }
 function toBool(v: unknown, fallback = false): boolean {
   if (v == null || v === '') return fallback
@@ -179,7 +223,7 @@ function parseRows(rawRows: RawRow[], colMap: ColumnMap): MappedRow[] {
       descripcion_corta: toStr(get('descripcion_corta')),
       descripcion_completa: toStr(get('descripcion_completa')),
       sku: toStr(get('sku')),
-      ean: toStr(get('ean')),
+      ean: normalizeEan(get('ean')),
       pvp,
       coste: toNum(get('coste')),
       stock: Math.max(0, Math.trunc(toNum(get('stock')) ?? 0)),
@@ -272,26 +316,29 @@ export function ExcelImporter() {
   const [imported, setImported] = useState(0)
   const [importErrors, setImportErrors] = useState<Array<{ name: string; error: string }>>([])
   const [dragging, setDragging] = useState(false)
+  // Si está marcado, el UPDATE de productos existentes sobrescribe el stock
+  // con el del Excel. Desmarcado, el stock de la web no se toca.
+  const [updateStock, setUpdateStock] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleFile = (file: File) => {
-    const reader = new FileReader()
-    reader.onload = e => {
-      const wb = xlsxRead(e.target?.result, { type: 'binary' })
-      // Buscar hoja "Productos" (generada por nuestro script) o caer a la primera.
-      const sheetName = wb.SheetNames.includes('Productos')
-        ? 'Productos'
-        : wb.SheetNames[0]
-      const ws = wb.Sheets[sheetName]
-      const data = utils.sheet_to_json<RawRow>(ws, { defval: '' })
-      if (data.length === 0) return
-      const hdrs = Object.keys(data[0])
-      setHeaders(hdrs)
-      setRawRows(data)
-      setColMap(autoMap(hdrs))
-      setStep('map')
-    }
-    reader.readAsBinaryString(file)
+  const handleFile = async (file: File) => {
+    // Import dinámico: xlsx pesa ~113 KB gz y solo hace falta al procesar un
+    // archivo, no al entrar en cualquier ruta /admin (PERF-M4).
+    const XLSX = await import('xlsx')
+    const buf = await file.arrayBuffer()
+    const wb = XLSX.read(buf, { type: 'array' })
+    // Buscar hoja "Productos" (generada por nuestro script) o caer a la primera.
+    const sheetName = wb.SheetNames.includes('Productos')
+      ? 'Productos'
+      : wb.SheetNames[0]
+    const ws = wb.Sheets[sheetName]
+    const data = XLSX.utils.sheet_to_json<RawRow>(ws, { defval: '' })
+    if (data.length === 0) return
+    const hdrs = Object.keys(data[0])
+    setHeaders(hdrs)
+    setRawRows(data)
+    setColMap(autoMap(hdrs))
+    setStep('map')
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -315,17 +362,27 @@ export function ExcelImporter() {
     const categoryCache = new Map<string, string>()
     const errors: Array<{ name: string; error: string }> = []
 
+    // Columnas realmente presentes en el Excel (mapeadas a algo ≠ ignorar).
+    // En UPDATE solo se escriben los campos cuya columna existe de verdad:
+    // reimportar el catálogo del TPV no debe machacar datos gestionados a
+    // mano desde el admin (BUG-A6).
+    const presentKeys = new Set<ColumnKey>(
+      Object.values(colMap).filter(k => k !== 'ignorar'),
+    )
+
     for (const row of valid) {
       try {
-        const categoryId = await resolveCategoryId(row.familia, categoryCache)
-        if (!categoryId) {
-          errors.push({ name: row.nombre, error: 'No se pudo crear/asociar categoría' })
-          continue
+        // La categoría solo se resuelve (y auto-crea) si el Excel trae la
+        // columna Familia. Para INSERT es obligatoria; para UPDATE, opcional.
+        let categoryId: string | null = null
+        if (presentKeys.has('familia') && row.familia) {
+          categoryId = await resolveCategoryId(row.familia, categoryCache)
         }
 
         const baseSlug = slugify(row.nombre) || `producto-${row._rowIdx}`
 
-        const buildPayload = (slug: string) => ({
+        // Payload completo: solo para INSERT (producto nuevo, defaults seguros).
+        const buildPayload = (slug: string, catId: string) => ({
           name: row.nombre,
           slug,
           sku: row.sku || null,
@@ -334,7 +391,7 @@ export function ExcelImporter() {
           description: row.descripcion_completa || null,
           retail_price: row.pvp ?? 0,
           stock: row.stock,
-          category_id: categoryId,
+          category_id: catId,
           active: row.activo,
           featured: false,
           // Campos Fase A:
@@ -346,11 +403,21 @@ export function ExcelImporter() {
           discount_percent: null,
         })
 
-        // Buscar existente por SKU primero (si tiene). Si no, por slug.
-        // `products.sku` NO tiene UNIQUE constraint en BD, por eso no usamos
-        // upsert(onConflict:'sku') — devuelve error 42P10.
+        // Buscar existente con prioridad EAN → SKU → slug. El EAN es la clave
+        // real del catálogo del TPV; el slug solo como último recurso (dos
+        // productos distintos con el mismo nombre se fusionarían, BUG-M1).
+        // `products.sku`/`ean` NO tienen UNIQUE constraint en BD, por eso no
+        // usamos upsert(onConflict) — devuelve error 42P10.
         let existingId: string | null = null
-        if (row.sku) {
+        if (row.ean) {
+          const { data: byEan } = await supabase
+            .from('products')
+            .select('id')
+            .eq('ean', row.ean)
+            .limit(1)
+          if (byEan?.[0]?.id) existingId = byEan[0].id
+        }
+        if (!existingId && row.sku) {
           const { data: bySku } = await supabase
             .from('products')
             .select('id')
@@ -368,15 +435,43 @@ export function ExcelImporter() {
         }
 
         if (existingId) {
-          // UPDATE — conservamos el slug existente para no romper enlaces.
-          const { slug: _ignoredSlug, ...updatePayload } = buildPayload(baseSlug)
-          void _ignoredSlug
-          const { error } = await supabase
-            .from('products')
-            .update(updatePayload)
-            .eq('id', existingId)
-          if (error) throw error
+          // UPDATE parcial — solo campos con columna presente en el Excel.
+          // No se toca el slug (rompería enlaces) ni `featured`/`discount_percent`
+          // (se gestionan a mano en el admin y el TPV no los conoce).
+          const updatePayload: ProductUpdate = {}
+          if (presentKeys.has('nombre')) updatePayload.name = row.nombre
+          if (presentKeys.has('sku')) updatePayload.sku = row.sku || null
+          if (presentKeys.has('marca')) updatePayload.brand = row.marca || null
+          if (presentKeys.has('descripcion_corta')) updatePayload.short_description = row.descripcion_corta || null
+          if (presentKeys.has('descripcion_completa')) updatePayload.description = row.descripcion_completa || null
+          if (presentKeys.has('pvp')) updatePayload.retail_price = row.pvp ?? 0
+          if (presentKeys.has('ean')) updatePayload.ean = row.ean || null
+          if (presentKeys.has('talla')) updatePayload.size_label = row.talla || null
+          if (presentKeys.has('grupo_modelo')) updatePayload.model_group = row.grupo_modelo || null
+          if (presentKeys.has('peso_gramos')) updatePayload.weight_grams = row.peso_gramos
+          if (presentKeys.has('familia') && categoryId) updatePayload.category_id = categoryId
+          // Stock: solo si el admin marcó "Actualizar stock desde el Excel".
+          if (updateStock && presentKeys.has('stock')) updatePayload.stock = row.stock
+          // `active` derivado de Tipo/Familia NO se aplica en UPDATE: solo se
+          // escribe si el Excel trae la columna Activo de forma explícita.
+          if (presentKeys.has('activo')) updatePayload.active = row.activo
+          // `is_purchasable` NUNCA se toca en UPDATE salvo columna explícita:
+          // antes se escribía siempre (false si faltaba la columna) y cada
+          // reimport desactivaba la compra online de todo el catálogo.
+          if (presentKeys.has('comprar_online')) updatePayload.is_purchasable = row.comprar_online
+
+          if (Object.keys(updatePayload).length > 0) {
+            const { error } = await supabase
+              .from('products')
+              .update(updatePayload)
+              .eq('id', existingId)
+            if (error) throw error
+          }
         } else {
+          if (!categoryId) {
+            errors.push({ name: row.nombre, error: 'No se pudo crear/asociar categoría' })
+            continue
+          }
           // INSERT — slug puede colisionar con otro producto que tenga el mismo
           // nombre normalizado. Reintentamos con sufijo -2, -3, etc.
           let attemptSlug = baseSlug
@@ -384,7 +479,7 @@ export function ExcelImporter() {
           while (true) {
             const { error } = await supabase
               .from('products')
-              .insert(buildPayload(attemptSlug))
+              .insert(buildPayload(attemptSlug, categoryId))
             if (!error) break
             const isSlugConflict = (error as { code?: string }).code === '23505'
               && /slug/i.test((error as { message?: string }).message ?? '')
@@ -425,6 +520,7 @@ export function ExcelImporter() {
     setMappedRows([])
     setImported(0)
     setImportErrors([])
+    setUpdateStock(true)
   }
 
   // ── Step 1: drop ───────────────────────────────────────────────────────
@@ -631,6 +727,30 @@ export function ExcelImporter() {
             </p>
           )}
         </div>
+
+        {/* Control de stock en UPDATE: por defecto el Excel del TPV manda,
+            pero el admin puede proteger el stock gestionado desde la web. */}
+        {Object.values(colMap).includes('stock') && (
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-3 cursor-pointer select-none w-fit">
+              <input
+                type="checkbox"
+                checked={updateStock}
+                onChange={e => setUpdateStock(e.target.checked)}
+                className="w-4 h-4 rounded accent-[var(--color-lavender)] cursor-pointer"
+              />
+              <span className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)]">
+                Actualizar stock desde el Excel en productos existentes
+              </span>
+            </label>
+            {updateStock && (
+              <p className="flex items-center gap-1.5 text-xs text-amber-400/90 font-[var(--font-body)] pl-7">
+                <AlertTriangle size={13} aria-hidden="true" />
+                El stock del Excel sobrescribirá el stock actual de la web (incluidas ventas posteriores al export del TPV).
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="flex justify-end gap-3">
           <Button variant="ghost" onClick={() => setStep('map')}>Volver</Button>

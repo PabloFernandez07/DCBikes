@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { clsx } from 'clsx'
 import { Upload, X, CheckCircle, AlertTriangle, Download, Loader2 } from 'lucide-react'
-import { read as xlsxRead, utils } from 'xlsx'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 
@@ -72,10 +71,13 @@ export function UrlImageImporter() {
   const handleFile = useCallback(async (file: File) => {
     setLoading(true)
     try {
+      // Import dinámico: xlsx pesa ~113 KB gz y solo hace falta al procesar
+      // un archivo, no al entrar en cualquier ruta /admin (PERF-M4).
+      const XLSX = await import('xlsx')
       const buf = await file.arrayBuffer()
-      const wb = xlsxRead(buf, { type: 'array' })
+      const wb = XLSX.read(buf, { type: 'array' })
       const ws = wb.Sheets['Imagenes'] ?? wb.Sheets[wb.SheetNames[0]]
-      const rows = utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
 
       const [products, withImages] = await Promise.all([fetchAllProducts(), fetchProductsWithImages()])
       const byEan = new Map<string, ProductLite>()

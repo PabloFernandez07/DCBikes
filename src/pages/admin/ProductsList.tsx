@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
 import type { Product, Category } from '@/lib/database.types'
 import type { ProductFormValues } from '@/components/admin/ProductForm'
+import { normalizeDecimalEs } from '@/schemas/product'
 
 const PAGE_SIZE_OPTIONS = [10, 50, 100] as const
 
@@ -153,6 +154,9 @@ export default function ProductsList() {
   const { toasts, toast, dismiss } = useToast()
   const [products, setProducts] = useState<ProductWithCategory[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  // `searchInput` refleja lo tecleado; `search` (con debounce de 300 ms) es lo
+  // que dispara la query. Sin esto se lanzaba 1 query por tecla (PERF-M5).
+  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [onlyOnline, setOnlyOnline] = useState(false)
@@ -245,6 +249,16 @@ export default function ProductsList() {
     fetchProducts()
   }, [fetchProducts])
 
+  // Debounce de la búsqueda: confirma el término (y resetea la página) cuando
+  // el usuario deja de teclear durante 300 ms.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput)
+      setPage(0)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [searchInput])
+
   useEffect(() => {
     supabase.from('categories').select('*').order('sort_order').then(({ data }) => {
       setCategories(data ?? [])
@@ -292,8 +306,10 @@ export default function ProductsList() {
       brand: values.brand || null,
       short_description: values.short_description || null,
       description: values.description || null,
-      retail_price: Number(values.retail_price),
-      discount_percent: values.discount_percent ? Number(values.discount_percent) : null,
+      // normalizeDecimalEs: el schema acepta coma decimal ("12,50"), la
+      // conversión a número debe aceptarla igual o guardaríamos NaN.
+      retail_price: Number(normalizeDecimalEs(values.retail_price)),
+      discount_percent: values.discount_percent ? Number(normalizeDecimalEs(values.discount_percent)) : null,
       stock: Number(values.stock),
       featured: values.featured,
       active: values.active,
@@ -402,8 +418,8 @@ export default function ProductsList() {
             <input
               type="text"
               placeholder="Buscar por nombre..."
-              value={search}
-              onChange={e => { setSearch(e.target.value); setPage(0) }}
+              value={searchInput}
+              onChange={e => setSearchInput(e.target.value)}
               className="w-full bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl pl-9 pr-4 py-2.5 text-sm text-[var(--color-cream)] placeholder-[var(--color-mid)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors"
             />
           </div>

@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronLeft, Truck, Store, Receipt, Clock, Bike } from 'lucide-react'
+import { Turnstile } from '@marsidev/react-turnstile'
 import { useCartStore } from '@/stores/cartStore'
 import { useSchedule } from '@/hooks/useSchedule'
 import { useShopSettings } from '@/hooks/useShopSettings'
@@ -20,6 +21,10 @@ import {
   PROVINCIAS_PENINSULA,
   type CheckoutFormValues,
 } from '@/schemas/checkout'
+
+// SEC-M2: misma site key que QuoteModal — el token viaja como
+// `cf_turnstile_token` en el body de `order-place`, que lo valida fail-closed.
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
 function fmtEuros(cents: number): string {
   return (cents / 100).toLocaleString('es-ES', {
@@ -62,6 +67,23 @@ export default function Checkout() {
 
   const subtotalCents = getSubtotalCents()
   const isEmpty = items.length === 0
+
+  // SEC-M2: verificación anti-bots con Cloudflare Turnstile (patrón QuoteModal).
+  // El widget se carga lazy en la primera interacción con el formulario:
+  // privacidad (Cloudflare no recibe señal hasta que el usuario va a comprar)
+  // y mejora LCP/FID. El botón de pago queda deshabilitado hasta tener token.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const [turnstileLoaded, setTurnstileLoaded] = useState(false)
+  // Cambiar la key remonta el widget para pedir un token fresco tras un
+  // fallo de validación en el backend (token caducado/consumido).
+  const [turnstileWidgetKey, setTurnstileWidgetKey] = useState(0)
+
+  const handleFirstFocus = useCallback(() => {
+    setTurnstileLoaded(prev => prev || true)
+  }, [])
+
+  const captchaRequired = Boolean(TURNSTILE_SITE_KEY)
+  const payDisabled = captchaRequired && !turnstileToken
 
   const {
     register,
@@ -111,6 +133,13 @@ export default function Checkout() {
       return
     }
 
+    // SEC-M2: sin token de Turnstile no se intenta crear el pedido (el botón
+    // ya está deshabilitado; este guard cubre submits por teclado/Enter).
+    if (captchaRequired && !turnstileToken) {
+      toast.error('Completa la verificación anti-bots antes de realizar el pedido.')
+      return
+    }
+
     // Construimos el body que `order-place` espera (ver contrato Fase E).
     // OJO: NO enviamos snapshot ni totales — el backend recalcula precios
     // y stock para evitar manipulación del cliente.
@@ -151,6 +180,9 @@ export default function Checkout() {
       },
       terms_version: TERMS_VERSION,
       privacy_version: PRIVACY_VERSION,
+      // SEC-M2: contrato con `order-place` — el backend valida el token
+      // contra Cloudflare en modo fail-closed antes de crear el pedido.
+      cf_turnstile_token: turnstileToken ?? '',
     }
 
     try {
@@ -204,6 +236,15 @@ export default function Checkout() {
         e instanceof Error
           ? e.message
           : 'Error procesando el pedido. Inténtalo de nuevo.'
+      // SEC-M2: si el backend rechaza el captcha (token caducado o ya
+      // consumido), lo explicamos claro y remontamos el widget para que el
+      // usuario obtenga un token fresco y pueda reintentar.
+      if (/captcha|turnstile/i.test(message)) {
+        setTurnstileToken(null)
+        setTurnstileWidgetKey(k => k + 1)
+        toast.error('La verificación anti-bots ha caducado. Complétala de nuevo y vuelve a intentarlo.')
+        return
+      }
       toast.error(message)
     }
   }
@@ -244,8 +285,11 @@ export default function Checkout() {
         Finaliza tu pedido
       </h1>
 
+      {/* onFocus (focusin burbujeante): primera interacción del usuario con
+          cualquier campo → carga lazy del widget Turnstile (SEC-M2). */}
       <form
         onSubmit={handleSubmit(onSubmit)}
+        onFocus={handleFirstFocus}
         className="grid lg:grid-cols-[1fr_380px] gap-8"
       >
         {/* Formulario (columna izquierda) */}
@@ -720,6 +764,40 @@ export default function Checkout() {
                 .
               </p>
             </div>
+
+            {/* SEC-M2: verificación anti-bots junto al botón de pago */}
+            <div className="border-t border-[var(--color-card-hover)] pt-5 space-y-2">
+              {TURNSTILE_SITE_KEY ? (
+                <>
+                  {turnstileLoaded && (
+                    <Turnstile
+                      key={turnstileWidgetKey}
+                      siteKey={TURNSTILE_SITE_KEY}
+                      onSuccess={token => setTurnstileToken(token)}
+                      onError={() => setTurnstileToken(null)}
+                      onExpire={() => setTurnstileToken(null)}
+                      options={{ theme: 'dark', size: 'flexible' }}
+                    />
+                  )}
+                  {payDisabled && (
+                    <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)]">
+                      {turnstileLoaded
+                        ? 'Completa la verificación anti-bots para habilitar el pago. Si caduca o falla, se reintenta automáticamente al volver a marcarla.'
+                        : 'Al rellenar el formulario se activará la verificación anti-bots necesaria para pagar.'}
+                    </p>
+                  )}
+                  {/* P-04: aviso legal Cloudflare Turnstile junto al widget */}
+                  <p className="text-xs text-gray-500">
+                    Verificación anti-fraude vía Cloudflare Turnstile (se carga al interactuar con el formulario).{' '}
+                    <a href="/cookies" className="underline">Más info</a>.
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+                  <span role="img" aria-hidden="true">⚠</span> Captcha no configurado (VITE_TURNSTILE_SITE_KEY). Los pedidos seguirán protegidos por rate-limit en el backend.
+                </p>
+              )}
+            </div>
           </section>
 
           {/* Footer formulario móvil — total duplicado para no perderlo de vista */}
@@ -737,6 +815,7 @@ export default function Checkout() {
               variant="primary"
               size="lg"
               loading={isSubmitting}
+              disabled={payDisabled}
               className="w-full font-[var(--font-display)] tracking-widest"
             >
               Realizar pedido con obligación de pago
@@ -798,10 +877,18 @@ export default function Checkout() {
             variant="primary"
             size="lg"
             loading={isSubmitting}
+            disabled={payDisabled}
             className="hidden lg:flex w-full font-[var(--font-display)] tracking-widest"
           >
             Realizar pedido con obligación de pago
           </Button>
+
+          {/* SEC-M2: recordatorio junto al botón de pago de escritorio */}
+          {payDisabled && (
+            <p className="hidden lg:block text-[10px] text-[var(--color-mid)] font-[var(--font-cond)] leading-relaxed -mt-3">
+              Completa la verificación anti-bots (sección 4) para habilitar el pago.
+            </p>
+          )}
 
           <p className="text-[10px] text-[var(--color-mid)] font-[var(--font-cond)] leading-relaxed">
             Al realizar el pedido se reservará el importe en tu tarjeta. No se

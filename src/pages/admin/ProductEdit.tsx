@@ -9,6 +9,7 @@ import { ToastContainer } from '@/components/ui/Toast'
 import { Button } from '@/components/ui/Button'
 import type { Product, ProductImage, Database } from '@/lib/database.types'
 import type { ProductFormValues } from '@/components/admin/ProductForm'
+import { normalizeDecimalEs } from '@/schemas/product'
 
 type ProductInsert = Database['public']['Tables']['products']['Insert']
 
@@ -116,9 +117,10 @@ export function ProductEdit() {
       brand: values.brand || null,
       short_description: values.short_description || null,
       description: values.description || null,
-      retail_price: Number(values.retail_price),
-      discount_percent: values.discount_percent ? Number(values.discount_percent) : null,
-      stock: Number(values.stock),
+      // normalizeDecimalEs: el schema acepta coma decimal ("12,50"), la
+      // conversión a número debe aceptarla igual o guardaríamos NaN.
+      retail_price: Number(normalizeDecimalEs(values.retail_price)),
+      discount_percent: values.discount_percent ? Number(normalizeDecimalEs(values.discount_percent)) : null,
       featured: values.featured,
       active: values.active,
       is_purchasable: values.is_purchasable,
@@ -127,6 +129,14 @@ export function ProductEdit() {
       color: values.color?.trim() ? values.color.trim() : null,
       flavor: values.flavor?.trim() ? values.flavor.trim() : null,
       weight_grams: values.weight_grams ? Number(values.weight_grams) : null,
+    }
+
+    // Stock: solo se incluye si el admin lo modificó respecto al valor que se
+    // cargó en el form. Si se enviara siempre, una venta concurrente entre la
+    // carga y el guardado se perdería (lost update, BUG-M6).
+    const stockNum = Number(values.stock)
+    if (isNew || !product || stockNum !== product.stock) {
+      payload.stock = stockNum
     }
 
     // Cast builder to bypass TypeScript 6 strict generic inference with Supabase typed client
@@ -152,6 +162,9 @@ export function ProductEdit() {
       if (updateResult.error) {
         toast.error('Error al actualizar: ' + updateResult.error.message)
       } else {
+        // Refresca la referencia local para que el dirty-check de stock use
+        // el valor recién guardado como nueva línea base.
+        setProduct(prev => (prev ? { ...prev, ...payload } as Product : prev))
         toast.success('Producto actualizado')
       }
     }

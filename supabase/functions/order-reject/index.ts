@@ -25,9 +25,9 @@ import {
   logPayment,
   logStatusChange,
   requireAdmin,
-  restoreStockFor,
   runRedsysOperation,
 } from '../_shared/order-admin.ts'
+import { restoreStockOnce } from '../_shared/stock-restore.ts'
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
@@ -114,7 +114,9 @@ serve(async (req) => {
       }
     }
 
-    await restoreStockFor(supabase, orderId)
+    // BUG-C2: restauración idempotente — si otro camino (p.ej. revert de
+    // captura KO en order-accept) ya devolvió el stock, no se duplica.
+    await restoreStockOnce(supabase, orderId)
     await logPayment(supabase, orderId, 'cancel', cancelResult, '9')
     await logStatusChange(
       supabase,

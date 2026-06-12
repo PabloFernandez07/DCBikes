@@ -32,15 +32,29 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 600,
       rolldownOptions: {
         output: {
-          manualChunks(id) {
-            if (!id.includes('node_modules')) return
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) return 'react-vendor'
-            if (id.includes('@supabase')) return 'supabase'
-            if (id.includes('recharts') || id.includes('d3-')) return 'charts'
-            if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) return 'forms'
-            if (id.includes('xlsx')) return 'xlsx'
-            if (id.includes('lucide-react')) return 'icons'
-            return 'vendor'
+          /*
+           * codeSplitting (API nativa de rolldown) en lugar de manualChunks:
+           * el matching por substring anterior metía react-hook-form y las deps
+           * de recharts (react-smooth, _react@x en rutas pnpm...) en react-vendor,
+           * arrastrando charts/forms como dependencias estáticas del entry público.
+           *
+           * Los tests matchean el paquete real (/node_modules/<pkg>/) y la prioridad
+           * importa: cada grupo captura recursivamente las deps de sus módulos, así
+           * que react (40) y las deps compartidas con el entry (35: clsx...) deben
+           * resolverse ANTES de que charts/forms las arrastren a un chunk lazy.
+           */
+          codeSplitting: {
+            groups: [
+              { name: 'react-vendor', priority: 40, test: /node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\// },
+              // Deps compartidas entre el entry público y los chunks lazy
+              { name: 'vendor', priority: 35, test: /node_modules\/(clsx|use-sync-external-store|react-is)\// },
+              { name: 'supabase', priority: 30, test: /node_modules\/@supabase\// },
+              { name: 'xlsx', priority: 28, test: /node_modules\/xlsx\// },
+              { name: 'charts', priority: 26, test: /node_modules\/(recharts|react-smooth|recharts-scale|victory-vendor|d3-[^/]+)\// },
+              { name: 'forms', priority: 24, test: /node_modules\/(react-hook-form|@hookform|zod)\// },
+              { name: 'icons', priority: 22, test: /node_modules\/lucide-react\// },
+              { name: 'vendor', priority: 10, test: /node_modules\// },
+            ],
           },
         },
       },

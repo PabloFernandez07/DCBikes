@@ -37,6 +37,8 @@ import { loadRedsysConfig, type RedsysConfig } from '../_shared/redsys-config.ts
 import { buildRedsysOrderId, signRedsysPayload } from '../_shared/redsys-sign.ts'
 import { generateOrderToken } from '../_shared/order-token.ts'
 import { internalSecretHeader } from '../_shared/security.ts'
+import { verifyTurnstile } from '../_shared/turnstile.ts'
+import { restoreStockOnce } from '../_shared/stock-restore.ts'
 
 /* ─────────────── Tipos input ─────────────── */
 
@@ -90,6 +92,14 @@ interface InputBody {
   terms_version?: string | null
   /** Versión vigente de la Política de Privacidad aceptada (prueba RGPD). */
   privacy_version?: string | null
+  /**
+   * SEC-M2 (auditoría técnica 2026-06-12): token de Cloudflare Turnstile.
+   * CONTRATO con el frontend: el checkout envía `cf_turnstile_token: string`
+   * en el body (mismo patrón que quote-submit / stock-alert-submit).
+   * Fail-closed: sin token válido no se crea pedido (un bot podía crear
+   * pedidos pending en masa quemando stock y numeración correlativa).
+   */
+  cf_turnstile_token: string
 }
 
 /* ─────────────── Validación ─────────────── */
@@ -204,6 +214,13 @@ function validateBody(raw: unknown): { ok: true; body: InputBody } | { ok: false
   const terms_version = asString(b.terms_version).trim().slice(0, 32) || null
   const privacy_version = asString(b.privacy_version).trim().slice(0, 32) || null
 
+  // SEC-M2: token Turnstile obligatorio (fail-closed). El mensaje incluye
+  // 'captcha' — contrato con el frontend para mostrar el widget de nuevo.
+  const cf_turnstile_token = asString(b.cf_turnstile_token).trim()
+  if (!cf_turnstile_token) {
+    return { ok: false, error: 'captcha requerido (cf_turnstile_token ausente)' }
+  }
+
   return {
     ok: true,
     body: {
@@ -216,6 +233,7 @@ function validateBody(raw: unknown): { ok: true; body: InputBody } | { ok: false
       consents,
       terms_version,
       privacy_version,
+      cf_turnstile_token,
     },
   }
 }
@@ -351,8 +369,11 @@ serve(async (req) => {
     if (req.method !== 'POST') return jsonError('method not allowed', 405, req)
 
     // B-27: rechazo temprano de payloads desproporcionados (anti-DoS).
+    // SEC-M2: límite ampliado de 8 KiB a 10 KiB — el token de Turnstile
+    // puede ocupar hasta 2048 caracteres y con 50 items el body rozaba el
+    // límite anterior.
     const cl = Number(req.headers.get('content-length') ?? '0')
-    if (Number.isFinite(cl) && cl > 8192) {
+    if (Number.isFinite(cl) && cl > 10240) {
       return jsonError('payload demasiado grande', 413, req)
     }
 
@@ -369,6 +390,15 @@ serve(async (req) => {
     const consent_ip = (cfip || xff.split(',')[0] || '').trim().slice(0, 64) || null
     const consent_user_agent =
       (req.headers.get('user-agent') ?? '').slice(0, 512) || null
+
+    // SEC-M2: verificación Turnstile ANTES de reservar stock o consumir
+    // numeración — un bot no debe poder quemar recursos. Fail-closed: si
+    // TURNSTILE_SECRET no está configurado o Cloudflare no confirma, 400.
+    const captchaOk = await verifyTurnstile(body.cf_turnstile_token, consent_ip, 'order-place')
+    if (!captchaOk) {
+      console.warn(`[${ts()}] order-place captcha inválido · ip=${consent_ip ?? 'n/a'}`)
+      return jsonError('verificación de captcha fallida', 400, req)
+    }
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
@@ -501,7 +531,8 @@ serve(async (req) => {
     } catch (err) {
       await supabase.rpc('restore_stock', { p_items: reserveItems })
       console.error(`[${ts()}] redsys-config:`, String(err))
-      return jsonError(String(err), 500, req)
+      // SEC-M3: detalle interno (config de pasarela) solo en logs.
+      return jsonError('error interno', 500, req)
     }
 
     // 5. Pre-generar Ds_Merchant_Order para correlar webhook (test/prod).
@@ -572,10 +603,24 @@ serve(async (req) => {
     const { error: itemsErr } = await supabase.from('order_items').insert(itemsRows)
     if (itemsErr) {
       console.error(`[${ts()}] insert order_items error:`, itemsErr.message)
-      // Best-effort cleanup. Stock ya descontado se queda comprometido al
-      // pedido pending; el cron de auto-cancel lo liberará vía rechazo.
-      await supabase.from('orders').delete().eq('id', orderId)
-      await supabase.rpc('restore_stock', { p_items: reserveItems })
+      // BUG-M7 (auditoría técnica 2026-06-12): restaurar stock ANTES de
+      // borrar el pedido. El orden anterior (delete → restore) podía perder
+      // stock sin rastro: si la restauración fallaba tras el delete, no
+      // quedaba ni pedido ni candado para reintentar. Ahora:
+      //   - restore OK → borramos el pedido (cleanup limpio).
+      //   - restore FALLA → NO borramos: el pedido queda pending con su
+      //     sello stock_restored_at a NULL y el cron order-auto-cancel lo
+      //     cancelará y reintentará la restauración.
+      // Pasamos reserveItems explícitamente: las filas de order_items NO
+      // existen en BD (el INSERT acaba de fallar).
+      const restoreResult = await restoreStockOnce(supabase, orderId, reserveItems)
+      if (restoreResult === 'failed') {
+        console.error(
+          `[${ts()}] BUG-M7 · pedido ${orderNumber} (${orderId}) queda pending SIN items y SIN stock restaurado · items=${JSON.stringify(reserveItems)} — el cron lo gestionará`,
+        )
+      } else {
+        await supabase.from('orders').delete().eq('id', orderId)
+      }
       return jsonError('no se pudieron guardar las líneas', 500, req)
     }
 
@@ -647,18 +692,17 @@ serve(async (req) => {
       otpRaw === 1 ||
       (typeof otpRaw === 'string' && otpRaw.trim().toLowerCase() === 'true')
 
+    // BUG-A2 (auditoría técnica 2026-06-12): el flujo OTP (S2-B2) quedó
+    // INACABADO — devolver `otp_required` aquí rompía el checkout porque el
+    // frontend no maneja esa respuesta y nadie podía pagar. Fix mínimo
+    // seguro: si el setting está activo, avisamos por log y continuamos con
+    // el flujo Redsys normal (el pago sigue protegido por 3DS de Redsys).
+    // Cuando el frontend implemente la pantalla OTP, restaurar aquí la
+    // respuesta `otp_required` con redirect a /pedido/{id}/otp.
     if (requireOtp) {
-      console.log(`[${ts()}] ✓ order-place ${config.mode} · ${orderNumber} · OTP requerido — redirigiendo a /pedido/${orderId}/otp`)
-      return jsonOk({
-        order_id: orderId,
-        order_number: orderNumber,
-        public_token: publicToken,
-        payment: {
-          mode: 'otp_required',
-          redirect_to: `/pedido/${orderId}/otp?token=${encodeURIComponent(publicToken)}`,
-          redsys_order_id: redsysOrderId,
-        },
-      }, req)
+      console.warn(
+        `[${ts()}] [OTP] require_payment_otp activo pero flujo S2-B2 incompleto — procediendo con pago normal · ${orderNumber}`,
+      )
     }
 
     // 10. Generar contrato PDF (soporte duradero L-05) — non-blocking.
@@ -721,6 +765,8 @@ serve(async (req) => {
     }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ order-place:`, String(err))
-    return jsonError(String(err), 500, req)
+    // SEC-M3: nunca exponer String(err) en el body (filtra rutas, SQL,
+    // mensajes de librerías). Detalle solo en console.error.
+    return jsonError('error interno', 500, req)
   }
 })

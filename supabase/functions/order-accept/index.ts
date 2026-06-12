@@ -30,9 +30,9 @@ import {
   logPayment,
   logStatusChange,
   requireAdmin,
-  restoreStockFor,
   runRedsysOperation,
 } from '../_shared/order-admin.ts'
+import { restoreStockOnce } from '../_shared/stock-restore.ts'
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
@@ -103,6 +103,23 @@ serve(async (req) => {
       ? String((rpcRow as { prev_status?: string }).prev_status ?? 'authorized')
       : 'authorized'
 
+    // BUG-A4 (auditoría técnica 2026-06-12): si la RPC indica que el pedido
+    // YA estaba 'accepted' (doble clic / dos admins concurrentes que pasaron
+    // el check idempotente inicial a la vez), NO lanzar una SEGUNDA captura
+    // a Redsys. Antes seguíamos: la segunda captura fallaba en Redsys
+    // (pre-auth ya consumida) y el revert movía el pedido a 'rejected' CON
+    // el dinero ya capturado. Cortocircuito: 200 OK sin tocar Redsys ni
+    // enviar emails (la primera llamada ya hizo todo).
+    if (prevStatus === 'accepted') {
+      console.log(`[${ts()}] order-accept · ${order.order_number} ya estaba accepted (concurrencia) — noop`)
+      const { data: inv } = await supabase
+        .from('invoices')
+        .select('invoice_number')
+        .eq('order_id', orderId)
+        .maybeSingle()
+      return jsonOk({ status: 'accepted', invoice_number: inv?.invoice_number ?? null }, req)
+    }
+
     const captureResult = await runRedsysOperation({
       config,
       redsysOrderId: order.payment_pre_auth_id,
@@ -127,8 +144,8 @@ serve(async (req) => {
           req,
         )
       }
-      // Restaurar stock + auditoría del rollback.
-      await restoreStockFor(supabase, orderId)
+      // Restaurar stock (idempotente — BUG-C2) + auditoría del rollback.
+      await restoreStockOnce(supabase, orderId)
       await logStatusChange(
         supabase,
         orderId,

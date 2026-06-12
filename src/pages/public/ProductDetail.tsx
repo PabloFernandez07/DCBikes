@@ -12,7 +12,6 @@ import { useProductGroup } from '@/hooks/useProductGroup'
 import { cleanGroupName } from '@/lib/variant-colors'
 import { useCartStore } from '@/stores/cartStore'
 import { useUiStore } from '@/stores/uiStore'
-import type { ProductImage, Category } from '@/lib/database.types'
 import { SEO } from '@/components/layout/SEO'
 
 function useReveal(deps: unknown[] = []) {
@@ -34,6 +33,8 @@ function useReveal(deps: unknown[] = []) {
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
+  // PERF-M3: images y category vienen embebidos en las queries del hook
+  // (PostgREST embeds) — ya no hay round-trips separados desde esta página.
   const {
     parentProduct,
     variants,
@@ -41,10 +42,10 @@ export default function ProductDetail() {
     setSelectedVariant,
     loading,
     error,
+    images,
+    category,
   } = useProductGroup(slug)
 
-  const [images, setImages] = useState<ProductImage[]>([])
-  const [category, setCategory] = useState<Category | null>(null)
   const [quoteOpen, setQuoteOpen] = useState(false)
   const [alertOpen, setAlertOpen] = useState(false)
   const [minPrice30d, setMinPrice30d] = useState<number | null>(null)
@@ -67,37 +68,10 @@ export default function ProductDetail() {
     if (selectedVariant) trackProductView(selectedVariant.id)
   }, [selectedVariant?.id])  // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch imágenes de TODAS las variantes (algunas pueden compartir, otras no).
-  useEffect(() => {
-    if (variants.length === 0) {
-      setImages([])
-      return
-    }
-    const ids = variants.map(v => v.id)
-    supabase
-      .from('product_images')
-      .select('*')
-      .in('product_id', ids)
-      .order('sort_order')
-      .then(({ data }) => setImages(data ?? []))
-  }, [variants])
-
-  // Fetch categoría del padre.
-  useEffect(() => {
-    if (!parentProduct?.category_id) {
-      setCategory(null)
-      return
-    }
-    supabase
-      .from('categories')
-      .select('*')
-      .eq('id', parentProduct.category_id)
-      .single()
-      .then(({ data }) => setCategory(data))
-  }, [parentProduct?.category_id])
-
   // Omnibus / RDL 1/2007 art. 20.1 — mínimo precio últimos 30 días.
-  // Se recarga al cambiar de variante (selectedVariant.id).
+  // Se recarga al cambiar de variante (selectedVariant.id). Corre EN PARALELO
+  // al primer render del grupo (ya no espera a las antiguas queries de
+  // imágenes/categoría, que ahora viajan embebidas en el hook — PERF-M3).
   useEffect(() => {
     if (!selectedVariant?.id) {
       setMinPrice30d(null)

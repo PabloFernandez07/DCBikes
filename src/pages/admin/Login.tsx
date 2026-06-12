@@ -56,8 +56,10 @@ export default function Login() {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-4">
           <img
-            src="/DC_Bikes_Sin_Fondo.png"
+            src="/DC_Bikes_Sin_Fondo_320.webp"
             alt="DC Bikes"
+            width={320}
+            height={321}
             className="h-20 w-auto mx-auto"
           />
           <div>

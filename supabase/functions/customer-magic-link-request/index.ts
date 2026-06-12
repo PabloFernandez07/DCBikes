@@ -213,6 +213,7 @@ serve(async (req) => {
     return jsonOk({ message: PUBLIC_MESSAGE }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-magic-link-request:`, String(err))
-    return jsonError(String(err), 500, req)
+    // SEC-M3: nunca exponer String(err) en el body. Detalle solo en logs.
+    return jsonError('error interno', 500, req)
   }
 })
