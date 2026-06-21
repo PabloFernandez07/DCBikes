@@ -16,6 +16,7 @@ import {
   Loader2,
   History,
   RefreshCw,
+  RotateCcw,
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -28,6 +29,10 @@ import { Button } from '@/components/ui/Button'
 import { Field } from '@/components/ui/Field'
 import { ToastContainer } from '@/components/ui/Toast'
 import { useToast } from '@/hooks/useToast'
+import {
+  ReturnRequestModal,
+  type EligibleReturnItem,
+} from '@/components/public/ReturnRequestModal'
 import {
   orderShippingSchema,
   type OrderShippingFormValues,
@@ -171,6 +176,12 @@ export default function MyOrderDetailCustomer() {
   // Edit address modal
   const [editOpen, setEditOpen] = useState(false)
   const [savingAddress, setSavingAddress] = useState(false)
+
+  // Return request modal
+  const [returnOpen, setReturnOpen] = useState(false)
+  const [checkingReturn, setCheckingReturn] = useState(false)
+  const [returnDeadline, setReturnDeadline] = useState<string | null>(null)
+  const [returnItems, setReturnItems] = useState<EligibleReturnItem[]>([])
 
   // Factura (descarga / generación bajo demanda)
   const [requestingInvoice, setRequestingInvoice] = useState(false)
@@ -418,6 +429,69 @@ export default function MyOrderDetailCustomer() {
     }
   }
 
+  // Comprueba si el pedido es elegible para devolución. Si lo es, abre el modal
+  // con los artículos devolvibles; si no, muestra el motivo y no abre nada.
+  const handleStartReturn = async () => {
+    if (!order || checkingReturn) return
+    const session = readSession()
+    if (!session) {
+      navigate('/mis-pedidos', { replace: true })
+      return
+    }
+    setCheckingReturn(true)
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke<{
+        ok: boolean
+        eligible?: boolean
+        reason?: string
+        deadline?: string | null
+        items?: EligibleReturnItem[]
+        error?: string
+      }>('customer-return-eligibility', {
+        body: { token: session.token, order_id: order.id },
+      })
+
+      if (fnError) {
+        const ctx = (fnError as unknown as { context?: Response & { status?: number } }).context
+        if (ctx?.status === 401 || ctx?.status === 403) {
+          try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+          navigate('/mis-pedidos', { replace: true })
+          return
+        }
+        let detail = fnError.message
+        if (ctx && typeof ctx.json === 'function') {
+          try {
+            const b = (await ctx.json()) as { error?: string }
+            if (b?.error) detail = b.error
+          } catch { /* ignore */ }
+        }
+        toast.error(detail || 'No se pudo comprobar la devolución')
+        return
+      }
+
+      if (!data?.ok) {
+        toast.error(data?.error ?? 'No se pudo comprobar la devolución')
+        return
+      }
+      if (!data.eligible) {
+        toast.error(data.reason ?? 'Este pedido no se puede devolver.')
+        return
+      }
+      const items = data.items ?? []
+      if (items.length === 0) {
+        toast.error('No hay artículos disponibles para devolver en este pedido.')
+        return
+      }
+      setReturnItems(items)
+      setReturnDeadline(data.deadline ?? null)
+      setReturnOpen(true)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al comprobar la devolución')
+    } finally {
+      setCheckingReturn(false)
+    }
+  }
+
   const onSubmitAddress = async (values: OrderShippingFormValues) => {
     if (!order || savingAddress) return
     const session = readSession()
@@ -526,7 +600,10 @@ export default function MyOrderDetailCustomer() {
     order.delivery_method === 'shipping' &&
     (order.status === 'pending' || order.status === 'authorized' || order.status === 'accepted') &&
     !order.cancelled_by_customer
-  const showActions = canCancel || canEditAddress
+  // Devolución: solo cuando el pedido está entregado. El backend valida el plazo
+  // de 15 días y la elegibilidad real al pulsar el botón.
+  const canReturn = order.status === 'delivered'
+  const showActions = canCancel || canEditAddress || canReturn
   const wasModified = !!order.client_modified_at
 
   return (
@@ -817,11 +894,32 @@ export default function MyOrderDetailCustomer() {
                   Cancelar pedido
                 </button>
               )}
+              {canReturn && (
+                <button
+                  type="button"
+                  onClick={handleStartReturn}
+                  disabled={checkingReturn}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-[var(--font-cond)] font-semibold tracking-wide bg-[var(--color-card-hover)] text-[var(--color-cream)] border border-[var(--color-mid)]/30 hover:border-[var(--color-lavender)]/50 hover:text-[var(--color-lavender)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {checkingReturn ? (
+                    <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                  ) : (
+                    <RotateCcw size={14} aria-hidden="true" />
+                  )}
+                  Solicitar devolución
+                </button>
+              )}
             </div>
             {canCancel && (
               <p className="text-[11px] text-[var(--color-mid)] mt-3 leading-relaxed font-[var(--font-body)]">
                 Mientras tu pedido esté pendiente de aprobación puedes cancelarlo sin coste:
                 liberaremos la reserva de pago de tu tarjeta automáticamente.
+              </p>
+            )}
+            {canReturn && (
+              <p className="text-[11px] text-[var(--color-mid)] mt-3 leading-relaxed font-[var(--font-body)]">
+                Tienes 15 días desde la entrega para devolver tu pedido. El reembolso se hará a tu
+                tarjeta cuando la tienda reciba el producto.
               </p>
             )}
           </section>
@@ -1069,6 +1167,23 @@ export default function MyOrderDetailCustomer() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal Solicitar devolución */}
+      {session && (
+        <ReturnRequestModal
+          open={returnOpen}
+          onClose={() => setReturnOpen(false)}
+          token={session.token}
+          orderId={order.id}
+          deadline={returnDeadline}
+          items={returnItems}
+          onSuccess={() => {
+            // Refrescamos el detalle para reflejar el nuevo estado del pedido.
+            const s = readSession()
+            if (s) fetchDetail(order.id, s.token)
+          }}
+        />
+      )}
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </div>

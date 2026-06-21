@@ -84,11 +84,16 @@ export async function requireAdmin(req: Request): Promise<
   }
 }
 
-/* ─────────── Redsys S2S (capture/cancel) ─────────── */
+/* ─────────── Redsys S2S (capture/cancel/refund) ─────────── */
 
 export type RedsysOpType =
   | { kind: 'capture'; amountCents: number }
   | { kind: 'cancel'; amountCents: number }
+  // refund: devolución parcial/total de una operación YA capturada (type 3).
+  // El caller pasa como redsysOrderId el Ds_Merchant_Order de la operación
+  // ORIGINAL confirmada (orders.payment_pre_auth_id) y amountCents = importe a
+  // reembolsar (refund_total_cents). Éxito Redsys → Ds_Response '0900'.
+  | { kind: 'refund'; amountCents: number }
 
 export interface RedsysOpResult {
   ok: boolean
@@ -112,9 +117,13 @@ export async function runRedsysOperation(opts: {
   const { config, redsysOrderId, op } = opts
 
   if (config.mode === 'mock') {
+    // En éxito real Redsys devuelve 0900 para confirmaciones (captura) y para
+    // devoluciones (refund). Replicamos ese código en mock para que la lógica
+    // de éxito del caller sea idéntica en mock y en producción.
+    const mockResponse = op.kind === 'capture' || op.kind === 'refund' ? '0900' : '0000'
     return {
       ok: true,
-      responseCode: '0000',
+      responseCode: mockResponse,
       authCode: 'MOCK' + Math.floor(Math.random() * 900000 + 100000),
       raw: { simulated: true, kind: op.kind, amount: op.amountCents, redsysOrderId },
       signatureValid: null,
@@ -122,7 +131,12 @@ export async function runRedsysOperation(opts: {
     }
   }
 
-  const transactionType = op.kind === 'capture' ? '2' : '9'
+  // Tipo de operación Redsys (DS_MERCHANT_TRANSACTIONTYPE):
+  //   '2' confirmación de pre-autorización (captura)
+  //   '9' anulación de pre-autorización (cancel)
+  //   '3' devolución de una operación confirmada (refund)
+  const transactionType =
+    op.kind === 'capture' ? '2' : op.kind === 'refund' ? '3' : '9'
 
   const params: Record<string, string | number> = {
     DS_MERCHANT_MERCHANTCODE: config.merchantCode,
@@ -195,7 +209,12 @@ export async function runRedsysOperation(opts: {
     Number.isFinite(n) && ((n >= 0 && n <= 99) || n === 900)
   const cancelOk =
     Number.isFinite(n) && ((n >= 0 && n <= 99) || n === 400 || n === 900 || n === 9222)
-  const ok = op.kind === 'capture' ? captureOk : cancelOk
+  // La devolución (type 3) se autoriza con 0900 ("autorizada para devoluciones
+  // y confirmaciones"); aceptamos también 0..99 por simetría con captura.
+  const refundOk =
+    Number.isFinite(n) && ((n >= 0 && n <= 99) || n === 900)
+  const ok =
+    op.kind === 'capture' ? captureOk : op.kind === 'refund' ? refundOk : cancelOk
 
   return {
     ok,
@@ -309,9 +328,9 @@ export async function logStatusChange(
 export async function logPayment(
   supabase: SupabaseClient,
   orderId: string,
-  operationType: 'capture' | 'cancel',
+  operationType: 'capture' | 'cancel' | 'refund',
   result: RedsysOpResult,
-  txType: '2' | '9',
+  txType: '2' | '9' | '3',
 ): Promise<void> {
   await supabase.from('payments_log').insert({
     order_id: orderId,

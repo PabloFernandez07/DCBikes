@@ -6,11 +6,15 @@ import { Field } from '@/components/ui/Field'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
 
+// `is_returnable` lo crea la migración 0066 (categories.is_returnable boolean,
+// default false). Hasta que se regeneren los tipos, este campo no existe en
+// database.types.ts, así que el .select() lo castea localmente (ver fetchCategories).
 interface Category {
   id: string
   slug: string
   name: string
   sort_order: number
+  is_returnable: boolean
   created_at: string
   products?: { count: number }[]
 }
@@ -43,6 +47,7 @@ export function Categories() {
   const [editName, setEditName] = useState('')
   const [editSlug, setEditSlug] = useState('')
   const [editSort, setEditSort] = useState('')
+  const [editReturnable, setEditReturnable] = useState(false)
   const [editError, setEditError] = useState('')
   const [savingId, setSavingId] = useState<string | null>(null)
 
@@ -67,9 +72,10 @@ export function Categories() {
 
   const fetchCategories = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('categories')
-      .select('id, name, slug, sort_order, created_at, products(count)')
+    // Cast a `any`: `is_returnable` aún no está en database.types.ts (migración
+    // 0066). Sin el cast, el .select() con esa columna no tipa.
+    const { data, error } = await (supabase.from('categories') as any)
+      .select('id, name, slug, sort_order, is_returnable, created_at, products(count)')
       .order('sort_order', { ascending: true })
 
     if (error) {
@@ -145,6 +151,7 @@ export function Categories() {
     setEditName(cat.name)
     setEditSlug(cat.slug)
     setEditSort(String(cat.sort_order))
+    setEditReturnable(cat.is_returnable ?? false)
     setEditError('')
   }
 
@@ -185,7 +192,7 @@ export function Categories() {
     }
 
     const { error } = await (supabase.from('categories') as any)
-      .update({ name, slug, sort_order: sort })
+      .update({ name, slug, sort_order: sort, is_returnable: editReturnable })
       .eq('id', cat.id)
 
     if (error) {
@@ -323,6 +330,20 @@ export function Categories() {
                                 className="w-full text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-ink)] px-2 py-1.5 rounded-lg border border-[var(--color-card-hover)] focus:border-[var(--color-lavender)]/50 focus:outline-none transition-colors"
                                 placeholder="Nombre"
                               />
+                              <label className="flex items-start gap-2 pt-1 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={editReturnable}
+                                  onChange={e => setEditReturnable(e.target.checked)}
+                                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--color-card-hover)] bg-[var(--color-ink)] accent-[var(--color-lavender)] focus:outline-none focus:ring-1 focus:ring-[var(--color-lavender)]/50"
+                                />
+                                <span className="text-xs font-[var(--font-body)] leading-snug">
+                                  <span className="text-[var(--color-cream)]">Admite devolución (RMA)</span>
+                                  <span className="block text-[var(--color-mid)]">
+                                    Si está activado, los productos de esta categoría se pueden devolver. Déjalo desactivado para bicis, nutrición, etc.
+                                  </span>
+                                </span>
+                              </label>
                               {editError && (
                                 <p className="text-xs text-[var(--color-brand-red)] font-[var(--font-body)]">
                                   {editError}

@@ -41,9 +41,12 @@ serve(async (req) => {
       )
     }
 
+    // delivered_at marca el inicio del plazo de devolución (15 días). Solo se
+    // fija ahora, en la primera transición a 'delivered' (el early-return de
+    // arriba protege contra machacar una fecha previa si ya estaba entregado).
     const { error: uErr } = await supabase
       .from('orders')
-      .update({ status: 'delivered' })
+      .update({ status: 'delivered', delivered_at: new Date().toISOString() })
       .eq('id', orderId)
     if (uErr) return jsonError(`update failed: ${uErr.message}`, 500, req)
 

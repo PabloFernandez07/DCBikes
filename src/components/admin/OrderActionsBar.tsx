@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Check, X as XIcon, Package, Store, Truck, Mail, Loader2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Check, X as XIcon, Package, Store, Truck, Mail, Loader2, RotateCcw } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
@@ -407,6 +408,18 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
             {busy ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Mail size={14} aria-hidden="true" />}
             Reenviar email confirmación
           </Button>
+        )}
+
+        {/* Acceso a devoluciones para pedidos entregados o ya devueltos. Lleva a la
+            lista de devoluciones (el RMA concreto no está cargado en este componente). */}
+        {(status === 'delivered' || status === 'returned') && (
+          <Link
+            to="/admin/devoluciones"
+            className="w-full inline-flex items-center justify-center gap-2 px-3 py-1.5 rounded-md text-sm font-[var(--font-cond)] text-[var(--color-lavender)] hover:bg-[rgba(196,162,207,0.08)] transition-colors"
+          >
+            <RotateCcw size={14} aria-hidden="true" />
+            Ver devoluciones
+          </Link>
         )}
       </div>
 

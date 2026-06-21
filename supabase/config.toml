@@ -127,3 +127,29 @@ verify_jwt = false
 
 [functions.stock-alert-cron]
 verify_jwt = false
+
+# ─────────────────────────────────────────────────────────────────
+# Funciones de devoluciones (RMA — feature 0066/0067).
+# generate-credit-invoice: invocada internamente (factura rectificativa).
+# send-return-*: emails transaccionales invocados con x-internal-secret desde
+#   customer-return-request y las funciones admin-return-* (approve/reject/
+#   mark-received). Mismo patrón que el resto de emails internos: su seguridad
+#   es verifyInternalSecret (timing-safe, fail-closed), no el JWT de plataforma.
+# ─────────────────────────────────────────────────────────────────
+[functions.generate-credit-invoice]
+verify_jwt = false
+
+[functions.send-return-requested-customer]
+verify_jwt = false
+
+[functions.send-return-requested-admin]
+verify_jwt = false
+
+[functions.send-return-approved-customer]
+verify_jwt = false
+
+[functions.send-return-rejected-customer]
+verify_jwt = false
+
+[functions.send-return-refunded-customer]
+verify_jwt = false
