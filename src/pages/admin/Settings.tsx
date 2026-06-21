@@ -136,6 +136,7 @@ const SETTINGS_SECTIONS: { id: string; label: string; kw: string }[] = [
   { id: 'facturacion', label: 'Facturación', kw: 'factura cif nif razon social iva prefijo numeracion fiscal emisor' },
   { id: 'pasarela', label: 'Pasarela de pago', kw: 'redsys tpv pago tarjeta entorno comercio' },
   { id: 'verifactu', label: 'Verifactu', kw: 'verifactu aeat hacienda certificado digital p12 pfx factura electronica envio' },
+  { id: 'seguridad', label: 'Contraseña', kw: 'contraseña password seguridad cambiar restablecer acceso login cuenta' },
 ]
 
 export function Settings() {
@@ -147,6 +148,34 @@ export function Settings() {
   const [originalSchedule, setOriginalSchedule] = useState<DaySchedule[]>(SCHEDULE)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  // ─── Cambio de contraseña del admin (sesión activa) ────────────────────
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+
+  async function handleChangePassword() {
+    if (newPassword.length < 8) {
+      toast.error('La contraseña debe tener al menos 8 caracteres')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden')
+      return
+    }
+    setChangingPassword(true)
+    // Supabase actualiza la contraseña del usuario de la sesión activa; no pide
+    // la actual (la sesión ya autentica). Tras esto la sesión sigue válida.
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setChangingPassword(false)
+    if (error) {
+      toast.error('No se pudo cambiar la contraseña: ' + error.message)
+      return
+    }
+    setNewPassword('')
+    setConfirmPassword('')
+    toast.success('Contraseña actualizada correctamente')
+  }
 
   // ─── Estado nuevas secciones (Fase J) ──────────────────────────────────
   // Para shipping en céntimos guardamos también el valor en € para que el
@@ -1554,6 +1583,43 @@ export function Settings() {
                   {certStatus.configured ? 'Reemplazar certificado' : 'Guardar certificado'}
                 </Button>
               </div>
+              </div>
+            </section>
+
+            {/* Section: Seguridad — cambiar la contraseña del admin */}
+            <section id="seguridad" className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5 scroll-mt-28">
+              <SectionHeader
+                icon={KeyRound}
+                title="Contraseña"
+              />
+              <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] -mt-2">
+                Cambia la contraseña con la que accedes al panel. No necesitas la actual: tu sesión ya está iniciada.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
+                <Field
+                  label="Nueva contraseña"
+                  type="password"
+                  placeholder="Mínimo 8 caracteres"
+                  value={newPassword}
+                  onChange={e => setNewPassword((e.target as HTMLInputElement).value)}
+                />
+                <Field
+                  label="Repite la nueva contraseña"
+                  type="password"
+                  placeholder="Vuelve a escribirla"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword((e.target as HTMLInputElement).value)}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  variant="primary"
+                  onClick={handleChangePassword}
+                  loading={changingPassword}
+                  disabled={!newPassword || !confirmPassword}
+                >
+                  Cambiar contraseña
+                </Button>
               </div>
             </section>
           </div>

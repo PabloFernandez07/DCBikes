@@ -83,7 +83,7 @@ serve(async (req) => {
         'id, order_number, status, customer_email, deleted_at, delivered_at, ' +
           'order_items(id, product_id, product_name, product_size_label, ' +
           'quantity, unit_price_cents, ' +
-          'products(category_id, categories(is_returnable)))',
+          'products(category_id, is_returnable, categories(is_returnable)))',
       )
       .eq('id', orderId)
       .maybeSingle()
@@ -170,13 +170,20 @@ serve(async (req) => {
       }
     }
 
-    // 4) Filtra líneas elegibles: categoría devolvible Y max_qty > 0.
+    // 4) Filtra líneas elegibles: devolvible Y max_qty > 0.
+    //    Devolvible = override del producto (products.is_returnable) si no es
+    //    null; si es null hereda de la categoría. coalesce(prod, cat, false).
     const eligibleRaw = rawItems.filter((i) => {
       const products = i.products as
-        | { categories?: { is_returnable?: boolean } | { is_returnable?: boolean }[] }
+        | {
+            is_returnable?: boolean | null
+            categories?: { is_returnable?: boolean } | { is_returnable?: boolean }[]
+          }
         | null
       const cat = Array.isArray(products?.categories) ? products?.categories[0] : products?.categories
-      const isReturnable = cat?.is_returnable === true
+      const prodOverride = products?.is_returnable
+      const isReturnable =
+        prodOverride === true || (prodOverride !== false && cat?.is_returnable === true)
       if (!isReturnable) return false
       const bought = (i.quantity as number) ?? 0
       const returned = returnedByItem.get(i.id as string) ?? 0

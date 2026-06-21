@@ -134,6 +134,9 @@ export const productFormSchema = z.object({
 
   // Nuevos campos
   is_purchasable: z.boolean(),
+  // Override de devolución por producto: true=devolvible, false=no, null=hereda
+  // de la categoría (categories.is_returnable).
+  is_returnable: z.boolean().nullable(),
   size_label: z.string(),
   model_group: z.string(),
   color: z.string(),

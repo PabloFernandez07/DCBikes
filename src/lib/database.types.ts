@@ -52,6 +52,7 @@ export interface Database {
           updated_at: string
           // ── 0002_purchasable_columns ──
           is_purchasable: boolean
+          is_returnable?: boolean | null
           size_label: string | null
           model_group: string | null
           weight_grams: number | null
@@ -83,6 +84,7 @@ export interface Database {
           updated_at?: string
           // ── 0002_purchasable_columns ──
           is_purchasable?: boolean
+          is_returnable?: boolean | null
           size_label?: string | null
           model_group?: string | null
           weight_grams?: number | null
@@ -114,6 +116,7 @@ export interface Database {
           updated_at?: string
           // ── 0002_purchasable_columns ──
           is_purchasable?: boolean
+          is_returnable?: boolean | null
           size_label?: string | null
           model_group?: string | null
           weight_grams?: number | null

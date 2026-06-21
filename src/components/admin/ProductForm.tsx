@@ -55,6 +55,8 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
       featured: product?.featured ?? false,
       active: product?.active ?? true,
       is_purchasable: product?.is_purchasable ?? false,
+      // is_returnable no está aún en database.types.ts (cast mínimo); null = hereda categoría.
+      is_returnable: (product as { is_returnable?: boolean | null } | undefined)?.is_returnable ?? null,
       size_label: product?.size_label ?? '',
       model_group: product?.model_group ?? '',
       color: product?.color ?? '',
@@ -89,6 +91,9 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
   const featured = watch('featured')
   const active = watch('active')
   const isPurchasable = watch('is_purchasable')
+  const isReturnable = watch('is_returnable')
+  // tri-estado <select> ↔ boolean|null: 'inherit'=null, 'yes'=true, 'no'=false.
+  const returnableMode = isReturnable === true ? 'yes' : isReturnable === false ? 'no' : 'inherit'
 
   const onSubmit = async (values: ProductFormValues) => {
     await onSave(values)
@@ -292,6 +297,26 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
             />
             <p className="mt-1.5 ml-12 text-xs text-[var(--color-mid)] font-[var(--font-body)] leading-relaxed max-w-md">
               Si está activo, los clientes pueden comprarlo desde la web. Si no, solo aparece como consulta para tienda física.
+            </p>
+          </div>
+          <div className="border-t border-[var(--color-card)] pt-4">
+            <label className="block text-sm font-[var(--font-cond)] tracking-wide text-[var(--color-cream)] mb-1.5">
+              Admite devolución
+            </label>
+            <select
+              value={returnableMode}
+              onChange={e => {
+                const v = e.target.value
+                setValue('is_returnable', v === 'yes' ? true : v === 'no' ? false : null, { shouldDirty: true })
+              }}
+              className="w-full max-w-xs text-sm text-[var(--color-cream)] font-[var(--font-body)] bg-[var(--color-ink)] px-3 py-2 rounded-lg border border-[var(--color-card)] focus:border-[var(--color-lavender)]/50 focus:outline-none transition-colors"
+            >
+              <option value="inherit">Según la categoría (por defecto)</option>
+              <option value="yes">Sí, este producto se puede devolver</option>
+              <option value="no">No, este producto no se puede devolver</option>
+            </select>
+            <p className="mt-1.5 text-xs text-[var(--color-mid)] font-[var(--font-body)] leading-relaxed max-w-md">
+              "Según la categoría" usa el ajuste de devoluciones de la categoría. Elige Sí/No para forzar este producto concreto, sin importar su categoría.
             </p>
           </div>
         </div>
