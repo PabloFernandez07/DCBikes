@@ -301,7 +301,11 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
     }
     setBusy(true)
     try {
-      const res = await invokeFn(fnName, { order_id: order.id })
+      // Las funciones send-order-* son internas (exigen x-internal-secret, que
+      // el navegador no tiene). Reenviamos a través del proxy admin-resend-email,
+      // que valida el JWT de admin y reenvía a la send-* correcta firmando con
+      // el secreto interno. (Llamarlas directo daba 403 → non-2xx.)
+      const res = await invokeFn('admin-resend-email', { order_id: order.id, fn: fnName })
       if (res.ok) {
         onToast('success', 'Email reenviado al cliente')
       } else if (res.notImplemented) {
