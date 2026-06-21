@@ -29,7 +29,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { buildCorsHeaders, asInt, getSettings, jsonError, jsonOk,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
-import { internalSecretHeader } from '../_shared/security.ts'
+import { internalSecretHeader, timingSafeEq } from '../_shared/security.ts'
 import {
   alertAdminCancelKo,
   loadConfig,
@@ -41,18 +41,23 @@ import {
 import { restoreStockOnce } from '../_shared/stock-restore.ts'
 
 function authorizeCron(req: Request): { ok: boolean; reason?: string } {
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  const auth = req.headers.get('authorization') ?? ''
-  const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : ''
-  if (!token || token !== serviceRoleKey) {
-    return { ok: false, reason: 'invalid bearer (esperado service_role_key)' }
+  // El secreto de autenticación es ORDER_CRON_SECRET (header x-cron-secret),
+  // que pg_cron envía leyéndolo de Vault (order_cron_secret) y coincide con
+  // la env var de la edge function. Es el control fuerte y fail-closed.
+  //
+  // Antes esta función exigía además que el Bearer fuese el JWT service_role.
+  // Tras la migración de claves de Supabase el runtime ya NO inyecta el JWT
+  // legacy en SUPABASE_SERVICE_ROLE_KEY (ahora vale `sb_secret_...`), pero el
+  // cron sigue mandando el JWT legacy desde Vault → el Bearer nunca cuadraba
+  // y la función devolvía 401, dejando los pedidos abandonados sin cancelar.
+  // El service_role ya no es necesario para autenticar (el secreto cron basta).
+  const expectedSecret = Deno.env.get('ORDER_CRON_SECRET') ?? ''
+  if (!expectedSecret) {
+    return { ok: false, reason: 'ORDER_CRON_SECRET env var no configurada' }
   }
-  const expectedSecret = Deno.env.get('ORDER_CRON_SECRET')
-  if (expectedSecret) {
-    const received = req.headers.get('x-cron-secret') ?? ''
-    if (received !== expectedSecret) {
-      return { ok: false, reason: 'invalid x-cron-secret' }
-    }
+  const received = req.headers.get('x-cron-secret') ?? ''
+  if (!timingSafeEq(received, expectedSecret)) {
+    return { ok: false, reason: 'invalid x-cron-secret' }
   }
   return { ok: true }
 }

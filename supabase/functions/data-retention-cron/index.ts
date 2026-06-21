@@ -43,6 +43,7 @@ import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-
 import { CORS_HEADERS, jsonError, jsonOk,
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
+import { timingSafeEq } from '../_shared/security.ts'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const SIX_YEARS_MS = 6 * 365 * DAY_MS
@@ -59,13 +60,19 @@ interface ActionResult {
 }
 
 function authorize(req: Request): { ok: boolean; reason?: string } {
-  const expected = Deno.env.get('CRON_SECRET') ?? ''
+  // pg_cron envía `Authorization: Bearer <data_retention_cron_secret>` leyendo
+  // ese secreto de Vault (ver 0021_cron_vault_secrets.sql). En las Edge
+  // Functions ese mismo valor está en la variable DATA_RETENTION_CRON_SECRET.
+  // Antes esta función comparaba contra CRON_SECRET, un secreto DISTINTO →
+  // el Bearer nunca cuadraba y la purga RGPD diaria devolvía 401 sin ejecutar.
+  // Comparación constante en tiempo (timingSafeEq) como el resto de crons.
+  const expected = Deno.env.get('DATA_RETENTION_CRON_SECRET') ?? ''
   if (!expected) {
-    return { ok: false, reason: 'CRON_SECRET env var no configurada' }
+    return { ok: false, reason: 'DATA_RETENTION_CRON_SECRET env var no configurada' }
   }
   const auth = req.headers.get('authorization') ?? ''
   const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : ''
-  if (!token || token !== expected) {
+  if (!timingSafeEq(token, expected)) {
     return { ok: false, reason: 'invalid bearer' }
   }
   return { ok: true }
