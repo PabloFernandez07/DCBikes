@@ -168,7 +168,7 @@ serve(async (req) => {
         'id, order_number, status, delivery_method, customer_email, customer_first_name, ' +
           'subtotal_cents, shipping_cents, total_cents, created_at, rejection_reason, ' +
           'tracking_number, tracking_carrier, ' +
-          'order_items(product_name, product_size_label, quantity, unit_price_cents, line_total_cents)',
+          'order_items(product_id, product_name, product_size_label, quantity, unit_price_cents, line_total_cents)',
       )
       .eq('id', id)
       .maybeSingle()
@@ -201,6 +201,37 @@ serve(async (req) => {
       }
     }
 
+    // Enriquece items con image_url (foto de portada del producto): mismo
+    // patrón que customer-order-detail y el catálogo público — query batch a
+    // product_images por product_id + getPublicUrl del bucket público
+    // `product-images`. Si el producto fue borrado (product_id null) o no
+    // tiene foto, image_url=null y el front muestra el placeholder de bici.
+    const rawItems = (order.order_items ?? []) as Array<Record<string, unknown>>
+    const productIds = rawItems
+      .map((i) => i.product_id as string | null)
+      .filter((pid): pid is string => !!pid)
+
+    const imageMap = new Map<string, string>()
+    if (productIds.length > 0) {
+      const { data: imgs } = await supabase
+        .from('product_images')
+        .select('product_id, storage_path')
+        .in('product_id', productIds)
+        .order('sort_order', { ascending: true })
+      for (const img of imgs ?? []) {
+        const pid = (img as { product_id: string }).product_id
+        if (imageMap.has(pid)) continue // primera por sort_order = portada
+        const { data: urlData } = supabase.storage
+          .from('product-images')
+          .getPublicUrl((img as { storage_path: string }).storage_path)
+        imageMap.set(pid, urlData.publicUrl)
+      }
+    }
+    const items = rawItems.map((i) => ({
+      ...i,
+      image_url: i.product_id ? imageMap.get(i.product_id as string) ?? null : null,
+    }))
+
     // B-16: payload mínimo. NO incluye shipping_city/shipping_postal_code.
     return jsonOk({
       order: {
@@ -216,7 +247,7 @@ serve(async (req) => {
         rejection_reason: order.rejection_reason,
         tracking_number: order.tracking_number,
         tracking_carrier: order.tracking_carrier,
-        items: order.order_items ?? [],
+        items,
         invoice: invoiceNumber ? { invoice_number: invoiceNumber, signed_url: invoiceUrl } : null,
       },
     }, req)
