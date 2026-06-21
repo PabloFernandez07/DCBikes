@@ -324,13 +324,17 @@ async function buildRedsysFormData(opts: {
   amountCents: number
   customerEmail: string
   description: string
+  // URL OK específica del pedido: /pedido/confirmacion/{uuid}?token={hmac}.
+  // La ruta React espera el id interno en el path y el token en query (igual
+  // que el flujo mock). config.paymentOkUrl es solo la base sin id ni token.
+  okUrl: string
 }): Promise<{
   action_url: string
   Ds_SignatureVersion: 'HMAC_SHA256_V1'
   Ds_MerchantParameters: string
   Ds_Signature: string
 }> {
-  const { config, orderId, amountCents, customerEmail, description } = opts
+  const { config, orderId, amountCents, customerEmail, description, okUrl } = opts
 
   const params: Record<string, string | number> = {
     DS_MERCHANT_MERCHANTCODE: config.merchantCode,
@@ -343,7 +347,7 @@ async function buildRedsysFormData(opts: {
     DS_MERCHANT_PRODUCTDESCRIPTION: description.slice(0, 125),
     DS_MERCHANT_MERCHANTNAME: config.merchantName.slice(0, 25),
     DS_MERCHANT_MERCHANTURL: config.paymentNotificationUrl,
-    DS_MERCHANT_URLOK: config.paymentOkUrl,
+    DS_MERCHANT_URLOK: okUrl,
     DS_MERCHANT_URLKO: config.paymentKoUrl,
     DS_MERCHANT_PAYMETHODS: config.payMethods,
     DS_MERCHANT_CONSUMERLANGUAGE: '001', // ES
@@ -749,6 +753,9 @@ serve(async (req) => {
       amountCents: totals.total_cents,
       customerEmail: body.customer.email,
       description,
+      // id interno (UUID) en el path + token en query, igual que el flujo mock.
+      // Redsys añade sus Ds_* con `&` al detectar el `?` ya presente.
+      okUrl: `${config.paymentOkUrl}/${orderId}?token=${encodeURIComponent(publicToken)}`,
     })
 
     console.log(

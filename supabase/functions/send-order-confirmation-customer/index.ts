@@ -24,6 +24,7 @@ import {
   corsPreflightResponse,
 } from '../_shared/email-utils.ts'
 import { verifyInternalSecret } from '../_shared/security.ts'
+import { generateOrderToken } from '../_shared/order-token.ts'
 
 serve(async (req) => {
   const cors = buildCorsHeaders(req)
@@ -92,7 +93,11 @@ serve(async (req) => {
 
     // TODO Fase E: signed token. Por ahora linkamos sin token; el endpoint
     // order-public-get rechazará la consulta hasta que Fase E genere el token.
-    const confirmationUrl = `${siteUrl}/pedido/confirmacion?id=${encodeURIComponent(order.id)}`
+    // La ruta React es /pedido/confirmacion/{id}?token={hmac}: id interno en el
+    // path + token firmado en query (order-public-get valida ambos). El formato
+    // anterior (?id=) daba 404 porque la ruta espera el id en el path.
+    const confirmationToken = await generateOrderToken(order.id, order.customer_email)
+    const confirmationUrl = `${siteUrl}/pedido/confirmacion/${order.id}?token=${encodeURIComponent(confirmationToken)}`
 
     const bodyHtml = `
       <p style="margin:0 0 16px 0">Hola <strong>${escapeHtml(order.customer_first_name)}</strong>,</p>
