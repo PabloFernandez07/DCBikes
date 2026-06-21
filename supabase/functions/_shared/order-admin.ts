@@ -180,18 +180,21 @@ export async function runRedsysOperation(opts: {
   const authCode = String(decoded['Ds_AuthorisationCode'] ?? '') || null
   const n = responseCode ? parseInt(responseCode, 10) : NaN
 
-  // 4.2 (auditoría 2026-06-11): antes `ok = true` incondicional para cancel —
-  // un KO de Redsys (red caída, firma inválida, pre-auth inexistente) pasaba
-  // como éxito y la retención del cliente quedaba viva sin que nadie lo viera.
-  // Ahora validamos también la anulación:
-  //   0..99 → autorizada (rango OK genérico de Redsys)
-  //   0900  → "transacción autorizada para devoluciones y confirmaciones"
-  //   0400  → "transacción anulada" (respuesta de anulación correcta)
-  //   9222  → "ya existe una anulación asociada" → idempotente: la pre-auth
-  //           ya estaba liberada, lo tratamos como OK.
-  const captureOk = Number.isFinite(n) && n >= 0 && n <= 99
+  // Códigos de respuesta Redsys (Ds_Response):
+  //   0000..0099 → "autorizada para pagos y preautorizaciones"
+  //   0900       → "autorizada para devoluciones y CONFIRMACIONES"
+  //   0400       → "transacción anulada" (respuesta de anulación correcta)
+  //   9222       → "ya existe una anulación asociada" → idempotente, OK.
+  //
+  // FIX 2026-06-21: la CONFIRMACIÓN de preautorización (captura, type 2)
+  // devuelve 0900 en éxito, NO 0000. La validación anterior (capture solo
+  // 0..99) daba por FALLIDA una captura correcta de 0900 → revertía el pedido
+  // a 'rejected' con el dinero ya capturado y mostraba error al aceptar.
+  // Tanto captura como anulación se consideran OK con 0..99 o 0900.
+  const captureOk =
+    Number.isFinite(n) && ((n >= 0 && n <= 99) || n === 900)
   const cancelOk =
-    Number.isFinite(n) && (n <= 99 ? n >= 0 : n === 400 || n === 900 || n === 9222)
+    Number.isFinite(n) && ((n >= 0 && n <= 99) || n === 400 || n === 900 || n === 9222)
   const ok = op.kind === 'capture' ? captureOk : cancelOk
 
   return {
