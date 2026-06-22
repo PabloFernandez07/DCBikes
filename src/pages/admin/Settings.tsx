@@ -150,11 +150,16 @@ export function Settings() {
   const [saving, setSaving] = useState(false)
 
   // ─── Cambio de contraseña del admin (sesión activa) ────────────────────
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [changingPassword, setChangingPassword] = useState(false)
 
   async function handleChangePassword() {
+    if (!currentPassword) {
+      toast.error('Introduce tu contraseña actual')
+      return
+    }
     if (newPassword.length < 8) {
       toast.error('La contraseña debe tener al menos 8 caracteres')
       return
@@ -164,14 +169,32 @@ export function Settings() {
       return
     }
     setChangingPassword(true)
-    // Supabase actualiza la contraseña del usuario de la sesión activa; no pide
-    // la actual (la sesión ya autentica). Tras esto la sesión sigue válida.
+    // Seguridad: verificamos la contraseña ACTUAL re-autenticando antes de
+    // permitir el cambio (la sesión por sí sola no demuestra que sea el titular
+    // quien está delante).
+    const { data: userData } = await supabase.auth.getUser()
+    const email = userData.user?.email
+    if (!email) {
+      setChangingPassword(false)
+      toast.error('No se pudo verificar tu sesión. Vuelve a iniciar sesión.')
+      return
+    }
+    const { error: signInErr } = await supabase.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    })
+    if (signInErr) {
+      setChangingPassword(false)
+      toast.error('La contraseña actual no es correcta')
+      return
+    }
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     setChangingPassword(false)
     if (error) {
       toast.error('No se pudo cambiar la contraseña: ' + error.message)
       return
     }
+    setCurrentPassword('')
     setNewPassword('')
     setConfirmPassword('')
     toast.success('Contraseña actualizada correctamente')
@@ -1597,8 +1620,17 @@ export function Settings() {
                 title="Contraseña"
               />
               <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] -mt-2">
-                Cambia la contraseña con la que accedes al panel. No necesitas la actual: tu sesión ya está iniciada.
+                Cambia la contraseña con la que accedes al panel. Por seguridad, confirma primero tu contraseña actual.
               </p>
+              <div className="max-w-xl">
+                <Field
+                  label="Contraseña actual"
+                  type="password"
+                  placeholder="Tu contraseña de acceso actual"
+                  value={currentPassword}
+                  onChange={e => setCurrentPassword((e.target as HTMLInputElement).value)}
+                />
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-xl">
                 <Field
                   label="Nueva contraseña"
@@ -1620,7 +1652,7 @@ export function Settings() {
                   variant="primary"
                   onClick={handleChangePassword}
                   loading={changingPassword}
-                  disabled={!newPassword || !confirmPassword}
+                  disabled={!currentPassword || !newPassword || !confirmPassword}
                 >
                   Cambiar contraseña
                 </Button>
