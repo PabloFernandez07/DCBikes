@@ -83,7 +83,12 @@ export function ReturnRequestModal({
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [returnNumber, setReturnNumber] = useState<string | null>(null)
 
-  // Reinicia el formulario cada vez que se abre con un set de items nuevo.
+  // Reinicia el formulario solo en la transición a "abierto", no en cada cambio
+  // de `items`. Si el padre refresca el pedido tras una devolución con éxito y eso
+  // altera la referencia de `items`, reiniciar aquí pisaría la pantalla de éxito
+  // (parecía que el modal "se reabría" volviendo al formulario). Por eso seguimos
+  // únicamente `open`: el reseteo ocurre al abrir y construye las selecciones con
+  // los items vigentes en ese momento.
   useEffect(() => {
     if (!open) return
     const initial: Record<string, ItemSelection> = {}
@@ -96,7 +101,8 @@ export function ReturnRequestModal({
     setPhase('idle')
     setErrorMsg(null)
     setReturnNumber(null)
-  }, [open, items])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
 
   const submitting = phase === 'loading'
 

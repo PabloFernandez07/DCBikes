@@ -47,11 +47,13 @@ serve(async (req) => {
     if (!ret) return jsonError('devolución no encontrada', 404, req)
 
     // ── Líneas devueltas ───────────────────────────────────────────────────
+    // order_return_items NO tiene columna created_at → ordenar por product_name
+    // (estable y legible). Ordenar por created_at daba error y rompía el detalle.
     const { data: items, error: iErr } = await supabase
       .from('order_return_items')
       .select('*')
       .eq('return_id', returnId)
-      .order('created_at', { ascending: true })
+      .order('product_name', { ascending: true })
     if (iErr) {
       console.error(`[${ts()}] admin-return-get items error:`, iErr.message)
       return jsonError('error leyendo las líneas de la devolución', 500, req)
@@ -64,7 +66,8 @@ serve(async (req) => {
       const { data: ord, error: oErr } = await supabase
         .from('orders')
         .select(
-          'id, order_number, status, customer_email, customer_name, ' +
+          'id, order_number, status, customer_email, ' +
+            'customer_first_name, customer_last_name, ' +
             'total_cents, payment_pre_auth_id, payment_captured_at, ' +
             'delivery_method, created_at',
         )

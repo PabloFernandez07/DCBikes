@@ -11,8 +11,26 @@ import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
 import {
-  ReturnStatusBadge, reasonLabel, type ReturnStatus,
+  ReturnStatusBadge, type ReturnStatus,
 } from './ReturnsList'
+
+// ─── Traducción de motivos de devolución ────────────────────────────
+// Códigos reales que emite el cliente (ReturnRequestModal) y valida la
+// constraint de order_returns. El mapa compartido de ReturnsList no cubre
+// 'not_liked' ni 'damaged', así que traducimos aquí con el contrato real.
+const REASON_LABELS: Record<string, string> = {
+  wrong_size: 'Talla incorrecta',
+  not_liked: 'No me convence',
+  defective: 'Producto defectuoso',
+  damaged: 'Llegó dañado',
+  wrong_item: 'Me enviaron otro producto',
+  other: 'Otro',
+}
+
+function reasonLabel(code: string | null | undefined): string {
+  if (!code) return '—'
+  return REASON_LABELS[code] ?? code
+}
 
 // ─── Tipos del contrato admin-return-get ────────────────────────────
 interface ReturnRecord {

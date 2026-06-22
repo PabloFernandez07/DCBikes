@@ -58,13 +58,12 @@ export function ReturnStatusBadge({ status, size = 'sm' }: { status: ReturnStatu
 
 // Traducción de los códigos de motivo del backend al español.
 export const RETURN_REASON_LABELS: Record<string, string> = {
-  defective: 'Producto defectuoso',
-  wrong_item: 'Artículo incorrecto',
   wrong_size: 'Talla incorrecta',
-  not_as_described: 'No coincide con la descripción',
-  changed_mind: 'Cambio de opinión',
-  damaged_shipping: 'Dañado en el envío',
-  other: 'Otros',
+  not_liked: 'No me convence',
+  defective: 'Producto defectuoso',
+  damaged: 'Llegó dañado',
+  wrong_item: 'Me enviaron otro producto',
+  other: 'Otro',
 }
 
 export function reasonLabel(code: string | null | undefined): string {

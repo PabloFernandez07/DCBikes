@@ -182,6 +182,10 @@ export default function MyOrderDetailCustomer() {
   const [checkingReturn, setCheckingReturn] = useState(false)
   const [returnDeadline, setReturnDeadline] = useState<string | null>(null)
   const [returnItems, setReturnItems] = useState<EligibleReturnItem[]>([])
+  // Marca que la devolución se registró con éxito: refrescamos el pedido al CERRAR
+  // el modal, no en onSuccess, para no re-renderizar (ni alterar `returnItems`)
+  // mientras se muestra la pantalla de éxito y evitar que el modal "se reabra".
+  const [returnSucceeded, setReturnSucceeded] = useState(false)
 
   // Factura (descarga / generación bajo demanda)
   const [requestingInvoice, setRequestingInvoice] = useState(false)
@@ -484,6 +488,7 @@ export default function MyOrderDetailCustomer() {
       }
       setReturnItems(items)
       setReturnDeadline(data.deadline ?? null)
+      setReturnSucceeded(false)
       setReturnOpen(true)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error al comprobar la devolución')
@@ -1176,15 +1181,23 @@ export default function MyOrderDetailCustomer() {
       {session && (
         <ReturnRequestModal
           open={returnOpen}
-          onClose={() => setReturnOpen(false)}
+          onClose={() => {
+            setReturnOpen(false)
+            // Refrescamos el pedido al cerrar (no en onSuccess) para no provocar un
+            // re-render que altere `returnItems` mientras se ve la pantalla de éxito.
+            if (returnSucceeded) {
+              setReturnSucceeded(false)
+              const s = readSession()
+              if (s) fetchDetail(order.id, s.token)
+            }
+          }}
           token={session.token}
           orderId={order.id}
           deadline={returnDeadline}
           items={returnItems}
           onSuccess={() => {
-            // Refrescamos el detalle para reflejar el nuevo estado del pedido.
-            const s = readSession()
-            if (s) fetchDetail(order.id, s.token)
+            // Solo marcamos el éxito; el refresco del detalle se hace al cerrar.
+            setReturnSucceeded(true)
           }}
         />
       )}
