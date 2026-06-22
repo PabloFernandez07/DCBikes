@@ -168,10 +168,78 @@ serve(async (req) => {
     const { deleted_at: _ignored, order_items: _oi, ...orderRest } = order as Record<string, unknown>
     const orderPublic = { ...orderRest, items }
 
+    // Devoluciones (RMA) de ESTE pedido. Si algo falla, NO rompemos el detalle:
+    // logueamos y devolvemos returns: []. Solo columnas públicas — nunca
+    // reason_text ni notas internas del admin.
+    let returns: Array<Record<string, unknown>> = []
+    try {
+      const { data: returnRows, error: rErr } = await supabase
+        .from('order_returns')
+        .select(
+          'id, return_number, status, reason_code, created_at, is_full_order, ' +
+            'store_pays_return, refund_items_cents, refund_shipping_cents, ' +
+            'refund_total_cents, received_at, refunded_at',
+        )
+        .eq('order_id', order.id)
+        .order('created_at', { ascending: true })
+
+      if (rErr) throw rErr
+
+      const returnList = returnRows ?? []
+      if (returnList.length > 0) {
+        const returnIds = returnList.map((r) => r.id as string)
+
+        // Una sola query batch de líneas (NO N+1). order_return_items no tiene
+        // created_at → si se ordena, por product_name.
+        const { data: itemRows, error: riErr } = await supabase
+          .from('order_return_items')
+          .select('return_id, product_name, product_size_label, quantity, line_refund_cents')
+          .in('return_id', returnIds)
+          .order('product_name', { ascending: true })
+
+        if (riErr) throw riErr
+
+        // Agrupar líneas por return_id en memoria.
+        const itemsByReturn = new Map<string, Array<Record<string, unknown>>>()
+        for (const it of itemRows ?? []) {
+          const rid = (it as { return_id: string }).return_id
+          const list = itemsByReturn.get(rid) ?? []
+          list.push({
+            product_name: it.product_name,
+            product_size_label: it.product_size_label,
+            quantity: it.quantity,
+            line_refund_cents: it.line_refund_cents,
+          })
+          itemsByReturn.set(rid, list)
+        }
+
+        returns = returnList.map((r) => ({
+          return_number: r.return_number,
+          status: r.status,
+          reason_code: r.reason_code,
+          created_at: r.created_at,
+          is_full_order: r.is_full_order,
+          store_pays_return: r.store_pays_return,
+          refund_items_cents: r.refund_items_cents,
+          refund_shipping_cents: r.refund_shipping_cents,
+          refund_total_cents: r.refund_total_cents,
+          received_at: r.received_at,
+          refunded_at: r.refunded_at,
+          items: itemsByReturn.get(r.id as string) ?? [],
+        }))
+      }
+    } catch (rErr) {
+      console.error(
+        `[${ts()}] customer-order-detail returns error · order=${order.order_number}:`,
+        rErr instanceof Error ? rErr.message : String(rErr),
+      )
+      returns = []
+    }
+
     console.log(
-      `[${ts()}] ✓ order-detail · email=${maskEmail(session.email)} · order=${order.order_number} · items=${items.length}`,
+      `[${ts()}] ✓ order-detail · email=${maskEmail(session.email)} · order=${order.order_number} · items=${items.length} · returns=${returns.length}`,
     )
-    return jsonOk({ order: orderPublic, invoice }, req)
+    return jsonOk({ order: orderPublic, invoice, returns }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-order-detail:`, String(err))
     return jsonError('internal error', 500, req)

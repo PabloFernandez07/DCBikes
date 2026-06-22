@@ -103,10 +103,99 @@ interface CustomerOrderDetail {
   cancelled_by_customer?: boolean
 }
 
+// ─── Devoluciones (RMA) del cliente ────────────────────────────────────
+// El backend devuelve `returns` como clave de primer nivel (hermana de
+// `order` e `invoice`). Cada elemento describe una devolución del pedido.
+type CustomerReturnStatus =
+  | 'requested'
+  | 'approved'
+  | 'rejected'
+  | 'received'
+  | 'refunded'
+  | 'cancelled'
+
+interface CustomerReturnItem {
+  product_name: string
+  product_size_label: string | null
+  quantity: number
+  line_refund_cents: number
+}
+
+interface CustomerReturn {
+  return_number: string
+  status: CustomerReturnStatus
+  reason_code: 'wrong_size' | 'not_liked' | 'defective' | 'damaged' | 'wrong_item' | 'other'
+  created_at: string
+  is_full_order: boolean
+  store_pays_return: boolean
+  refund_items_cents: number
+  refund_shipping_cents: number
+  refund_total_cents: number
+  received_at: string | null
+  refunded_at: string | null
+  items: CustomerReturnItem[]
+}
+
 interface DetailResponse {
   ok: boolean
   order?: CustomerOrderDetail
+  returns?: CustomerReturn[]
   error?: string
+}
+
+// Badge de estado de devolución en español (coherente en color con el badge
+// de admin de ReturnsList). Con fallback al código crudo si llega uno desconocido.
+const RETURN_STATUS_META: Record<CustomerReturnStatus, { label: string; className: string }> = {
+  requested: {
+    label: 'Solicitada',
+    className: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+  },
+  approved: {
+    label: 'Aprobada',
+    className: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
+  },
+  rejected: {
+    label: 'Rechazada',
+    className: 'bg-[var(--color-brand-red)]/15 text-[var(--color-brand-red)] border-[var(--color-brand-red)]/30',
+  },
+  received: {
+    label: 'Recibida',
+    className: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+  },
+  refunded: {
+    label: 'Reembolsada',
+    className: 'bg-green-500/15 text-green-400 border-green-500/30',
+  },
+  cancelled: {
+    label: 'Cancelada',
+    className: 'bg-[var(--color-card-hover)] text-[var(--color-cream-dim)] border-[var(--color-mid)]/20',
+  },
+}
+
+// Traducción de los códigos de motivo del backend al español (fallback al código).
+const RETURN_REASON_LABELS: Record<string, string> = {
+  wrong_size: 'Talla incorrecta',
+  not_liked: 'No me convence',
+  defective: 'Producto defectuoso',
+  damaged: 'Llegó dañado',
+  wrong_item: 'Me enviaron otro producto',
+  other: 'Otro',
+}
+
+// Progreso de la devolución hasta el reembolso. Solo se muestra cuando el
+// estado NO es terminal negativo (rejected/cancelled): esos se ven como badge.
+const RETURN_PROGRESS_STEPS: { key: CustomerReturnStatus; label: string }[] = [
+  { key: 'requested', label: 'Solicitada' },
+  { key: 'approved', label: 'Aprobada' },
+  { key: 'received', label: 'Recibida' },
+  { key: 'refunded', label: 'Reembolsada' },
+]
+
+const RETURN_PROGRESS_ORDER: Record<string, number> = {
+  requested: 0,
+  approved: 1,
+  received: 2,
+  refunded: 3,
 }
 
 function fmtEuros(cents: number) {
@@ -170,6 +259,7 @@ export default function MyOrderDetailCustomer() {
 
   const [loading, setLoading] = useState(true)
   const [order, setOrder] = useState<CustomerOrderDetail | null>(null)
+  const [returns, setReturns] = useState<CustomerReturn[]>([])
   const [error, setError] = useState<string | null>(null)
 
   // Cancel modal
@@ -252,6 +342,7 @@ export default function MyOrderDetailCustomer() {
         invoice_number: invoiceData?.invoice_number ?? null,
         invoice_signed_url: invoiceData?.signed_url ?? null,
       })
+      setReturns(data.returns ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar el pedido')
     } finally {
@@ -795,6 +886,184 @@ export default function MyOrderDetailCustomer() {
             </p>
           </div>
         </section>
+
+        {/* Tu devolución — una card por cada devolución registrada del pedido */}
+        {returns.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] inline-flex items-center gap-2">
+              <RotateCcw size={13} className="text-[var(--color-lavender)]" aria-hidden="true" />
+              {returns.length === 1 ? 'Tu devolución' : 'Tus devoluciones'}
+            </h2>
+
+            {returns.map((ret) => {
+              const statusMeta = RETURN_STATUS_META[ret.status]
+              const reasonLabel = RETURN_REASON_LABELS[ret.reason_code] ?? ret.reason_code
+              const isTerminalNegative = ret.status === 'rejected' || ret.status === 'cancelled'
+              const progressIdx = RETURN_PROGRESS_ORDER[ret.status] ?? -1
+              // Fechas asociadas a cada hito del progreso (cuando tienen sentido).
+              const stepDate: Record<string, string | null> = {
+                requested: ret.created_at,
+                received: ret.received_at,
+                refunded: ret.refunded_at,
+              }
+
+              return (
+                <article
+                  key={ret.return_number}
+                  className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 space-y-5"
+                >
+                  {/* Cabecera: nº DEV + badge de estado */}
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div>
+                      <p className="font-[var(--font-cond)] text-[var(--color-lavender)] tracking-wide text-sm">
+                        {ret.return_number}
+                      </p>
+                      <p className="text-[11px] text-[var(--color-mid)] mt-0.5 font-[var(--font-body)]">
+                        Solicitada el {formatDate(ret.created_at)} · {reasonLabel}
+                      </p>
+                    </div>
+                    <span
+                      className={clsx(
+                        'inline-flex items-center rounded-full font-[var(--font-cond)] font-medium tracking-wide border px-3 py-1.5 text-sm',
+                        statusMeta
+                          ? statusMeta.className
+                          : 'bg-[var(--color-card-hover)] text-[var(--color-cream-dim)] border-[var(--color-mid)]/20',
+                      )}
+                    >
+                      {statusMeta?.label ?? ret.status}
+                    </span>
+                  </div>
+
+                  {/* Artículos devueltos */}
+                  <div>
+                    <h3 className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-2">
+                      Artículos devueltos
+                      {ret.is_full_order && (
+                        <span className="ml-2 normal-case tracking-normal text-[var(--color-cream-dim)]">
+                          (pedido completo)
+                        </span>
+                      )}
+                    </h3>
+                    <ul className="space-y-1.5">
+                      {ret.items.map((item, idx) => (
+                        <li
+                          key={`${ret.return_number}-${item.product_name}-${idx}`}
+                          className="flex items-center justify-between gap-3 text-sm"
+                        >
+                          <span className="text-[var(--color-cream)] font-[var(--font-body)] min-w-0">
+                            <span className="line-clamp-1">{item.product_name}</span>
+                            <span className="text-[11px] text-[var(--color-mid)]">
+                              {item.product_size_label ? `Talla ${item.product_size_label} · ` : ''}
+                              Cantidad {item.quantity}
+                            </span>
+                          </span>
+                          <span className="font-[var(--font-cond)] text-[var(--color-cream-dim)] tabular-nums whitespace-nowrap">
+                            {fmtEuros(item.line_refund_cents)} €
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Importe a reembolsar */}
+                  <div className="pt-3 border-t border-[var(--color-card-hover)] space-y-1.5 text-sm font-[var(--font-cond)]">
+                    <div className="flex justify-between">
+                      <span className="text-[var(--color-mid)]">Reembolso de artículos</span>
+                      <span className="text-[var(--color-cream-dim)] tabular-nums">{fmtEuros(ret.refund_items_cents)} €</span>
+                    </div>
+                    {ret.refund_shipping_cents > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-[var(--color-mid)]">Reembolso de envío</span>
+                        <span className="text-[var(--color-cream-dim)] tabular-nums">{fmtEuros(ret.refund_shipping_cents)} €</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-baseline pt-2 mt-1 border-t border-[var(--color-card-hover)]/60">
+                      <span className="uppercase tracking-widest text-[var(--color-cream-dim)]">
+                        {ret.status === 'refunded' ? 'Reembolsado' : 'A reembolsar'}
+                      </span>
+                      <span className="font-[var(--font-display)] text-xl text-[var(--color-lavender)] tracking-wide tabular-nums">
+                        {fmtEuros(ret.refund_total_cents)} €
+                      </span>
+                    </div>
+                    {!ret.store_pays_return && (
+                      <p className="text-[10px] text-[var(--color-mid)] pt-1 font-[var(--font-body)] leading-relaxed">
+                        Los gastos de envío de la devolución corren por tu cuenta.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Progreso de la devolución (o estado terminal si rechazada/cancelada) */}
+                  {isTerminalNegative ? (
+                    <div
+                      className={clsx(
+                        'flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-[var(--font-cond)]',
+                        statusMeta?.className,
+                      )}
+                    >
+                      {ret.status === 'rejected' ? (
+                        <XCircle size={15} aria-hidden="true" />
+                      ) : (
+                        <Circle size={13} aria-hidden="true" />
+                      )}
+                      <span>
+                        {ret.status === 'rejected'
+                          ? 'La tienda ha rechazado esta devolución.'
+                          : 'Esta devolución fue cancelada.'}
+                      </span>
+                    </div>
+                  ) : (
+                    <ol className="grid grid-cols-4 gap-2" aria-label="Progreso de la devolución">
+                      {RETURN_PROGRESS_STEPS.map((step, idx) => {
+                        const reached = idx <= progressIdx
+                        const isCurrent = idx === progressIdx
+                        const date = stepDate[step.key]
+                        return (
+                          <li key={step.key} className="flex flex-col items-center text-center gap-1.5">
+                            <div className="relative w-full flex items-center justify-center">
+                              {idx > 0 && (
+                                <span
+                                  className={clsx(
+                                    'absolute right-1/2 top-1/2 -translate-y-1/2 h-px w-full',
+                                    reached ? 'bg-[var(--color-lavender)]/60' : 'bg-[var(--color-card-hover)]',
+                                  )}
+                                  aria-hidden="true"
+                                />
+                              )}
+                              <span
+                                className={clsx(
+                                  'relative z-10 inline-flex items-center justify-center w-7 h-7 rounded-full border-2 transition-colors',
+                                  reached
+                                    ? 'bg-[var(--color-lavender)]/20 border-[var(--color-lavender)] text-[var(--color-lavender)]'
+                                    : 'bg-[var(--color-card)] border-[var(--color-card-hover)] text-[var(--color-mid)]',
+                                  isCurrent && 'ring-2 ring-[var(--color-lavender)]/30',
+                                )}
+                              >
+                                {reached ? <CheckCircle2 size={14} aria-hidden="true" /> : <Circle size={10} aria-hidden="true" />}
+                              </span>
+                            </div>
+                            <span
+                              className={clsx(
+                                'text-[11px] font-[var(--font-cond)] tracking-wide leading-tight',
+                                reached ? 'text-[var(--color-cream)]' : 'text-[var(--color-mid)]',
+                              )}
+                            >
+                              {step.label}
+                            </span>
+                            {date && reached && (
+                              <span className="text-[10px] text-[var(--color-mid)] tabular-nums leading-tight">
+                                {formatDate(date)}
+                              </span>
+                            )}
+                          </li>
+                        )
+                      })}
+                    </ol>
+                  )}
+                </article>
+              )
+            })}
+          </section>
+        )}
 
         {/* Datos cliente + entrega */}
         <section className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-2xl p-6 grid sm:grid-cols-2 gap-5">
