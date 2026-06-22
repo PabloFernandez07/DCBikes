@@ -1101,6 +1101,14 @@ export default function MyOrderDetailCustomer() {
               <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)]">
                 Este pedido no se completó.
               </p>
+            ) : order.status === 'delivered' ? (
+              <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)]">
+                Pedido recogido en tienda.
+              </p>
+            ) : order.status === 'ready_pickup' ? (
+              <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)]">
+                Tu pedido está listo para recoger en tienda.
+              </p>
             ) : (
               <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)]">
                 Te avisaremos por email cuando esté listo para recoger en tienda.
