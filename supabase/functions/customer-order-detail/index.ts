@@ -236,10 +236,29 @@ serve(async (req) => {
       returns = []
     }
 
+    // Datos de la tienda (destinatario de la hoja de devolución imprimible).
+    // Solo se cargan si hay devoluciones: es lo único que los necesita.
+    let store: { name: string; address: string; phone: string } | null = null
+    if (returns.length > 0) {
+      const { data: srows } = await supabase
+        .from('settings')
+        .select('key, value')
+        .in('key', ['store_name', 'store_address', 'store_phone'])
+      const sval = (k: string): string => {
+        const v = (srows ?? []).find((s) => (s as { key: string }).key === k)?.value
+        return typeof v === 'string' ? v : v == null ? '' : String(v)
+      }
+      store = {
+        name: sval('store_name'),
+        address: sval('store_address'),
+        phone: sval('store_phone'),
+      }
+    }
+
     console.log(
       `[${ts()}] ✓ order-detail · email=${maskEmail(session.email)} · order=${order.order_number} · items=${items.length} · returns=${returns.length}`,
     )
-    return jsonOk({ order: orderPublic, invoice, returns }, req)
+    return jsonOk({ order: orderPublic, invoice, returns, store }, req)
   } catch (err) {
     console.error(`[${ts()}] ✗ customer-order-detail:`, String(err))
     return jsonError('internal error', 500, req)

@@ -17,6 +17,7 @@ import {
   History,
   RefreshCw,
   RotateCcw,
+  Printer,
 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -136,10 +137,18 @@ interface CustomerReturn {
   items: CustomerReturnItem[]
 }
 
+// Datos de la tienda (destinatario de la hoja de devolución imprimible).
+interface CustomerStore {
+  name: string
+  address: string
+  phone: string
+}
+
 interface DetailResponse {
   ok: boolean
   order?: CustomerOrderDetail
   returns?: CustomerReturn[]
+  store?: CustomerStore | null
   error?: string
 }
 
@@ -223,6 +232,83 @@ function formatDateTime(iso: string) {
   })
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+// Hoja de devolución imprimible: se abre en una ventana aislada y se imprime
+// (no toca el CSS de la app). El cliente la pega en la caja. NO es una etiqueta
+// de transporte prepagada — el cliente envía/lleva el paquete por su cuenta.
+function printReturnSlip(
+  ret: CustomerReturn,
+  order: CustomerOrderDetail,
+  store: CustomerStore | null,
+) {
+  const itemsRows = ret.items
+    .map(
+      (it) => `<tr>
+        <td>${escapeHtml(it.product_name)}${it.product_size_label ? ` <span class="muted">(${escapeHtml(it.product_size_label)})</span>` : ''}</td>
+        <td class="num">${it.quantity}</td>
+      </tr>`,
+    )
+    .join('')
+
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
+    <title>Hoja de devolución ${escapeHtml(ret.return_number)}</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { font-family: Arial, Helvetica, sans-serif; color: #111; margin: 32px; }
+      h1 { font-size: 20px; letter-spacing: 2px; margin: 0 0 2px; }
+      .rma { font-size: 28px; font-weight: bold; letter-spacing: 1px; margin: 4px 0 16px; }
+      .grid { display: flex; gap: 24px; margin: 16px 0; }
+      .box { flex: 1; border: 1px solid #999; border-radius: 8px; padding: 12px 14px; }
+      .box h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #666; margin: 0 0 6px; }
+      .box p { margin: 2px 0; font-size: 14px; line-height: 1.4; white-space: pre-line; }
+      table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+      th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #ddd; font-size: 14px; }
+      th { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #666; }
+      .num { text-align: right; width: 60px; }
+      .muted { color: #888; }
+      .note { margin-top: 20px; font-size: 12px; color: #444; border-top: 1px dashed #bbb; padding-top: 12px; }
+      @media print { body { margin: 12mm; } }
+    </style></head><body>
+    <h1>HOJA DE DEVOLUCIÓN</h1>
+    <div class="rma">${escapeHtml(ret.return_number)}</div>
+    <div class="grid">
+      <div class="box">
+        <h2>Enviar a / Entregar en</h2>
+        <p><strong>${escapeHtml(store?.name || 'La tienda')}</strong></p>
+        <p>${escapeHtml(store?.address || '')}</p>
+        ${store?.phone ? `<p>Tel.: ${escapeHtml(store.phone)}</p>` : ''}
+      </div>
+      <div class="box">
+        <h2>Remitente</h2>
+        <p>${escapeHtml(`${order.customer_first_name} ${order.customer_last_name}`.trim())}</p>
+        <p>${escapeHtml(order.customer_email)}</p>
+        <p class="muted">Pedido ${escapeHtml(order.order_number)}</p>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Artículo a devolver</th><th class="num">Uds.</th></tr></thead>
+      <tbody>${itemsRows}</tbody>
+    </table>
+    <div class="note">
+      Incluye esta hoja dentro del paquete. Conserva el justificante de envío hasta
+      que confirmemos el reembolso. Devolución ${escapeHtml(ret.return_number)}.
+    </div>
+    <script>window.onload = function () { window.print(); }<\/script>
+  </body></html>`
+
+  const w = window.open('', '_blank', 'noopener,noreferrer,width=720,height=900')
+  if (!w) return
+  w.document.write(html)
+  w.document.close()
+}
+
 // Timeline simplificado para el cliente: pending → authorized → accepted →
 // shipped/ready_pickup → delivered. Estados terminales negativos (rejected,
 // cancelled, payment_failed, returned) se muestran como "Cerrado".
@@ -260,6 +346,7 @@ export default function MyOrderDetailCustomer() {
   const [loading, setLoading] = useState(true)
   const [order, setOrder] = useState<CustomerOrderDetail | null>(null)
   const [returns, setReturns] = useState<CustomerReturn[]>([])
+  const [store, setStore] = useState<CustomerStore | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Cancel modal
@@ -343,6 +430,7 @@ export default function MyOrderDetailCustomer() {
         invoice_signed_url: invoiceData?.signed_url ?? null,
       })
       setReturns(data.returns ?? [])
+      setStore(data.store ?? null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar el pedido')
     } finally {
@@ -1058,6 +1146,47 @@ export default function MyOrderDetailCustomer() {
                         )
                       })}
                     </ol>
+                  )}
+
+                  {/* Instrucciones + hoja imprimible: solo mientras la devolución
+                      está en curso (solicitada o aprobada). Una vez recibida o
+                      reembolsada ya no hacen falta. */}
+                  {(ret.status === 'requested' || ret.status === 'approved') && (
+                    <div className="pt-4 border-t border-[var(--color-card-hover)] space-y-3">
+                      <h4 className="text-[10px] font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)]">
+                        Cómo realizar la devolución
+                      </h4>
+                      <ol className="list-decimal pl-5 space-y-1.5 text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed">
+                        <li>Empaqueta el artículo en su estado original, con etiquetas y embalaje si es posible.</li>
+                        <li>
+                          Imprime la hoja de devolución (nº{' '}
+                          <span className="text-[var(--color-cream)] font-medium">{ret.return_number}</span>) e inclúyela dentro de la caja.
+                        </li>
+                        <li>
+                          {order.delivery_method === 'pickup' ? 'Llévalo a la tienda' : 'Envíalo a la tienda'}
+                          {store?.address ? (
+                            <>: <span className="text-[var(--color-cream)]">{store.address}</span></>
+                          ) : '.'}
+                        </li>
+                        <li>
+                          {ret.store_pays_return
+                            ? 'Los gastos de envío de la devolución los asume la tienda (motivo por defecto, daño o error).'
+                            : 'Los gastos de envío de la devolución corren por tu cuenta.'}
+                        </li>
+                        <li>
+                          En cuanto recibamos el paquete, te reembolsamos{' '}
+                          <span className="text-[var(--color-cream)] font-medium">{fmtEuros(ret.refund_total_cents)} €</span> a tu tarjeta.
+                        </li>
+                      </ol>
+                      <button
+                        type="button"
+                        onClick={() => printReturnSlip(ret, order, store)}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-[var(--color-lavender)]/40 text-[var(--color-lavender)] font-[var(--font-cond)] font-semibold text-sm tracking-wide hover:border-[var(--color-lavender)] transition-colors"
+                      >
+                        <Printer size={14} aria-hidden="true" />
+                        Imprimir hoja de devolución
+                      </button>
+                    </div>
                   )}
                 </article>
               )
