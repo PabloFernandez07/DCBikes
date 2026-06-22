@@ -745,7 +745,61 @@ export function Settings() {
 
   return (
     <>
-      <div ref={searchRootRef} className="space-y-6 max-w-2xl">
+      <div ref={searchRootRef} className="lg:flex lg:flex-row-reverse lg:gap-8 lg:items-start">
+        {/* Buscador + navegación — columna derecha sticky en pantallas grandes,
+            arriba del todo en móvil. Antes era sticky sobre el contenido y se
+            solapaba; ahora ocupa el hueco vacío de la derecha. */}
+        {!loading && (
+          <div data-search-toolbar className="lg:w-80 lg:shrink-0 lg:sticky lg:top-4 mb-6 lg:mb-0">
+            <div className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl p-3 space-y-3">
+              <div className="relative">
+                <Search
+                  size={16}
+                  aria-hidden="true"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)]"
+                />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar ajuste…"
+                  className="w-full bg-[var(--color-ink)] border border-[var(--color-card-hover)] rounded-lg pl-9 pr-9 py-2.5 text-sm text-[var(--color-cream)] placeholder-[var(--color-mid)] font-[var(--font-body)] focus:outline-none focus:ring-2 focus:ring-[var(--color-lavender)]/50 focus:border-[var(--color-lavender)]"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    aria-label="Limpiar búsqueda"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)] hover:text-[var(--color-cream)]"
+                  >
+                    <XIcon size={15} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {visibleSections.length === 0 ? (
+                  <span className="text-xs text-[var(--color-mid)] font-[var(--font-body)]">
+                    Sin resultados para «{search}»
+                  </span>
+                ) : (
+                  visibleSections.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => jumpTo(s.id)}
+                      className="px-3 py-1.5 rounded-full text-xs font-[var(--font-cond)] tracking-wide bg-[var(--color-ink)] border border-[var(--color-card-hover)] text-[var(--color-cream-dim)] hover:border-[var(--color-lavender)]/60 hover:text-[var(--color-lavender)] transition-colors"
+                    >
+                      {highlightMatch(s.label, normalizedQuery)}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Columna de contenido (izquierda) */}
+        <div className="flex-1 lg:max-w-2xl min-w-0 space-y-6">
         {/* Banner crítico — datos fiscales incompletos */}
         {fiscalIncomplete && (
           <div
@@ -807,56 +861,6 @@ export function Settings() {
             Ajustes generales de la tienda
           </p>
         </div>
-
-        {/* Barra de búsqueda + navegación rápida */}
-        {!loading && (
-          <div data-search-toolbar className="sticky top-0 z-20 bg-[var(--color-ink)] pt-1 pb-3">
-            <div className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl p-3 space-y-3">
-              <div className="relative">
-                <Search
-                  size={16}
-                  aria-hidden="true"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)]"
-                />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar ajuste… (envío, IVA, certificado, horarios…)"
-                  className="w-full bg-[var(--color-ink)] border border-[var(--color-card-hover)] rounded-lg pl-9 pr-9 py-2.5 text-sm text-[var(--color-cream)] placeholder-[var(--color-mid)] font-[var(--font-body)] focus:outline-none focus:ring-2 focus:ring-[var(--color-lavender)]/50 focus:border-[var(--color-lavender)]"
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => setSearch('')}
-                    aria-label="Limpiar búsqueda"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-mid)] hover:text-[var(--color-cream)]"
-                  >
-                    <XIcon size={15} aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {visibleSections.length === 0 ? (
-                  <span className="text-xs text-[var(--color-mid)] font-[var(--font-body)]">
-                    Sin resultados para «{search}»
-                  </span>
-                ) : (
-                  visibleSections.map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => jumpTo(s.id)}
-                      className="px-3 py-1.5 rounded-full text-xs font-[var(--font-cond)] tracking-wide bg-[var(--color-ink)] border border-[var(--color-card-hover)] text-[var(--color-cream-dim)] hover:border-[var(--color-lavender)]/60 hover:text-[var(--color-lavender)] transition-colors"
-                    >
-                      {highlightMatch(s.label, normalizedQuery)}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {loading ? (
           <div className="flex justify-center py-16">
@@ -1624,6 +1628,7 @@ export function Settings() {
             </section>
           </div>
         )}
+        </div>{/* /columna contenido */}
       </div>
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />

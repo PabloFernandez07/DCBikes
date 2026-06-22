@@ -819,6 +819,10 @@ export default function MyOrderDetailCustomer() {
                   {order.shipping_province && `, ${order.shipping_province}`}
                 </p>
               </div>
+            ) : isClosed ? (
+              <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)]">
+                Este pedido no se completó.
+              </p>
             ) : (
               <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)]">
                 Te avisaremos por email cuando esté listo para recoger en tienda.
