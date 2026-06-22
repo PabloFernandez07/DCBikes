@@ -40,7 +40,11 @@ import {
 } from '@/schemas/order-shipping'
 
 const STORAGE_KEY = 'dcbikes_customer_session'
-const SESSION_TTL_MS = 24 * 60 * 60 * 1000
+// Solo higiene de localStorage (no autoridad). El backend manda: la sesión es
+// deslizante (24h desde el último uso) y al expirar de verdad responde 401, lo
+// que limpia el token aquí. Antes esto eran 24h fijas y mataba en el front una
+// sesión que el backend aún honraba → el usuario veía "ya expiró" antes de hora.
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
 interface StoredSession {
   token: string

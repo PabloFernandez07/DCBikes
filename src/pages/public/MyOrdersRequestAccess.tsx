@@ -9,7 +9,9 @@ import { PRIVACY_VERSION } from '@/lib/legal-versions'
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
 
 const STORAGE_KEY = 'dcbikes_customer_session'
-const SESSION_TTL_MS = 24 * 60 * 60 * 1000 // 24h
+// Higiene de localStorage; la autoridad es el backend (sesión deslizante 24h
+// desde el último uso + limpieza en 401). Ver nota en MyOrderDetailCustomer.
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
 interface StoredSession {
   token: string

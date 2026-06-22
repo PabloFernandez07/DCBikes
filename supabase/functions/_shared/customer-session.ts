@@ -109,6 +109,19 @@ export async function verifyCustomerSession(
   }
   if (!data) return null
 
+  // Expiración DESLIZANTE: las 24h cuentan desde el último uso, no desde el
+  // envío del email. Sin esto, si el email pasaba horas en la bandeja antes del
+  // primer clic, la ventana útil real era < 24h ("lo uso y al volver ya
+  // expiró"). Si al token le queda menos de media vida, lo renovamos a now+24h.
+  // Solo escribimos al cruzar el umbral → no amplificamos writes en cada fetch.
+  const remainingMs = new Date(data.expires_at).getTime() - Date.now()
+  if (remainingMs < TOKEN_TTL_MS / 2) {
+    await supabaseAdmin
+      .from('customer_sessions')
+      .update({ expires_at: new Date(Date.now() + TOKEN_TTL_MS).toISOString() })
+      .eq('token_hash', tokenHash)
+  }
+
   return { email: data.email }
 }
 
