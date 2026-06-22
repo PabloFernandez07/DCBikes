@@ -745,12 +745,12 @@ export function Settings() {
 
   return (
     <>
-      <div ref={searchRootRef} className="lg:flex lg:flex-row-reverse lg:gap-8 lg:items-start">
+      <div ref={searchRootRef} className="lg:flex lg:gap-8 lg:items-start">
         {/* Buscador + navegación — columna derecha sticky en pantallas grandes,
             arriba del todo en móvil. Antes era sticky sobre el contenido y se
             solapaba; ahora ocupa el hueco vacío de la derecha. */}
         {!loading && (
-          <div data-search-toolbar className="lg:w-80 lg:shrink-0 lg:sticky lg:top-4 mb-6 lg:mb-0">
+          <div data-search-toolbar className="lg:order-2 lg:ml-auto lg:w-80 lg:shrink-0 lg:sticky lg:top-4 mb-6 lg:mb-0">
             <div className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl p-3 space-y-3">
               <div className="relative">
                 <Search
@@ -798,8 +798,8 @@ export function Settings() {
           </div>
         )}
 
-        {/* Columna de contenido (izquierda) */}
-        <div className="flex-1 lg:max-w-2xl min-w-0 space-y-6">
+        {/* Columna de contenido (pegada a la izquierda, ancho original) */}
+        <div className="lg:order-1 lg:max-w-2xl min-w-0 space-y-6">
         {/* Banner crítico — datos fiscales incompletos */}
         {fiscalIncomplete && (
           <div
