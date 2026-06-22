@@ -106,7 +106,13 @@ export default function Groupings() {
       .sort((a, b) => a.model_group.localeCompare(b.model_group))
 
     setGroups(list)
-    setUngroupedCount(ungrouped)
+    // Conteo real de sin-agrupar: el fetch de arriba tope 1000 filas, así que el
+    // conteo en memoria se quedaba corto con >1000 productos. Lo pedimos exacto.
+    const { count: ungroupedReal } = await supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .is('model_group', null)
+    setUngroupedCount(ungroupedReal ?? ungrouped)
     setLoadingGroups(false)
   }, [toast])
 
@@ -848,26 +854,40 @@ function UngroupedList({
   const [moveQuery, setMoveQuery] = useState('')
   const [moveRunning, setMoveRunning] = useState(false)
 
+  // Búsqueda en SERVIDOR. Antes cargaba solo los 200 primeros sin agrupar y
+  // filtraba en memoria → con >1000 sin agrupar, un producto fuera de esos 200
+  // no aparecía aunque lo buscaras. Ahora, al teclear, consulta el servidor por
+  // nombre o SKU (con debounce) y encuentra cualquiera.
   useEffect(() => {
+    let cancelled = false
     setLoading(true)
-    supabase
-      .from('products')
-      .select('id, name, sku, retail_price, stock, slug, brand, model_group')
-      .is('model_group', null)
-      .order('name', { ascending: true })
-      .limit(200)
-      .then(({ data }) => {
+    const q = search.trim()
+    const timer = setTimeout(() => {
+      let query = supabase
+        .from('products')
+        .select('id, name, sku, retail_price, stock, slug, brand, model_group')
+        .is('model_group', null)
+        .order('name', { ascending: true })
+        .limit(q ? 100 : 200)
+      if (q) {
+        // Escapa los caracteres que rompen el filtro .or de PostgREST.
+        const safe = q.replace(/[%,()]/g, ' ')
+        query = query.or(`name.ilike.%${safe}%,sku.ilike.%${safe}%`)
+      }
+      query.then(({ data }) => {
+        if (cancelled) return
         setItems(((data as unknown) as Product[]) ?? [])
         setLoading(false)
       })
-  }, [])
+    }, 250)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [search])
 
-  const filtered = useMemo(() => {
-    if (!items) return []
-    const q = search.trim().toLowerCase()
-    if (!q) return items.slice(0, 50)
-    return items.filter(p => p.name.toLowerCase().includes(q)).slice(0, 50)
-  }, [items, search])
+  // El servidor ya filtra y limita; aquí solo exponemos lo recibido.
+  const filtered = useMemo(() => items ?? [], [items])
 
   const handleAssign = async (group: string) => {
     if (!moveTarget) return
