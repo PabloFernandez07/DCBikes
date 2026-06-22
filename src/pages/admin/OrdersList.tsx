@@ -22,6 +22,14 @@ function isOrderBulkEligible(o: Order): boolean {
   return o.status === 'accepted' && o.delivery_method === 'shipping' && !o.deleted_at
 }
 
+/**
+ * Seleccionable para acciones en lote GENERALES (p.ej. eliminar): cualquier
+ * pedido no eliminado. El envío en lote sigue restringido a isOrderBulkEligible.
+ */
+function isOrderSelectable(o: Order): boolean {
+  return !o.deleted_at
+}
+
 const PAGE_SIZE = 30
 
 type DeliveryFilter = 'all' | 'shipping' | 'pickup'
@@ -197,15 +205,15 @@ export default function OrdersList() {
   }, [page, statusFilter, deliveryFilter, dateFrom, dateTo, search, showDeleted])
 
   // ── Selection helpers ──────────────────────────────────────────
-  const bulkEligibleOnPage = useMemo(
-    () => orders.filter(isOrderBulkEligible),
+  const selectableOnPage = useMemo(
+    () => orders.filter(isOrderSelectable),
     [orders],
   )
   const allOnPageSelected =
-    bulkEligibleOnPage.length > 0 &&
-    bulkEligibleOnPage.every(o => selectedIds.has(o.id))
+    selectableOnPage.length > 0 &&
+    selectableOnPage.every(o => selectedIds.has(o.id))
   const someOnPageSelected =
-    bulkEligibleOnPage.some(o => selectedIds.has(o.id)) && !allOnPageSelected
+    selectableOnPage.some(o => selectedIds.has(o.id)) && !allOnPageSelected
 
   const toggleOne = useCallback((id: string) => {
     setSelectedIds(prev => {
@@ -221,13 +229,13 @@ export default function OrdersList() {
       const next = new Set(prev)
       if (allOnPageSelected) {
         // Quita los de esta página, conserva el resto (improbable pero por si).
-        for (const o of bulkEligibleOnPage) next.delete(o.id)
+        for (const o of selectableOnPage) next.delete(o.id)
       } else {
-        for (const o of bulkEligibleOnPage) next.add(o.id)
+        for (const o of selectableOnPage) next.add(o.id)
       }
       return next
     })
-  }, [allOnPageSelected, bulkEligibleOnPage])
+  }, [allOnPageSelected, selectableOnPage])
 
   const clearSelection = useCallback(() => setSelectedIds(new Set()), [])
 
@@ -238,8 +246,11 @@ export default function OrdersList() {
     [orders, selectedIds],
   )
 
+  // Solo los enviables de entre los seleccionados (aceptados + envío). El modal
+  // de "marcar enviados" opera únicamente sobre estos; el botón se deshabilita
+  // si no hay ninguno (p.ej. si solo seleccionaste pedidos de recogida).
   const bulkShipOrders: BulkShipOrder[] = useMemo(
-    () => selectedOrders.map(o => ({
+    () => selectedOrders.filter(isOrderBulkEligible).map(o => ({
       id: o.id,
       order_number: o.order_number,
       customer_first_name: o.customer_first_name,
@@ -247,6 +258,38 @@ export default function OrdersList() {
     })),
     [selectedOrders],
   )
+
+  // ── Borrado en lote (soft-delete) ─────────────────────────────
+  const [deletingBulk, setDeletingBulk] = useState(false)
+  const handleBulkDelete = useCallback(async () => {
+    if (deletingBulk || selectedOrders.length === 0) return
+    const n = selectedOrders.length
+    const ok = window.confirm(
+      `¿Eliminar ${n} pedido${n > 1 ? 's' : ''}? Se marcarán como eliminados ` +
+        `(recuperables con el interruptor "mostrar eliminados").`,
+    )
+    if (!ok) return
+    setDeletingBulk(true)
+    let done = 0
+    let failed = 0
+    for (const o of selectedOrders) {
+      try {
+        const { data, error } = await supabase.functions.invoke('order-delete', {
+          body: { order_id: o.id },
+        })
+        if (error || !(data as { ok?: boolean })?.ok) failed++
+        else done++
+      } catch {
+        failed++
+      }
+    }
+    setDeletingBulk(false)
+    setSelectedIds(new Set())
+    if (done > 0) toast.success(`${done} pedido${done > 1 ? 's' : ''} eliminado${done > 1 ? 's' : ''}`)
+    if (failed > 0) toast.error(`${failed} no se pudieron eliminar`)
+    fetchOrders()
+    fetchCounters()
+  }, [deletingBulk, selectedOrders, toast, fetchOrders, fetchCounters])
 
   // ── CSV export ────────────────────────────────────────────────
   /**
@@ -578,7 +621,7 @@ export default function OrdersList() {
                           if (el) el.indeterminate = someOnPageSelected
                         }}
                         onChange={toggleAllOnPage}
-                        disabled={bulkEligibleOnPage.length === 0}
+                        disabled={selectableOnPage.length === 0}
                         className="accent-[var(--color-lavender)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
                       />
                     </th>
@@ -594,7 +637,7 @@ export default function OrdersList() {
                 <tbody>
                   {orders.map(o => {
                     const isDeleted = !!o.deleted_at
-                    const eligible = isOrderBulkEligible(o)
+                    const eligible = isOrderSelectable(o)
                     const checked = selectedIds.has(o.id)
                     return (
                     <tr
@@ -693,7 +736,7 @@ export default function OrdersList() {
             <ul className="md:hidden divide-y divide-[var(--color-card-hover)]/40">
               {orders.map(o => {
                 const isDeleted = !!o.deleted_at
-                const eligible = isOrderBulkEligible(o)
+                const eligible = isOrderSelectable(o)
                 const checked = selectedIds.has(o.id)
                 return (
                 <li
@@ -788,8 +831,11 @@ export default function OrdersList() {
           count={selectedIds.size}
           onMarkShipped={() => setBulkModalOpen(true)}
           onExportSelected={() => handleExportCsv(true)}
+          onDeleteSelected={handleBulkDelete}
           onClear={clearSelection}
           disabled={exportingCsv}
+          shipDisabled={bulkShipOrders.length === 0}
+          deleting={deletingBulk}
         />
       )}
 

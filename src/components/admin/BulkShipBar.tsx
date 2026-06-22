@@ -1,12 +1,17 @@
-import { Truck, FileDown, X } from 'lucide-react'
+import { Truck, FileDown, Trash2, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 interface BulkShipBarProps {
   count: number
   onMarkShipped: () => void
   onExportSelected: () => void
+  onDeleteSelected: () => void
   onClear: () => void
   disabled?: boolean
+  // El botón de envío en lote solo aplica a pedidos aceptados de envío; se
+  // deshabilita si entre los seleccionados no hay ninguno enviable.
+  shipDisabled?: boolean
+  deleting?: boolean
 }
 
 /**
@@ -22,8 +27,11 @@ export function BulkShipBar({
   count,
   onMarkShipped,
   onExportSelected,
+  onDeleteSelected,
   onClear,
   disabled,
+  shipDisabled,
+  deleting,
 }: BulkShipBarProps) {
   return (
     <div
@@ -46,7 +54,7 @@ export function BulkShipBar({
             variant="primary"
             size="sm"
             onClick={onMarkShipped}
-            disabled={disabled}
+            disabled={disabled || shipDisabled}
             className="flex-1 sm:flex-none justify-center"
           >
             <Truck size={14} aria-hidden="true" />
@@ -61,6 +69,20 @@ export function BulkShipBar({
           >
             <FileDown size={14} aria-hidden="true" />
             Exportar CSV seleccionados
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={onDeleteSelected}
+            disabled={disabled || deleting}
+            className="flex-1 sm:flex-none justify-center"
+          >
+            {deleting ? (
+              <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Trash2 size={14} aria-hidden="true" />
+            )}
+            Eliminar
           </Button>
           <button
             type="button"
