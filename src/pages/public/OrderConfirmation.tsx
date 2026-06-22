@@ -365,14 +365,8 @@ export default function OrderConfirmation() {
           </ul>
         </section>
 
-        {/* CTA + Imprimir */}
+        {/* CTA */}
         <div className="flex flex-wrap justify-center gap-3 pt-4 print:hidden">
-          <button
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-[var(--color-lavender)]/40 text-[var(--color-lavender)] font-[var(--font-cond)] font-semibold tracking-widest hover:border-[var(--color-lavender)] transition-all"
-          >
-            Guardar / Imprimir PDF
-          </button>
           <Link
             to="/catalogo"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--color-lavender)] text-[var(--color-ink)] font-[var(--font-cond)] font-semibold tracking-widest hover:brightness-110 transition-all"
