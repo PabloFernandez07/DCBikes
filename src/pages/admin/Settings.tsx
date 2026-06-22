@@ -745,12 +745,22 @@ export function Settings() {
 
   return (
     <>
+      {/* Cabecera de página (a ancho completo, encima de las dos columnas) */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
+          CONFIGURACIÓN
+        </h1>
+        <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
+          Ajustes generales de la tienda
+        </p>
+      </div>
+
       <div ref={searchRootRef} className="lg:flex lg:gap-8 lg:items-start">
         {/* Buscador + navegación — columna derecha sticky en pantallas grandes,
             arriba del todo en móvil. Antes era sticky sobre el contenido y se
             solapaba; ahora ocupa el hueco vacío de la derecha. */}
         {!loading && (
-          <div data-search-toolbar className="lg:order-2 lg:ml-auto lg:w-80 lg:shrink-0 lg:sticky lg:top-4 mb-6 lg:mb-0">
+          <div data-search-toolbar className="lg:order-2 lg:flex-1 lg:sticky lg:top-4 mb-6 lg:mb-0">
             <div className="bg-[var(--color-card)] border border-[var(--color-card-hover)] rounded-xl p-3 space-y-3">
               <div className="relative">
                 <Search
@@ -851,16 +861,6 @@ export function Settings() {
             </div>
           </div>
         )}
-
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-[var(--font-display)] text-[var(--color-cream)] tracking-widest">
-            CONFIGURACIÓN
-          </h1>
-          <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
-            Ajustes generales de la tienda
-          </p>
-        </div>
 
         {loading ? (
           <div className="flex justify-center py-16">
