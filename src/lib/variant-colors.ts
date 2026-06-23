@@ -33,6 +33,14 @@ function norm(s: string): string {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
 }
 
+/**
+ * Lista de colores conocidos (los que tienen "puntito"), capitalizados, para
+ * autocompletar en el admin y normalizar la entrada (evita "AZUL"/"azul"/"Azul").
+ */
+export const KNOWN_COLORS: string[] = Object.keys(HEX)
+  .map(c => c.replace(/\b\w/g, m => m.toUpperCase()))
+  .sort((a, b) => a.localeCompare(b, 'es'))
+
 /** Devuelve el color hex para el puntito de un nombre de color. */
 export function colorHex(name: string | null | undefined): string {
   if (!name) return '#888'

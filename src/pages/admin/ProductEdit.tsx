@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bell } from 'lucide-react'
+import { ArrowLeft, Bell, Palette } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { ProductForm } from '@/components/admin/ProductForm'
+import { ColorVariantGenerator } from '@/components/admin/ColorVariantGenerator'
 import { ImageUploader } from '@/components/admin/ImageUploader'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
@@ -30,6 +31,9 @@ export function ProductEdit() {
   // Stock alerts: número de suscriptores pendientes y estado de envío
   const [alertCount, setAlertCount] = useState<number | null>(null)
   const [notifying, setNotifying] = useState(false)
+
+  // Generador de variantes de color (clona este producto en varios colores).
+  const [genOpen, setGenOpen] = useState(false)
 
   useEffect(() => {
     if (isNew) return
@@ -196,6 +200,17 @@ export function ProductEdit() {
           <p className="text-sm text-[var(--color-mid)] font-[var(--font-body)] mt-0.5">
             {isNew ? 'Crea un nuevo producto en el catálogo' : 'Modifica los datos e imágenes del producto'}
           </p>
+          {!isNew && product && (
+            <div className="mt-3">
+              <Button variant="secondary" size="sm" type="button" onClick={() => setGenOpen(true)}>
+                <Palette size={14} aria-hidden="true" />
+                Generar variantes de color
+              </Button>
+              <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)] mt-1.5">
+                Crea este modelo en varios colores y tallas de golpe, sin dar de alta uno por uno.
+              </p>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -272,6 +287,18 @@ export function ProductEdit() {
           </div>
         )}
       </div>
+
+      {!isNew && product && (
+        <ColorVariantGenerator
+          open={genOpen}
+          baseProduct={product}
+          onClose={() => setGenOpen(false)}
+          onDone={() => {
+            setGenOpen(false)
+            navigate('/admin/agrupaciones')
+          }}
+        />
+      )}
 
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
     </>

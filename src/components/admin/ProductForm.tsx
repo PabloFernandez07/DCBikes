@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Field } from '@/components/ui/Field'
 import type { Category, Product } from '@/lib/database.types'
 import { productFormSchema, type ProductFormValues } from '@/schemas/product'
+import { KNOWN_COLORS } from '@/lib/variant-colors'
 
 // Re-export para que importadores existentes sigan funcionando.
 export type { ProductFormValues } from '@/schemas/product'
@@ -254,8 +255,14 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
             label="Color"
             helpText="Ej. Rojo, Negro, Blanco. Crea el selector de color en la ficha cuando el grupo tiene varios. Vacío si no aplica."
             error={errors.color?.message}
+            list="known-colors-form"
             {...register('color')}
           />
+          <datalist id="known-colors-form">
+            {KNOWN_COLORS.map(c => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
           <Field
             label="Sabor"
             helpText="Ej. Cola, Fresa, Limón. Crea el selector de sabor en la ficha (nutrición) cuando el grupo tiene varios. Vacío si no aplica."

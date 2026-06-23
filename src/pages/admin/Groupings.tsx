@@ -19,6 +19,7 @@ import { Modal } from '@/components/ui/Modal'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
 import type { Product } from '@/lib/database.types'
+import { KNOWN_COLORS, colorHex, isLightColor } from '@/lib/variant-colors'
 
 // ─── Persistencia local de grupos "confirmados" ────────────────────────
 const CONFIRMED_KEY = 'dcbikes_confirmed_groups'
@@ -66,6 +67,7 @@ export default function Groupings() {
   const [variants, setVariants] = useState<Product[]>([])
   const [loadingVariants, setLoadingVariants] = useState(false)
   const [sizeEdits, setSizeEdits] = useState<Record<string, string>>({})
+  const [colorEdits, setColorEdits] = useState<Record<string, string>>({})
   const [savingProductId, setSavingProductId] = useState<string | null>(null)
 
   // Modales
@@ -140,6 +142,9 @@ export default function Groupings() {
       setSizeEdits(
         Object.fromEntries(rows.map(r => [r.id, r.size_label ?? ''])),
       )
+      setColorEdits(
+        Object.fromEntries(rows.map(r => [r.id, r.color ?? ''])),
+      )
       setLoadingVariants(false)
     },
     [toast],
@@ -151,6 +156,7 @@ export default function Groupings() {
     } else {
       setVariants([])
       setSizeEdits({})
+      setColorEdits({})
     }
   }, [selectedGroup, fetchVariants])
 
@@ -199,6 +205,27 @@ export default function Groupings() {
           p.id === product.id
             ? { ...p, size_label: newSize === '' ? null : newSize }
             : p,
+        ),
+      )
+    }
+  }
+
+  const handleSaveColor = async (product: Product) => {
+    const newColor = colorEdits[product.id]?.trim() ?? ''
+    if ((product.color ?? '') === newColor) return
+    setSavingProductId(product.id)
+    const { error } = await supabase
+      .from('products')
+      .update({ color: newColor === '' ? null : newColor })
+      .eq('id', product.id)
+    setSavingProductId(null)
+    if (error) {
+      toast.error('Error guardando color: ' + error.message)
+    } else {
+      toast.success('Color actualizado')
+      setVariants(prev =>
+        prev.map(p =>
+          p.id === product.id ? { ...p, color: newColor === '' ? null : newColor } : p,
         ),
       )
     }
@@ -291,6 +318,12 @@ export default function Groupings() {
 
   return (
     <>
+      {/* Autocompletado de colores conocidos para los inputs de color de cada variante. */}
+      <datalist id="known-colors-grouping">
+        {KNOWN_COLORS.map(c => (
+          <option key={c} value={c} />
+        ))}
+      </datalist>
       <div className="space-y-5">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -510,6 +543,11 @@ export default function Groupings() {
                                 setSizeEdits(prev => ({ ...prev, [v.id]: value }))
                               }
                               onSaveSize={() => handleSaveSize(v)}
+                              colorValue={colorEdits[v.id] ?? ''}
+                              onColorChange={value =>
+                                setColorEdits(prev => ({ ...prev, [v.id]: value }))
+                              }
+                              onSaveColor={() => handleSaveColor(v)}
                               onRemove={() => handleRemoveFromGroup(v)}
                               onMove={() => {
                                 setMoveTarget(v)
@@ -716,6 +754,9 @@ function VariantRow({
   sizeValue,
   onSizeChange,
   onSaveSize,
+  colorValue,
+  onColorChange,
+  onSaveColor,
   onRemove,
   onMove,
   saving,
@@ -724,6 +765,9 @@ function VariantRow({
   sizeValue: string
   onSizeChange: (v: string) => void
   onSaveSize: () => void
+  colorValue: string
+  onColorChange: (v: string) => void
+  onSaveColor: () => void
   onRemove: () => void
   onMove: () => void
   saving: boolean
@@ -749,6 +793,7 @@ function VariantRow({
   }, [product.id])
 
   const dirty = (product.size_label ?? '') !== sizeValue.trim()
+  const colorDirty = (product.color ?? '') !== colorValue.trim()
 
   return (
     <li className="px-5 py-3 hover:bg-[var(--color-card-hover)]/20 transition-colors">
@@ -789,6 +834,40 @@ function VariantRow({
               className="p-1.5 rounded-md text-emerald-400 hover:bg-emerald-500/15 transition-colors disabled:opacity-50"
               aria-label="Guardar talla"
               title="Guardar talla"
+            >
+              <Save size={14} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <label className="text-[10px] uppercase tracking-wider text-[var(--color-mid)] font-[var(--font-cond)]">
+            Color
+          </label>
+          <span
+            className="inline-block w-3 h-3 rounded-full shrink-0"
+            style={{
+              backgroundColor: colorValue.trim() ? colorHex(colorValue) : 'transparent',
+              border: !colorValue.trim() || isLightColor(colorValue) ? '1px solid var(--color-mid)' : 'none',
+            }}
+            aria-hidden="true"
+          />
+          <input
+            type="text"
+            list="known-colors-grouping"
+            value={colorValue}
+            onChange={e => onColorChange(e.target.value)}
+            placeholder="—"
+            className="w-28 bg-[var(--color-ink)] border border-[var(--color-card-hover)] rounded-md px-2 py-1 text-xs text-[var(--color-cream)] focus:outline-none focus:border-[var(--color-lavender)] transition-colors text-center"
+          />
+          {colorDirty && (
+            <button
+              type="button"
+              onClick={onSaveColor}
+              disabled={saving}
+              className="p-1.5 rounded-md text-emerald-400 hover:bg-emerald-500/15 transition-colors disabled:opacity-50"
+              aria-label="Guardar color"
+              title="Guardar color"
             >
               <Save size={14} aria-hidden="true" />
             </button>
