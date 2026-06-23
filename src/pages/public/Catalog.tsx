@@ -464,10 +464,15 @@ export default function Catalog() {
           </div>
         )}
 
-        {/* Grid */}
-        <div ref={gridRef}>
+        {/* Grid
+            Tope de anchura en monitores enormes (ultrawide 3440px): sin cap, el
+            grid full-bleed estiraba 4 tarjetas gigantes (~830px) con el producto
+            perdido en blanco. `max-w-[2200px] mx-auto` centra el contenido y, junto
+            con las columnas extra (2xl/min-[1920]/min-[2560]), deja tarjetas de
+            ~280-340px en pantallas grandes. De xl hacia abajo no cambia nada. */}
+        <div ref={gridRef} className="max-w-[2200px] mx-auto">
           {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1920px]:grid-cols-5 min-[2560px]:grid-cols-6 gap-4 lg:gap-6">
               {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
           ) : sortedCards.length === 0 ? (
@@ -485,7 +490,7 @@ export default function Catalog() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[1920px]:grid-cols-5 min-[2560px]:grid-cols-6 gap-4 lg:gap-6">
               {sortedCards.map((card, i) => {
                 const hasPriceRange = card.minPrice !== card.maxPrice
                 return (

@@ -32,7 +32,8 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
 
   if (images.length === 0) {
     return (
-      <div className="w-full aspect-square bg-[var(--color-card)] rounded-2xl flex items-center justify-center">
+      // Mismo cap de ancho que la imagen real para que el placeholder no salte de tamaño.
+      <div className="w-full max-w-[560px] mx-auto aspect-square bg-[var(--color-card)] rounded-2xl flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-[var(--color-mid)]">
           <Bike size={64} strokeWidth={1} aria-hidden="true" />
           <span className="font-[var(--font-cond)] text-sm tracking-widest uppercase">Sin imagen</span>
@@ -41,8 +42,13 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
     )
   }
 
+  // Las fotos de catálogo de las marcas suelen llegar a ~500-800px de lado y se
+  // suben a Storage sin redimensionar. La columna de la ficha (grid de 2) puede
+  // pasar de 700px en escritorio, así que sin tope la imagen se ampliaba por
+  // encima de su resolución nativa y se veía pixelada. Capamos el bloque a 560px
+  // (centrado) para no superar el tamaño nativo típico; en móvil sigue al 100%.
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 w-full max-w-[560px] mx-auto">
       <div
         className="relative w-full aspect-square bg-white rounded-2xl overflow-hidden select-none"
         onTouchStart={handleTouchStart}
@@ -51,7 +57,9 @@ export function ImageCarousel({ images }: ImageCarouselProps) {
         <img
           src={images[current].url}
           alt={images[current].alt}
-          className="w-full h-full object-contain p-8 transition-opacity duration-300"
+          className="w-full h-full object-contain p-6 transition-opacity duration-300"
+          loading="eager"
+          decoding="async"
           key={current}
         />
 
