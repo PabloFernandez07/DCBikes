@@ -282,6 +282,20 @@ export default function ProductsList() {
     }
   }
 
+  const handleToggleOnline = async (product: Product) => {
+    const { error } = await supabase
+      .from('products')
+      .update({ is_purchasable: !product.is_purchasable })
+      .eq('id', product.id)
+    if (!error) {
+      setProducts(prev =>
+        prev.map(p =>
+          p.id === product.id ? { ...p, is_purchasable: !product.is_purchasable } : p,
+        ),
+      )
+    }
+  }
+
   const handleArchive = async (product: Product) => {
     const { error } = await supabase
       .from('products')
@@ -573,6 +587,7 @@ export default function ProductsList() {
                       selected={selectedIds.has(p.id)}
                       onToggleSelected={() => toggleOne(p.id)}
                       onToggleActive={() => handleToggleActive(p)}
+                      onToggleOnline={() => handleToggleOnline(p)}
                       onEdit={() => navigate(`/admin/productos/${p.id}`)}
                       onArchive={() => handleArchive(p)}
                     />
@@ -758,6 +773,7 @@ function ProductRow({
   selected,
   onToggleSelected,
   onToggleActive,
+  onToggleOnline,
   onEdit,
   onArchive,
 }: {
@@ -765,6 +781,7 @@ function ProductRow({
   selected: boolean
   onToggleSelected: () => void
   onToggleActive: () => void
+  onToggleOnline: () => void
   onEdit: () => void
   onArchive: () => void
 }) {
@@ -845,13 +862,33 @@ function ProductRow({
         {product.stock}
       </td>
       <td className="px-3 py-3 text-center">
-        <OnlineBadge active={product.is_purchasable} />
+        <button
+          type="button"
+          role="switch"
+          aria-checked={product.is_purchasable}
+          aria-label={`Compra online de ${product.name}`}
+          title={product.is_purchasable ? 'Comprable online — clic para desactivar' : 'No comprable online — clic para activar'}
+          onClick={onToggleOnline}
+          className={clsx(
+            'relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200',
+            product.is_purchasable ? 'bg-emerald-500' : 'bg-[var(--color-card-hover)]',
+          )}
+        >
+          <span
+            className={clsx(
+              'inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200',
+              product.is_purchasable ? 'translate-x-4' : 'translate-x-0.5',
+            )}
+          />
+        </button>
       </td>
       <td className="px-3 py-3 text-center">
         <button
           type="button"
           role="switch"
           aria-checked={product.active}
+          aria-label={`Activo: ${product.name}`}
+          title={product.active ? 'Activo — clic para desactivar' : 'Inactivo — clic para activar'}
           onClick={onToggleActive}
           className={clsx(
             'relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200',
@@ -887,26 +924,5 @@ function ProductRow({
         </div>
       </td>
     </tr>
-  )
-}
-
-function OnlineBadge({ active }: { active: boolean }) {
-  return (
-    <span
-      className={clsx(
-        'inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-[var(--font-cond)] font-semibold tracking-wider uppercase',
-        active
-          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-          : 'bg-[var(--color-card-hover)] text-[var(--color-mid)] border border-transparent',
-      )}
-    >
-      <span
-        className={clsx(
-          'w-1.5 h-1.5 rounded-full',
-          active ? 'bg-emerald-400' : 'bg-[var(--color-mid)]',
-        )}
-      />
-      {active ? 'Online' : 'Off'}
-    </span>
   )
 }
