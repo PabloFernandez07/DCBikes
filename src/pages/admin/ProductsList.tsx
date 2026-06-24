@@ -574,7 +574,7 @@ export default function ProductsList() {
                     <th className="px-3 py-3.5 text-left text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide hidden lg:table-cell">Grupo</th>
                     <SortTh label="PVP" field="price" sortKey={sortKey} onSort={handleSort} align="right" />
                     <SortTh label="Stock" field="stock" sortKey={sortKey} onSort={handleSort} align="right" className="hidden sm:table-cell" />
-                    <SortTh label="Online" field="online" sortKey={sortKey} onSort={handleSort} align="center" />
+                    <SortTh label="Compra online" field="online" sortKey={sortKey} onSort={handleSort} align="center" />
                     <SortTh label="Activo" field="active" sortKey={sortKey} onSort={handleSort} align="center" />
                     <th className="px-3 py-3.5 text-right text-[var(--color-mid)] font-[var(--font-cond)] tracking-wide">Acciones</th>
                   </tr>
