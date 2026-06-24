@@ -118,7 +118,16 @@ export async function loadRedsysConfig(
   // mode === 'prod'
   const merchantCode = Deno.env.get('REDSYS_MERCHANT_CODE') ?? ''
   const terminal = Deno.env.get('REDSYS_TERMINAL') ?? ''
-  const secretBase64 = Deno.env.get('REDSYS_SECRET_KEY') ?? ''
+  // Clave de firma: primero la guardada (cifrada) en Vault desde el admin; si no
+  // hay, caemos al secreto de entorno REDSYS_SECRET_KEY (compatibilidad previa).
+  let secretBase64 = ''
+  try {
+    const { data } = await supabase.rpc('get_redsys_secret_key')
+    if (typeof data === 'string' && data.trim()) secretBase64 = data.trim()
+  } catch {
+    // Sin acceso a Vault → fallback a la env var.
+  }
+  if (!secretBase64) secretBase64 = Deno.env.get('REDSYS_SECRET_KEY') ?? ''
 
   if (!merchantCode || !terminal || !secretBase64) {
     throw new Error(

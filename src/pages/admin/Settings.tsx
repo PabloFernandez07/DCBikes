@@ -234,6 +234,45 @@ export function Settings() {
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({})
   const [savingPayment, setSavingPayment] = useState(false)
 
+  // ─── Clave de firma Redsys (SHA-256) — guardada CIFRADA en Supabase Vault ──
+  // Nunca se lee el valor en el front: solo si está configurada (boolean) y se
+  // escribe vía RPC admin. El backend la descifra con service_role.
+  const [signatureKey, setSignatureKey] = useState('')
+  const [signatureKeySet, setSignatureKeySet] = useState<boolean | null>(null)
+  const [savingSignatureKey, setSavingSignatureKey] = useState(false)
+
+  // Las RPCs de la clave de firma no están en los tipos generados de Supabase.
+  type CustomRpc = {
+    rpc: (
+      fn: string,
+      args?: Record<string, unknown>,
+    ) => Promise<{ data: unknown; error: { message: string } | null }>
+  }
+
+  useEffect(() => {
+    ;(supabase as unknown as CustomRpc).rpc('redsys_secret_key_is_set').then(({ data, error }) => {
+      if (!error) setSignatureKeySet(data === true)
+    })
+  }, [])
+
+  async function handleSaveSignatureKey() {
+    const key = signatureKey.trim()
+    if (key.length < 8) {
+      toast.error('Introduce la clave de firma que te ha dado el banco')
+      return
+    }
+    setSavingSignatureKey(true)
+    const { error } = await (supabase as unknown as CustomRpc).rpc('set_redsys_secret_key', { p_key: key })
+    setSavingSignatureKey(false)
+    if (error) {
+      toast.error('No se pudo guardar la clave: ' + error.message)
+      return
+    }
+    setSignatureKey('')
+    setSignatureKeySet(true)
+    toast.success('Clave de firma guardada de forma segura')
+  }
+
   // ─── Verifactu (modo + entorno) ─────────────────────────────────────────
   const [verifactuValues, setVerifactuValues] = useState<{
     verifactu_mode: 'no_verifactu' | 'verifactu'
@@ -1391,6 +1430,52 @@ export function Settings() {
                 helpText="Este texto aparece en la pantalla de pago Redsys y en el extracto bancario del cliente. Máx. 60 caracteres."
               />
 
+              {/* Clave de firma SHA-256 (la que da el banco) — guardada cifrada en Vault */}
+              <div className="rounded-xl border border-[var(--color-card-hover)] bg-[var(--color-ink)]/40 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-[var(--font-cond)] font-semibold text-[var(--color-cream)] tracking-wide">
+                    Clave de firma (SHA-256)
+                  </h3>
+                  {signatureKeySet === null ? (
+                    <span className="text-[10px] text-[var(--color-mid)]">…</span>
+                  ) : signatureKeySet ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-[var(--font-cond)] uppercase tracking-wider">
+                      Configurada
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-[var(--font-cond)] uppercase tracking-wider">
+                      Sin configurar
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-[var(--color-mid)] font-[var(--font-body)] leading-relaxed">
+                  Es la clave que te ha dado el banco para firmar los pagos del TPV virtual. Se
+                  guarda <strong className="text-[var(--color-cream-dim)]">cifrada</strong> (no se
+                  muestra nunca). Pégala aquí y guárdala; si ya hay una, esto la sustituye.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Field
+                    label=""
+                    type="password"
+                    placeholder={signatureKeySet ? 'Pega una nueva clave para sustituirla' : 'Pega aquí la clave de firma'}
+                    autoComplete="off"
+                    value={signatureKey}
+                    onChange={e => setSignatureKey((e.target as HTMLInputElement).value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="primary"
+                    type="button"
+                    onClick={handleSaveSignatureKey}
+                    loading={savingSignatureKey}
+                    disabled={!signatureKey.trim()}
+                    className="shrink-0 self-start"
+                  >
+                    Guardar clave
+                  </Button>
+                </div>
+              </div>
+
               {/* Banner credenciales Vault */}
               <div className="rounded-lg border border-[var(--color-card-hover)] bg-[var(--color-ink)]/60 p-4 flex gap-3 items-start">
                 <ShieldAlert
@@ -1401,17 +1486,15 @@ export function Settings() {
                 <div className="text-xs text-[var(--color-cream-dim)] leading-relaxed space-y-1">
                   <p>
                     <span aria-hidden="true">🔒 </span>
-                    <strong className="text-[var(--color-cream)]">
-                      Las credenciales sensibles
-                    </strong>{' '}
-                    (FUC, Terminal, Clave SHA-256) se gestionan vía{' '}
-                    <strong className="text-[var(--color-cream)]">Supabase Vault</strong>{' '}
-                    del proyecto, NO desde aquí.
+                    El <strong className="text-[var(--color-cream)]">FUC (código de comercio)</strong> y el{' '}
+                    <strong className="text-[var(--color-cream)]">Terminal</strong> se gestionan vía{' '}
+                    <strong className="text-[var(--color-cream)]">Supabase Vault</strong> del proyecto.
+                    La <strong className="text-[var(--color-cream)]">clave de firma</strong> sí puedes
+                    ponerla aquí arriba (se guarda cifrada).
                   </p>
                   <p className="text-[var(--color-mid)]">
-                    Para cambiarlas, contacta con el administrador técnico del
-                    proyecto. Solo las Edge Functions con service_role pueden
-                    leerlas.
+                    Ninguna credencial se muestra en pantalla. Solo las Edge Functions con
+                    service_role pueden leerlas para firmar los pagos.
                   </p>
                 </div>
               </div>
