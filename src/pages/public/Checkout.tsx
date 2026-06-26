@@ -408,7 +408,7 @@ export default function Checkout() {
                         value: 'shipping' as const,
                         icon: Truck,
                         title: 'Envío a dirección',
-                        subtitle: `${fmtEuros(shippingFlatRateCents)} € · Gratis desde ${fmtEuros(shippingFreeThresholdCents)} €`,
+                        subtitle: `${fmtEuros(shippingFlatRateCents)} € · Gratis desde ${fmtEuros(shippingFreeThresholdCents)} € · Entrega en 24/48h`,
                       },
                       {
                         value: 'pickup' as const,
@@ -460,6 +460,10 @@ export default function Checkout() {
 
             {deliveryMethod === 'shipping' ? (
               <div className="grid sm:grid-cols-2 gap-4 pt-2">
+                <div className="sm:col-span-2 flex items-center gap-2 rounded-lg border border-[var(--color-card-hover)] bg-[var(--color-ink)]/50 px-3 py-2.5 text-xs text-[var(--color-cream-dim)] font-[var(--font-body)]">
+                  <Truck size={15} className="text-[var(--color-lavender)] shrink-0" aria-hidden={true} />
+                  <span>Tu pedido llega en <strong className="text-[var(--color-cream)]">24/48 h</strong> (Península), una vez confirmada la disponibilidad.</span>
+                </div>
                 <div className="sm:col-span-2">
                   <Field
                     label="Dirección"
