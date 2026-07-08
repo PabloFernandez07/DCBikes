@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   Package,
@@ -22,22 +22,41 @@ import { clsx } from 'clsx'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 
+// El badge se quedaba pegado: solo consultaba al montar el AdminShell, y como es
+// una SPA no se remonta al navegar → tras leer/responder una consulta seguía
+// mostrando el contador viejo hasta recargar. Ahora refresca cada 60 s (igual que
+// el de pedidos) y además al cambiar de ruta, para que se actualice al instante.
 function usePendingQuotes() {
   const [count, setCount] = useState(0)
+  const { pathname } = useLocation()
 
   useEffect(() => {
-    supabase
-      .from('quote_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'new')
-      .then(({ count: c }) => setCount(c ?? 0))
-  }, [])
+    let cancelled = false
+
+    const fetchCount = () => {
+      supabase
+        .from('quote_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'new')
+        .then(({ count: c }) => {
+          if (!cancelled) setCount(c ?? 0)
+        })
+    }
+
+    fetchCount()
+    const interval = window.setInterval(fetchCount, 60_000)
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+    }
+  }, [pathname])
 
   return count
 }
 
 function usePendingOrders() {
   const [count, setCount] = useState(0)
+  const { pathname } = useLocation()
 
   useEffect(() => {
     let cancelled = false
@@ -58,7 +77,7 @@ function usePendingOrders() {
       cancelled = true
       window.clearInterval(interval)
     }
-  }, [])
+  }, [pathname])
 
   return count
 }
