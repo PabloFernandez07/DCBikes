@@ -19,6 +19,30 @@ import { ScrollVideoHero } from "@/components/public/ScrollVideoHero";
 import { Button } from "@/components/ui/Button";
 import type { Product, ProductImage } from "@/lib/database.types";
 
+// Baldosa blanca con el logo oficial de la marca (desde /public/marcas/).
+// Los logos oficiales asumen fondo claro, por eso van sobre baldosa blanca.
+// Si el archivo faltara, cae al wordmark de texto para no romper la sección.
+function BrandMark({ name, logo }: { name: string; logo?: string }) {
+  const [broken, setBroken] = useState(false);
+  return (
+    <div className="w-full h-16 rounded-xl bg-white flex items-center justify-center px-4">
+      {logo && !broken ? (
+        <img
+          src={`/marcas/${logo}`}
+          alt={name}
+          className="max-h-10 max-w-full object-contain"
+          loading="lazy"
+          onError={() => setBroken(true)}
+        />
+      ) : (
+        <span className="font-[var(--font-display)] text-2xl tracking-widest leading-none text-[#111827]">
+          {name}
+        </span>
+      )}
+    </div>
+  );
+}
+
 const TICKER_WORDS = [
   { text: "BICICLETAS", accent: false },
   { text: "·", accent: true },
@@ -514,26 +538,21 @@ export default function Home() {
           </div>
           <div className="rv grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-10">
             {[
-              { name: "GIANT", sub: "Bicicletas", color: "#E5301E" },
-              { name: "LIV", sub: "Bicicletas", color: "#C4A2CF" },
-              { name: "STEVENS", sub: "Bicicletas", color: "#EEF3F8" },
-              { name: "SHIMANO", sub: "Componentes", color: "#E5301E" },
-              { name: "SRAM", sub: "Componentes", color: "#C4A2CF" },
-              { name: "ETXEONDO", sub: "Ropa ciclista", color: "#E5301E" },
-            ].map(({ name, sub, color }, i) => (
+              { name: "GIANT", logo: "giant.svg", sub: "Bicicletas" },
+              { name: "LIV", logo: "liv.png", sub: "Bicicletas" },
+              { name: "STEVENS", logo: "stevens.png", sub: "Bicicletas" },
+              { name: "SHIMANO", logo: "shimano.svg", sub: "Componentes" },
+              { name: "SRAM", logo: "sram.svg", sub: "Componentes" },
+              { name: "ETXEONDO", logo: "etxeondo.png", sub: "Ropa ciclista" },
+            ].map((brand, i) => (
               <div
-                key={name}
-                className="rv group flex flex-col items-center justify-center gap-2 p-6 rounded-2xl bg-[var(--color-card)] border border-[var(--color-card-hover)] hover:border-[rgba(196,162,207,0.3)] transition-all duration-300 cursor-default"
+                key={brand.name}
+                className="rv group flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-[var(--color-card)] border border-[var(--color-card-hover)] hover:border-[rgba(196,162,207,0.3)] transition-all duration-300 cursor-default"
                 style={{ transitionDelay: `${i * 60}ms` }}
               >
-                <span
-                  className="font-[var(--font-display)] text-3xl tracking-widest leading-none transition-colors duration-300"
-                  style={{ color }}
-                >
-                  {name}
-                </span>
+                <BrandMark {...brand} />
                 <span className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-mid)] group-hover:text-[var(--color-cream)] transition-colors">
-                  {sub}
+                  {brand.sub}
                 </span>
               </div>
             ))}
