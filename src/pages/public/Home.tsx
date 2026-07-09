@@ -22,15 +22,15 @@ import type { Product, ProductImage } from "@/lib/database.types";
 // Baldosa blanca con el logo oficial de la marca (desde /public/marcas/).
 // Los logos oficiales asumen fondo claro, por eso van sobre baldosa blanca.
 // Si el archivo faltara, cae al wordmark de texto para no romper la sección.
-function BrandMark({ name, logo }: { name: string; logo?: string }) {
+function BrandMark({ name, logo, big }: { name: string; logo?: string; big?: boolean }) {
   const [broken, setBroken] = useState(false);
   return (
-    <div className="w-full h-28 rounded-xl bg-white flex items-center justify-center px-2">
+    <div className="w-full h-32 rounded-xl bg-white flex items-center justify-center px-2">
       {logo && !broken ? (
         <img
           src={`/marcas/${logo}`}
           alt={name}
-          className="max-h-24 max-w-full object-contain"
+          className={`${big ? "max-h-28" : "max-h-24"} max-w-full object-contain`}
           loading="lazy"
           onError={() => setBroken(true)}
         />
@@ -540,10 +540,10 @@ export default function Home() {
             {[
               { name: "GIANT", logo: "giant.svg", sub: "Bicicletas" },
               { name: "LIV", logo: "liv.png", sub: "Bicicletas" },
-              { name: "STEVENS", logo: "stevens.png", sub: "Bicicletas" },
-              { name: "SHIMANO", logo: "shimano.svg", sub: "Componentes" },
-              { name: "SRAM", logo: "sram.svg", sub: "Componentes" },
-              { name: "ETXEONDO", logo: "etxeondo.png", sub: "Ropa ciclista" },
+              { name: "STEVENS", logo: "stevens.png", sub: "Bicicletas", big: true },
+              { name: "SHIMANO", logo: "shimano.svg", sub: "Componentes", big: true },
+              { name: "SRAM", logo: "sram.svg", sub: "Componentes", big: true },
+              { name: "ETXEONDO", logo: "etxeondo.png", sub: "Ropa ciclista", big: true },
             ].map((brand, i) => (
               <div
                 key={brand.name}
