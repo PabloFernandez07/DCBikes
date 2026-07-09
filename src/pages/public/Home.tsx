@@ -541,8 +541,8 @@ export default function Home() {
               { name: "GIANT", logo: "giant.svg", sub: "Bicicletas" },
               { name: "LIV", logo: "liv.png", sub: "Bicicletas" },
               { name: "STEVENS", logo: "stevens.png", sub: "Bicicletas", big: true },
-              { name: "SHIMANO", logo: "shimano.svg", sub: "Componentes", big: true },
-              { name: "SRAM", logo: "sram.svg", sub: "Componentes", big: true },
+              { name: "SHIMANO", logo: "shimano.png", sub: "Componentes", big: true },
+              { name: "SRAM", logo: "sram.png", sub: "Componentes", big: true },
               { name: "ETXEONDO", logo: "etxeondo.png", sub: "Ropa ciclista", big: true },
             ].map((brand, i) => (
               <div
