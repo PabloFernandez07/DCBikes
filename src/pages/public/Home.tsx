@@ -538,8 +538,8 @@ export default function Home() {
           </div>
           <div className="rv grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-10">
             {[
-              { name: "GIANT", logo: "giant.svg", sub: "Bicicletas" },
-              { name: "LIV", logo: "liv.png", sub: "Bicicletas" },
+              { name: "GIANT", logo: "giant-v2.svg", sub: "Bicicletas" },
+              { name: "LIV", logo: "liv-v2.png", sub: "Bicicletas" },
               { name: "STEVENS", logo: "stevens.png", sub: "Bicicletas", big: true },
               { name: "SHIMANO", logo: "shimano.png", sub: "Componentes", big: true },
               { name: "SRAM", logo: "sram.png", sub: "Componentes", big: true },
