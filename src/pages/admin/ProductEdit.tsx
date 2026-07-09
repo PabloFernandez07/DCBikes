@@ -129,6 +129,7 @@ export function ProductEdit() {
       active: values.active,
       is_purchasable: values.is_purchasable,
       is_returnable: values.is_returnable,
+      is_second_hand: values.is_second_hand,
       size_label: values.size_label?.trim() ? values.size_label.trim() : null,
       model_group: values.model_group?.trim() ? values.model_group.trim() : null,
       color: values.color?.trim() ? values.color.trim() : null,

@@ -233,6 +233,13 @@ export default function ProductDetail() {
             </span>
           )}
 
+          {/* Ocasión / segunda mano */}
+          {parentProduct.is_second_hand && (
+            <span className="inline-flex items-center gap-1.5 self-start bg-amber-500 text-[var(--color-ink)] text-xs font-[var(--font-cond)] font-bold tracking-widest uppercase px-2.5 py-1 rounded-md mb-1">
+              ♻️ Ocasión · segunda mano
+            </span>
+          )}
+
           {/* Name */}
           <h1 className="font-[var(--font-display)] text-3xl md:text-5xl text-[var(--color-cream)] leading-tight tracking-wide">
             {displayName}

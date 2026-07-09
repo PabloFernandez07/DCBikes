@@ -137,6 +137,8 @@ export const productFormSchema = z.object({
   // Override de devolución por producto: true=devolvible, false=no, null=hereda
   // de la categoría (categories.is_returnable).
   is_returnable: z.boolean().nullable(),
+  // Producto de ocasión / segunda mano (muestra etiqueta y permite filtrar).
+  is_second_hand: z.boolean(),
   size_label: z.string(),
   model_group: z.string(),
   color: z.string(),

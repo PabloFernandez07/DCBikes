@@ -17,6 +17,8 @@ interface ProductCardProps {
   onlineAvailable?: boolean
   /** ¿Todas las variantes sin stock? */
   allOutOfStock?: boolean
+  /** ¿Producto de ocasión / segunda mano? */
+  secondHand?: boolean
 }
 
 function fmt(n: number) {
@@ -32,6 +34,7 @@ export function ProductCard({
   variantCount,
   onlineAvailable,
   allOutOfStock,
+  secondHand,
 }: ProductCardProps) {
   const mainImageRow = images.find(img => img.sort_order === 0) ?? images[0]
   const mainImage = mainImageRow
@@ -71,10 +74,19 @@ export function ProductCard({
             <Bike size={48} strokeWidth={1} aria-hidden="true" />
           </div>
         )}
-        {hasDiscount && (
-          <span className="absolute top-2 left-2 bg-[var(--color-brand-red)] text-white text-xs font-[var(--font-cond)] font-bold tracking-wide px-2 py-1 rounded-lg">
-            -{pct}%
-          </span>
+        {(hasDiscount || secondHand) && (
+          <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
+            {hasDiscount && (
+              <span className="bg-[var(--color-brand-red)] text-white text-xs font-[var(--font-cond)] font-bold tracking-wide px-2 py-1 rounded-lg">
+                -{pct}%
+              </span>
+            )}
+            {secondHand && (
+              <span className="bg-amber-500 text-[var(--color-ink)] text-[10px] font-[var(--font-cond)] font-bold tracking-widest uppercase px-2 py-1 rounded-md">
+                ♻️ Ocasión
+              </span>
+            )}
+          </div>
         )}
         {/* Badges esquina superior derecha */}
         <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">

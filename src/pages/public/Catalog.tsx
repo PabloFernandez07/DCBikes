@@ -22,7 +22,7 @@ type SortKey = 'name' | 'price_asc' | 'price_desc' | 'discount' | 'newest'
  * Evita arrastrar description, safety_standards, ean, etc. en el payload.
  */
 const CATALOG_COLUMNS =
-  'id,slug,name,brand,retail_price,discount_percent,stock,is_purchasable,size_label,model_group,created_at,category_id'
+  'id,slug,name,brand,retail_price,discount_percent,stock,is_purchasable,is_second_hand,size_label,model_group,created_at,category_id'
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'name',       label: 'Nombre A–Z' },
@@ -165,6 +165,7 @@ export default function Catalog() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [onlyOcasion, setOnlyOcasion] = useState(false)
   const catScrollRef = useRef<HTMLDivElement>(null)
   const scrollCats = (dx: number) => catScrollRef.current?.scrollBy({ left: dx, behavior: 'smooth' })
   // Estado de scroll: si hay contenido desbordado a izquierda/derecha (para
@@ -254,7 +255,12 @@ export default function Catalog() {
   }, [products])
 
   const cards = useMemo(() => buildCatalogCards(products), [products])
-  const sortedCards = useMemo(() => sortCards(cards, sort), [cards, sort])
+  // Filtro de ocasión: solo grupos con alguna variante de segunda mano.
+  const filteredCards = useMemo(
+    () => (onlyOcasion ? cards.filter(c => c.variants.some(v => v.is_second_hand)) : cards),
+    [cards, onlyOcasion],
+  )
+  const sortedCards = useMemo(() => sortCards(filteredCards, sort), [filteredCards, sort])
 
   // PERF-M2c: pre-indexamos las imágenes por product_id (ya ordenadas por
   // sort_order) UNA vez por cambio de `images`, en vez de filtrar + ordenar
@@ -285,12 +291,14 @@ export default function Catalog() {
   }
 
   const hasOffers = products.some(p => p.discount_percent && p.discount_percent > 0)
+  const hasOcasion = products.some(p => p.is_second_hand)
   const activeFilters = [
     selectedCategory && categories.find(c => c.id === selectedCategory)?.name,
+    onlyOcasion ? 'Ocasión' : null,
     search.trim() && `"${search.trim()}"`,
   ].filter(Boolean)
 
-  const clearAll = () => { setSearch(''); setSelectedCategory(null) }
+  const clearAll = () => { setSearch(''); setSelectedCategory(null); setOnlyOcasion(false) }
 
   return (
     <div className="w-full">
@@ -426,6 +434,21 @@ export default function Catalog() {
                 <span aria-hidden="true">🏷️</span> Ofertas
               </button>
             )}
+            {hasOcasion && (
+              <button
+                type="button"
+                onClick={() => setOnlyOcasion(v => !v)}
+                aria-pressed={onlyOcasion}
+                className={clsx(
+                  'shrink-0 snap-start whitespace-nowrap px-4 py-2 rounded-full text-sm font-[var(--font-cond)] tracking-wide transition-all duration-200 flex items-center gap-1.5',
+                  onlyOcasion
+                    ? 'bg-amber-500 text-[var(--color-ink)] shadow-[0_6px_18px_-7px_rgba(245,158,11,0.6)]'
+                    : 'text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[var(--color-card)]/60',
+                )}
+              >
+                <span aria-hidden="true">♻️</span> Ocasión
+              </button>
+            )}
             {visibleCategories.map(cat => (
               <button
                 key={cat.id}
@@ -504,6 +527,7 @@ export default function Catalog() {
                       variantCount={card.variants.length}
                       onlineAvailable={card.onlineAvailable}
                       allOutOfStock={card.allOutOfStock}
+                      secondHand={card.variants.some(v => v.is_second_hand)}
                     />
                   </div>
                 )

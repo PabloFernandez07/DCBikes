@@ -58,6 +58,7 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
       is_purchasable: product?.is_purchasable ?? false,
       // is_returnable no está aún en database.types.ts (cast mínimo); null = hereda categoría.
       is_returnable: (product as { is_returnable?: boolean | null } | undefined)?.is_returnable ?? null,
+      is_second_hand: (product as { is_second_hand?: boolean } | undefined)?.is_second_hand ?? false,
       size_label: product?.size_label ?? '',
       model_group: product?.model_group ?? '',
       color: product?.color ?? '',
@@ -93,6 +94,7 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
   const active = watch('active')
   const isPurchasable = watch('is_purchasable')
   const isReturnable = watch('is_returnable')
+  const isSecondHand = watch('is_second_hand')
   // tri-estado <select> ↔ boolean|null: 'inherit'=null, 'yes'=true, 'no'=false.
   const returnableMode = isReturnable === true ? 'yes' : isReturnable === false ? 'no' : 'inherit'
 
@@ -304,6 +306,16 @@ export function ProductForm({ product, onSave, onCancel, loading }: ProductFormP
             />
             <p className="mt-1.5 ml-12 text-xs text-[var(--color-mid)] font-[var(--font-body)] leading-relaxed max-w-md">
               Si está activo, los clientes pueden comprarlo desde la web. Si no, solo aparece como consulta para tienda física.
+            </p>
+          </div>
+          <div className="border-t border-[var(--color-card)] pt-4">
+            <ToggleField
+              label="Producto de ocasión"
+              checked={isSecondHand}
+              onChange={v => setValue('is_second_hand', v, { shouldDirty: true })}
+            />
+            <p className="mt-1.5 ml-12 text-xs text-[var(--color-mid)] font-[var(--font-body)] leading-relaxed max-w-md">
+              Segunda mano. Muestra la etiqueta «Ocasión» en el catálogo y permite filtrarlo por productos de ocasión.
             </p>
           </div>
           <div className="border-t border-[var(--color-card)] pt-4">
