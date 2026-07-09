@@ -25,12 +25,12 @@ import type { Product, ProductImage } from "@/lib/database.types";
 function BrandMark({ name, logo }: { name: string; logo?: string }) {
   const [broken, setBroken] = useState(false);
   return (
-    <div className="w-full h-16 rounded-xl bg-white flex items-center justify-center px-4">
+    <div className="w-full h-20 rounded-xl bg-white flex items-center justify-center px-3">
       {logo && !broken ? (
         <img
           src={`/marcas/${logo}`}
           alt={name}
-          className="max-h-10 max-w-full object-contain"
+          className="max-h-16 max-w-full object-contain"
           loading="lazy"
           onError={() => setBroken(true)}
         />
