@@ -45,6 +45,58 @@ const urls = [
   { loc: '/terminos-venta', changefreq: 'yearly', priority: '0.4' },
 ]
 
+// ── Rutas dinámicas: fichas de producto desde Supabase ──────────────────────
+// Un URL por MODELO (grupo model_group, representante = primero por nombre, igual
+// que la card del catálogo) + productos sueltos. Sin credenciales → solo estáticas
+// (degrada sin romper el build).
+async function fetchProductUrls() {
+  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  const key = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+  if (!url || !key) {
+    console.warn('sitemap: sin credenciales Supabase → solo URLs estáticas')
+    return []
+  }
+  try {
+    const res = await fetch(
+      `${url}/rest/v1/products?select=slug,name,model_group&active=eq.true&order=name`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } },
+    )
+    if (!res.ok) {
+      console.warn('sitemap: fetch productos falló', res.status)
+      return []
+    }
+    const rows = await res.json()
+    const groups = new Map()
+    const singles = []
+    for (const p of rows) {
+      if (!p.slug) continue
+      if (p.model_group && p.model_group.trim()) {
+        const g = groups.get(p.model_group) || []
+        g.push(p)
+        groups.set(p.model_group, g)
+      } else {
+        singles.push(p)
+      }
+    }
+    const reps = []
+    for (const [, g] of groups) {
+      g.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es'))
+      reps.push(g[0])
+    }
+    return [...reps, ...singles].map(p => ({
+      loc: `/producto/${p.slug}`,
+      changefreq: 'weekly',
+      priority: '0.7',
+    }))
+  } catch (err) {
+    console.warn('sitemap: error trayendo productos →', String(err))
+    return []
+  }
+}
+
+const productUrls = await fetchProductUrls()
+urls.push(...productUrls)
+
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">

@@ -1,4 +1,12 @@
 {
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.dcbikescantabria.com" }],
+      "destination": "https://dcbikescantabria.com/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/((?!assets/|api/).*)", "destination": "/index.html" }
   ],
@@ -15,8 +23,8 @@
         { "key": "X-Permitted-Cross-Domain-Policies", "value": "none" },
         { "key": "Permissions-Policy", "value": "payment=(self), usb=(), serial=(), gyroscope=(), accelerometer=(), magnetometer=(), fullscreen=(self), autoplay=(self), camera=(), microphone=(), geolocation=(), interest-cohort=()" },
         { "key": "Cross-Origin-Embedder-Policy", "value": "credentialless" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; media-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com; frame-src 'self' https://www.google.com https://maps.google.com https://*.google.com https://challenges.cloudflare.com; object-src 'none'; manifest-src 'self'; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://sis.redsys.es https://sis-t.redsys.es:25443;" },
-        { "key": "Content-Security-Policy-Report-Only", "value": "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; media-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com; frame-src 'self' https://www.google.com https://maps.google.com https://*.google.com https://challenges.cloudflare.com; object-src 'none'; manifest-src 'self'; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://sis.redsys.es https://sis-t.redsys.es:25443; report-uri /api/csp-report;" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; media-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://va.vercel-scripts.com; frame-src 'self' https://www.google.com https://maps.google.com https://*.google.com https://challenges.cloudflare.com; object-src 'none'; manifest-src 'self'; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://sis.redsys.es https://sis-t.redsys.es:25443;" },
+        { "key": "Content-Security-Policy-Report-Only", "value": "default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; media-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://challenges.cloudflare.com https://va.vercel-scripts.com; frame-src 'self' https://www.google.com https://maps.google.com https://*.google.com https://challenges.cloudflare.com; object-src 'none'; manifest-src 'self'; worker-src 'self' blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https://sis.redsys.es https://sis-t.redsys.es:25443; report-uri /api/csp-report;" }
       ]
     },
     {
