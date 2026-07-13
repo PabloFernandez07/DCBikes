@@ -90,7 +90,7 @@ serve(async (req) => {
   }
 
   try {
-    const { to, from, subject, body } = await req.json()
+    const { to, from, subject, body, message_id } = await req.json()
 
     if (typeof to !== 'string' || typeof body !== 'string' || !body.trim()) {
       return json({ error: 'faltan campos: to, body' }, 400)
@@ -125,7 +125,16 @@ serve(async (req) => {
       direction: 'in',
       body: clean,
       subject: typeof subject === 'string' ? subject : null,
+      email_id: typeof message_id === 'string' && message_id ? message_id : null,
     })
+
+    // 23505 = el correo ya estaba en el hilo. Pasa cuando el lector del buzón
+    // reintenta porque no le llegó nuestra respuesta. No es un error: se
+    // responde ok para que deje de reintentarlo, y no se duplica el mensaje.
+    if (insErr?.code === '23505') {
+      console.log(`[${ts()}] correo ${message_id} ya estaba en el hilo, ignorado`)
+      return json({ ok: true, duplicate: true, quote_id: quote.id })
+    }
     if (insErr) throw new Error(insErr.message)
 
     // Vuelve a «nueva» para que reaparezca en la pestaña de pendientes: el
