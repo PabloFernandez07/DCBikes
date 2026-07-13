@@ -19,6 +19,17 @@ interface ProductCardProps {
   allOutOfStock?: boolean
   /** ¿Producto de ocasión / segunda mano? */
   secondHand?: boolean
+  /**
+   * Carga la imagen ya, sin esperar a que la tarjeta se acerque al viewport.
+   *
+   * En el catálogo el lazy es lo correcto: hay decenas de productos y no tiene
+   * sentido bajarlos todos. Pero en la home son 4 tarjetas fijas que el usuario
+   * SIEMPRE va a ver, y con el hero de 500vh por delante hay tiempo de sobra
+   * para descargarlas. Si se dejan en lazy, llegan justo cuando el usuario está
+   * pasando por encima y el navegador tiene que pintarlas en caliente: eso es
+   * lo que hacía que el scroll diera un tirón al salir del hero.
+   */
+  eager?: boolean
 }
 
 function fmt(n: number) {
@@ -35,6 +46,7 @@ export function ProductCard({
   onlineAvailable,
   allOutOfStock,
   secondHand,
+  eager = false,
 }: ProductCardProps) {
   const mainImageRow = images.find(img => img.sort_order === 0) ?? images[0]
   const mainImage = mainImageRow
@@ -67,7 +79,13 @@ export function ProductCard({
             src={mainImage.publicUrl}
             alt={mainImage.alt ?? cardName}
             className="w-full h-full object-contain p-4 sm:p-8 transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
+            loading={eager ? 'eager' : 'lazy'}
+            // La decodificación fuera del hilo principal: aunque la imagen
+            // llegue tarde, pintarla no roba un frame al scroll.
+            decoding="async"
+            // Baja prioridad: que se descargue mientras el usuario mira el
+            // hero, sin competir con el vídeo ni con la primera pintada.
+            fetchPriority={eager ? 'low' : undefined}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-[var(--color-mid)]">

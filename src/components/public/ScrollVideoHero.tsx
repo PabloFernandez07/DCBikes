@@ -123,8 +123,8 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
         {!isMobile ? (
           <video
             ref={videoRef}
-            src="/hero/hero-scrub.mp4"
-            poster="/hero/hero-poster.jpg"
+            src="/hero/hero-scrub-v2.mp4"
+            poster="/hero/hero-poster-v2.jpg"
             muted
             playsInline
             preload="auto"

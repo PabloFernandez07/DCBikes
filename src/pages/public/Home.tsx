@@ -31,7 +31,8 @@ function BrandMark({ name, logo, big }: { name: string; logo?: string; big?: boo
           src={`/marcas/${logo}`}
           alt={name}
           className={`${big ? "max-h-28" : "max-h-24"} max-w-full object-contain`}
-          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
           onError={() => setBroken(true)}
         />
       ) : (
@@ -58,42 +59,60 @@ const TICKER_WORDS = [
   { text: "·", accent: true },
 ];
 
-function useCountUp(target: number, duration = 1800) {
-  const [count, setCount] = useState(0);
-  const [started, setStarted] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+/**
+ * Contador animado que NO pasa por el estado de React.
+ *
+ * La versión anterior usaba setInterval(16ms) + setCount, o sea un render de
+ * React cada 16 ms durante 1,8 s. Con los cuatro contadores arrancando a la vez
+ * —justo cuando terminas el hero y entra la sección— eran ~450 renders en dos
+ * segundos, y encima setInterval no está sincronizado con los frames del
+ * navegador: caía entre frames y los tiraba. Ahí estaba el tirón del final.
+ *
+ * Ahora la cuenta va en un bucle rAF y escribe el número directamente en el
+ * DOM. Cero renders, sincronizado con la pantalla, y el navegador lo pausa solo
+ * si la pestaña no está visible.
+ */
+function useCountUp(target: number, suffix: string, duration = 1800) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const numRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+    const host = hostRef.current;
+    const num = numRef.current;
+    if (!host || !num) return;
+
+    let rafId: number | null = null;
+    let inicio: number | null = null;
+
+    const tick = (t: number) => {
+      inicio ??= t;
+      const p = Math.min(1, (t - inicio) / duration);
+      const suavizado = 1 - Math.pow(1 - p, 3);
+      num.textContent = `${Math.floor(suavizado * target)}${suffix}`;
+      if (p < 1) rafId = requestAnimationFrame(tick);
+      else {
+        num.textContent = `${target}${suffix}`;
+        rafId = null;
+      }
+    };
+
     const obs = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !started) setStarted(true);
+        if (!entry.isIntersecting) return;
+        obs.disconnect();                       // se cuenta una sola vez
+        rafId = requestAnimationFrame(tick);
       },
       { threshold: 0.5 },
     );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [started]);
+    obs.observe(host);
 
-  useEffect(() => {
-    if (!started) return;
-    let frame = 0;
-    const totalFrames = Math.round(duration / 16);
-    const timer = setInterval(() => {
-      frame++;
-      const progress = frame / totalFrames;
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * target));
-      if (frame >= totalFrames) {
-        setCount(target);
-        clearInterval(timer);
-      }
-    }, 16);
-    return () => clearInterval(timer);
-  }, [started, target, duration]);
+    return () => {
+      obs.disconnect();
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, [target, suffix, duration]);
 
-  return { count, ref };
+  return { hostRef, numRef };
 }
 
 function StatCounter({
@@ -105,12 +124,14 @@ function StatCounter({
   suffix?: string;
   label: string;
 }) {
-  const { count, ref } = useCountUp(value);
+  const { hostRef, numRef } = useCountUp(value, suffix);
   return (
-    <div ref={ref} className="flex flex-col items-center gap-1 text-center">
-      <span className="font-[var(--font-display)] text-4xl sm:text-5xl lg:text-6xl text-[var(--color-lavender)] tracking-wide tabular-nums">
-        {count}
-        {suffix}
+    <div ref={hostRef} className="flex flex-col items-center gap-1 text-center">
+      <span
+        ref={numRef}
+        className="font-[var(--font-display)] text-4xl sm:text-5xl lg:text-6xl text-[var(--color-lavender)] tracking-wide tabular-nums"
+      >
+        {`0${suffix}`}
       </span>
       <span className="font-[var(--font-cond)] text-sm text-[var(--color-mid)] tracking-widest uppercase">
         {label}
@@ -504,6 +525,10 @@ export default function Home() {
                 <ProductCard
                   product={product}
                   images={getProductImages(product.id)}
+                  // Son 4 tarjetas fijas que el usuario siempre verá, y el hero
+                  // de 500vh da tiempo de sobra a descargarlas. En lazy llegaban
+                  // justo cuando pasabas por encima y el pintado robaba frames.
+                  eager
                   onClick={() =>
                     product.slug
                       ? navigate(`/producto/${product.slug}`)
