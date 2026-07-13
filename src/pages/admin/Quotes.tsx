@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
-import type { QuoteRequest } from '@/lib/database.types'
+import type { QuoteRequest, QuoteMessage } from '@/lib/database.types'
 
 type StatusFilter = 'all' | 'new' | 'read' | 'replied' | 'archived'
 
@@ -48,11 +48,11 @@ function buildReplyTemplate(quote: QuoteWithProduct): { subject: string; body: s
     ? `Re: Consulta sobre ${quote.products.name} – DC Bikes Cantabria`
     : 'Re: Consulta de presupuesto – DC Bikes Cantabria'
 
-  const contextLines = [
-    quote.products?.name ? `Producto consultado: ${quote.products.name}` : null,
-    quote.message ? `\nSu mensaje:\n"${quote.message}"` : null,
-  ].filter(Boolean).join('\n')
-
+  // Sin citar el mensaje original: el hilo ya lo tienes delante en el panel y
+  // el email que recibe el cliente lleva la referencia al producto en su
+  // cabecera. Citarlo aquí solo ensuciaría el correo y el cuerpo que se guarda
+  // en el hilo. Además, en la segunda respuesta en adelante citar el mensaje
+  // original sería directamente engañoso.
   const body = [
     'Hola,',
     '',
@@ -64,9 +64,6 @@ function buildReplyTemplate(quote: QuoteWithProduct): { subject: string; body: s
     'DC Bikes Cantabria',
     'El Astillero, Cantabria',
     'dcbikescantabria.com',
-    '',
-    '--- Mensaje original ---',
-    contextLines,
   ].join('\n')
 
   return { subject, body }
@@ -91,6 +88,22 @@ export function Quotes() {
   const [replyBody, setReplyBody] = useState('')
   const [replySending, setReplySending] = useState(false)
 
+  // Hilo de la consulta seleccionada
+  const [thread, setThread] = useState<QuoteMessage[]>([])
+  const [threadLoading, setThreadLoading] = useState(false)
+
+  const fetchThread = useCallback(async (quoteId: string) => {
+    setThreadLoading(true)
+    const { data, error } = await supabase
+      .from('quote_messages')
+      .select('*')
+      .eq('quote_id', quoteId)
+      .order('created_at', { ascending: true })
+    if (error) console.error('[THREAD]', error)
+    setThread(data ?? [])
+    setThreadLoading(false)
+  }, [])
+
   const fetchQuotes = useCallback(async () => {
     setLoading(true)
     const { data } = await supabase
@@ -111,6 +124,12 @@ export function Quotes() {
     setReplySubject('')
     setReplyBody('')
   }, [selected?.id])
+
+  // Cargar el hilo de la consulta abierta
+  useEffect(() => {
+    if (!selected) { setThread([]); return }
+    fetchThread(selected.id)
+  }, [selected?.id, fetchThread])
 
   // Bandeja activa vs papelera. En la papelera mostramos TODAS las eliminadas
   // (las pestañas de estado no aplican ahí); en la bandeja filtramos por estado.
@@ -255,6 +274,7 @@ export function Quotes() {
 
       toast.success(`Respuesta enviada a ${quote.email}`)
       setReplyOpen(false)
+      fetchThread(quote.id)   // la función ya guardó el mensaje: recárgalo en el hilo
       // La función ya actualiza el estado en BD; actualizamos también el estado local
       const updated = { ...quote, status: 'replied' }
       setQuotes(prev => prev.map(q => (q.id === quote.id ? updated : q)))
@@ -485,16 +505,49 @@ export function Quotes() {
               </div>
             </div>
 
-            {/* Message */}
+            {/* Hilo de la conversación — el cliente nunca lo ve: para él son
+                correos normales. Sus mensajes a la izquierda, los tuyos a la
+                derecha. */}
             <div className="px-4 sm:px-6 py-4">
-              <p className="text-xs font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-2">
-                Mensaje
+              <p className="text-xs font-[var(--font-cond)] tracking-widest uppercase text-[var(--color-mid)] mb-3">
+                Conversación
               </p>
-              <div className="bg-[var(--color-ink)] rounded-xl px-4 sm:px-5 py-4">
-                <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed whitespace-pre-wrap">
-                  {selected.message ?? <span className="italic text-[var(--color-mid)]">Sin mensaje.</span>}
-                </p>
-              </div>
+
+              {threadLoading ? (
+                <div className="flex items-center gap-2 py-4 text-sm text-[var(--color-mid)] font-[var(--font-body)]">
+                  <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                  Cargando conversación…
+                </div>
+              ) : thread.length === 0 ? (
+                <div className="bg-[var(--color-ink)] rounded-xl px-4 sm:px-5 py-4">
+                  <p className="text-sm italic text-[var(--color-mid)] font-[var(--font-body)]">
+                    Sin mensajes.
+                  </p>
+                </div>
+              ) : (
+                <ol className="flex flex-col gap-3">
+                  {thread.map(m => {
+                    const mine = m.direction === 'out'
+                    return (
+                      <li key={m.id} className={clsx('flex', mine ? 'justify-end' : 'justify-start')}>
+                        <div className={clsx(
+                          'max-w-[85%] sm:max-w-[75%] rounded-xl px-4 py-3 border',
+                          mine
+                            ? 'bg-[var(--color-lavender)]/12 border-[var(--color-lavender)]/25'
+                            : 'bg-[var(--color-ink)] border-[var(--color-card-hover)]',
+                        )}>
+                          <p className="text-[11px] font-[var(--font-cond)] tracking-wide uppercase text-[var(--color-mid)] mb-1.5">
+                            {mine ? 'Tú' : selected.email} · {formatDate(m.created_at)}
+                          </p>
+                          <p className="text-sm text-[var(--color-cream-dim)] font-[var(--font-body)] leading-relaxed whitespace-pre-wrap">
+                            {m.body}
+                          </p>
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ol>
+              )}
             </div>
 
             {/* Actions */}

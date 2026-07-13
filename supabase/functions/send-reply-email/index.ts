@@ -105,8 +105,18 @@ serve(async (req) => {
       .eq('key', 'reply_from_email')
       .single()
 
-    const replyTo = ((replySetting?.value as string | null) ?? '"info@dcbikescantabria.com"')
+    const baseReplyTo = ((replySetting?.value as string | null) ?? '"info@dcbikescantabria.com"')
       .replace(/^"|"$/g, '')
+
+    // Dirección de respuesta única por consulta (sub-addressing: buzon+q<token>@…).
+    // Cuando el cliente le da a «Responder», su correo vuelve con el token en el
+    // destinatario, así que se sabe a qué hilo pertenece sin adivinar por asunto
+    // ni por remitente (el mismo cliente puede tener varias consultas abiertas).
+    // Si la consulta está anonimizada por retención no hay token: se usa la
+    // dirección normal y esa respuesta simplemente no se atribuirá.
+    const replyTo = quote.reply_token
+      ? baseReplyTo.replace('@', `+q${quote.reply_token}@`)
+      : baseReplyTo
 
     // Convertir saltos de línea del body de texto plano a HTML
     const bodyHtml = body
@@ -143,8 +153,7 @@ serve(async (req) => {
           <p style="margin:0 0 4px;font-size:13px;font-weight:600;color:#333">DC Bikes Cantabria</p>
           <p style="margin:0;font-size:12px;color:#999">El Astillero, Cantabria · dcbikescantabria.com</p>
           <p style="margin:8px 0 0;font-size:11px;color:#bbb">
-            Para responder a este mensaje, escríbenos a
-            <a href="mailto:${replyTo}" style="color:#C4A2CF">${replyTo}</a>
+            Puedes responder directamente a este correo y te contestamos.
           </p>
         </div>
       </div>`
@@ -169,6 +178,20 @@ serve(async (req) => {
 
     if (!resendRes.ok) {
       throw new Error(JSON.stringify(resendBody))
+    }
+
+    // Guardar la respuesta en el hilo (si esto fallara el email ya está enviado,
+    // así que se registra y se sigue: perder el registro es malo, pero decirle
+    // al admin que no se envió cuando sí se envió es peor — reenviaría).
+    const { error: msgErr } = await supabase.from('quote_messages').insert({
+      quote_id,
+      direction: 'out',
+      body,
+      subject,
+      email_id: resendBody.id ?? null,
+    })
+    if (msgErr) {
+      console.error(`[${ts()}] ✗ Email enviado pero no guardado en el hilo:`, msgErr.message)
     }
 
     // Marcar como respondida

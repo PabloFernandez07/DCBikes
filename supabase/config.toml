@@ -54,6 +54,13 @@ verify_jwt = false
 [functions.verifactu-send-cron]
 verify_jwt = false
 
+# La invoca n8n (o el cron que lea el buzón) al llegar una respuesta de un
+# cliente. Es un llamador externo sin JWT de plataforma: su seguridad es
+# QUOTE_INBOUND_SECRET (comparación en tiempo constante, fail-closed si la env
+# no está puesta), igual que Redsys se apoya en su firma HMAC.
+[functions.quote-inbound]
+verify_jwt = false
+
 # ─────────────────────────────────────────────────────────────────
 # Funciones SOLO internas (auditoría V5 — fix email).
 # Se invocan vía supabase.functions.invoke con cabecera x-internal-secret

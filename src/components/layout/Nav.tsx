@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Menu, X, Settings, ShoppingCart, Package } from 'lucide-react'
+import { Menu, X, ShoppingCart, Package } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useCartStore } from '@/stores/cartStore'
 import { useUiStore } from '@/stores/uiStore'
@@ -71,14 +71,9 @@ export function Nav() {
               </span>
             )}
           </button>
-          <Link
-            to="/admin"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-[var(--font-cond)] text-sm font-medium tracking-wide text-[var(--color-mid)] hover:text-[var(--color-lavender)] hover:bg-[rgba(196,162,207,0.1)] transition-all duration-200"
-            aria-label="Panel de administración"
-          >
-            <Settings size={15} aria-hidden="true" />
-            <span className="hidden sm:inline">Admin</span>
-          </Link>
+          {/* El acceso al panel no se enlaza desde la web pública: se entra
+              escribiendo /admin directamente. La protección real sigue siendo
+              el login + admin_users, no la ausencia del enlace. */}
           <button
             className="md:hidden p-2 rounded-lg text-[var(--color-mid)] hover:text-[var(--color-cream)] hover:bg-[rgba(255,255,255,0.08)] transition-colors"
             onClick={() => setOpen(o => !o)}

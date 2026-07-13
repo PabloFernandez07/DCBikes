@@ -221,6 +221,36 @@ export interface Database {
         }
         Relationships: []
       }
+      quote_messages: {
+        Row: {
+          id: string
+          quote_id: string
+          direction: 'in' | 'out'
+          body: string
+          subject: string | null
+          email_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          quote_id: string
+          direction: 'in' | 'out'
+          body: string
+          subject?: string | null
+          email_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          quote_id?: string
+          direction?: 'in' | 'out'
+          body?: string
+          subject?: string | null
+          email_id?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       quote_requests: {
         Row: {
           id: string
@@ -231,6 +261,7 @@ export interface Database {
           status: string
           created_at: string
           deleted_at: string | null
+          reply_token: string | null
         }
         Insert: {
           id?: string
@@ -817,6 +848,8 @@ export type Category = Database['public']['Tables']['categories']['Row']
 export type Product = Database['public']['Tables']['products']['Row']
 export type ProductImage = Database['public']['Tables']['product_images']['Row']
 export type QuoteRequest = Database['public']['Tables']['quote_requests']['Row']
+// ── 0073_quote_messages ─────────────────────────────────────────
+export type QuoteMessage = Database['public']['Tables']['quote_messages']['Row']
 export type Setting = Database['public']['Tables']['settings']['Row']
 // ── 0003_orders_schema ──────────────────────────────────────────
 export type Order = Database['public']['Tables']['orders']['Row']
