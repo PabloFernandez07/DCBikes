@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import type { FromWorker, ScrubStats, ToWorker } from "@/workers/scrubProtocol";
 
-export const HERO_VIDEO = "/hero/hero-scrub-v4.mp4";
-export const HERO_POSTER = "/hero/hero-poster-v4.jpg";
+export const HERO_VIDEO = "/hero/hero-scrub-v2.mp4";
+export const HERO_POSTER = "/hero/hero-poster-v2.jpg";
 /** Tamaño nativo del vídeo. Se le pone al canvas ANTES de transferirlo para que
  *  el object-fit:cover del CSS recorte bien desde el primer momento; si el MP4
  *  dijera otra cosa, el worker lo corrige. */
