@@ -125,9 +125,9 @@ export function WorkshopHero({ onQuoteOpen }: WorkshopHeroProps) {
       // La pantalla es más panorámica que el vídeo (16:9), así que cover recorta
       // arriba y abajo. Centrado, se comía el sillín. Todo el recorte al suelo.
       encuadre="center top"
-      // La barra de navegación mide 80px y es fija: sin esto, el sillín queda
-      // debajo de ella en cuanto la pantalla baja de ~1800px de ancho (medido).
-      margenSuperior={80}
+      // El hero es sticky top-0 igual que la barra: al hacer scroll se metía
+      // DEBAJO de ella y le cortaba el sillín. Que se pegue por debajo.
+      alturaBarra={80}
       bloques={bloques}
       // En móvil no hay scrub y el MP4 ni se descarga, pero el póster (el
       // fotograma 0: la bici entera) es una foto de producto estupenda y pesa

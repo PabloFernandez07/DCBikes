@@ -52,20 +52,24 @@ export interface ScrubHeroProps {
    */
   encuadre?: string;
   /**
-   * Baja el vídeo estos píxeles, para que el contenido no quede debajo de la
-   * barra de navegación (que es fija y translúcida, y tapa la franja de arriba).
+   * Altura de la barra de navegación, en píxeles. Si se pasa, el hero se pega
+   * DEBAJO de ella en vez de detrás.
    *
-   * Con `encuadre="center top"` no basta: alinea el vídeo con el borde superior,
-   * y como el vídeo se escala POR ANCHO, en pantallas estrechas el escalado es
-   * menor y el sillín cae MÁS ARRIBA, otra vez debajo de la barra. Medido:
-   *   1366px de ancho -> sillín a 60px · barra 80px -> TAPADO
-   *   1850px de ancho -> sillín a 82px · barra 80px -> se ve por los pelos
-   * Bajando el vídeo la altura de la barra, el sillín se salva en TODAS.
+   * Por qué hace falta: la barra es `sticky top-0` y ocupa sitio en el flujo, así
+   * que al principio de la página el hero ya empieza a 80px y no hay solape.
+   * Pero el hero también es `sticky top-0`: en cuanto haces scroll se PEGA ARRIBA
+   * DEL TODO y se mete DEBAJO de la barra. En el taller eso decapitaba el sillín
+   * justo al final del scroll, que es cuando está más alto (medido, a 1366px de
+   * ancho: sillín a 60px, barra hasta 80px).
    *
-   * La franja que queda arriba no se ve: está justo debajo de la barra, que es
-   * opaca al 92%.
+   * Con esto el hero se pega a 80px y su altura se recorta otro tanto: el vídeo
+   * nunca pasa por debajo de la barra, y al principio de la página tampoco queda
+   * ninguna franja, porque es justo donde ya estaba.
+   *
+   * La portada no lo usa: ahí el vídeo por debajo de la barra translúcida queda
+   * bien y no hay nada que decapitar.
    */
-  margenSuperior?: number;
+  alturaBarra?: number;
 }
 
 /**
@@ -92,7 +96,7 @@ export function ScrubHero({
   bloques,
   fondoMovil,
   encuadre = "center",
-  margenSuperior = 0,
+  alturaBarra = 0,
 }: ScrubHeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -192,18 +196,15 @@ export function ScrubHero({
       <div
         className={
           lock
-            ? "sticky top-0 h-[100dvh] w-full overflow-hidden"
+            ? "sticky w-full overflow-hidden"
             : "relative h-[100dvh] w-full overflow-hidden"
         }
+        style={
+          lock
+            ? { top: alturaBarra, height: `calc(100dvh - ${alturaBarra}px)` }
+            : undefined
+        }
       >
-        {/* Capa del fondo. Va en su propio contenedor para poder BAJARLA sin
-            mover ni los velos ni el texto. Lleva el color de fondo para que la
-            franja de arriba (la que tapa la barra) no sea un agujero. */}
-        <div
-          className="absolute inset-0 overflow-hidden bg-[var(--color-ink)]"
-          style={{ top: margenSuperior }}
-          aria-hidden="true"
-        >
         {!isMobile ? (
           <>
             {/* El póster va DEBAJO y siempre. El canvas nace con opacity:0 y solo
@@ -245,7 +246,6 @@ export function ScrubHero({
             />
           )
         )}
-        </div>
 
         {/* Velo lateral: contraste para que el texto se lea sobre el vídeo. */}
         {!isMobile && (
