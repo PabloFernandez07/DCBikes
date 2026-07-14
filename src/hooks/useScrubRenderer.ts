@@ -1,17 +1,12 @@
 import { useEffect, useRef } from "react";
 import type { FromWorker, ScrubStats, ToWorker } from "@/workers/scrubProtocol";
 
-export const HERO_VIDEO = "/hero/hero-scrub-v2.mp4";
-export const HERO_POSTER = "/hero/hero-poster-v2.jpg";
-/** Tamaño nativo del vídeo. Se le pone al canvas ANTES de transferirlo para que
- *  el object-fit:cover del CSS recorte bien desde el primer momento; si el MP4
- *  dijera otra cosa, el worker lo corrige. */
-const ANCHO = 1920;
-const ALTO = 1080;
-
 /** La clave de caché lleva el nombre del fichero, así que renombrar el vídeo
- *  invalida la caché sola (el worker borra las claves dcbikes-hero-* viejas). */
-const CACHE_NAME = `dcbikes-hero-${HERO_VIDEO.slice(HERO_VIDEO.lastIndexOf("/") + 1)}`;
+ *  invalida la caché sola (el worker borra las claves dcbikes-hero-* viejas).
+ *  Y como cada hero tiene su propio fichero, cada uno tiene su propia caché:
+ *  el del taller no pisa al de la portada. */
+const cacheName = (url: string) =>
+  `dcbikes-hero-${url.slice(url.lastIndexOf("/") + 1)}`;
 
 /**
  * Amortiguación exponencial. El código viejo hacía `actual += diff * 0.12` una
@@ -44,6 +39,13 @@ interface Opciones {
   enabled: boolean;
   /** El worker no ha podido: hay que caer al <video>. */
   onFail: () => void;
+  /** El MP4 a descodificar. TIENE que ser all-intra. */
+  video: string;
+  /** Tamaño nativo del MP4. Se le pone al canvas ANTES de transferirlo para que
+   *  el object-fit:cover recorte bien desde el primer momento; si el MP4 dijera
+   *  otra cosa, el worker lo corrige. */
+  ancho: number;
+  alto: number;
   /** Progreso de descarga 0..1, por si se quiere pintar una barra de carga. */
   onLoadProgress?: (p: number) => void;
 }
@@ -64,7 +66,7 @@ export function useScrubRenderer(
   sectionRef: React.RefObject<HTMLElement | null>,
   hostRef: React.RefObject<HTMLDivElement | null>,
   onProgress: (p: number) => void,
-  { enabled, onFail, onLoadProgress }: Opciones,
+  { enabled, onFail, video, ancho, alto, onLoadProgress }: Opciones,
 ): void {
   // Estos callbacks cambian de identidad en cada render del consumidor; van a
   // una ref para no re-montar el worker por eso.
@@ -81,8 +83,8 @@ export function useScrubRenderer(
     // en StrictMode el efecto se monta dos veces y la segunda lanzaría
     // InvalidStateError. Creando el elemento aquí, cada montaje tiene el suyo.
     const canvas = document.createElement("canvas");
-    canvas.width = ANCHO;
-    canvas.height = ALTO;
+    canvas.width = ancho;
+    canvas.height = alto;
     canvas.setAttribute("aria-hidden", "true");
     // Arranca invisible: debajo está el póster, y así no se ve un canvas negro
     // mientras baja el vídeo. Se destapa con el primer fotograma pintado.
@@ -240,7 +242,7 @@ export function useScrubRenderer(
     // el retraso el póster tardaba exactamente lo mismo (compite con el JS y
     // las fuentes, no con el vídeo) y el primer fotograma pasaba de 1,5 s a
     // 3,0 s. Todo coste y ningún beneficio.
-    enviar({ type: "init", canvas: offscreen, url: HERO_VIDEO, cacheName: CACHE_NAME });
+    enviar({ type: "init", canvas: offscreen, url: video, cacheName: cacheName(video) });
     leerScroll();
 
     return () => {
@@ -255,7 +257,7 @@ export function useScrubRenderer(
       worker.terminate();   // se lleva por delante decoder, bitmaps y bytes
       canvas.remove();
     };
-  }, [sectionRef, hostRef, enabled]);
+  }, [sectionRef, hostRef, enabled, video, ancho, alto]);
 }
 
 /** Contabilidad para el banco de pruebas (`?bench=1`). Los ImageBitmap y los

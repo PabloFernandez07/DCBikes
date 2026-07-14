@@ -1,31 +1,33 @@
-import { useNavigate } from "react-router-dom";
-import { ArrowRight, Star } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Phone, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { HeroText, ScrubHero, type BloqueHero } from "@/components/public/ScrubHero";
 
-interface ScrollVideoHeroProps {
+export const TALLER_VIDEO = "/taller/despiece-scrub-v1.mp4";
+export const TALLER_POSTER = "/taller/despiece-poster-v1.jpg";
+
+interface WorkshopHeroProps {
   onQuoteOpen: () => void;
 }
 
-export const HERO_VIDEO = "/hero/hero-scrub-v2.mp4";
-export const HERO_POSTER = "/hero/hero-poster-v2.jpg";
-
 /**
- * El hero de la portada. Toda la maquinaria (WebCodecs, worker, canvas, plan B)
- * vive en ScrubHero: aquí solo está el contenido y cuándo aparece cada bloque.
+ * El hero del taller: una Giant que se va despiezando conforme bajas.
+ *
+ * El texto se apoya en lo que el vídeo está demostrando. «Taller experto» y
+ * «en las mejores manos» lo dice todo el mundo y no prueban nada; «conocemos
+ * cada pieza» es una afirmación que el despiece está demostrando mientras el
+ * cliente la lee.
  */
-export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
-  const navigate = useNavigate();
-
+export function WorkshopHero({ onQuoteOpen }: WorkshopHeroProps) {
   const bloques: BloqueHero[] = [
     {
-      key: "badge",
+      key: "eyebrow",
       rango: { inStart: 0.00, inEnd: 0.08, outStart: 0.70, outEnd: 0.78 },
       nodo: (
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(196,162,207,0.15)] border border-[rgba(196,162,207,0.3)] w-fit backdrop-blur-sm">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-lavender)] animate-[spulse_2s_ease-in-out_infinite]" />
           <span className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-lavender)]">
-            El Astillero · Cantabria
+            Nuestro taller · El Astillero
           </span>
         </div>
       ),
@@ -37,22 +39,22 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
         <h1
           className="font-[var(--font-display)] leading-none tracking-wide text-[var(--color-cream)]"
           style={{
-            fontSize: "clamp(2.4rem, 9vw, 8rem)",
+            fontSize: "clamp(2.2rem, 7.5vw, 6.5rem)",
             textShadow: "0 4px 24px rgba(0,0,0,0.55)",
           }}
         >
           <span className="block">
             <span style={{ whiteSpace: "nowrap" }}>
-              <HeroText text="MUÉVETE" baseDelay={200} />
+              <HeroText text="CONOCEMOS" baseDelay={200} />
             </span>
           </span>
           <span className="block text-[var(--color-lavender)]">
             <span style={{ whiteSpace: "nowrap" }}>
-              <HeroText text="SIN" baseDelay={700} />
+              <HeroText text="CADA" baseDelay={780} />
             </span>
             {" "}
             <span style={{ whiteSpace: "nowrap" }}>
-              <HeroText text="LÍMITES" baseDelay={920} />
+              <HeroText text="PIEZA" baseDelay={1030} />
             </span>
           </span>
         </h1>
@@ -76,8 +78,8 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
           className="text-[var(--color-cream-dim)] font-[var(--font-body)] text-lg max-w-md leading-relaxed"
           style={{ textShadow: "0 2px 12px rgba(0,0,0,0.55)" }}
         >
-          Tu tienda de bicicletas de confianza. Venta, taller y asesoramiento
-          profesional en el corazón de Cantabria.
+          Porque la hemos desmontado mil veces. Mecánicos especializados en todas
+          las marcas y disciplinas, en El Astillero.
         </p>
       ),
     },
@@ -89,20 +91,22 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
           <Button
             variant="primary"
             size="lg"
-            onClick={() => navigate("/catalogo")}
-            className="font-[var(--font-display)] tracking-widest text-xl"
-          >
-            Ver catálogo
-            <ArrowRight size={20} aria-hidden="true" />
-          </Button>
-          <Button
-            variant="secondary"
-            size="lg"
             onClick={onQuoteOpen}
             className="font-[var(--font-display)] tracking-widest text-xl"
           >
             Pedir presupuesto
+            <ArrowRight size={20} aria-hidden="true" />
           </Button>
+          <Link to="/contacto">
+            <Button
+              variant="secondary"
+              size="lg"
+              className="font-[var(--font-display)] tracking-widest text-xl"
+            >
+              <Phone size={18} aria-hidden="true" />
+              Cómo llegar
+            </Button>
+          </Link>
         </div>
       ),
     },
@@ -110,34 +114,18 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
 
   return (
     <ScrubHero
-      video={HERO_VIDEO}
-      poster={HERO_POSTER}
-      ancho={1280}
-      alto={720}
-      pantallas={5}
+      video={TALLER_VIDEO}
+      poster={TALLER_POSTER}
+      ancho={1920}
+      alto={1080}
+      // Tres pantallas, no cinco: en la portada el hero ES el escaparate, pero
+      // aquí el visitante viene a ver servicios y precios. Cinco pantallas de
+      // vídeo por delante serían cine caro.
+      pantallas={3}
       bloques={bloques}
-      // En móvil la portada nunca ha enseñado el vídeo (son megas para nada en
-      // datos): un degradado de marca y a correr.
-      fondoMovil={
-        <>
-          <div
-            className="absolute inset-0"
-            aria-hidden="true"
-            style={{
-              background:
-                "linear-gradient(155deg, var(--color-ink-deep) 0%, var(--color-ink) 55%, rgba(196,162,207,0.04) 100%)",
-            }}
-          />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            aria-hidden="true"
-            style={{
-              background:
-                "radial-gradient(ellipse 90% 70% at 80% 40%, rgba(196,162,207,0.07), transparent 65%)",
-            }}
-          />
-        </>
-      }
+      // En móvil no hay scrub y el MP4 ni se descarga, pero el póster (el
+      // fotograma 0: la bici entera) es una foto de producto estupenda y pesa
+      // 63 KB. Mejor eso que un degradado.
     />
   );
 }

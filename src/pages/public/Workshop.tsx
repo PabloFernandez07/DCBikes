@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Wrench, Settings, Star, ArrowRight, CheckCircle, Clock, Phone, FileText } from 'lucide-react'
+import { Wrench, Settings, Star, ArrowRight, CheckCircle, Clock, FileText } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { QuoteModal } from '@/components/public/QuoteModal'
 import { SEO } from '@/components/layout/SEO'
+import { WorkshopHero } from '@/components/public/WorkshopHero'
 
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -69,47 +70,10 @@ export default function Workshop() {
         ]}
       />
       {/* Hero */}
-      <section className="relative py-16 md:py-28 overflow-hidden">
-        <div
-          className="absolute inset-0 pointer-events-none"
-          aria-hidden="true"
-          style={{
-            background: 'radial-gradient(ellipse 70% 60% at 20% 50%, rgba(196,162,207,0.07) 0%, transparent 70%)',
-          }}
-        />
-        {/* Background text decoration */}
-        <span
-          className="absolute right-0 top-1/2 -translate-y-1/2 font-[var(--font-display)] text-[20vw] leading-none text-[rgba(196,162,207,0.03)] select-none pointer-events-none"
-          aria-hidden="true"
-        >
-          TALLER
-        </span>
-        <div className="w-full px-4 sm:px-6 lg:px-8 relative">
-          <p className="rv font-[var(--font-cond)] text-sm tracking-widest uppercase text-[var(--color-lavender)] mb-4">
-            Nuestro taller
-          </p>
-          <h1 className="rv font-[var(--font-display)] text-6xl sm:text-7xl md:text-8xl lg:text-[10rem] text-[var(--color-cream)] tracking-wide leading-none">
-            TALLER<br />
-            <span className="text-[var(--color-lavender)]">EXPERTO</span>
-          </h1>
-          <p className="rv mt-6 md:mt-8 text-[var(--color-mid)] font-[var(--font-body)] text-lg md:text-xl max-w-2xl leading-relaxed" style={{ transitionDelay: '100ms' }}>
-            Mecánicos especializados con años de experiencia en todas las marcas y disciplinas.
-            Tu bicicleta en las mejores manos, en El Astillero.
-          </p>
-          <div className="rv flex flex-wrap gap-4 mt-10" style={{ transitionDelay: '180ms' }}>
-            <Button variant="primary" size="lg" onClick={() => setQuoteOpen(true)} className="font-[var(--font-display)] tracking-widest text-lg">
-              Pedir presupuesto
-              <ArrowRight size={18} aria-hidden="true" />
-            </Button>
-            <Link to="/contacto">
-              <Button variant="secondary" size="lg" className="font-[var(--font-cond)] tracking-wide">
-                <Phone size={16} aria-hidden="true" />
-                Cómo llegar
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Hero con el despiece de la Giant gobernado por el scroll. Tres pantallas
+          y no cinco como la portada: el taller es una página de servicio, y quien
+          entra viene a saber qué le arreglas y cuánto cuesta, no a ver cine. */}
+      <WorkshopHero onQuoteOpen={() => setQuoteOpen(true)} />
 
       {/* Stats strip */}
       <section className="border-y border-[var(--color-card)] bg-[var(--color-ink-deep)] py-8">
