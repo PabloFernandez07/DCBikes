@@ -14,6 +14,28 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
 
+  <!--
+    El póster del hero se pide AQUÍ, desde el HTML, no desde React.
+    Si se espera a que monte el componente, el worker ya ha arrancado la
+    descarga del MP4 (7,5 MB) y los dos se pelean por el ancho de banda: en una
+    línea de 5 Mbps el póster (275 KB) tardaba >1 s y el hero se veía NEGRO ese
+    rato. Pedido desde el <head> sale a la red antes incluso de que se descargue
+    el bundle, así que llega el primero y el hero nunca está vacío.
+
+    El `media` es EXACTAMENTE el negado del predicado de móvil de useHeroFlags
+    ("(max-width: 768px), (pointer: coarse) and (max-width: 1024px)"), porque en
+    móvil el hero es un degradado y el póster no se llega a pintar: bajarlo sería
+    tirar 275 KB de datos móviles. Con un `(min-width: 769px)` a secas, un
+    teléfono APAISADO (812 px) se lo tragaba.
+      - >= 1025 px            -> escritorio, sea cual sea el puntero
+      - 769..1024 px y ratón  -> escritorio (ventana estrecha)
+      - 769..1024 px y dedo   -> tablet/móvil apaisado: NO
+    Es una lista separada por comas (= "o") a propósito: sintaxis de Media
+    Queries 3, que entiende cualquier navegador.
+  -->
+  <link rel="preload" as="image" href="/hero/hero-poster-v4.jpg" fetchpriority="high"
+        media="(min-width: 1025px), (min-width: 769px) and (pointer: fine)" />
+
   <!-- Tema -->
   <meta name="theme-color" content="#0a0e1a" />
   <meta name="color-scheme" content="dark light" />

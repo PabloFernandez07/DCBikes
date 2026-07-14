@@ -2,7 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { useHeroFlags } from "@/hooks/useHeroFlags";
 import { useScrollVideo } from "@/hooks/useScrollVideo";
+import {
+  HERO_POSTER,
+  HERO_VIDEO,
+  soportaScrubWebCodecs,
+  useScrubRenderer,
+} from "@/hooks/useScrubRenderer";
 import { lerpReveal } from "@/lib/reveal";
 
 interface ScrollVideoHeroProps {
@@ -54,7 +61,13 @@ function HeroText({ text, baseDelay }: { text: string; baseDelay: number }) {
 export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasHostRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Si el renderer de WebCodecs falla (MP4 raro, sin descodificador, worker
+  // caído...) se cae al <video> de siempre, que sigue funcionando.
+  const [scrubFallido, setScrubFallido] = useState(false);
+  const onScrubFail = useCallback(() => setScrubFallido(true), []);
 
   // Los bloques que se revelan, la barra y el indicador se animan escribiendo
   // sus estilos a mano. Si esto pasara por estado de React, cada frame de
@@ -64,7 +77,25 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
   const barRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLDivElement>(null);
 
+  const { isMobile, isReducedMotion } = useHeroFlags();
+
+  // En móvil o reduced-motion: vídeo en autoplay-loop, sección 100dvh, texto
+  // estático y visible desde el principio (nadie le escribe estilos).
+  const lock = !isMobile && !isReducedMotion;
+
+  // applyProgress es estable (deps vacías) para no re-montar el worker en cada
+  // render, así que `lock` le llega por ref.
+  const lockRef = useRef(lock);
+  lockRef.current = lock;
+
   const applyProgress = useCallback((p: number) => {
+    // Cinturón y tirantes. Sin scrub, los bloques NO llevan estilo en línea y el
+    // CSS los pinta visibles; si alguien llamara aquí con p=0 (lo hacía
+    // useScrollVideo en la rama !lock) escribiríamos `opacity: 0` sobre el
+    // titular y los CTA, y como sin scrub nadie vuelve a llamar jamás, el hero
+    // se quedaba mudo PARA SIEMPRE con prefers-reduced-motion. Que no se pueda.
+    if (!lockRef.current) return;
+
     for (const key of REVEAL_KEYS) {
       const el = revealRefs.current[key];
       if (!el) continue;
@@ -86,14 +117,22 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
     }
   }, []);
 
-  const { isMobile, isReducedMotion } = useScrollVideo(sectionRef, videoRef, applyProgress);
+  // El scrub bueno (WebCodecs -> canvas) solo cuando hay scrub que hacer y el
+  // navegador puede. En móvil NI SE DESCARGA el MP4: son 7,5 MB. Y "móvil" es
+  // también el teléfono APAISADO y la tablet, no solo el ancho (ver useHeroFlags).
+  const usaCanvas = lock && soportaScrubWebCodecs && !scrubFallido;
 
-  // En móvil o reduced-motion: vídeo en autoplay-loop, sección 100dvh, texto
-  // estático y visible desde el principio (nadie le escribe estilos).
-  const lock = !isMobile && !isReducedMotion;
+  useScrubRenderer(sectionRef, canvasHostRef, applyProgress, {
+    enabled: usaCanvas,
+    onFail: onScrubFail,
+  });
+
+  // El <video> solo lo gobierna useScrollVideo cuando NO manda el canvas.
+  useScrollVideo(sectionRef, videoRef, applyProgress, !usaCanvas);
 
   // Con scrub, los bloques arrancan invisibles y los va sacando el scroll. Sin
-  // scrub no se tocan nunca, así que se quedan tal cual los pinta el CSS.
+  // scrub nadie les escribe estilos (applyProgress corta arriba del todo si
+  // !lock), así que se quedan tal cual los pinta el CSS: visibles.
   const revealStyle = lock
     ? { opacity: 0, willChange: "opacity, transform" as const }
     : undefined;
@@ -121,16 +160,36 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
       >
         {/* Fondo: vídeo en desktop, gradiente estático en móvil */}
         {!isMobile ? (
-          <video
-            ref={videoRef}
-            src="/hero/hero-scrub-v3.mp4"
-            poster="/hero/hero-poster-v3.jpg"
-            muted
-            playsInline
-            preload="auto"
-            aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+          <>
+            {/*
+              El póster va DEBAJO y siempre. El canvas nace con opacity:0 y solo
+              se destapa cuando el worker ha pintado su primer fotograma, así que
+              nunca hay hero en negro mientras baja el vídeo: se ve el póster, que
+              es el fotograma 0, y el relevo es invisible.
+              Si el canvas manda, el <video> ni se monta: no se descarga dos veces.
+            */}
+            <img
+              src={HERO_POSTER}
+              alt=""
+              aria-hidden="true"
+              fetchPriority="high"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            {usaCanvas ? (
+              <div ref={canvasHostRef} className="absolute inset-0" aria-hidden="true" />
+            ) : (
+              <video
+                ref={videoRef}
+                src={HERO_VIDEO}
+                poster={HERO_POSTER}
+                muted
+                playsInline
+                preload="auto"
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
+          </>
         ) : (
           <>
             <div
