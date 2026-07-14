@@ -1,14 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { useHeroFlags, type ScrollVideoFlags } from "@/hooks/useHeroFlags";
 
-export interface ScrollVideoFlags {
-  isMobile: boolean;
-  isReducedMotion: boolean;
-}
+export type { ScrollVideoFlags };
 
-/** Cuánto se acerca el valor mostrado al objetivo en cada frame (0..1).
- *  Más bajo = más suave y más "pesado"; más alto = más pegado al dedo.
- *  0.12 ≈ el tacto de las webs tipo Rockstar/Apple. */
-const AMORTIGUACION = 0.12;
+/**
+ * Amortiguación exponencial: cuánto se acerca el valor mostrado al objetivo,
+ * POR SEGUNDO. Antes esto era `actual += diff * 0.12` una vez por frame, y eso
+ * ataba el tacto a la frecuencia de refresco: en un monitor de 120 Hz se
+ * aplicaba el doble de veces por segundo y el hero se sentía distinto que en
+ * uno de 60 Hz. Con `1 - exp(-lambda*dt)` el resultado depende del tiempo, no
+ * de cuántos frames hayan cabido.
+ *
+ * lambda = 7,7 reproduce el tacto de antes a 60 Hz: 1 - exp(-7,7/60) = 0,120.
+ */
+const LAMBDA = 7.7;
 
 /** Umbral para dejar de perseguir el objetivo (en unidades de progreso 0..1). */
 const EPSILON = 0.0004;
@@ -46,16 +51,11 @@ export function useScrollVideo(
   sectionRef: React.RefObject<HTMLElement | null>,
   videoRef: React.RefObject<HTMLVideoElement | null>,
   onProgress: (p: number) => void,
+  /** false cuando el hero lo lleva el renderer de WebCodecs (useScrubRenderer):
+   *  entonces no hay <video> que controlar y este hook solo publica las flags. */
+  enabled = true,
 ): ScrollVideoFlags {
-  const [flags, setFlags] = useState<ScrollVideoFlags>(() => {
-    if (typeof window === "undefined") {
-      return { isMobile: false, isReducedMotion: false };
-    }
-    return {
-      isMobile: window.matchMedia("(max-width: 768px)").matches,
-      isReducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    };
-  });
+  const flags = useHeroFlags();
 
   // El callback cambia de identidad en cada render del consumidor; lo guardamos
   // en una ref para no tener que re-suscribir los listeners por ello.
@@ -63,24 +63,9 @@ export function useScrollVideo(
   onProgressRef.current = onProgress;
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mqMobile = window.matchMedia("(max-width: 768px)");
-    const mqReduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () =>
-      setFlags({ isMobile: mqMobile.matches, isReducedMotion: mqReduced.matches });
-    sync();
-    mqMobile.addEventListener("change", sync);
-    mqReduced.addEventListener("change", sync);
-    return () => {
-      mqMobile.removeEventListener("change", sync);
-      mqReduced.removeEventListener("change", sync);
-    };
-  }, []);
-
-  useEffect(() => {
     const video = videoRef.current;
     const section = sectionRef.current;
-    if (!video || !section) return;
+    if (!enabled || !video || !section) return;
 
     const lock = !flags.isMobile && !flags.isReducedMotion;
 
@@ -92,7 +77,19 @@ export function useScrollVideo(
       void video.play().catch(() => {
         // Algunos navegadores bloquean el autoplay; con el primer frame basta.
       });
-      onProgressRef.current(0);
+      // OJO: aquí NO se llama a onProgress(0). Parece inofensivo y es lo que
+      // dejaba el hero SIN TEXTO NI BOTONES con prefers-reduced-motion en
+      // escritorio: onProgress escribe los estilos del reveal A MANO sobre los
+      // refs, y con p=0 eso es `opacity: 0` en el badge, el h1, el divisor, el
+      // párrafo y los DOS CTA. Sin scrub no hay scroll que vuelva a mover el
+      // progreso NUNCA MÁS, así que ese opacity:0 se quedaba puesto para
+      // siempre: el usuario con reduced-motion —justo el que tiene trastornos
+      // vestibulares— veía un vídeo en bucle y cero contenido.
+      //
+      // Sin esta llamada nadie toca los bloques y se quedan como los pinta el
+      // CSS (visibles), que es lo que ya pasaba en móvil de casualidad (allí no
+      // se monta el <video>, así que el efecto salía antes de llegar aquí).
+      // ScrollVideoHero además corta applyProgress cuando !lock, por si acaso.
       return;
     }
 
@@ -105,6 +102,7 @@ export function useScrollVideo(
     let rafId: number | null = null;
     let visible = true;
     let ultimoSeek = -1;
+    let ultimoT = 0;        // para que la amortiguación dependa del tiempo, no del frame
 
     /** Duración de medio fotograma: por debajo de eso, reposicionar el vídeo no
      *  cambiaría nada en pantalla y solo gastaría decodificaciones. */
@@ -134,7 +132,10 @@ export function useScrollVideo(
       }
     };
 
-    const tick = () => {
+    const tick = (t: number) => {
+      const dt = Math.min(Math.max((t - ultimoT) / 1000, 0), 0.1);
+      ultimoT = t;
+
       const diff = objetivo - actual;
 
       if (Math.abs(diff) < EPSILON) {
@@ -144,13 +145,16 @@ export function useScrollVideo(
         return;
       }
 
-      actual += diff * AMORTIGUACION;
+      actual += diff * (1 - Math.exp(-LAMBDA * dt));
       pintar();
       rafId = requestAnimationFrame(tick);
     };
 
     const arrancar = () => {
-      if (rafId === null && visible) rafId = requestAnimationFrame(tick);
+      if (rafId === null && visible) {
+        ultimoT = performance.now();   // si no, el primer dt tras una pausa sería enorme
+        rafId = requestAnimationFrame(tick);
+      }
     };
 
     const onMeta = () => {
@@ -186,7 +190,7 @@ export function useScrollVideo(
       window.removeEventListener("resize", leerScroll);
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, [sectionRef, videoRef, flags.isMobile, flags.isReducedMotion]);
+  }, [sectionRef, videoRef, enabled, flags.isMobile, flags.isReducedMotion]);
 
   return flags;
 }
