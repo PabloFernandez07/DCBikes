@@ -46,6 +46,9 @@ interface Opciones {
    *  otra cosa, el worker lo corrige. */
   ancho: number;
   alto: number;
+  /** object-position del canvas: de dónde recorta el cover en pantallas más
+   *  panorámicas que el vídeo. */
+  encuadre?: string;
   /** Progreso de descarga 0..1, por si se quiere pintar una barra de carga. */
   onLoadProgress?: (p: number) => void;
 }
@@ -66,7 +69,7 @@ export function useScrubRenderer(
   sectionRef: React.RefObject<HTMLElement | null>,
   hostRef: React.RefObject<HTMLDivElement | null>,
   onProgress: (p: number) => void,
-  { enabled, onFail, video, ancho, alto, onLoadProgress }: Opciones,
+  { enabled, onFail, video, ancho, alto, encuadre = "center", onLoadProgress }: Opciones,
 ): void {
   // Estos callbacks cambian de identidad en cada render del consumidor; van a
   // una ref para no re-montar el worker por eso.
@@ -89,7 +92,7 @@ export function useScrubRenderer(
     // Arranca invisible: debajo está el póster, y así no se ve un canvas negro
     // mientras baja el vídeo. Se destapa con el primer fotograma pintado.
     canvas.style.cssText =
-      "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;";
+      `position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:${encuadre};opacity:0;`;
     host.appendChild(canvas);
 
     let worker: Worker;
@@ -257,7 +260,7 @@ export function useScrubRenderer(
       worker.terminate();   // se lleva por delante decoder, bitmaps y bytes
       canvas.remove();
     };
-  }, [sectionRef, hostRef, enabled, video, ancho, alto]);
+  }, [sectionRef, hostRef, enabled, video, ancho, alto, encuadre]);
 }
 
 /** Contabilidad para el banco de pruebas (`?bench=1`). Los ImageBitmap y los

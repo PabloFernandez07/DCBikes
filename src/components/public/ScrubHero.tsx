@@ -40,6 +40,32 @@ export interface ScrubHeroProps {
   /** Qué se pinta de fondo en móvil y con reduced-motion, donde NO hay scrub y
    *  el MP4 ni se descarga. Por defecto, el póster. */
   fondoMovil?: ReactNode;
+  /**
+   * De dónde recorta el `object-fit: cover` cuando la pantalla es más
+   * panorámica que el vídeo (16:9). Por defecto centra, y entonces se come lo
+   * de arriba Y lo de abajo a partes iguales.
+   *
+   * En el taller eso decapitaba el sillín: en el vídeo tiene 85 px de aire por
+   * encima, el recorte se comía la mitad y la barra de navegación tapaba el
+   * resto. Con "center top" no se recorta nada por arriba; todo el recorte se va
+   * al suelo, donde solo hay sombra.
+   */
+  encuadre?: string;
+  /**
+   * Baja el vídeo estos píxeles, para que el contenido no quede debajo de la
+   * barra de navegación (que es fija y translúcida, y tapa la franja de arriba).
+   *
+   * Con `encuadre="center top"` no basta: alinea el vídeo con el borde superior,
+   * y como el vídeo se escala POR ANCHO, en pantallas estrechas el escalado es
+   * menor y el sillín cae MÁS ARRIBA, otra vez debajo de la barra. Medido:
+   *   1366px de ancho -> sillín a 60px · barra 80px -> TAPADO
+   *   1850px de ancho -> sillín a 82px · barra 80px -> se ve por los pelos
+   * Bajando el vídeo la altura de la barra, el sillín se salva en TODAS.
+   *
+   * La franja que queda arriba no se ve: está justo debajo de la barra, que es
+   * opaca al 92%.
+   */
+  margenSuperior?: number;
 }
 
 /**
@@ -65,6 +91,8 @@ export function ScrubHero({
   pantallas = 5,
   bloques,
   fondoMovil,
+  encuadre = "center",
+  margenSuperior = 0,
 }: ScrubHeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -137,6 +165,7 @@ export function ScrubHero({
     video,
     ancho,
     alto,
+    encuadre,
   });
 
   // El <video> solo lo gobierna useScrollVideo cuando NO manda el canvas.
@@ -167,6 +196,14 @@ export function ScrubHero({
             : "relative h-[100dvh] w-full overflow-hidden"
         }
       >
+        {/* Capa del fondo. Va en su propio contenedor para poder BAJARLA sin
+            mover ni los velos ni el texto. Lleva el color de fondo para que la
+            franja de arriba (la que tapa la barra) no sea un agujero. */}
+        <div
+          className="absolute inset-0 overflow-hidden bg-[var(--color-ink)]"
+          style={{ top: margenSuperior }}
+          aria-hidden="true"
+        >
         {!isMobile ? (
           <>
             {/* El póster va DEBAJO y siempre. El canvas nace con opacity:0 y solo
@@ -179,6 +216,7 @@ export function ScrubHero({
               aria-hidden="true"
               fetchPriority="high"
               className="absolute inset-0 w-full h-full object-cover"
+              style={{ objectPosition: encuadre }}
             />
             {usaCanvas ? (
               <div ref={canvasHostRef} className="absolute inset-0" aria-hidden="true" />
@@ -192,6 +230,7 @@ export function ScrubHero({
                 preload="auto"
                 aria-hidden="true"
                 className="absolute inset-0 w-full h-full object-cover"
+                style={{ objectPosition: encuadre }}
               />
             )}
           </>
@@ -202,9 +241,11 @@ export function ScrubHero({
               alt=""
               aria-hidden="true"
               className="absolute inset-0 w-full h-full object-cover"
+              style={{ objectPosition: encuadre }}
             />
           )
         )}
+        </div>
 
         {/* Velo lateral: contraste para que el texto se lea sobre el vídeo. */}
         {!isMobile && (
