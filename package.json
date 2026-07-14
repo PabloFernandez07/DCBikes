@@ -10,7 +10,9 @@
     "gen:images": "node scripts/generate-images.mjs",
     "gen:sitemap": "node scripts/generate-sitemap.mjs",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "pnpm run test:strip",
+    "test:strip": "npx tsx supabase/functions/_shared/strip-quoted-reply.test.ts"
   },
   "dependencies": {
     "@fontsource/barlow": "^5.2.8",

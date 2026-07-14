@@ -5,6 +5,7 @@ import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
+import { notifyBadgeRefresh } from '@/lib/adminBadges'
 import type { Database } from '@/lib/database.types'
 import type { OrderStatus } from './OrderStatusBadge'
 
@@ -134,6 +135,12 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
       }
       setAcceptOpen(false)
       setAcceptNotes('')
+      // El badge de Pedidos cuenta los 'authorized'. Aprobar uno lo baja, y esto
+      // pasa SIN cambiar de ruta: hay que avisar al AdminShell o el punto rojo se
+      // queda pegado hasta el refresco de 60 s — justo el síntoma que el bus de
+      // badges venía a arreglar, y que cubría el borrado en lote (la excepción)
+      // pero no aprobar un pago (la regla).
+      notifyBadgeRefresh('orders')
       await onRefresh?.()
     } catch (err) {
       onToast('error', err instanceof Error ? err.message : 'Error al aceptar')
@@ -169,6 +176,8 @@ export function OrderActionsBar({ order, currentUserId, onChanged, onRefresh, on
       }
       setRejectOpen(false)
       setRejectCustom('')
+      // Rechazar también saca el pedido de 'authorized' → mismo badge, mismo aviso.
+      notifyBadgeRefresh('orders')
       await onRefresh?.()
     } catch (err) {
       onToast('error', err instanceof Error ? err.message : 'Error al rechazar')
