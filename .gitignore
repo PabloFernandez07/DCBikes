@@ -43,3 +43,7 @@ Docs/runbooks/admin-users-seed.md
 
 # Secretos generados localmente — NO COMMITEAR
 Docs/runbooks/secretos-generados-RECUPERAR.txt
+
+# Copias de seguridad de datos antes de operaciones destructivas.
+# Contienen datos de clientes: NUNCA al repositorio.
+.backups/

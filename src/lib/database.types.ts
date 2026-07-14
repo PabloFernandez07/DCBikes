@@ -227,6 +227,9 @@ export interface Database {
           quote_id: string
           direction: 'in' | 'out'
           body: string
+          /** 0076: cuerpo original antes de recortarle el historial citado.
+           *  NULL = el recortador no tocó nada y `body` ya es el original. */
+          body_raw: string | null
           subject: string | null
           email_id: string | null
           created_at: string
@@ -236,6 +239,7 @@ export interface Database {
           quote_id: string
           direction: 'in' | 'out'
           body: string
+          body_raw?: string | null
           subject?: string | null
           email_id?: string | null
           created_at?: string
@@ -245,6 +249,7 @@ export interface Database {
           quote_id?: string
           direction?: 'in' | 'out'
           body?: string
+          body_raw?: string | null
           subject?: string | null
           email_id?: string | null
           created_at?: string

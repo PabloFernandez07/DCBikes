@@ -9,6 +9,7 @@ import { BulkShipModal, type BulkShipOrder } from '@/components/admin/BulkShipMo
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
 import { buildOrdersCsv, downloadCsv, defaultCsvFilename, type CsvOrderItem } from '@/lib/csvExport'
+import { notifyBadgeRefresh } from '@/lib/adminBadges'
 import type { Database } from '@/lib/database.types'
 
 type Order = Database['public']['Tables']['orders']['Row']
@@ -289,6 +290,9 @@ export default function OrdersList() {
     if (failed > 0) toast.error(`${failed} no se pudieron eliminar`)
     fetchOrders()
     fetchCounters()
+    // Eliminar un pedido 'authorized' baja el badge del menú, y esto pasa sin cambiar
+    // de ruta: hay que avisar al AdminShell (mismo motivo que en Consultas).
+    notifyBadgeRefresh('orders')
   }, [deletingBulk, selectedOrders, toast, fetchOrders, fetchCounters])
 
   // ── CSV export ────────────────────────────────────────────────

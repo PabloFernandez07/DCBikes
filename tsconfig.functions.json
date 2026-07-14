@@ -1,0 +1,45 @@
+// Typecheck de los módulos COMPARTIDOS de las edge functions que son TypeScript
+// puro (sin imports de Deno). Hoy: el recortador de historial citado y su
+// batería de pruebas.
+//
+// POR QUÉ EXISTE: tsconfig.app.json solo incluye `src`, así que `tsc` no veía
+// NADA de supabase/functions/**. El recortador es la pieza más frágil de todo
+// esto —heurística pura, sin estándar detrás— y era justo la que no tenía red:
+// si alguien lo tocaba y lo rompía, ni tsc, ni el build, ni el deploy avisaban.
+// Se enteraban los clientes, en silencio, semanas después.
+//
+// Ahora está referenciado desde tsconfig.json, así que `tsc -b` (o sea, `pnpm
+// build`) lo comprueba. Las pruebas se lanzan con `pnpm test`.
+//
+// OJO: aquí NO pueden entrar los index.ts de las funciones: importan de
+// https://deno.land/… y https://esm.sh/…, que tsc no sabe resolver. Esos se
+// validan al desplegarlos (Deno los typechequea). Este proyecto es solo para lo
+// que se puede comprobar en Node.
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.functions.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "module": "esnext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "supabase/functions/_shared/strip-quoted-reply.ts",
+    "supabase/functions/_shared/strip-quoted-reply.test.ts"
+  ]
+}

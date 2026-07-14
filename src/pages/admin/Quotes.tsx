@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { clsx } from 'clsx'
 import { X, Mail, Send, RotateCcw, CheckCheck, Archive, Loader2, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/ui/Toast'
+import { notifyBadgeRefresh } from '@/lib/adminBadges'
 import type { QuoteRequest, QuoteMessage } from '@/lib/database.types'
 
 type StatusFilter = 'all' | 'new' | 'read' | 'replied' | 'archived'
@@ -92,29 +93,50 @@ export function Quotes() {
   const [thread, setThread] = useState<QuoteMessage[]>([])
   const [threadLoading, setThreadLoading] = useState(false)
 
+  // Token de la última petición en vuelo. Sin esto hay una carrera con
+  // consecuencias de privacidad: si el admin salta rápido de la consulta A a la
+  // B y la petición de A resuelve DESPUÉS que la de B, el `setThread` de A gana
+  // con B seleccionada → se pinta el hilo de OTRO cliente bajo la cabecera de B.
+  // Solo se acepta la respuesta de la consulta que sigue abierta.
+  const threadReq = useRef(0)
+
   const fetchThread = useCallback(async (quoteId: string) => {
+    const req = ++threadReq.current
     setThreadLoading(true)
     const { data, error } = await supabase
       .from('quote_messages')
       .select('*')
       .eq('quote_id', quoteId)
       .order('created_at', { ascending: true })
-    if (error) console.error('[THREAD]', error)
+    if (req !== threadReq.current) return  // llegó tarde: hay otra consulta abierta
+    if (error) {
+      console.error('[THREAD]', error)
+      toast.error('No se pudo cargar la conversación: ' + error.message)
+    }
     setThread(data ?? [])
     setThreadLoading(false)
-  }, [])
+  }, [toast])
 
   const fetchQuotes = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('quote_requests')
       .select('*, products(name)')
       .order('created_at', { ascending: false })
+    // Si esto falla (RLS, sesión caducada, red) y no se mira el error, la
+    // pantalla enseña «No hay consultas» y el dueño concluye que no tiene
+    // trabajo pendiente. Un error tiene que verse.
+    if (error) {
+      console.error('[QUOTES]', error)
+      toast.error('No se pudieron cargar las consultas: ' + error.message)
+      setLoading(false)
+      return
+    }
     const rows = (data as QuoteWithProduct[]) ?? []
     setQuotes(rows)
     setNewCount(rows.filter(q => q.status === 'new' && !q.deleted_at).length)
     setLoading(false)
-  }, [])
+  }, [toast])
 
   useEffect(() => { fetchQuotes() }, [fetchQuotes])
 
@@ -130,6 +152,48 @@ export function Quotes() {
     if (!selected) { setThread([]); return }
     fetchThread(selected.id)
   }, [selected?.id, fetchThread])
+
+  // Red de seguridad. El primer mensaje del hilo lo siembra un trigger en la BD
+  // (migración 0075), así que una consulta con texto SIEMPRE debería traerlo. Si
+  // aun así falta, pintamos el texto de quote_requests.message en vez de dejar
+  // al comercio con la consulta ilegible: el mensaje del cliente es el único
+  // dato que esta pantalla existe para enseñar, y perderlo cuesta un cliente.
+  //
+  // LA CONDICIÓN ES «FALTA EL ORIGINAL», NO «EL HILO ESTÁ VACÍO». Antes esto
+  // hacía `if (thread.length > 0) return thread`, o sea que solo saltaba con el
+  // hilo COMPLETAMENTE vacío… y las dos consultas que estaban de verdad rotas en
+  // producción tenían hilo [out, in, out]: NO estaban vacías, solo les faltaba el
+  // original. La red no habría saltado en ninguna de las dos. Es el mismo
+  // predicado falso-negativo que se descartó (con razón) al escribir el backfill
+  // de 0075 —«buscar consultas SIN NINGUNA fila da cero afectadas y parece que
+  // no hay nada roto»— y que se había colado otra vez aquí.
+  //
+  // El original se reconoce por su marca email_id='quote:<uuid>' (0075), que es
+  // el mismo discriminador que usa la BD. Si no está, se antepone.
+  //
+  // Efecto colateral buscado: en una consulta anonimizada por retención (hilo
+  // borrado, message = «[anonimizado…]») se ve el aviso de la purga en lugar de
+  // un vacío que parece pérdida de datos.
+  const displayThread = useMemo<QuoteMessage[]>(() => {
+    if (!selected?.message) return thread
+    if (thread.some(m => m.email_id === `quote:${selected.id}`)) return thread
+
+    console.warn(
+      '[THREAD] falta el mensaje original en el hilo — ¿falta el trigger 0075?',
+      selected.id,
+    )
+    const original: QuoteMessage = {
+      id: `fallback-${selected.id}`,
+      quote_id: selected.id,
+      direction: 'in',
+      body: selected.message,
+      body_raw: null,
+      subject: null,
+      email_id: null,
+      created_at: selected.created_at,
+    }
+    return [original, ...thread]
+  }, [thread, selected])
 
   // Bandeja activa vs papelera. En la papelera mostramos TODAS las eliminadas
   // (las pestañas de estado no aplican ahí); en la bandeja filtramos por estado.
@@ -190,6 +254,7 @@ export function Quotes() {
         if (quote.status !== 'new' && newStatus === 'new') return prev + 1
         return prev
       })
+      notifyBadgeRefresh('quotes')
       if (selected?.id === quote.id) setSelected(updated)
     }
   }, [toast, selected])
@@ -214,6 +279,7 @@ export function Quotes() {
       return
     }
     toast.success(successMsg)
+    notifyBadgeRefresh('quotes')
     if (selected && ids.includes(selected.id)) setSelected(null)
     clearSelection()
     fetchQuotes()
@@ -245,6 +311,10 @@ export function Quotes() {
       if (!deleted && quote.deleted_at) return prev + 1
       return prev
     })
+    // Papelera y restauración cambian el badge del menú sin cambiar de ruta: hay que
+    // avisar al AdminShell o el punto rojo se queda pegado hasta el refresco de 60 s.
+    // Al restaurar una consulta sin leer, vuelve a contar sola (sigue siendo 'new').
+    notifyBadgeRefresh('quotes')
     if (selected?.id === quote.id) {
       if (deleted) setSelected(null)
       else setSelected({ ...quote, deleted_at: newVal })
@@ -279,6 +349,7 @@ export function Quotes() {
       const updated = { ...quote, status: 'replied' }
       setQuotes(prev => prev.map(q => (q.id === quote.id ? updated : q)))
       setNewCount(prev => quote.status === 'new' ? prev - 1 : prev)
+      notifyBadgeRefresh('quotes')
       if (selected?.id === quote.id) setSelected(updated)
     } catch (err) {
       console.error('[REPLY]', err)
@@ -518,7 +589,7 @@ export function Quotes() {
                   <Loader2 size={14} className="animate-spin" aria-hidden="true" />
                   Cargando conversación…
                 </div>
-              ) : thread.length === 0 ? (
+              ) : displayThread.length === 0 ? (
                 <div className="bg-[var(--color-ink)] rounded-xl px-4 sm:px-5 py-4">
                   <p className="text-sm italic text-[var(--color-mid)] font-[var(--font-body)]">
                     Sin mensajes.
@@ -526,7 +597,7 @@ export function Quotes() {
                 </div>
               ) : (
                 <ol className="flex flex-col gap-3">
-                  {thread.map(m => {
+                  {displayThread.map(m => {
                     const mine = m.direction === 'out'
                     return (
                       <li key={m.id} className={clsx('flex', mine ? 'justify-end' : 'justify-start')}>

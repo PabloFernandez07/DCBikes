@@ -21,12 +21,59 @@ import {
 import { clsx } from 'clsx'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
+import { onBadgeRefresh, type AdminBadge } from '@/lib/adminBadges'
+
+type BadgeKey = AdminBadge
+
+// Los dos badges avisan de trabajo PENDIENTE, así que solo cuentan lo que el dueño
+// puede ver y atender. La papelera es un borrado lógico (deleted_at): una fila en la
+// papelera ya no existe para él, aunque siga sin leer/sin aprobar. Sin el
+// `.is('deleted_at', null)` el punto rojo seguía contando consultas que ya había
+// tirado a la basura sin abrirlas (status sigue siendo 'new'), y lo mismo habría
+// pasado con un pedido 'authorized' eliminado. Además así cuadran con las listas:
+// OrdersList ya excluye los borrados en sus contadores y Quotes solo muestra las no
+// borradas en la bandeja.
+//
+// Devuelven null si la consulta FALLA. Antes hacían `.then(({ count }) => count ?? 0)`
+// sin mirar `error`: si la consulta se caía (RLS, sesión caducada, red), el badge
+// mostraba 0 y el dueño concluía que no tenía trabajo pendiente. Un fallo de red no
+// puede parecerse a una bandeja vacía. Con null, useBadgeCount conserva el último
+// valor conocido en vez de inventarse un cero.
+const badgeQueries: Record<BadgeKey, () => PromiseLike<number | null>> = {
+  quotes: () =>
+    supabase
+      .from('quote_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'new')
+      .is('deleted_at', null)
+      .then(({ count, error }) => {
+        if (error) {
+          console.error('[BADGE quotes]', error.message)
+          return null
+        }
+        return count ?? 0
+      }),
+  orders: () =>
+    supabase
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'authorized')
+      .is('deleted_at', null)
+      .then(({ count, error }) => {
+        if (error) {
+          console.error('[BADGE orders]', error.message)
+          return null
+        }
+        return count ?? 0
+      }),
+}
 
 // El badge se quedaba pegado: solo consultaba al montar el AdminShell, y como es
 // una SPA no se remonta al navegar → tras leer/responder una consulta seguía
-// mostrando el contador viejo hasta recargar. Ahora refresca cada 60 s (igual que
-// el de pedidos) y además al cambiar de ruta, para que se actualice al instante.
-function usePendingQuotes() {
+// mostrando el contador viejo hasta recargar. Refresca cada 60 s, al cambiar de ruta
+// y —lo que faltaba— cuando una pantalla avisa por el bus de que ha tocado los datos
+// (p. ej. mandar una consulta a la papelera, que no cambia de ruta).
+function useBadgeCount(badge: BadgeKey) {
   const [count, setCount] = useState(0)
   const { pathname } = useLocation()
 
@@ -34,55 +81,25 @@ function usePendingQuotes() {
     let cancelled = false
 
     const fetchCount = () => {
-      supabase
-        .from('quote_requests')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'new')
-        .then(({ count: c }) => {
-          if (!cancelled) setCount(c ?? 0)
-        })
+      badgeQueries[badge]().then(c => {
+        // c === null → la consulta falló: se conserva el último valor conocido
+        // en vez de enseñar un 0 que significaría «nada pendiente».
+        if (!cancelled && c !== null) setCount(c)
+      })
     }
 
     fetchCount()
     const interval = window.setInterval(fetchCount, 60_000)
+    const unsubscribe = onBadgeRefresh(badge, fetchCount)
     return () => {
       cancelled = true
       window.clearInterval(interval)
+      unsubscribe()
     }
-  }, [pathname])
+  }, [badge, pathname])
 
   return count
 }
-
-function usePendingOrders() {
-  const [count, setCount] = useState(0)
-  const { pathname } = useLocation()
-
-  useEffect(() => {
-    let cancelled = false
-
-    const fetchCount = () => {
-      supabase
-        .from('orders')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'authorized')
-        .then(({ count: c }) => {
-          if (!cancelled) setCount(c ?? 0)
-        })
-    }
-
-    fetchCount()
-    const interval = window.setInterval(fetchCount, 60_000)
-    return () => {
-      cancelled = true
-      window.clearInterval(interval)
-    }
-  }, [pathname])
-
-  return count
-}
-
-type BadgeKey = 'quotes' | 'orders'
 
 interface NavItem {
   to: string
@@ -110,8 +127,8 @@ export function AdminShell() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
-  const pendingQuotes = usePendingQuotes()
-  const pendingOrders = usePendingOrders()
+  const pendingQuotes = useBadgeCount('quotes')
+  const pendingOrders = useBadgeCount('orders')
 
   const handleSignOut = async () => {
     await signOut()

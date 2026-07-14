@@ -103,7 +103,14 @@ Deno.serve(async (req) => {
   // el comercio sepa quién consulta, y se purga junto con el resto.
   const composedMessage = `Nombre: ${name}\n\n${message}`.slice(0, 5000)
 
-  // Inserta
+  // Inserta.
+  //
+  // OJO: aquí NO se escribe en quote_messages a propósito. El primer mensaje del
+  // hilo (direction 'in', el texto que acaba de escribir el cliente) lo siembra
+  // el trigger quote_requests_seed_thread_trg — migración 0075 — dentro de esta
+  // misma transacción. Hacerlo aquí con un segundo insert significaría que, si
+  // ese insert falla, la consulta queda con el hilo vacío y el comercio no puede
+  // leerla: es exactamente el fallo que arregló 0075. No lo devuelvas aquí.
   const { data: inserted, error: insertErr } = await supabase
     .from('quote_requests')
     .insert({

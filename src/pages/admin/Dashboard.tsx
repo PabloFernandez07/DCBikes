@@ -93,6 +93,16 @@ export default function Dashboard() {
         .from('products')
         .select('id', { count: 'exact', head: true })
         .eq('active', true),
+      // OJO con el criterio de la papelera (deleted_at), que aquí NO es uniforme a
+      // propósito:
+      //  · Las métricas de VOLUMEN ("Consultas hoy", "Pedidos hoy", la gráfica de
+      //    consultas recibidas) miden lo que ENTRÓ. Tirar una consulta a la papelera
+      //    es gestionar la bandeja, no hacer que nunca hubiera existido: si las
+      //    filtráramos, el histórico se vaciaría según el dueño va limpiando (hoy
+      //    mismo las 18 consultas reales están todas en la papelera → la gráfica se
+      //    quedaría en blanco). Por eso van sin filtrar.
+      //  · Los contadores de PENDIENTES sí filtran: avisan de trabajo por hacer y
+      //    tienen que cuadrar con la lista a la que llevan al hacer clic.
       supabase
         .from('quote_requests')
         .select('id', { count: 'exact', head: true })
@@ -101,10 +111,15 @@ export default function Dashboard() {
         .from('product_views')
         .select('id', { count: 'exact', head: true })
         .gte('viewed_at', todayStart.toISOString()),
+      // Pendiente de aprobación = accionable. Excluye los eliminados, igual que hacen
+      // el badge del menú y los contadores de OrdersList; si no, esta card decía "3
+      // pendientes" y al pulsar (te lleva a ?status=authorized, que sí filtra los
+      // borrados) la lista salía vacía.
       supabase
         .from('orders')
         .select('id', { count: 'exact', head: true })
-        .eq('status', 'authorized'),
+        .eq('status', 'authorized')
+        .is('deleted_at', null),
       supabase
         .from('orders')
         .select('id', { count: 'exact', head: true })
