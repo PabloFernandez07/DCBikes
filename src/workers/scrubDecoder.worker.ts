@@ -61,21 +61,42 @@
  *
  * 5. Nada se guarda en la Cache API sin comprobar que el MP4 está ENTERO.
  *    Ver comprobarIntegridad(): era un envenenamiento de caché permanente.
+ *
+ * 6. El backing del canvas es SIEMPRE el tamaño físico mostrado (capado al
+ *    nativo del vídeo), y el recorte "cover" + el reescalado los hace ESTE
+ *    worker al crear cada ImageBitmap, no el CSS ni el compositor.
+ *
+ *    Antes el canvas medía siempre 1920x1080 y el object-fit:cover del CSS
+ *    hacía el resto. Con GPU eso es gratis; SIN GPU (aceleración desactivada,
+ *    drivers vetados, VM...) el compositor software tiene que remuestrear el
+ *    viewport entero EN CADA FRAME cuando el backing no coincide con los
+ *    píxeles físicos: +5,2 ms/frame medidos. La config más fluida de todo el
+ *    diagnóstico fue justo la contraria: bitmap reescalado POR EL WORKER sobre
+ *    un canvas que casa 1:1 con los píxeles mostrados (blit barato). El worker
+ *    puede permitírselo porque va en su propio hilo y le sobra presupuesto
+ *    (decode software 3,7-5,7 ms + createImageBitmap 1,8-3,8 ms por fotograma),
+ *    y además lo paga UNA vez por fotograma descodificado (queda cacheado en la
+ *    LRU ya recortado y escalado), no una vez por frame compuesto.
+ *
+ *    Bonus: en ventanas más pequeñas que el vídeo los bitmaps de la caché pasan
+ *    a ocupar lo que ocupa el backing (p. ej. 1366x768 = 4 MiB por fotograma en
+ *    vez de 7,91), y el drawImage de pintado es una copia 1:1 sin remuestreo.
  */
 
 import { parseMp4, type Mp4Track } from '@/lib/mp4';
 import type { FromWorker, ScrubStats, ToWorker } from './scrubProtocol';
 
 /** Fotogramas que se quedan en la LRU. 8 x ImageBitmap 1080p RGBA (7,91 MiB) =
- *  63 MiB. Estaba en 16 = 127 MiB, y esa memoria no se soltaba NUNCA. El informe
+ *  63 MiB COMO MUCHO: desde que los bitmaps van pre-escalados al backing, en
+ *  ventanas más pequeñas que el vídeo cuestan menos (1366x768 = 4 MiB cada
+ *  uno). Estaba en 16 = 127 MiB, y esa memoria no se soltaba NUNCA. El informe
  *  de partida ya midió que con 8 se va a 58,5 fps, o sea lo mismo que cachearlos
  *  todos. */
 const LRU_MAX = 8;
 /** Fotogramas que se adelantan en la dirección del scroll. Con LRU_MAX=8 deja
- *  además un par de huecos de historial para cuando el scroll da la vuelta. */
+ *  además un par de huecos de historial para cuando el scroll da la vuelta.
+ *  Se cuenta en índices PEDIDOS: con zancada 2 se adelantan 5 múltiplos de 2. */
 const PREFETCH = 5;
-/** Coste en memoria de vídeo de un fotograma 1080p en RGBA. Solo para informar. */
-const MB_POR_FOTOGRAMA = (1920 * 1080 * 4) / (1024 * 1024);
 /** Si el fotograma no ha salido en este tiempo, se fuerza con flush(). */
 const ESPERA_ANTES_DE_FLUSH_MS = 8;
 /** Cuántos fotogramas seguidos tienen que tardar para dar por hecho que este
@@ -115,6 +136,18 @@ let necesitaFlush = false;
 let deseado = -1;
 let pintado = -1;
 let direccion = 1;
+/** Zancada de la escalera adaptativa del hilo principal (1 = sin escalera).
+ *  Solo afecta al prefetch: los índices que llegan por 'seek' ya vienen
+ *  cuantizados a esta rejilla, y adelantar los intermedios sería gastar decode
+ *  en fotogramas que jamás se van a pedir, justo cuando la CPU va ahogada. */
+let stride = 1;
+/** Tamaño físico visible del hueco del canvas (px). El backing se calcula de
+ *  aquí capado al nativo del vídeo: ver la nota 6 de la cabecera. */
+let viewportW = 0;
+let viewportH = 0;
+/** Ancla del encuadre (object-position) en 0..1 por eje. 0,5 = centro. */
+let focoX = 0.5;
+let focoY = 0.5;
 let sirviendo = false;
 /** Alguien pidió algo mientras servir() estaba ocupado: hay que dar otra vuelta. */
 let repetir = false;
@@ -127,6 +160,7 @@ let dormido = false;
 const stats: ScrubStats = {
   cached: 0, cachedMB: 0, decodes: 0, hits: 0, misses: 0,
   ranges: 0, needsFlush: false, sleeping: false,
+  stride: 1, canvasW: 0, canvasH: 0,
 };
 
 // ---------------------------------------------------------------- caché LRU
@@ -142,7 +176,10 @@ function lruGet(i: number): ImageBitmap | undefined {
 
 function contarLru() {
   stats.cached = lru.size;
-  stats.cachedMB = Math.round(lru.size * MB_POR_FOTOGRAMA);
+  // Los bitmaps van pre-recortados y pre-escalados al backing, así que su coste
+  // es el del backing, no el del vídeo (en ventanas pequeñas es bastante menos).
+  const bytesPorFotograma = (canvas ? canvas.width * canvas.height : 1920 * 1080) * 4;
+  stats.cachedMB = Math.round((lru.size * bytesPorFotograma) / (1024 * 1024));
 }
 
 function lruSet(i: number, bm: ImageBitmap) {
@@ -261,12 +298,46 @@ async function descodificar(i: number): Promise<ImageBitmap | null> {
   }
 
   try {
-    return await createImageBitmap(frame);
+    return await crearBitmap(frame);
   } finally {
     // OBLIGATORIO. Sin esto el pool se atasca a los 10 fotogramas y flush() deja
     // de resolver para siempre.
     frame.close();
   }
+}
+
+/**
+ * VideoFrame → ImageBitmap con el recorte "cover" y el escalado al backing YA
+ * HECHOS. Es la nota 6 de la cabecera en una función: el remuestreo se paga
+ * aquí (una vez por fotograma descodificado, en el hilo del worker, y queda
+ * cacheado así en la LRU), para que pintar sea un drawImage 1:1 y el compositor
+ * no tenga que remuestrear el viewport entero en cada frame (+5,2 ms/frame
+ * medidos sin GPU).
+ *
+ * El recorte replica object-fit:cover con el ancla `focoX/focoY`
+ * (object-position): se toma del vídeo el rectángulo más grande con la
+ * proporción del backing y se escala a él. Si backing y vídeo miden lo mismo
+ * (monitor 1080p a pantalla completa), sale un recorte identidad y un resize
+ * no-op: el caso común no paga nada nuevo.
+ */
+function crearBitmap(frame: VideoFrame): Promise<ImageBitmap> {
+  const vw = frame.displayWidth || frame.codedWidth;
+  const vh = frame.displayHeight || frame.codedHeight;
+  const cw = canvas?.width ?? vw;
+  const ch = canvas?.height ?? vh;
+  const s = Math.max(cw / vw, ch / vh);
+  const srcW = Math.min(vw, Math.max(1, Math.round(cw / s)));
+  const srcH = Math.min(vh, Math.max(1, Math.round(ch / s)));
+  const srcX = Math.round((vw - srcW) * focoX);
+  const srcY = Math.round((vh - srcH) * focoY);
+  return createImageBitmap(frame, srcX, srcY, srcW, srcH, {
+    resizeWidth: cw,
+    resizeHeight: ch,
+    // 'medium' para que la reducción (1920 → portátiles 1366/1536) no haga
+    // parpadear los radios de las bicis; el sobrecoste sobre 'low' es del hilo
+    // del worker, que va sobrado.
+    resizeQuality: 'medium',
+  });
 }
 
 // ------------------------------------------------------------ bucle de pintado
@@ -360,7 +431,9 @@ async function prefetch() {
   if (!track || pintado < 0 || dormido) return;
   for (let k = 1; k <= PREFETCH; k++) {
     if (deseado !== pintado) return;                 // ha vuelto a moverse: fuera
-    const i = pintado + k * direccion;
+    // Se salta por la rejilla de la zancada: el hilo principal solo va a pedir
+    // múltiplos de `stride`, así que los intermedios serían decode tirado.
+    const i = pintado + k * stride * direccion;
     if (i < 0 || i >= track.frameCount) return;
     if (lru.has(i) || !disponible(i)) continue;
     const bm = await descodificar(i);
@@ -589,16 +662,45 @@ async function descargar(url: string, cacheName: string) {
   void servir();
 }
 
+/**
+ * Backing ideal del canvas: el tamaño físico visible, CAPADO al nativo del
+ * vídeo. Nunca más grande que lo que se ve (pintar 1920x1080 para mostrarse en
+ * 1366x768 es tirar CPU, con y sin GPU) y nunca más grande que la fuente (no
+ * hay nitidez nueva que ganar y sí memoria y blit que pagar; en monitores por
+ * encima del nativo el compositor escala igual que siempre, sin regresión).
+ * El factor `k` conserva la proporción del HUECO, no la del vídeo: así el
+ * object-fit:cover del elemento queda en identidad y el recorte real lo decide
+ * crearBitmap() con el ancla del encuadre.
+ */
+function backingIdeal(t: Mp4Track): { w: number; h: number } {
+  if (viewportW <= 0 || viewportH <= 0) return { w: t.codedWidth, h: t.codedHeight };
+  const k = Math.min(1, t.codedWidth / viewportW, t.codedHeight / viewportH);
+  return {
+    w: Math.max(1, Math.round(viewportW * k)),
+    h: Math.max(1, Math.round(viewportH * k)),
+  };
+}
+
+/** Aplica el backing que toque al canvas. Devuelve true si ha cambiado de
+ *  tamaño (y por tanto se ha borrado su contenido y la LRU ya no vale). */
+function ajustarBacking(t: Mp4Track): boolean {
+  if (!canvas) return false;
+  const b = backingIdeal(t);
+  stats.canvasW = b.w;
+  stats.canvasH = b.h;
+  if (canvas.width === b.w && canvas.height === b.h) return false;
+  canvas.width = b.w;
+  canvas.height = b.h;
+  return true;
+}
+
 function arrancarDecoder(): Promise<void> {
   if (arranque) return arranque;
   arranque = (async () => {
     const t = track;
     if (!t) throw new Error('MP4: sin pista de vídeo');
 
-    if (canvas && (canvas.width !== t.codedWidth || canvas.height !== t.codedHeight)) {
-      canvas.width = t.codedWidth;
-      canvas.height = t.codedHeight;
-    }
+    ajustarBacking(t);
 
     const config: VideoDecoderConfig = {
       codec: t.codec,
@@ -649,9 +751,52 @@ self.onmessage = (e: MessageEvent<ToWorker>) => {
   if (msg.type === 'init') {
     canvas = msg.canvas;
     ctx = canvas.getContext('2d', { alpha: false });
+    viewportW = msg.viewport.width;
+    viewportH = msg.viewport.height;
+    focoX = msg.encuadre.x;
+    focoY = msg.encuadre.y;
+    stats.canvasW = canvas.width;
+    stats.canvasH = canvas.height;
     descargar(msg.url, msg.cacheName).catch((err: Error) => {
       post({ type: 'error', message: err.message });
     });
+    return;
+  }
+
+  if (msg.type === 'viewport') {
+    viewportW = msg.width;
+    viewportH = msg.height;
+    // Si el vídeo aún no ha llegado, con guardarlo basta: arrancarDecoder()
+    // aplicará el backing bueno antes del primer pintado.
+    if (!track) return;
+    // El fotograma que enseña el canvas AHORA, antes de que el resize lo borre.
+    const enPantalla = pintado >= 0 ? pintado : deseado;
+    const bmPrevio = enPantalla >= 0 ? lru.get(enPantalla) : undefined;
+    if (bmPrevio) lru.delete(enPantalla); // fuera de la LRU para que vaciarLru() no lo cierre
+    if (!ajustarBacking(track)) {
+      if (bmPrevio) lruSet(enPantalla, bmPrevio); // no ha cambiado nada: devuélvelo
+      return;
+    }
+    // Backing nuevo => los bitmaps cacheados (pre-recortados y pre-escalados al
+    // tamaño viejo) ya no valen. El fotograma actual se re-estira como apaño
+    // instantáneo (evita un frame en negro a mitad de resize) y se re-descodifica
+    // limpio justo después.
+    vaciarLru();
+    if (bmPrevio && ctx && canvas) {
+      ctx.drawImage(bmPrevio, 0, 0, canvas.width, canvas.height);
+      bmPrevio.close();
+    }
+    if (enPantalla >= 0) {
+      pintado = -1;          // fuerza el repintado aunque el índice no cambie
+      deseado = enPantalla;
+      void servir();
+    }
+    return;
+  }
+
+  if (msg.type === 'stride') {
+    stride = Math.max(1, Math.floor(msg.stride));
+    stats.stride = stride;
     return;
   }
 

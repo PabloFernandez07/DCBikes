@@ -25,8 +25,14 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
     {
       key: "badge",
       rango: { inStart: 0.00, inEnd: 0.08, outStart: 0.70, outEnd: 0.78 },
+      // SIN backdrop-blur, y no es un descuido: el blur del badge costaba
+      // ~5,7 ms/frame de composición SOFTWARE (2 render passes extra sobre un
+      // fondo que cambia en cada frame de scroll) y era la causa nº 1 del
+      // tirón del hero en máquinas sin aceleración gráfica. Quitarlo dejó la
+      // portada sin GPU clavada al vsync (medido). El fondo lleva la mezcla
+      // ink+lavanda ya "cocinada" con más alpha para dar el mismo contraste.
       nodo: (
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(196,162,207,0.15)] border border-[rgba(196,162,207,0.3)] w-fit backdrop-blur-sm">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(52,43,58,0.7)] border border-[rgba(196,162,207,0.3)] w-fit">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-lavender)] animate-[spulse_2s_ease-in-out_infinite]" />
           <span className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-lavender)]">
             El Astillero · Cantabria

@@ -23,8 +23,12 @@ export function WorkshopHero({ onQuoteOpen }: WorkshopHeroProps) {
     {
       key: "eyebrow",
       rango: { inStart: 0.00, inEnd: 0.08, outStart: 0.70, outEnd: 0.78 },
+      // SIN backdrop-blur, igual que el badge de la portada: costaba ~5,7
+      // ms/frame de composición software (el taller pasó de 18-23 frames >25 ms
+      // por pasada a 1-2 solo con esto, medido sin GPU). Fondo pre-mezclado con
+      // más alpha en su lugar.
       nodo: (
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(196,162,207,0.15)] border border-[rgba(196,162,207,0.3)] w-fit backdrop-blur-sm">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[rgba(52,43,58,0.7)] border border-[rgba(196,162,207,0.3)] w-fit">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-lavender)] animate-[spulse_2s_ease-in-out_infinite]" />
           <span className="font-[var(--font-cond)] text-xs tracking-widest uppercase text-[var(--color-lavender)]">
             Nuestro taller · El Astillero

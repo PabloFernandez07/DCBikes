@@ -247,7 +247,14 @@ export function ScrubHero({
           )
         )}
 
-        {/* Velo lateral: contraste para que el texto se lea sobre el vídeo. */}
+        {/* Velo lateral: contraste para que el texto se lea sobre el vídeo.
+            Medido sin GPU: los dos velos cuestan ~3-4 ms/frame de composición
+            software (translúcidos a pantalla completa sobre un canvas que
+            cambia). CABEN en presupuesto una vez quitado el backdrop-blur del
+            badge, por eso se quedan. Si algún día hay que arañar más, la
+            palanca es hornearlos en el canvas del worker (y quitarlos del DOM
+            solo cuando el canvas está destapado), NO añadir blur ni más capas
+            translúcidas encima del vídeo. */}
         {!isMobile && (
           <div
             className="absolute inset-0 pointer-events-none"
