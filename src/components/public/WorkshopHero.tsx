@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Phone, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { HeroText, ScrubHero, type BloqueHero } from "@/components/public/ScrubHero";
+import { FondoGradiente, HeroText, ScrubHero, type BloqueHero } from "@/components/public/ScrubHero";
 
 export const TALLER_VIDEO = "/taller/despiece-scrub-v1.mp4";
 export const TALLER_POSTER = "/taller/despiece-poster-v1.jpg";
@@ -129,9 +129,9 @@ export function WorkshopHero({ onQuoteOpen }: WorkshopHeroProps) {
       // DEBAJO de ella y le cortaba el sillín. Que se pegue por debajo.
       alturaBarra={80}
       bloques={bloques}
-      // En móvil no hay scrub y el MP4 ni se descarga, pero el póster (el
-      // fotograma 0: la bici entera) es una foto de producto estupenda y pesa
-      // 63 KB. Mejor eso que un degradado.
+      // En móvil, como la portada: sin bici, solo el mensaje sobre el degradado
+      // de marca. El despiece a lo ancho de un móvil se ve pequeño y apretado.
+      fondoMovil={<FondoGradiente />}
     />
   );
 }

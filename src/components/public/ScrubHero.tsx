@@ -332,6 +332,34 @@ function AnimatedChar({ char, delay }: { char: string; delay: number }) {
   );
 }
 
+/**
+ * El fondo de marca para móvil: degradado oscuro con un halo lavanda. En móvil
+ * no hay scrub y el MP4 ni se descarga (son megas para nada en datos), así que
+ * el hero enseña esto y solo el mensaje encima, igual en la portada y el taller.
+ */
+export function FondoGradiente() {
+  return (
+    <>
+      <div
+        className="absolute inset-0"
+        aria-hidden="true"
+        style={{
+          background:
+            "linear-gradient(155deg, var(--color-ink-deep) 0%, var(--color-ink) 55%, rgba(196,162,207,0.04) 100%)",
+        }}
+      />
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 70% at 80% 40%, rgba(196,162,207,0.07), transparent 65%)",
+        }}
+      />
+    </>
+  );
+}
+
 /** Titular que aparece letra a letra. */
 export function HeroText({ text, baseDelay }: { text: string; baseDelay: number }) {
   return (

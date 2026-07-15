@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { HeroText, ScrubHero, type BloqueHero } from "@/components/public/ScrubHero";
+import { FondoGradiente, HeroText, ScrubHero, type BloqueHero } from "@/components/public/ScrubHero";
 
 interface ScrollVideoHeroProps {
   onQuoteOpen: () => void;
@@ -118,26 +118,7 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
       bloques={bloques}
       // En móvil la portada nunca ha enseñado el vídeo (son megas para nada en
       // datos): un degradado de marca y a correr.
-      fondoMovil={
-        <>
-          <div
-            className="absolute inset-0"
-            aria-hidden="true"
-            style={{
-              background:
-                "linear-gradient(155deg, var(--color-ink-deep) 0%, var(--color-ink) 55%, rgba(196,162,207,0.04) 100%)",
-            }}
-          />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            aria-hidden="true"
-            style={{
-              background:
-                "radial-gradient(ellipse 90% 70% at 80% 40%, rgba(196,162,207,0.07), transparent 65%)",
-            }}
-          />
-        </>
-      }
+      fondoMovil={<FondoGradiente />}
     />
   );
 }
