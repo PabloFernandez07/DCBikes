@@ -7,8 +7,12 @@ interface ScrollVideoHeroProps {
   onQuoteOpen: () => void;
 }
 
-export const HERO_VIDEO = "/hero/hero-scrub-v2.mp4";
-export const HERO_POSTER = "/hero/hero-poster-v2.jpg";
+// v5 = 1080p (antes 720p). El vídeo se pinta a pantalla completa y en monitores
+// con escalado de Windows el 720p se veía blando; el 1080p sube la nitidez de
+// verdad. Sigue pesando 6,9 MB (lejos de los 14,9 que daban tirones) porque es
+// all-intra a CRF 28. Nombre nuevo = caché de Vercel rota sin renombrar a mano.
+export const HERO_VIDEO = "/hero/hero-scrub-v5.mp4";
+export const HERO_POSTER = "/hero/hero-poster-v5.jpg";
 
 /**
  * El hero de la portada. Toda la maquinaria (WebCodecs, worker, canvas, plan B)
@@ -112,8 +116,8 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
     <ScrubHero
       video={HERO_VIDEO}
       poster={HERO_POSTER}
-      ancho={1280}
-      alto={720}
+      ancho={1920}
+      alto={1080}
       pantallas={5}
       bloques={bloques}
       // En móvil la portada nunca ha enseñado el vídeo (son megas para nada en
