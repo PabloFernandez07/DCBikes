@@ -4,6 +4,10 @@ export interface ScrubStats {
   /** Fotogramas en la caché LRU y coste aproximado en memoria de vídeo. */
   cached: number;
   cachedMB: number;
+  /** Techo vigente de la LRU. NO es una constante: sale de un presupuesto de
+   *  memoria dividido entre lo que ocupa un bitmap con el backing de ahora, así
+   *  que en un monitor grande son menos fotogramas (ver el worker). */
+  lruMax: number;
   decodes: number;
   hits: number;
   misses: number;
@@ -16,13 +20,9 @@ export interface ScrubStats {
   /** true mientras el hero está fuera de pantalla o la pestaña escondida: la
    *  caché de bitmaps está vacía y no se adelanta nada. */
   sleeping: boolean;
-  /** Zancada vigente de la escalera adaptativa (1 = se pinta cada fotograma).
-   *  La decide el hilo principal midiendo sus deltas de rAF; aquí solo se
-   *  refleja para el banco de pruebas (`?bench=1`). */
-  stride: number;
   /** Tamaño real del backing del canvas en píxeles físicos. Sirve para
    *  verificar la regla de oro del motor: backing == píxeles mostrados
-   *  (blit 1:1), nunca más grande. */
+   *  (blit 1:1). */
   canvasW: number;
   canvasH: number;
 }
@@ -38,15 +38,20 @@ export type ToWorker =
       /**
        * Tamaño VISIBLE del hueco del canvas, en píxeles FÍSICOS (CSS × DPR).
        *
-       * El worker dimensiona el backing a min(esto, nativo del vídeo). El
-       * porqué es la regla de oro medida en el diagnóstico sin GPU: si el
-       * backing coincide con los píxeles físicos mostrados, el compositor copia
-       * el quad 1:1 (barato); si NO coincide, tiene que remuestrear el viewport
-       * entero EN CADA FRAME, y eso costó +5,2 ms/frame medidos en composición
-       * software (el 720p antiguo mostrado a 1080p era la peor configuración de
-       * todas, peor que el 1080p actual). Quien reescala es SIEMPRE el worker
-       * (una vez por fotograma descodificado), nunca el compositor (una vez por
-       * frame compuesto).
+       * ESTE es el backing del canvas, tal cual, a cualquier ancho (solo se
+       * reduce en el disparate: ver BACKING_MAX_PX en el worker). El porqué es
+       * la regla de oro medida en el diagnóstico sin GPU: si el backing coincide
+       * con los píxeles físicos mostrados, el compositor copia el quad 1:1
+       * (barato); si NO coincide, tiene que remuestrear el viewport entero EN
+       * CADA FRAME, y eso costó +5,2 ms/frame medidos en composición software.
+       * Quien reescala es SIEMPRE el worker (una vez por fotograma
+       * descodificado), nunca el compositor (una vez por frame compuesto).
+       *
+       * Ojo: esto vale también cuando el hueco es MÁS GRANDE que el vídeo. Ahí
+       * el backing supera al nativo y el bitmap se estira sin ganar nitidez; da
+       * igual, porque lo que se busca es suavidad y el compositor iba a hacer
+       * ese mismo estirado de todas formas, pero en cada frame. Ver el comentario
+       * de backingIdeal() en el worker, que cuenta el fallo que había aquí.
        */
       viewport: { width: number; height: number };
       /**
@@ -71,14 +76,6 @@ export type ToWorker =
    * fotograma actual al tamaño nuevo.
    */
   | { type: 'viewport'; width: number; height: number }
-  /**
-   * Zancada de la escalera adaptativa (ver el bloque grande de comentario en
-   * useScrubRenderer.ts). A partir de este mensaje el hilo principal solo va a
-   * pedir índices múltiplos de `stride`, así que el prefetch debe saltar por la
-   * misma rejilla: adelantar los fotogramas intermedios sería quemar decode
-   * justo en las máquinas donde la CPU no da para más.
-   */
-  | { type: 'stride'; stride: number }
   /** El hero ya no se ve (fuera de pantalla o pestaña escondida): suelta los
    *  ImageBitmap de la LRU. Son varios MB de memoria de vídeo CADA UNO y, sin
    *  esto, se quedaban reservados toda la vida de la página. */

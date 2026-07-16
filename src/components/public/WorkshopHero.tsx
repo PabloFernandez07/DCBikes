@@ -120,8 +120,6 @@ export function WorkshopHero({ onQuoteOpen }: WorkshopHeroProps) {
     <ScrubHero
       video={TALLER_VIDEO}
       poster={TALLER_POSTER}
-      ancho={1920}
-      alto={1080}
       // Tres pantallas, no cinco: en la portada el hero ES el escaparate, pero
       // aquí el visitante viene a ver servicios y precios. Cinco pantallas de
       // vídeo por delante serían cine caro.

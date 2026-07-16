@@ -28,10 +28,6 @@ export interface ScrubHeroProps {
    *  que nunca hay un hero en negro mientras baja el vídeo. Debe ser el
    *  fotograma 0 del MP4: así el relevo es invisible. */
   poster: string;
-  /** Tamaño nativo del MP4. Se le da al canvas antes de transferirlo para que el
-   *  object-fit:cover recorte bien desde el primer momento. */
-  ancho: number;
-  alto: number;
   /** Cuántas pantallas de scroll dura el vídeo. La portada usa 5 (es el
    *  escaparate); una página de servicio debería usar menos, o metes cinco
    *  pantallas entre el visitante y lo que ha venido a buscar. */
@@ -90,8 +86,6 @@ export interface ScrubHeroProps {
 export function ScrubHero({
   video,
   poster,
-  ancho,
-  alto,
   pantallas = 5,
   bloques,
   fondoMovil,
@@ -167,8 +161,6 @@ export function ScrubHero({
     enabled: usaCanvas,
     onFail: onScrubFail,
     video,
-    ancho,
-    alto,
     encuadre,
   });
 

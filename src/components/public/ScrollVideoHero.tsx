@@ -122,8 +122,6 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
     <ScrubHero
       video={HERO_VIDEO}
       poster={HERO_POSTER}
-      ancho={1920}
-      alto={1080}
       pantallas={5}
       bloques={bloques}
       // En móvil la portada nunca ha enseñado el vídeo (son megas para nada en

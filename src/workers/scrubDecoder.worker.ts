@@ -41,10 +41,11 @@
  *
  *    Un ImageBitmap ya vive en la GPU (drawImage: 0,0 ms; con un VideoFrame por
  *    hardware hay que resubirlo, 0,9 ms). Se paga en memoria: 1080p RGBA = 7,91
- *    MiB POR FOTOGRAMA. Por eso la LRU es de 8 (63 MiB) y no de 16 (127 MiB), y
- *    sobre todo por eso se SUELTA entera cuando el hero sale de pantalla o se
- *    esconde la pestaña: quien está leyendo el pie de página no tiene por qué
- *    pagar memoria de vídeo por un hero que no ve.
+ *    MiB POR FOTOGRAMA. Por eso la LRU se dimensiona por PRESUPUESTO (ver
+ *    LRU_PRESUPUESTO_MIB) y no de 16 (127 MiB), y sobre todo por eso se SUELTA
+ *    entera cuando el hero sale de pantalla o se esconde la pestaña: quien está
+ *    leyendo el pie de página no tiene por qué pagar memoria de vídeo por un
+ *    hero que no ve.
  *
  * 4. Un fotograma que aún no ha bajado se pide con un Range EXACTO.
  *
@@ -62,9 +63,9 @@
  * 5. Nada se guarda en la Cache API sin comprobar que el MP4 está ENTERO.
  *    Ver comprobarIntegridad(): era un envenenamiento de caché permanente.
  *
- * 6. El backing del canvas es SIEMPRE el tamaño físico mostrado (capado al
- *    nativo del vídeo), y el recorte "cover" + el reescalado los hace ESTE
- *    worker al crear cada ImageBitmap, no el CSS ni el compositor.
+ * 6. El backing del canvas es SIEMPRE el tamaño físico mostrado, A CUALQUIER
+ *    ANCHO, y el recorte "cover" + el reescalado los hace ESTE worker al crear
+ *    cada ImageBitmap, no el CSS ni el compositor.
  *
  *    Antes el canvas medía siempre 1920x1080 y el object-fit:cover del CSS
  *    hacía el resto. Con GPU eso es gratis; SIN GPU (aceleración desactivada,
@@ -86,17 +87,66 @@
 import { parseMp4, type Mp4Track } from '@/lib/mp4';
 import type { FromWorker, ScrubStats, ToWorker } from './scrubProtocol';
 
-/** Fotogramas que se quedan en la LRU. 8 x ImageBitmap 1080p RGBA (7,91 MiB) =
- *  63 MiB COMO MUCHO: desde que los bitmaps van pre-escalados al backing, en
- *  ventanas más pequeñas que el vídeo cuestan menos (1366x768 = 4 MiB cada
- *  uno). Estaba en 16 = 127 MiB, y esa memoria no se soltaba NUNCA. El informe
- *  de partida ya midió que con 8 se va a 58,5 fps, o sea lo mismo que cachearlos
- *  todos. */
-const LRU_MAX = 8;
-/** Fotogramas que se adelantan en la dirección del scroll. Con LRU_MAX=8 deja
- *  además un par de huecos de historial para cuando el scroll da la vuelta.
- *  Se cuenta en índices PEDIDOS: con zancada 2 se adelantan 5 múltiplos de 2. */
-const PREFETCH = 5;
+/**
+ * PRESUPUESTO de memoria de vídeo para la caché de bitmaps, en MiB.
+ *
+ * La LRU ya no puede ser un número fijo de fotogramas. Los bitmaps se cachean
+ * pre-recortados y pre-escalados AL BACKING (nota 6), y el backing casa con los
+ * píxeles físicos del hueco a cualquier ancho, así que "8 fotogramas" cuesta
+ * cosas muy distintas según el monitor:
+ *      1578x725  ~ 4,4 MiB/frame  x8 =  35 MiB
+ *      1920x1080 ~ 7,9 MiB/frame  x8 =  63 MiB   (lo de siempre)
+ *      2538x1265 ~ 12,3 MiB/frame x8 =  98 MiB   (medido en un 3440x1440)
+ *      3840x2160 ~ 31,6 MiB/frame x8 = 253 MiB   <- inaceptable
+ * Con presupuesto en vez de cuenta, el techo es el mismo en todas partes y el
+ * caso común no cambia: a 1080p salen 12 fotogramas, se capa a LRU_TOPE=8 y
+ * queda EXACTAMENTE la configuración de antes (63 MiB).
+ *
+ * 96 MiB es ~1,5x lo que ya costaba el caso 1080p, que llevaba tiempo en
+ * producción sin quejas de memoria.
+ *
+ * Recortar la LRU en pantallas grandes es barato y por eso se prefiere a
+ * recortar el backing: un fallo de caché es UN intra (0,4-2,75 ms de decode +
+ * el createImageBitmap), pagado en el hilo del worker; romper el 1:1 se paga en
+ * el compositor EN CADA FRAME COMPUESTO. La caché es una optimización; el 1:1 no.
+ */
+const LRU_PRESUPUESTO_MIB = 96;
+/** Tope de la LRU: más de 8 no compra nada (el informe de partida ya midió que
+ *  con 8 se va a 58,5 fps, o sea lo mismo que cachearlos todos) y sí memoria. */
+const LRU_TOPE = 8;
+/** Suelo de la LRU: el fotograma pintado + uno de adelanto + uno de historial.
+ *  No hace falta violar el presupuesto para respetarlo: BACKING_MAX_PX está
+ *  elegido justo para que en el peor backing permitido quepan 3 (ver abajo). */
+const LRU_SUELO = 3;
+/**
+ * Tope absoluto del backing, en PÍXELES (área), por sanidad.
+ *
+ * Es un área y NO un ancho a propósito: el coste (memoria, reescalado, blit) va
+ * con los píxeles, no con un eje. Un ultrapanorámico 5120x1440 son 7,4 MP y pasa
+ * entero; caparlo por ancho a 3840 le rompería el 1:1 a un monitor que existe y
+ * se vende, que es justo el error que este arreglo viene a deshacer.
+ *
+ * 8,3 MP = 3840x2160 exactos (4K). Por encima de eso el backing se reduce
+ * conservando la proporción del hueco y SÍ vuelve a estirar el compositor: es un
+ * mal conocido, idéntico al de antes del arreglo, a cambio de no reservar 132
+ * MiB por bitmap en un 8K. Sale a cuenta porque por encima de 4K sin aceleración
+ * gráfica no hay prácticamente nadie.
+ *
+ * El número está atado a LRU_SUELO: 8,3 MP x 4 B = 31,6 MiB por bitmap, y
+ * 3 x 31,6 = 95 MiB <= LRU_PRESUPUESTO_MIB. O sea que el suelo de la LRU nunca
+ * se pasa del presupuesto. Si algún día se sube este tope, hay que subir el
+ * presupuesto o bajar el suelo.
+ */
+const BACKING_MAX_PX = 3840 * 2160;
+/** Fotogramas que se adelantan en la dirección del scroll, derivado de la LRU:
+ *  se le dejan el hueco del fotograma pintado y dos de historial para cuando el
+ *  scroll da la vuelta. Con la LRU en su tope da 5, que es lo que había fijo.
+ *
+ *  Tiene que salir de la LRU y no ser fijo: adelantar más fotogramas de los que
+ *  caben es contraproducente, porque los últimos van EXPULSANDO a los primeros
+ *  —que son justo los que el scroll va a pedir a continuación—, o sea decode
+ *  tirado a la basura en las máquinas que menos les sobra. */
+const adelantoDe = (lruMax: number) => Math.max(1, Math.min(5, lruMax - 3));
 /** Si el fotograma no ha salido en este tiempo, se fuerza con flush(). */
 const ESPERA_ANTES_DE_FLUSH_MS = 8;
 /** Cuántos fotogramas seguidos tienen que tardar para dar por hecho que este
@@ -136,13 +186,13 @@ let necesitaFlush = false;
 let deseado = -1;
 let pintado = -1;
 let direccion = 1;
-/** Zancada de la escalera adaptativa del hilo principal (1 = sin escalera).
- *  Solo afecta al prefetch: los índices que llegan por 'seek' ya vienen
- *  cuantizados a esta rejilla, y adelantar los intermedios sería gastar decode
- *  en fotogramas que jamás se van a pedir, justo cuando la CPU va ahogada. */
-let stride = 1;
-/** Tamaño físico visible del hueco del canvas (px). El backing se calcula de
- *  aquí capado al nativo del vídeo: ver la nota 6 de la cabecera. */
+/** Fotogramas que caben en la LRU y cuántos se adelantan con el backing de
+ *  AHORA. Los recalcula ajustarBacking(): un backing nuevo cambia lo que ocupa
+ *  cada bitmap y por tanto cuántos caben en el presupuesto. */
+let lruMax = LRU_TOPE;
+let adelanto = adelantoDe(LRU_TOPE);
+/** Tamaño físico visible del hueco del canvas (px). Es el backing, tal cual:
+ *  ver la nota 6 de la cabecera. */
 let viewportW = 0;
 let viewportH = 0;
 /** Ancla del encuadre (object-position) en 0..1 por eje. 0,5 = centro. */
@@ -160,7 +210,7 @@ let dormido = false;
 const stats: ScrubStats = {
   cached: 0, cachedMB: 0, decodes: 0, hits: 0, misses: 0,
   ranges: 0, needsFlush: false, sleeping: false,
-  stride: 1, canvasW: 0, canvasH: 0,
+  lruMax: LRU_TOPE, canvasW: 0, canvasH: 0,
 };
 
 // ---------------------------------------------------------------- caché LRU
@@ -174,17 +224,29 @@ function lruGet(i: number): ImageBitmap | undefined {
   return bm;
 }
 
+/** Lo que ocupa UN bitmap de la caché. Los bitmaps van pre-recortados y
+ *  pre-escalados al backing (nota 6), así que su coste es el del backing, no el
+ *  del vídeo: en un portátil es bastante menos y en un 4K bastante más. */
+function bytesPorFotograma(): number {
+  return (canvas ? canvas.width * canvas.height : 1920 * 1080) * 4;
+}
+
 function contarLru() {
   stats.cached = lru.size;
-  // Los bitmaps van pre-recortados y pre-escalados al backing, así que su coste
-  // es el del backing, no el del vídeo (en ventanas pequeñas es bastante menos).
-  const bytesPorFotograma = (canvas ? canvas.width * canvas.height : 1920 * 1080) * 4;
-  stats.cachedMB = Math.round((lru.size * bytesPorFotograma) / (1024 * 1024));
+  stats.cachedMB = Math.round((lru.size * bytesPorFotograma()) / (1024 * 1024));
+}
+
+/** Cuántos bitmaps caben en el presupuesto con el backing de ahora. */
+function recalcularLru() {
+  const caben = Math.floor((LRU_PRESUPUESTO_MIB * 1024 * 1024) / bytesPorFotograma());
+  lruMax = Math.max(LRU_SUELO, Math.min(LRU_TOPE, caben));
+  adelanto = adelantoDe(lruMax);
+  stats.lruMax = lruMax;
 }
 
 function lruSet(i: number, bm: ImageBitmap) {
   lru.set(i, bm);
-  while (lru.size > LRU_MAX) {
+  while (lru.size > lruMax) {
     const viejo = lru.keys().next().value as number | undefined;
     if (viejo === undefined) break;
     lru.get(viejo)?.close();   // un ImageBitmap suelto no lo recoge nadie: hay que cerrarlo
@@ -429,11 +491,9 @@ async function unaPasada() {
  *  seguir: el `pintado + k*direccion` daría índices inventados a partir de -1. */
 async function prefetch() {
   if (!track || pintado < 0 || dormido) return;
-  for (let k = 1; k <= PREFETCH; k++) {
+  for (let k = 1; k <= adelanto; k++) {
     if (deseado !== pintado) return;                 // ha vuelto a moverse: fuera
-    // Se salta por la rejilla de la zancada: el hilo principal solo va a pedir
-    // múltiplos de `stride`, así que los intermedios serían decode tirado.
-    const i = pintado + k * stride * direccion;
+    const i = pintado + k * direccion;
     if (i < 0 || i >= track.frameCount) return;
     if (lru.has(i) || !disponible(i)) continue;
     const bm = await descodificar(i);
@@ -663,18 +723,41 @@ async function descargar(url: string, cacheName: string) {
 }
 
 /**
- * Backing ideal del canvas: el tamaño físico visible, CAPADO al nativo del
- * vídeo. Nunca más grande que lo que se ve (pintar 1920x1080 para mostrarse en
- * 1366x768 es tirar CPU, con y sin GPU) y nunca más grande que la fuente (no
- * hay nitidez nueva que ganar y sí memoria y blit que pagar; en monitores por
- * encima del nativo el compositor escala igual que siempre, sin regresión).
- * El factor `k` conserva la proporción del HUECO, no la del vídeo: así el
- * object-fit:cover del elemento queda en identidad y el recorte real lo decide
- * crearBitmap() con el ancla del encuadre.
+ * Backing ideal del canvas: EL TAMAÑO FÍSICO DEL HUECO, sea el que sea. Solo se
+ * reduce si se pasa de BACKING_MAX_PX, y entonces conservando la proporción del
+ * HUECO (no la del vídeo): así el object-fit:cover del elemento queda en
+ * identidad y el recorte real lo decide crearBitmap() con el ancla del encuadre.
+ *
+ * AQUÍ HABÍA UN CAP AL TAMAÑO NATIVO DEL VÍDEO Y ERA UN FALLO. El razonamiento
+ * que lo justificaba decía: "por encima del nativo no hay nitidez que ganar, y
+ * el compositor escala igual que siempre, SIN REGRESIÓN". Las dos frases son
+ * ciertas y la conclusión es falsa:
+ *
+ *  - Lo de la nitidez es verdad y da igual. Estirar 1920 -> 2538 no inventa
+ *    detalle, no se busca detalle: SE BUSCA SUAVIDAD. El compositor ya estaba
+ *    haciendo EXACTAMENTE ese mismo estirado; la única diferencia es que lo
+ *    hacía 60 veces por segundo, en el proceso equivocado, en vez de una vez por
+ *    fotograma descodificado en el hilo del worker, que va sobrado.
+ *  - "Sin regresión" no es "arreglado". En un monitor más ancho que el vídeo el
+ *    cap dejaba el arreglo de la nota 6 SIN APLICAR, que es como no tenerlo. El
+ *    cap era la anomalía dentro de su propio diseño: el mismo fichero ya medía
+ *    que ese estirado cuesta +5,2 ms/frame y que es la peor configuración.
+ *
+ * MEDIDO (taller, sin GPU, ventana real de 2560 en un 3440x1440, 20 px/frame,
+ * mediana de 3 pasadas), cap contra sin cap:
+ *      con cap (canvas 1920x957, NO 1:1): p50 24,9 ms · 54 % de frames >23 ms
+ *      sin cap (canvas 2538x1265, 1:1)  : p50 16,7 ms ·  4 % de frames >23 ms
+ * Y es un ACANTILADO, no una pendiente: entre 1920 (1:1) y 2048 (roto) hay un
+ * 13 % más de píxeles y 20 veces más jank. El precio de quitar el cap es
+ * MEMORIA (bitmaps más grandes), y eso lo acota LRU_PRESUPUESTO_MIB.
+ *
+ * O sea: NO vuelvas a capar esto al nativo del vídeo "porque no da nitidez".
+ * No va de nitidez.
  */
 function backingIdeal(t: Mp4Track): { w: number; h: number } {
   if (viewportW <= 0 || viewportH <= 0) return { w: t.codedWidth, h: t.codedHeight };
-  const k = Math.min(1, t.codedWidth / viewportW, t.codedHeight / viewportH);
+  const area = viewportW * viewportH;
+  const k = area > BACKING_MAX_PX ? Math.sqrt(BACKING_MAX_PX / area) : 1;
   return {
     w: Math.max(1, Math.round(viewportW * k)),
     h: Math.max(1, Math.round(viewportH * k)),
@@ -688,10 +771,19 @@ function ajustarBacking(t: Mp4Track): boolean {
   const b = backingIdeal(t);
   stats.canvasW = b.w;
   stats.canvasH = b.h;
-  if (canvas.width === b.w && canvas.height === b.h) return false;
-  canvas.width = b.w;
-  canvas.height = b.h;
-  return true;
+  const cambia = canvas.width !== b.w || canvas.height !== b.h;
+  if (cambia) {
+    canvas.width = b.w;
+    canvas.height = b.h;
+  }
+  // Bitmaps más grandes => caben menos en el presupuesto. Se recalcula SIEMPRE,
+  // no solo si el canvas ha cambiado de tamaño: en el arranque el hilo principal
+  // ya suele acertar el backing de primeras, así que aquí no cambiaría nada...
+  // y la LRU se quedaría con el tope por defecto (8) justo en los monitores
+  // grandes donde 8 no caben. Es el único sitio por el que pasan TODOS los
+  // backings, incluido el primero.
+  recalcularLru();
+  return cambia;
 }
 
 function arrancarDecoder(): Promise<void> {
@@ -791,12 +883,6 @@ self.onmessage = (e: MessageEvent<ToWorker>) => {
       deseado = enPantalla;
       void servir();
     }
-    return;
-  }
-
-  if (msg.type === 'stride') {
-    stride = Math.max(1, Math.floor(msg.stride));
-    stats.stride = stride;
     return;
   }
 
