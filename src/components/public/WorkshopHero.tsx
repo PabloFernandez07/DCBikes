@@ -3,7 +3,13 @@ import { ArrowRight, Phone, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FondoGradiente, HeroText, ScrubHero, type BloqueHero } from "@/components/public/ScrubHero";
 
-export const TALLER_VIDEO = "/taller/despiece-scrub-v1.mp4";
+// v2 = 48 fps (antes 24), por cadencia: con 145 fotogramas en 3 pantallas salían
+// 15 px de scroll por fotograma (~30 img/s a velocidad de lectura); con 287 salen
+// 7,6 px, o sea imagen nueva en casi cada refresco. Los intermedios están
+// interpolados (el vídeo se generó con IA y no hay fuente que re-renderizar) y
+// cuesta 0,1 MB: 4,1 -> 4,2. Sigue all-intra (287 fotogramas / 287 keyframes).
+export const TALLER_VIDEO = "/taller/despiece-scrub-v2.mp4";
+// El póster es el fotograma 0, que no ha cambiado: sigue valiendo el de v1.
 export const TALLER_POSTER = "/taller/despiece-poster-v1.jpg";
 
 interface WorkshopHeroProps {

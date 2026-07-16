@@ -23,10 +23,18 @@ export function Nav() {
   const itemCount = useCartStore(s => s.items.reduce((a, i) => a + i.quantity, 0))
   const toggleCart = useUiStore(s => s.toggleCart)
 
+  // La barra va SIN backdrop-blur, por lo mismo que el badge del hero: es sticky
+  // por encima del vídeo de la portada, así que su fondo cambia en CADA frame de
+  // scroll y el blur habría que recalcularlo entero, 60 veces por segundo, sobre
+  // 1920x80 px. Medido en la portada: con blur, 9 de 150 frames pasaban de 25 ms
+  // (p95 41,6 ms); sin él, 0 de 150 (p95 8,5 ms). El taller no lo sufría porque
+  // su alturaBarra=80 saca el vídeo de debajo de la barra.
+  // No se pierde nada visual: el fondo ya va al 92 % de opacidad y el blur casi
+  // no se veía. Era coste puro. Si alguien lo vuelve a poner, vuelve el tirón.
   return (
     <header
       className="sticky top-0 z-50 w-full"
-      style={{ background: 'rgba(26,22,32,0.92)', backdropFilter: 'blur(16px)' }}
+      style={{ background: 'rgba(26,22,32,0.92)' }}
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 shrink-0" aria-label="DC Bikes Cantabria — inicio">

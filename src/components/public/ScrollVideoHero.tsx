@@ -7,11 +7,20 @@ interface ScrollVideoHeroProps {
   onQuoteOpen: () => void;
 }
 
-// v5 = 1080p (antes 720p). El vídeo se pinta a pantalla completa y en monitores
-// con escalado de Windows el 720p se veía blando; el 1080p sube la nitidez de
-// verdad. Sigue pesando 6,9 MB (lejos de los 14,9 que daban tirones) porque es
-// all-intra a CRF 28. Nombre nuevo = caché de Vercel rota sin renombrar a mano.
-export const HERO_VIDEO = "/hero/hero-scrub-v5.mp4";
+// v6 = 48 fps (antes 24). Lo que se compra aquí es CADENCIA, no nitidez: el
+// recorrido de scroll se reparte entre los fotogramas que haya, y con 121 salían
+// 36 px de scroll por fotograma — el hero se veía a ~20 img/s con el navegador
+// yendo a 60 fps y cero frames perdidos. Con 239 fotogramas y 3 pantallas salen
+// 9 px por fotograma: imagen nueva en casi cada refresco.
+// Los fotogramas de en medio están INTERPOLADOS (minterpolate, compensación de
+// movimiento): el vídeo se generó con IA a 24 fps y no hay fuente que
+// re-renderizar. Ver la nota de memoria del hero para la receta exacta.
+// Cuesta 1 MB (6,7 -> 7,7): el doble de fotogramas sale casi gratis porque van a
+// CRF 30 en vez de 28 y cada interpolado se parece mucho a sus vecinos.
+// Sigue siendo all-intra (239 fotogramas / 239 keyframes), que es innegociable.
+// Nombre nuevo = caché de Vercel rota sin tener que purgarla a mano.
+export const HERO_VIDEO = "/hero/hero-scrub-v6.mp4";
+// El póster es el fotograma 0 y ese no ha cambiado: sigue valiendo el de v5.
 export const HERO_POSTER = "/hero/hero-poster-v5.jpg";
 
 /**
@@ -122,7 +131,19 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
     <ScrubHero
       video={HERO_VIDEO}
       poster={HERO_POSTER}
-      pantallas={5}
+      // Tres pantallas, no cinco, y el motivo es la FLUIDEZ, no el diseño.
+      // El recorrido de scroll se reparte entre los fotogramas que tenga el
+      // vídeo: con 5 pantallas salían 4320 px / 120 saltos = 36 px de scroll por
+      // fotograma, y a velocidad de lectura (600 px/s) eso son ~17 imágenes
+      // nuevas por segundo. El hero se veía a saltos con el navegador yendo a
+      // 60 fps clavados y cero frames perdidos: no era jank, era que no había
+      // imágenes que enseñar. Medido: 5 pantallas -> 20 fps efectivos;
+      // 3 -> 30; 2 -> 60. Con el vídeo ya a 48 fps, 3 pantallas dan 9 px por
+      // fotograma, que es cadencia de sobra.
+      // Si subes este número, baja la fluidez en proporción directa. La regla:
+      // px_por_fotograma = (pantallas-1)*alto_ventana / (nº fotogramas - 1),
+      // y tiene que quedar por debajo de ~10.
+      pantallas={3}
       bloques={bloques}
       // En móvil la portada nunca ha enseñado el vídeo (son megas para nada en
       // datos): un degradado de marca y a correr.
