@@ -7,19 +7,15 @@ interface ScrollVideoHeroProps {
   onQuoteOpen: () => void;
 }
 
-// v6 = 48 fps (antes 24). Lo que se compra aquí es CADENCIA, no nitidez: el
-// recorrido de scroll se reparte entre los fotogramas que haya, y con 121 salían
-// 36 px de scroll por fotograma — el hero se veía a ~20 img/s con el navegador
-// yendo a 60 fps y cero frames perdidos. Con 239 fotogramas y 3 pantallas salen
-// 9 px por fotograma: imagen nueva en casi cada refresco.
-// Los fotogramas de en medio están INTERPOLADOS (minterpolate, compensación de
-// movimiento): el vídeo se generó con IA a 24 fps y no hay fuente que
-// re-renderizar. Ver la nota de memoria del hero para la receta exacta.
-// Cuesta 1 MB (6,7 -> 7,7): el doble de fotogramas sale casi gratis porque van a
-// CRF 30 en vez de 28 y cada interpolado se parece mucho a sus vecinos.
-// Sigue siendo all-intra (239 fotogramas / 239 keyframes), que es innegociable.
-// Nombre nuevo = caché de Vercel rota sin tener que purgarla a mano.
-export const HERO_VIDEO = "/hero/hero-scrub-v6.mp4";
+// v5 = 24 fps, 1080p all-intra. Se volvió a v5 desde v6 (2026-07-17): v6 metía
+// 48 fps INTERPOLADOS (minterpolate) que solo servían para dar cadencia al motor
+// de canvas (WebCodecs, ahora apagado). Reproduciendo el <video> de forma nativa
+// esos fotogramas de más no aportan y se pagaban en NITIDEZ: v6 daba 269 kbit por
+// fotograma contra los 461 de v5 (-42 % de bits por imagen). v5 se ve más nítido
+// Y pesa menos (6,98 vs 8,03 MB). Sigue all-intra (121/121 keyframes) → el seek
+// por currentTime cae en keyframe y es instantáneo. El póster ya es el fotograma
+// 0 de v5, así que el relevo póster→vídeo es invisible.
+export const HERO_VIDEO = "/hero/hero-scrub-v5.mp4";
 // El póster es el fotograma 0 y ese no ha cambiado: sigue valiendo el de v5.
 export const HERO_POSTER = "/hero/hero-poster-v5.jpg";
 

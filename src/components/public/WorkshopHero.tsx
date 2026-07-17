@@ -3,12 +3,13 @@ import { ArrowRight, Phone, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FondoGradiente, HeroText, ScrubHero, type BloqueHero } from "@/components/public/ScrubHero";
 
-// v2 = 48 fps (antes 24), por cadencia: con 145 fotogramas en 3 pantallas salían
-// 15 px de scroll por fotograma (~30 img/s a velocidad de lectura); con 287 salen
-// 7,6 px, o sea imagen nueva en casi cada refresco. Los intermedios están
-// interpolados (el vídeo se generó con IA y no hay fuente que re-renderizar) y
-// cuesta 0,1 MB: 4,1 -> 4,2. Sigue all-intra (287 fotogramas / 287 keyframes).
-export const TALLER_VIDEO = "/taller/despiece-scrub-v2.mp4";
+// v1 = 24 fps, 1080p all-intra. Se volvió a v1 desde v2 (2026-07-17), por lo mismo
+// que la portada: v2 metía 48 fps interpolados solo para el motor de canvas (ya
+// apagado), y se pagaban en nitidez — v2 daba 122 kbit por fotograma contra los
+// 234 de v1 (la mitad). Con el <video> nativo v1 se ve más nítido y pesa menos
+// (4,15 vs 4,28 MB). Sigue all-intra (145/145 keyframes) → seek instantáneo. El
+// póster ya es el fotograma 0 de v1.
+export const TALLER_VIDEO = "/taller/despiece-scrub-v1.mp4";
 // El póster es el fotograma 0, que no ha cambiado: sigue valiendo el de v1.
 export const TALLER_POSTER = "/taller/despiece-poster-v1.jpg";
 
