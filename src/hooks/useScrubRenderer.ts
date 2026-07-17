@@ -193,6 +193,7 @@ export function useScrubRenderer(
     let rafId: number | null = null;
     let ultimoT = 0;
     let visible = true;
+    let watchdog: ReturnType<typeof setTimeout> | undefined;   // arranque de WebCodecs
 
     // Los 'seek' son objetos planos; el 'init' lleva el OffscreenCanvas, que NO
     // se clona: hay que TRANSFERIRLO explícitamente o postMessage lanza.
@@ -206,6 +207,7 @@ export function useScrubRenderer(
         ultimoIndice = -1;      // fuerza a mandar el índice actual ya
         leerScroll();
       } else if (msg.type === "firstPaint") {
+        clearTimeout(watchdog);   // arrancó bien: se desarma el fallback
         canvas.style.opacity = "1";
       } else if (msg.type === "progress") {
         cbs.current.onLoadProgress?.(msg.total ? msg.loaded / msg.total : 0);
@@ -370,11 +372,30 @@ export function useScrubRenderer(
       viewport: fisico,
       encuadre: parseEncuadre(encuadre),
     });
+
+    // Watchdog de arranque. En navegadores que restringen WebCodecs (Opera GX con
+    // su bloqueador y su GX Control, y similares) el worker puede quedarse MUDO sin
+    // mandar ni 'ready' ni 'error': el canvas se queda invisible y el hero
+    // congelado sobre el póster, sin caer al <video>. Si no ha pintado el primer
+    // fotograma en este tiempo, se da por perdido y se cae al <video>, que funciona
+    // en todas partes. 6 s es holgado a propósito: el primer fotograma solo necesita
+    // el moov + el sample 0 (~35 KB con faststart), que llega rápido hasta en 4G;
+    // pasarse de 6 s es señal de cuelgue, no de red lenta. Se desarma en 'firstPaint'.
+    watchdog = setTimeout(() => {
+      if (!vivo) return;
+      console.warn("[hero] WebCodecs no arrancó a tiempo: se cae al <video>");
+      vivo = false;
+      worker.terminate();
+      canvas.remove();
+      cbs.current.onFail();
+    }, 6000);
+
     ro.observe(host);
     leerScroll();
 
     return () => {
       vivo = false;
+      clearTimeout(watchdog);
       io.disconnect();
       ro.disconnect();
       clearTimeout(temporizadorViewport);

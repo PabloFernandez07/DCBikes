@@ -141,13 +141,14 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
       // se comprimen solos. Para fluidez de refresco total haría falta el canvas
       // con blending (ver la skill scroll-video-optimo); esto es el nivel gratis.
       pantallas={2}
-      // BLENDING (canvas WebCodecs + cross-fade) DESACTIVADO temporalmente
-      // (2026-07-18): a un visitante "no le salía el vídeo, bajaba directo" —
-      // arranque del canvas fallando o muy lento en su navegador, sin reproducir
-      // aún (en Chrome carga y hace scrub bien). Se vuelve al <video>+v5, que con
-      // pantallas=2 va fluido y funciona en todas partes. Para REACTIVAR: poner
-      // `blending` aquí. Toda la maquinaria del blend sigue en el worker/renderer,
-      // inerte sin esta prop (el worker solo mezcla si le llega frac).
+      // Canvas WebCodecs + cross-fade entre fotogramas vecinos: cadencia de
+      // refresco (fluido de verdad) sin subir peso ni bajar nitidez, en la portada
+      // porque su cámara casi no se mueve (el fantasma es imperceptible, medido).
+      // Ahora con el decodificador forzado a software (como Rockstar) y un watchdog
+      // de arranque: si WebCodecs se cuelga (Opera GX y navegadores restrictivos),
+      // cae solo al <video>. Así la mayoría gana la fluidez y nadie se queda con el
+      // hero congelado. El taller NO lo usa (sus piezas fantasmearían).
+      blending
       bloques={bloques}
       // En móvil la portada nunca ha enseñado el vídeo (son megas para nada en
       // datos): un degradado de marca y a correr.

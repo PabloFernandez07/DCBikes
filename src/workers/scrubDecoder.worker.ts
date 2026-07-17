@@ -845,10 +845,17 @@ function arrancarDecoder(): Promise<void> {
       description: t.description,
       codedWidth: t.codedWidth,
       codedHeight: t.codedHeight,
-      // Ver nota 1 de la cabecera. 'prefer-hardware' es HARDWARE-ONLY en Chrome
-      // y mataba el scrub entero en las máquinas sin descodificador H.264 por
-      // hardware, que son justo las que peor lo pasaban con el <video>.
-      hardwareAcceleration: 'no-preference',
+      // 'prefer-software', igual que el sitio de GTA VI de Rockstar (verificado en
+      // el teardown de su worker). Motivo, medido de campo: en navegadores que
+      // restringen recursos o el pipeline de vídeo (Opera GX con GX Control, y
+      // similares) la ruta por HARDWARE que puede elegir 'no-preference' se cuelga
+      // sin dar error —el worker se queda mudo y el hero se ve congelado—, mientras
+      // que forzar software arranca en todas partes. Rockstar va fluido ahí
+      // precisamente por esto. El coste (software siempre) lo absorbe el prefetch:
+      // los fotogramas se descodifican por adelantado, fuera del camino del pintado.
+      // ('prefer-hardware' está descartado aparte: es HARDWARE-ONLY en Chrome y
+      // mataba el scrub en máquinas sin H.264 por hardware.)
+      hardwareAcceleration: 'prefer-software',
       optimizeForLatency: true,
     };
 
