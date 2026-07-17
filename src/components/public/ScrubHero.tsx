@@ -127,6 +127,13 @@ export function ScrubHero({
   const { isMobile, isReducedMotion } = useHeroFlags();
   const lock = !isMobile && !isReducedMotion;
 
+  // Panel de diagnóstico en pantalla (?herodiag=1): para ver en un navegador ajeno
+  // (Opera GX...) qué motor se usa y dónde se cuelga, sin abrir DevTools. Inerte
+  // sin el parámetro. El renderer le añade los eventos del worker (ver useScrubRenderer).
+  const herodiag =
+    typeof location !== "undefined" &&
+    new URLSearchParams(location.search).has("herodiag");
+
   // applyProgress es estable (deps vacías) para no re-montar el worker en cada
   // render, así que `lock` y `bloques` le llegan por ref.
   const lockRef = useRef(lock);
@@ -208,6 +215,25 @@ export function ScrubHero({
   });
 
   return (
+    <>
+      {herodiag && (
+        <div
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, zIndex: 99999,
+            background: "rgba(0,0,0,0.92)", color: "#33ff66",
+            font: "12px/1.5 monospace", padding: "10px 12px",
+            maxHeight: "60vh", overflow: "auto", whiteSpace: "pre-wrap",
+          }}
+        >
+          {`DIAGNÓSTICO DEL HERO  —  mándame una captura de esto
+soporta WebCodecs: ${soportaScrubWebCodecs}
+isMobile: ${isMobile}  ·  reducedMotion: ${isReducedMotion}  ·  lock: ${lock}
+blending pedido: ${blending}  ·  usaCanvas: ${usaCanvas}  ·  scrubFallido: ${scrubFallido}
+MOTOR ACTIVO: ${usaCanvas ? "CANVAS (WebCodecs)" : "VIDEO (fallback)"}
+──────── eventos del worker ────────`}
+          <pre id="hero-diag-log" style={{ margin: 0, color: "#9ff" }} />
+        </div>
+      )}
     <section
       ref={sectionRef}
       className="relative"
@@ -364,6 +390,7 @@ export function ScrubHero({
         )}
       </div>
     </section>
+    </>
   );
 }
 

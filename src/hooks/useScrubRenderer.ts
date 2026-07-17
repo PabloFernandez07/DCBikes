@@ -23,6 +23,19 @@ const LAMBDA = 7.7;
 /** Por debajo de esto ya no se persigue el objetivo: el bucle se apaga solo. */
 const EPSILON = 0.0004;
 
+/** Panel de diagnóstico en pantalla (?herodiag=1): escribe la secuencia real del
+ *  motor —soporte, mensajes del worker, watchdog, fallback— para poder ver en un
+ *  navegador ajeno (Opera GX...) DÓNDE se cuelga, sin abrir DevTools. Inerte sin
+ *  el parámetro. El overlay lo pinta ScrubHero; aquí solo se le añaden líneas. */
+const HERODIAG =
+  typeof location !== "undefined" &&
+  new URLSearchParams(location.search).has("herodiag");
+function diag(txt: string) {
+  if (!HERODIAG) return;
+  const el = typeof document !== "undefined" && document.getElementById("hero-diag-log");
+  if (el) el.textContent += `${(performance.now() / 1000).toFixed(1)}s · ${txt}\n`;
+}
+
 /** ¿Puede este navegador hacer el scrub con WebCodecs? Si no (Safari, iOS), se
  *  usa el <video> de siempre, que es literalmente el fallback de Rockstar. */
 export const soportaScrubWebCodecs =
@@ -203,19 +216,24 @@ export function useScrubRenderer(
     worker.onmessage = (e: MessageEvent<FromWorker>) => {
       const msg = e.data;
       if (msg.type === "ready") {
+        diag(`ready ✓ (${msg.frameCount} fotogramas, ${msg.codec})`);
         nFrames = msg.frameCount;
         ultimoIndice = -1;      // fuerza a mandar el índice actual ya
         leerScroll();
       } else if (msg.type === "firstPaint") {
+        diag("firstPaint ✓ — CANVAS DESTAPADO, todo OK");
         clearTimeout(watchdog);   // arrancó bien: se desarma el fallback
         canvas.style.opacity = "1";
       } else if (msg.type === "progress") {
+        if (msg.loaded === 0 || msg.loaded >= msg.total) diag(`descarga: ${msg.loaded}/${msg.total} bytes`);
         cbs.current.onLoadProgress?.(msg.total ? msg.loaded / msg.total : 0);
       } else if (msg.type === "stats") {
         exponerStats(msg.stats);
       } else if (msg.type === "error") {
         // El worker no puede seguir: se retira y manda el <video>.
+        diag(`ERROR del worker: ${msg.message} → cae al <video>`);
         console.warn("[hero] scrub WebCodecs no disponible:", msg.message);
+        clearTimeout(watchdog);
         vivo = false;
         worker.terminate();
         canvas.remove();
@@ -223,12 +241,15 @@ export function useScrubRenderer(
       }
     };
     worker.onerror = (e) => {
+      diag(`worker onerror: ${e.message || "(sin mensaje)"} → cae al <video>`);
       console.warn("[hero] worker del hero caído:", e.message);
+      clearTimeout(watchdog);
       vivo = false;
       worker.terminate();
       canvas.remove();
       cbs.current.onFail();
     };
+    diag("worker creado, esperando 'ready'…");
 
     const pintar = () => {
       cbs.current.onProgress(actual);
@@ -383,6 +404,7 @@ export function useScrubRenderer(
     // pasarse de 6 s es señal de cuelgue, no de red lenta. Se desarma en 'firstPaint'.
     watchdog = setTimeout(() => {
       if (!vivo) return;
+      diag("WATCHDOG 6s: worker MUDO (ni ready ni error) → cae al <video>. Esta es la señal del cuelgue.");
       console.warn("[hero] WebCodecs no arrancó a tiempo: se cae al <video>");
       vivo = false;
       worker.terminate();
