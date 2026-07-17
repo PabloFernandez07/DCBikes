@@ -66,8 +66,18 @@ export type ToWorker =
        */
       encuadre: { x: number; y: number };
     }
-  /** dir: +1 si el scroll baja, -1 si sube. Manda el prefetch. */
-  | { type: 'seek'; index: number; dir: number }
+  /**
+   * dir: +1 si el scroll baja, -1 si sube. Manda el prefetch.
+   *
+   * frac (0..1): posición SUBFOTOGRAMA entre `index` e `index+1`. Si viene y es
+   * > 0, el worker MEZCLA (cross-fade) el fotograma `index` con el `index+1`
+   * pintando el segundo con globalAlpha=frac encima: así la cadencia deja de
+   * estar atada al número de fotogramas y pasa a ser la del refresco (rompe el
+   * "stepping" sin subir N ni peso). Solo lo manda la portada (cámara casi
+   * quieta -> sin fantasma); el taller NO lo manda (sus piezas se mueven y el
+   * cross-fade las duplicaría), así que allí el worker pinta el índice tal cual.
+   */
+  | { type: 'seek'; index: number; dir: number; frac?: number }
   /**
    * El hueco visible ha cambiado (resize de ventana, zoom, cambio de DPR).
    * Llega ya con debounce desde el hilo principal. El worker recalcula el

@@ -108,6 +108,11 @@ interface Opciones {
   encuadre?: string;
   /** Progreso de descarga 0..1, por si se quiere pintar una barra de carga. */
   onLoadProgress?: (p: number) => void;
+  /** Si true, el scroll manda un índice FRACCIONARIO y el worker mezcla los dos
+   *  fotogramas vecinos (cross-fade): la cadencia pasa a ser la del refresco en
+   *  vez de la de nFrames, sin subir N ni peso. Solo para planos de poco
+   *  movimiento (la portada); en el taller fantasmearía. Ver scrubProtocol. */
+  blending?: boolean;
 }
 
 /**
@@ -133,7 +138,7 @@ export function useScrubRenderer(
   sectionRef: React.RefObject<HTMLElement | null>,
   hostRef: React.RefObject<HTMLDivElement | null>,
   onProgress: (p: number) => void,
-  { enabled, onFail, video, encuadre = "center", onLoadProgress }: Opciones,
+  { enabled, onFail, video, encuadre = "center", onLoadProgress, blending = false }: Opciones,
 ): void {
   // Estos callbacks cambian de identidad en cada render del consumidor; van a
   // una ref para no re-montar el worker por eso.
@@ -184,6 +189,7 @@ export function useScrubRenderer(
     let objetivo = 0;     // a dónde quiere ir el scroll
     let actual = 0;       // dónde está el hero (persigue al objetivo, amortiguado)
     let ultimoIndice = -1;
+    let ultimaPos = 0;      // posición fraccionaria anterior, para la dirección del blend
     let rafId: number | null = null;
     let ultimoT = 0;
     let visible = true;
@@ -227,12 +233,29 @@ export function useScrubRenderer(
       if (nFrames <= 0) return;
 
       // El corazón de todo: el fotograma es aritmética, no un seek.
-      const i = Math.min(nFrames - 1, Math.round(actual * (nFrames - 1)));
-      if (i !== ultimoIndice) {
-        const dir = i > ultimoIndice ? 1 : -1;
+      const pos = actual * (nFrames - 1);
+
+      if (blending) {
+        // Índice ENTERO + fracción. El worker mezcla i con i+1 según `frac`, así
+        // la cadencia deja de estar atada a nFrames y pasa a ser la del refresco.
+        // Se manda en CADA tick porque la fracción cambia de forma continua aunque
+        // el índice entero no; no spamea en reposo porque el tick se apaga solo
+        // cuando `actual` alcanza el objetivo (diff < EPSILON).
+        const i = Math.min(nFrames - 1, Math.floor(pos));
+        const frac = i >= nFrames - 1 ? 0 : pos - i;   // en el último fotograma no hay i+1
+        const dir = pos >= ultimaPos ? 1 : -1;
         ultimoIndice = i;
-        enviar({ type: "seek", index: i, dir });
+        enviar({ type: "seek", index: i, dir, frac });
+      } else {
+        // Índice entero redondeado; solo se manda cuando cambia (el clásico).
+        const i = Math.min(nFrames - 1, Math.round(pos));
+        if (i !== ultimoIndice) {
+          const dir = i > ultimoIndice ? 1 : -1;
+          ultimoIndice = i;
+          enviar({ type: "seek", index: i, dir });
+        }
       }
+      ultimaPos = pos;
     };
 
     const tick = (t: number) => {
@@ -364,7 +387,7 @@ export function useScrubRenderer(
       worker.terminate();   // se lleva por delante decoder, bitmaps y bytes
       canvas.remove();
     };
-  }, [sectionRef, hostRef, enabled, video, encuadre]);
+  }, [sectionRef, hostRef, enabled, video, encuadre, blending]);
 }
 
 /** Contabilidad para el banco de pruebas (`?bench=1`). Los ImageBitmap y los

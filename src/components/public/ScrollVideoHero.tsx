@@ -141,6 +141,12 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
       // se comprimen solos. Para fluidez de refresco total haría falta el canvas
       // con blending (ver la skill scroll-video-optimo); esto es el nivel gratis.
       pantallas={2}
+      // El motor de canvas (WebCodecs) con cross-fade entre fotogramas vecinos:
+      // la cadencia pasa a ser la del refresco (fluido de verdad, ~60 img/s a
+      // cualquier velocidad) sin subir peso ni bajar nitidez. Se puede aquí porque
+      // la cámara de la portada está casi quieta (0,87 px/fotograma de contenido):
+      // el fantasma del cross-fade es imperceptible (medido). El taller NO lo usa.
+      blending
       bloques={bloques}
       // En móvil la portada nunca ha enseñado el vídeo (son megas para nada en
       // datos): un degradado de marca y a correr.

@@ -66,6 +66,17 @@ export interface ScrubHeroProps {
    * bien y no hay nada que decapitar.
    */
   alturaBarra?: number;
+  /**
+   * Enciende el motor de canvas (WebCodecs) CON cross-fade entre fotogramas
+   * vecinos: la cadencia pasa a ser la del refresco en vez de la de nFrames, o
+   * sea fluidez de "GTA VI" sin subir el número de fotogramas ni el peso.
+   *
+   * Solo para planos de POCO movimiento. La portada lo activa (su cámara está
+   * casi quieta: el cross-fade es imperceptible). El taller NO: sus piezas se
+   * mueven y el cross-fade las duplicaría (doble exposición), así que se queda
+   * con el <video>. Sin WebCodecs (Safari viejo) cae también al <video>.
+   */
+  blending?: boolean;
 }
 
 /**
@@ -91,6 +102,7 @@ export function ScrubHero({
   fondoMovil,
   encuadre = "center",
   alturaBarra = 0,
+  blending = false,
 }: ScrubHeroProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -156,27 +168,22 @@ export function ScrubHero({
     }
   }, []);
 
-  // WebCodecs DESACTIVADO a propósito (2026-07-17, a petición). El motor de canvas
-  // (Web Worker + OffscreenCanvas + WebCodecs, "estilo Rockstar") se fue
-  // complicando parche a parche desde el 14-jul y el scrub se percibía cada vez
-  // peor. Volvemos al <video> + currentTime de siempre —el que la portada usó
-  // estable dos meses—, que aquí es el "plan B" gobernado por useScrollVideo: con
-  // el MP4 all-intra los seeks caen en keyframe y son instantáneos, y el navegador
-  // reproduce el vídeo de forma NATIVA (sin el "stepping" de pintar índices
-  // enteros). Para REACTIVAR WebCodecs, poner este flag a true: vuelve a exigir el
-  // soporte del navegador y a caer al <video> solo si falla.
-  const WEBCODECS: boolean = false;
-
-  // El canvas solo cuando hay scrub que hacer y el navegador puede. En móvil NI
-  // SE DESCARGA el MP4 — y "móvil" incluye el teléfono apaisado y la tablet, no
-  // solo el ancho de pantalla (ver useHeroFlags).
-  const usaCanvas = WEBCODECS && lock && soportaScrubWebCodecs && !scrubFallido;
+  // El canvas (WebCodecs) se enciende SOLO si esta página pide `blending` y el
+  // navegador puede. La portada lo pide: el cross-fade entre fotogramas vecinos le
+  // da cadencia de refresco (fluido de verdad) sin subir peso, y su cámara casi
+  // quieta hace el fantasma imperceptible. El taller NO lo pide —sus piezas se
+  // moverían y el cross-fade las duplicaría—, así que se queda con el <video> +
+  // currentTime (all-intra: los seeks caen en keyframe y son instantáneos). Sin
+  // WebCodecs (Safari viejo) o si el worker falla, la portada también cae al
+  // <video>. En móvil NI se descarga el MP4 (lock ya es false ahí).
+  const usaCanvas = blending && lock && soportaScrubWebCodecs && !scrubFallido;
 
   useScrubRenderer(sectionRef, canvasHostRef, applyProgress, {
     enabled: usaCanvas,
     onFail: onScrubFail,
     video,
     encuadre,
+    blending,
   });
 
   // El <video> solo lo gobierna useScrollVideo cuando NO manda el canvas.

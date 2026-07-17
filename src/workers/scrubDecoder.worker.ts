@@ -194,6 +194,11 @@ let necesitaFlush = false;
 let deseado = -1;
 let pintado = -1;
 let direccion = 1;
+/** Posición subfotograma 0..1 del scroll entre `pintado` y `pintado+1`. Si es
+ *  > 0 (solo la portada la manda), pintar() mezcla los dos fotogramas vecinos
+ *  (cross-fade) para que la cadencia sea la del refresco y no la de N. El taller
+ *  no manda frac, así que aquí queda en 0 y pintar() dibuja el índice tal cual. */
+let fracActual = 0;
 /** Fotogramas que caben en la LRU y cuántos se adelantan con el backing de
  *  AHORA. Los recalcula ajustarBacking(): un backing nuevo cambia lo que ocupa
  *  cada bitmap y por tanto cuántos caben en el presupuesto. */
@@ -414,12 +419,41 @@ function crearBitmap(frame: VideoFrame): Promise<ImageBitmap> {
 
 function pintar(i: number, bm: ImageBitmap) {
   if (!ctx || !canvas) return;
+  // Fotograma base, opaco (globalAlpha vale 1 por defecto y con {alpha:false} el
+  // canvas queda cubierto entero).
   ctx.drawImage(bm, 0, 0, canvas.width, canvas.height);
+  // Blend: si el scroll está ENTRE i e i+1 (frac>0) y el vecino i+1 ya está en la
+  // caché, se pinta encima con opacidad = frac. Resultado = lerp(i, i+1, frac).
+  // Es un cross-fade (doble exposición), no interpolación con movimiento: se
+  // mide imperceptible en la portada porque su cámara casi no se mueve. Si i+1 no
+  // está aún (o es el último fotograma), se queda solo la base: sin fantasma, con
+  // un stepping momentáneo hasta que el prefetch traiga el vecino y recomponer().
+  if (fracActual > 0.003) {
+    // lru.get (no lruGet): el vecino no debe robarle la recencia al fotograma
+    // pintado, o la LRU expulsaría justo lo que el scroll va a volver a pedir.
+    const vecino = lru.get(i + 1);
+    if (vecino) {
+      ctx.globalAlpha = fracActual;
+      ctx.drawImage(vecino, 0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 1;
+    }
+  }
   pintado = i;
   if (!primerPintado) {
     primerPintado = true;
     post({ type: 'firstPaint' });
   }
+}
+
+/** Repinta el fotograma que ya está en pantalla con el frac de AHORA, sin
+ *  descodificar nada: es lo que hace que el cross-fade avance suave entre dos
+ *  fotogramas vecinos (cuando el scroll se mueve dentro de un mismo intervalo,
+ *  cambia frac pero no el índice entero) y lo que recompone en cuanto el prefetch
+ *  trae el vecino i+1. Barato: un par de drawImage desde la caché. */
+function recomponer() {
+  if (pintado < 0) return;
+  const bm = lruGet(pintado);
+  if (bm) pintar(pintado, bm);
 }
 
 /**
@@ -508,6 +542,10 @@ async function prefetch() {
     if (!bm) return;
     lruSet(i, bm);
   }
+  // Con blend, el vecino i+1 que el cross-fade necesita puede acabar de entrar en
+  // la caché justo ahora: recomponer el fotograma en pantalla para que el blend
+  // aparezca sin esperar al siguiente tick.
+  if (fracActual > 0) recomponer();
 }
 
 // ------------------------------------------------------------------- descarga
@@ -897,9 +935,16 @@ self.onmessage = (e: MessageEvent<ToWorker>) => {
   if (msg.type === 'sleep') { dormir(); return; }
   if (msg.type === 'wake') { despertar(); return; }
 
-  if (msg.type === 'seek' && msg.index !== deseado) {
-    direccion = msg.dir || (msg.index > deseado ? 1 : -1);
-    deseado = msg.index;
-    void servir();
+  if (msg.type === 'seek') {
+    fracActual = msg.frac ?? 0;
+    if (msg.index !== deseado) {
+      direccion = msg.dir || (msg.index > deseado ? 1 : -1);
+      deseado = msg.index;
+      void servir();
+    } else if (fracActual > 0) {
+      // Solo se ha movido el subfotograma (mismo índice entero, distinto frac):
+      // el cross-fade avanza recomponiendo desde la caché, sin descodificar nada.
+      recomponer();
+    }
   }
 };
