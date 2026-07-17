@@ -923,13 +923,13 @@ function arrancarDecoder(): Promise<void> {
       // ('prefer-hardware' está descartado aparte: es HARDWARE-ONLY en Chrome y
       // mataba el scrub en máquinas sin H.264 por hardware.)
       hardwareAcceleration: 'prefer-software',
-      // false con decode-ahead (como Rockstar): con latency:true el descodificador
-      // retiene la salida y hay que forzar flush() por fotograma, que es una fuente
-      // de interbloqueo documentada y penaliza justo el pipeline frágil de Opera GX.
-      // Precargando todo de golpe no hace falta la latencia baja: se descodifica en
-      // lote y un flush() al final saca lo que quede. Sin precarga se mantiene true
-      // (scrub bajo demanda, donde sí importa la latencia por fotograma).
-      optimizeForLatency: !modoPrecarga,
+      // SIEMPRE true: el mecanismo de descodificar() (carrera + flush por fotograma)
+      // depende de esta latencia baja para sacar cada frame; con false el
+      // descodificador retiene la salida y no sale ninguno (probado: cached=0).
+      // Con decode-ahead el flush por fotograma solo se paga en la PRECARGA (hero
+      // quieto), no en el scroll (que ya es todo cache-hit), así que no penaliza
+      // el steady-state, que es lo que importa en Opera GX.
+      optimizeForLatency: true,
     };
 
     // Lo pide el propio mensaje de error de Chrome («Check isConfigSupported()
