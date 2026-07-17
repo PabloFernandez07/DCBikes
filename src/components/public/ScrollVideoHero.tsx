@@ -7,17 +7,15 @@ interface ScrollVideoHeroProps {
   onQuoteOpen: () => void;
 }
 
-// v5 = 24 fps, 1080p all-intra. Se volvió a v5 desde v6 (2026-07-17): v6 metía
-// 48 fps INTERPOLADOS (minterpolate) que solo servían para dar cadencia al motor
-// de canvas (WebCodecs, ahora apagado). Reproduciendo el <video> de forma nativa
-// esos fotogramas de más no aportan y se pagaban en NITIDEZ: v6 daba 269 kbit por
-// fotograma contra los 461 de v5 (-42 % de bits por imagen). v5 se ve más nítido
-// Y pesa menos (6,98 vs 8,03 MB). Sigue all-intra (121/121 keyframes) → el seek
-// por currentTime cae en keyframe y es instantáneo. El póster ya es el fotograma
-// 0 de v5, así que el relevo póster→vídeo es invisible.
-export const HERO_VIDEO = "/hero/hero-scrub-v5.mp4";
-// El póster es el fotograma 0 y ese no ha cambiado: sigue valiendo el de v5.
-export const HERO_POSTER = "/hero/hero-poster-v5.jpg";
+// v7 = el metraje "salida de tienda" de public/webScroll/Salida_Tienda_1080, la
+// fuente de MÁS calidad (18,9 MB con GOP largo), re-encodada a 1080p ALL-INTRA
+// (121/121 keyframes: cada fotograma es un keyframe, así el scrub salta/descodifica
+// cualquiera sin descomprimir desde un keyframe lejano; innegociable). CRF 25 → 9,4 MB.
+// El peso sube algo respecto a v5, pero con decode-ahead se precarga entero, así que
+// no afecta a la fluidez, solo a la descarga inicial. Nombre nuevo = caché de Vercel rota.
+export const HERO_VIDEO = "/hero/hero-scrub-v7.mp4";
+// El póster es el fotograma 0 de v7 (renovado junto con el vídeo).
+export const HERO_POSTER = "/hero/hero-poster-v7.jpg";
 
 /**
  * El hero de la portada. Toda la maquinaria (WebCodecs, worker, canvas, plan B)

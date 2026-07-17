@@ -3,16 +3,14 @@ import { ArrowRight, Phone, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FondoGradiente, HeroText, ScrubHero, type BloqueHero } from "@/components/public/ScrubHero";
 
-// v1 = 24 fps, 1080p all-intra, 145 fotogramas. Es la versión NÍTIDA: v2 metía 48
-// fps interpolados que se pagaban en nitidez (122 kbit/fotograma contra los 234 de
-// v1). El taller usa el MISMO motor que la portada —canvas WebCodecs + decode-ahead
-// (descodifica el clip entero por adelantado y en el scroll solo pinta, para ir
-// fluido en Opera GX)— pero SIN blending: las piezas del despiece se mueven y el
-// cross-fade las duplicaría, así que se pinta el índice tal cual. El póster ya es
-// el fotograma 0 de v1.
-export const TALLER_VIDEO = "/taller/despiece-scrub-v1.mp4";
-// El póster es el fotograma 0, que no ha cambiado: sigue valiendo el de v1.
-export const TALLER_POSTER = "/taller/despiece-poster-v1.jpg";
+// v3 = el render "bici desmontada" de public/webScroll/Bici_Despiece_1080,
+// re-encodado a 1080p ALL-INTRA (145/145 keyframes). CRF 25 → 4,6 MB. El taller usa
+// el MISMO motor que la portada —canvas WebCodecs + decode-ahead: descodifica el
+// clip entero por adelantado y en el scroll solo pinta, para ir fluido en Opera GX—
+// pero SIN blending: las piezas del despiece se mueven y el cross-fade las
+// duplicaría, así que se pinta el índice tal cual. El póster es el fotograma 0 de v3.
+export const TALLER_VIDEO = "/taller/despiece-scrub-v3.mp4";
+export const TALLER_POSTER = "/taller/despiece-poster-v3.jpg";
 
 interface WorkshopHeroProps {
   onQuoteOpen: () => void;
