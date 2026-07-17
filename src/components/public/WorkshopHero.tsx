@@ -3,12 +3,13 @@ import { ArrowRight, Phone, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FondoGradiente, HeroText, ScrubHero, type BloqueHero } from "@/components/public/ScrubHero";
 
-// v1 = 24 fps, 1080p all-intra. Se volvió a v1 desde v2 (2026-07-17), por lo mismo
-// que la portada: v2 metía 48 fps interpolados solo para el motor de canvas (ya
-// apagado), y se pagaban en nitidez — v2 daba 122 kbit por fotograma contra los
-// 234 de v1 (la mitad). Con el <video> nativo v1 se ve más nítido y pesa menos
-// (4,15 vs 4,28 MB). Sigue all-intra (145/145 keyframes) → seek instantáneo. El
-// póster ya es el fotograma 0 de v1.
+// v1 = 24 fps, 1080p all-intra, 145 fotogramas. Es la versión NÍTIDA: v2 metía 48
+// fps interpolados que se pagaban en nitidez (122 kbit/fotograma contra los 234 de
+// v1). El taller usa el MISMO motor que la portada —canvas WebCodecs + decode-ahead
+// (descodifica el clip entero por adelantado y en el scroll solo pinta, para ir
+// fluido en Opera GX)— pero SIN blending: las piezas del despiece se mueven y el
+// cross-fade las duplicaría, así que se pinta el índice tal cual. El póster ya es
+// el fotograma 0 de v1.
 export const TALLER_VIDEO = "/taller/despiece-scrub-v1.mp4";
 // El póster es el fotograma 0, que no ha cambiado: sigue valiendo el de v1.
 export const TALLER_POSTER = "/taller/despiece-poster-v1.jpg";

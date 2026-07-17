@@ -397,11 +397,12 @@ export function useScrubRenderer(
       cacheName: cacheName(video),
       viewport: fisico,
       encuadre: parseEncuadre(encuadre),
-      // La portada (blending) pide DECODE-AHEAD: descodificar todo el clip por
-      // adelantado y retenerlo, para que el scroll no descodifique nada. Es lo que
-      // hace que en navegadores con el pipeline de vídeo frágil (Opera GX) el scrub
-      // no se atasque.
-      precarga: blending,
+      // DECODE-AHEAD por defecto en todo hero que use canvas (portada Y taller):
+      // descodificar el clip entero por adelantado y retenerlo, para que el scroll
+      // no descodifique nada. Es lo que hace que en navegadores con el pipeline de
+      // vídeo frágil (Opera GX) el scrub no se atasque. El renderer solo corre con
+      // el canvas activo, así que aquí siempre conviene precargar.
+      precarga: true,
     });
 
     // Watchdog de arranque. En navegadores que restringen WebCodecs (Opera GX con

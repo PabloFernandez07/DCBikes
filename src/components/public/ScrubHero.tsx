@@ -175,15 +175,16 @@ export function ScrubHero({
     }
   }, []);
 
-  // El canvas (WebCodecs) se enciende SOLO si esta página pide `blending` y el
-  // navegador puede. La portada lo pide: el cross-fade entre fotogramas vecinos le
-  // da cadencia de refresco (fluido de verdad) sin subir peso, y su cámara casi
-  // quieta hace el fantasma imperceptible. El taller NO lo pide —sus piezas se
-  // moverían y el cross-fade las duplicaría—, así que se queda con el <video> +
-  // currentTime (all-intra: los seeks caen en keyframe y son instantáneos). Sin
-  // WebCodecs (Safari viejo) o si el worker falla, la portada también cae al
-  // <video>. En móvil NI se descarga el MP4 (lock ya es false ahí).
-  const usaCanvas = blending && lock && soportaScrubWebCodecs && !scrubFallido;
+  // El canvas (WebCodecs) + DECODE-AHEAD es el MOTOR POR DEFECTO de todos los
+  // heroes (portada y taller): descodifica el clip entero por adelantado y en el
+  // scroll solo pinta, así va fluido incluso en navegadores con el pipeline de
+  // vídeo frágil (Opera GX), donde descodificar en caliente se atasca. El BLENDING
+  // (cross-fade entre fotogramas vecinos) es un extra APARTE, solo para planos de
+  // cámara casi quieta (la portada): en el taller las piezas del despiece se
+  // mueven y el cross-fade las duplicaría, por eso el taller usa el canvas SIN
+  // blending. Sin WebCodecs (Safari viejo) o si el worker falla, se cae al
+  // <video>+currentTime. En móvil NI se descarga el MP4 (lock ya es false ahí).
+  const usaCanvas = lock && soportaScrubWebCodecs && !scrubFallido;
 
   useScrubRenderer(sectionRef, canvasHostRef, applyProgress, {
     enabled: usaCanvas,
