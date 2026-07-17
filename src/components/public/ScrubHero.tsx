@@ -222,7 +222,10 @@ export function ScrubHero({
             position: "fixed", top: 0, left: 0, right: 0, zIndex: 99999,
             background: "rgba(0,0,0,0.92)", color: "#33ff66",
             font: "12px/1.5 monospace", padding: "10px 12px",
-            maxHeight: "60vh", overflow: "auto", whiteSpace: "pre-wrap",
+            whiteSpace: "pre-wrap",
+            // pointer-events:none para que el panel NO se coma el scroll de la
+            // rueda: así la página baja y el medidor cuenta de verdad.
+            pointerEvents: "none",
           }}
         >
           {`DIAGNÓSTICO DEL HERO  —  HAZ SCROLL arriba y abajo y mira el número de abajo

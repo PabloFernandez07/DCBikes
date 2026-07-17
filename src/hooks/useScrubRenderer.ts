@@ -426,7 +426,7 @@ export function useScrubRenderer(
     // Así se ve al momento —y en un navegador ajeno como Opera GX— si el scrub va
     // bien mientras se hace scroll. Solo con el parámetro; cero coste sin él.
     if (HERODIAG) {
-      let ultP = 0, ultR = 0, ultT = performance.now();
+      let ultP = 0, ultR = 0, ultT = performance.now(), maxImgS = 0;
       liveInterval = setInterval(() => {
         const el = document.getElementById("hero-diag-live");
         if (!el) return;
@@ -435,9 +435,10 @@ export function useScrubRenderer(
         const imgS = Math.round((paintedWorker - ultP) / dt);
         const fps = Math.round((rafCount - ultR) / dt);
         ultP = paintedWorker; ultR = rafCount; ultT = ahora;
-        el.style.color = imgS >= 45 ? "#33ff66" : imgS >= 20 ? "#ffcc33" : "#ff5555";
+        if (imgS > maxImgS) maxImgS = imgS;   // recuerda el pico para no depender del instante de la captura
+        el.style.color = maxImgS >= 45 ? "#33ff66" : maxImgS >= 20 ? "#ffcc33" : "#ff5555";
         el.textContent =
-          `▶ ${imgS} imágenes/seg   ·   ${fps} refrescos/seg   ·   fotograma ${Math.max(0, ultimoIndice)}/${nFrames > 0 ? nFrames - 1 : "?"}`;
+          `▶ ahora ${imgS}  ·  MÁX ${maxImgS} img/s  ·  ${fps} refr/s  ·  fot ${Math.max(0, ultimoIndice)}/${nFrames > 0 ? nFrames - 1 : "?"}`;
       }, 400);
     }
 
