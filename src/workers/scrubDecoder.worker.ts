@@ -111,6 +111,11 @@ import type { FromWorker, ScrubStats, ToWorker } from './scrubProtocol';
  * el compositor EN CADA FRAME COMPUESTO. La caché es una optimización; el 1:1 no.
  */
 const LRU_PRESUPUESTO_MIB = 96;
+/** Presupuesto de memoria (MiB) cuando la portada pide DECODE-AHEAD: se retienen
+ *  TODOS los fotogramas del clip. Es alto a propósito (el hero es un plano corto
+ *  de <=150 fotogramas), pero acotado: el backing se reduce si con él los N no
+ *  caben aquí, así nunca se dispara un OOM. Solo lo usa la portada con precarga. */
+const PRECARGA_PRESUPUESTO_MIB = 512;
 /** Tope de la LRU: más de 8 no compra nada (el informe de partida ya midió que
  *  con 8 se va a 58,5 fps, o sea lo mismo que cachearlos todos) y sí memoria. */
 const LRU_TOPE = 8;
@@ -219,6 +224,12 @@ let primerPintado = false;
 let tardiosSeguidos = 0;
 /** El hero no se ve: ni se adelantan fotogramas ni se guarda memoria de vídeo. */
 let dormido = false;
+/** Decode-ahead estilo Rockstar (lo pide la portada en el init): descodificar
+ *  TODOS los fotogramas por adelantado y retenerlos, para que el scroll no
+ *  descodifique nada. Ver prefetch() y backingIdeal(). */
+let modoPrecarga = false;
+/** true mientras el pase de decode-ahead sigue rellenando la caché. */
+let precargaCompleta = false;
 
 const stats: ScrubStats = {
   cached: 0, cachedMB: 0, decodes: 0, hits: 0, misses: 0, painted: 0,
@@ -254,6 +265,15 @@ function contarLru() {
 
 /** Cuántos bitmaps caben en el presupuesto con el backing de ahora. */
 function recalcularLru() {
+  // Decode-ahead: retener TODOS los fotogramas (el backing ya se capó en
+  // backingIdeal para que quepan en PRECARGA_PRESUPUESTO_MIB). Sin tope de 8 ni
+  // presupuesto de 96: la LRU no expulsa nada, y el prefetch los llena todos.
+  if (modoPrecarga && track) {
+    lruMax = track.frameCount;
+    adelanto = track.frameCount;
+    stats.lruMax = lruMax;
+    return;
+  }
   const caben = Math.floor((LRU_PRESUPUESTO_MIB * 1024 * 1024) / bytesPorFotograma());
   lruMax = Math.max(LRU_SUELO, Math.min(LRU_TOPE, caben));
   adelanto = adelantoDe(lruMax);
@@ -284,6 +304,7 @@ function dormir() {
   dormido = true;
   stats.sleeping = true;
   vaciarLru();
+  precargaCompleta = false;   // al despertar habrá que volver a precargar
   post({ type: 'stats', stats });
 }
 
@@ -543,7 +564,33 @@ async function unaPasada() {
  *  Con `pintado < 0` no hay nada pintado aún, así que no hay dirección que
  *  seguir: el `pintado + k*direccion` daría índices inventados a partir de -1. */
 async function prefetch() {
-  if (!track || pintado < 0 || dormido) return;
+  if (!track || dormido) return;
+
+  // DECODE-AHEAD (portada): recorre TODOS los fotogramas y rellena la caché, para
+  // que el scroll no descodifique nada (el trabajo caro se hace una vez, con el
+  // hero quieto). Cede al scroll: si el usuario mueve el scroll, sale marcando
+  // `repetir` para que servir() atienda antes lo pedido y luego vuelva a seguir
+  // precargando. Cuando ya están todos, `precargaCompleta` lo apaga para siempre.
+  if (modoPrecarga) {
+    if (precargaCompleta) { if (fracActual > 0) recomponer(); return; }
+    let faltan = 0;
+    for (let i = 0; i < track.frameCount; i++) {
+      if (dormido) return;
+      if (deseado !== pintado) { repetir = true; return; }  // el scroll pide algo: cede
+      if (lru.has(i)) continue;
+      if (!disponible(i)) { faltan++; continue; }            // aún no bajó; otra vuelta lo pillará
+      const bm = await descodificar(i);
+      if (!bm) return;
+      lruSet(i, bm);
+      if (fracActual > 0) recomponer();
+    }
+    if (faltan === 0) precargaCompleta = true;               // clip entero en memoria
+    if (fracActual > 0) recomponer();
+    return;
+  }
+
+  // Prefetch normal (taller / sin decode-ahead): solo `adelanto` en la dirección.
+  if (pintado < 0) return;
   for (let k = 1; k <= adelanto; k++) {
     if (deseado !== pintado) return;                 // ha vuelto a moverse: fuera
     const i = pintado + k * direccion;
@@ -814,7 +861,16 @@ async function descargar(url: string, cacheName: string) {
 function backingIdeal(t: Mp4Track): { w: number; h: number } {
   if (viewportW <= 0 || viewportH <= 0) return { w: t.codedWidth, h: t.codedHeight };
   const area = viewportW * viewportH;
-  const k = area > BACKING_MAX_PX ? Math.sqrt(BACKING_MAX_PX / area) : 1;
+  // Tope normal por sanidad. Con DECODE-AHEAD hay un segundo tope: el que hace que
+  // los N fotogramas quepan en PRECARGA_PRESUPUESTO_MIB. Si el viewport es más
+  // grande, se reduce el backing (el compositor reescala: se pierde algo de
+  // nitidez a cambio de que el clip entero quepa y el scroll no descodifique nada).
+  let topePx = BACKING_MAX_PX;
+  if (modoPrecarga && t.frameCount > 0) {
+    const porPrecarga = (PRECARGA_PRESUPUESTO_MIB * 1024 * 1024) / (t.frameCount * 4);
+    topePx = Math.min(topePx, porPrecarga);
+  }
+  const k = area > topePx ? Math.sqrt(topePx / area) : 1;
   return {
     w: Math.max(1, Math.round(viewportW * k)),
     h: Math.max(1, Math.round(viewportH * k)),
@@ -867,7 +923,13 @@ function arrancarDecoder(): Promise<void> {
       // ('prefer-hardware' está descartado aparte: es HARDWARE-ONLY en Chrome y
       // mataba el scrub en máquinas sin H.264 por hardware.)
       hardwareAcceleration: 'prefer-software',
-      optimizeForLatency: true,
+      // false con decode-ahead (como Rockstar): con latency:true el descodificador
+      // retiene la salida y hay que forzar flush() por fotograma, que es una fuente
+      // de interbloqueo documentada y penaliza justo el pipeline frágil de Opera GX.
+      // Precargando todo de golpe no hace falta la latencia baja: se descodifica en
+      // lote y un flush() al final saca lo que quede. Sin precarga se mantiene true
+      // (scrub bajo demanda, donde sí importa la latencia por fotograma).
+      optimizeForLatency: !modoPrecarga,
     };
 
     // Lo pide el propio mensaje de error de Chrome («Check isConfigSupported()
@@ -909,6 +971,7 @@ self.onmessage = (e: MessageEvent<ToWorker>) => {
     ctx = canvas.getContext('2d', { alpha: false });
     viewportW = msg.viewport.width;
     viewportH = msg.viewport.height;
+    modoPrecarga = msg.precarga ?? false;
     focoX = msg.encuadre.x;
     focoY = msg.encuadre.y;
     stats.canvasW = canvas.width;
@@ -938,6 +1001,7 @@ self.onmessage = (e: MessageEvent<ToWorker>) => {
     // instantáneo (evita un frame en negro a mitad de resize) y se re-descodifica
     // limpio justo después.
     vaciarLru();
+    precargaCompleta = false;   // backing nuevo => hay que re-precargar el clip
     if (bmPrevio && ctx && canvas) {
       ctx.drawImage(bmPrevio, 0, 0, canvas.width, canvas.height);
       bmPrevio.close();

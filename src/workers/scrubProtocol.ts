@@ -59,6 +59,16 @@ export type ToWorker =
        */
       viewport: { width: number; height: number };
       /**
+       * Decode-ahead estilo Rockstar: si true, tras arrancar el worker
+       * descodifica TODOS los fotogramas por adelantado y los RETIENE (LRU sin
+       * expulsión, con el backing capado para que quepan), de modo que durante el
+       * scroll no descodifica nada — solo pinta lo ya listo. Es lo que hace que en
+       * navegadores con el pipeline de vídeo frágil (Opera GX) el scrub no se
+       * atasque: el trabajo caro se hace una vez, con el hero quieto, no en caliente.
+       * Lo activa la portada (junto con el blending); el taller no lo usa.
+       */
+      precarga?: boolean;
+      /**
        * Ancla del encuadre tipo object-position, en 0..1 por eje
        * (0,5 = centro; 0 = arriba/izquierda; 1 = abajo/derecha).
        *
