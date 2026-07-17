@@ -156,10 +156,21 @@ export function ScrubHero({
     }
   }, []);
 
+  // WebCodecs DESACTIVADO a propósito (2026-07-17, a petición). El motor de canvas
+  // (Web Worker + OffscreenCanvas + WebCodecs, "estilo Rockstar") se fue
+  // complicando parche a parche desde el 14-jul y el scrub se percibía cada vez
+  // peor. Volvemos al <video> + currentTime de siempre —el que la portada usó
+  // estable dos meses—, que aquí es el "plan B" gobernado por useScrollVideo: con
+  // el MP4 all-intra los seeks caen en keyframe y son instantáneos, y el navegador
+  // reproduce el vídeo de forma NATIVA (sin el "stepping" de pintar índices
+  // enteros). Para REACTIVAR WebCodecs, poner este flag a true: vuelve a exigir el
+  // soporte del navegador y a caer al <video> solo si falla.
+  const WEBCODECS: boolean = false;
+
   // El canvas solo cuando hay scrub que hacer y el navegador puede. En móvil NI
   // SE DESCARGA el MP4 — y "móvil" incluye el teléfono apaisado y la tablet, no
   // solo el ancho de pantalla (ver useHeroFlags).
-  const usaCanvas = lock && soportaScrubWebCodecs && !scrubFallido;
+  const usaCanvas = WEBCODECS && lock && soportaScrubWebCodecs && !scrubFallido;
 
   useScrubRenderer(sectionRef, canvasHostRef, applyProgress, {
     enabled: usaCanvas,
