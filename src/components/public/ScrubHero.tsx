@@ -139,6 +139,10 @@ export function ScrubHero({
       el.style.opacity = String(opacity);
       // translate3d fuerza la capa en GPU; translateY a secas puede quedarse en CPU.
       el.style.transform = `translate3d(0, ${translateY}px, 0)`;
+      // opacity:0 NO saca del orden de tabulación ni del hit-testing: sin esto,
+      // un bloque invisible deja sus botones tabulables y clicables (WCAG 2.4.7).
+      // inert lo saca de foco, tab y puntero mientras está oculto.
+      el.toggleAttribute("inert", opacity < 0.05);
     }
 
     // scaleX en vez de width: animar width recalcula el layout en cada frame; un
@@ -175,7 +179,13 @@ export function ScrubHero({
   // declarado aquí dentro: eso crearía un tipo nuevo en cada render y React
   // remontaría el subárbol, relanzando la animación letra a letra del título.
   const reveal = (key: string) => ({
-    ref: (el: HTMLDivElement | null) => { revealRefs.current[key] = el; },
+    ref: (el: HTMLDivElement | null) => {
+      revealRefs.current[key] = el;
+      // Con scrub, revealStyle pinta el bloque a opacity:0 hasta que applyProgress
+      // lo revele. Nace inerte para que no haya botones invisibles pero tabulables
+      // antes del primer frame de scroll (WCAG 2.4.7); applyProgress lo abre.
+      if (el && lockRef.current) el.toggleAttribute("inert", true);
+    },
     style: revealStyle,
   });
 
@@ -183,13 +193,17 @@ export function ScrubHero({
     <section
       ref={sectionRef}
       className="relative"
-      style={{ height: lock ? `${pantallas * 100}vh` : "100dvh" }}
+      // Con scrub, alto fijo de N pantallas (el recorrido del scrub). Sin scrub,
+      // MIN-alto de una pantalla: si el contenido no cabe (zoom al 400 %, que
+      // reduce el viewport a 320 CSS px), la sección CRECE en vez de recortar los
+      // CTA con overflow:hidden (era WCAG 1.4.10).
+      style={lock ? { height: `${pantallas * 100}vh` } : { minHeight: "100dvh" }}
     >
       <div
         className={
           lock
             ? "sticky w-full overflow-hidden"
-            : "relative h-[100dvh] w-full overflow-hidden"
+            : "relative min-h-[100dvh] w-full overflow-hidden"
         }
         style={
           lock
@@ -197,12 +211,14 @@ export function ScrubHero({
             : undefined
         }
       >
-        {!isMobile ? (
+        {lock ? (
           <>
             {/* El póster va DEBAJO y siempre. El canvas nace con opacity:0 y solo
                 se destapa cuando el worker pinta su primer fotograma, así que
                 nunca hay hero en negro mientras baja el vídeo.
-                Si manda el canvas, el <video> ni se monta: no se descarga dos veces. */}
+                Si manda el canvas, el <video> ni se monta: no se descarga dos veces.
+                El <video> es el plan B (sin WebCodecs): scrub por currentTime,
+                gobernado por el scroll, NUNCA en bucle automático. */}
             <img
               src={poster}
               alt=""
@@ -227,6 +243,21 @@ export function ScrubHero({
               />
             )}
           </>
+        ) : !isMobile ? (
+          // Escritorio con prefers-reduced-motion: el póster (el fotograma 0, el
+          // escaparate REAL) congelado. Ni scrub, ni <video>, ni descarga del MP4:
+          // quien pide menos movimiento ve el contenido quieto, no un vídeo en
+          // bucle (era WCAG 2.2.2, nivel A). Se prefiere el póster al degradado de
+          // móvil porque en escritorio no hay que ahorrar datos y el plano real
+          // comunica más.
+          <img
+            src={poster}
+            alt=""
+            aria-hidden="true"
+            fetchPriority="high"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ objectPosition: encuadre }}
+          />
         ) : (
           fondoMovil ?? (
             <img
@@ -267,8 +298,16 @@ export function ScrubHero({
           }}
         />
 
-        {/* El contenido */}
-        <div className="absolute inset-0 z-10 flex items-center px-4 sm:px-6 lg:px-8">
+        {/* El contenido. Con scrub va absolute (clavado sobre el vídeo). Sin scrub
+            va en flujo con min-alto de pantalla y aire vertical: así, a zoom alto
+            el bloque empuja y la sección crece, en vez de recortarse (WCAG 1.4.10). */}
+        <div
+          className={
+            lock
+              ? "absolute inset-0 z-10 flex items-center px-4 sm:px-6 lg:px-8"
+              : "relative z-10 flex min-h-[100dvh] items-center px-4 sm:px-6 lg:px-8 py-20"
+          }
+        >
           <div className="flex flex-col gap-7 max-w-xl lg:max-w-2xl">
             {bloques.map(b => (
               <div key={b.key} {...reveal(b.key)}>{b.nodo}</div>
@@ -363,9 +402,16 @@ export function FondoGradiente() {
 export function HeroText({ text, baseDelay }: { text: string; baseDelay: number }) {
   return (
     <span>
-      {text.split("").map((char, i) => (
-        <AnimatedChar key={i} char={char} delay={baseDelay + i * 55} />
-      ))}
+      {/* Cada letra va en un <span display:inline-block> (AnimatedChar), y eso hace
+          que el lector de pantalla DELETREE el titular ("M U É V E T E"). El
+          sr-only da la palabra entera a la tecnología asistiva y los caracteres
+          animados van aria-hidden: se ven, pero no se leen letra a letra. */}
+      <span className="sr-only">{text}</span>
+      <span aria-hidden="true">
+        {text.split("").map((char, i) => (
+          <AnimatedChar key={i} char={char} delay={baseDelay + i * 55} />
+        ))}
+      </span>
     </span>
   );
 }

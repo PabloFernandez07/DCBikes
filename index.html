@@ -33,7 +33,12 @@
     Es una lista separada por comas (= "o") a propósito: sintaxis de Media
     Queries 3, que entiende cualquier navegador.
   -->
-  <link rel="preload" as="image" href="/hero/hero-poster-v2.jpg" fetchpriority="high"
+  <!-- OJO: este href DEBE coincidir con HERO_POSTER de ScrollVideoHero.tsx. Estuvo
+       apuntando a v2 (renombrado a v5 en el commit de 1080p) y, como el rewrite SPA
+       de vercel.json convierte cualquier fichero que falta en un 200 de index.html,
+       fallaba en silencio: gastaba un round-trip de máxima prioridad bajando HTML
+       disfrazado de imagen y el póster real (que es el LCP) no se preloadeaba. -->
+  <link rel="preload" as="image" href="/hero/hero-poster-v5.jpg" fetchpriority="high"
         media="(min-width: 1025px), (min-width: 769px) and (pointer: fine)" />
 
   <!-- Tema -->

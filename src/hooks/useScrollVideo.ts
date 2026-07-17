@@ -69,27 +69,24 @@ export function useScrollVideo(
 
     const lock = !flags.isMobile && !flags.isReducedMotion;
 
-    // Móvil o reduced-motion: el vídeo ni se controla, se deja en bucle.
+    // Móvil o reduced-motion: aquí NO debería llegar un <video>. ScrubHero solo
+    // lo monta en modo lock (con reduced-motion pinta el póster estático y con
+    // móvil el degradado), así que el guard de arriba (`!video`) ya nos saca
+    // antes. Este bloque es defensa en profundidad: si por lo que sea hubiera un
+    // <video>, lo dejamos PARADO en su primer fotograma. NUNCA en bucle
+    // automático — con prefers-reduced-motion eso sería WCAG 2.2.2 (nivel A):
+    // el único usuario que pidió menos movimiento acabaría siendo el único con
+    // un vídeo reproduciéndose solo e indefinidamente.
+    //
+    // Tampoco se llama a onProgress(0): escribiría opacity:0 sobre el badge, el
+    // h1, el divisor, el párrafo y los dos CTA, y sin scrub nadie volvería a
+    // mover el progreso, dejando el hero mudo para siempre. Los bloques se
+    // quedan como los pinta el CSS (visibles). ScrubHero además corta
+    // applyProgress cuando !lock.
     if (!lock) {
-      video.loop = true;
-      video.muted = true;
-      video.autoplay = true;
-      void video.play().catch(() => {
-        // Algunos navegadores bloquean el autoplay; con el primer frame basta.
-      });
-      // OJO: aquí NO se llama a onProgress(0). Parece inofensivo y es lo que
-      // dejaba el hero SIN TEXTO NI BOTONES con prefers-reduced-motion en
-      // escritorio: onProgress escribe los estilos del reveal A MANO sobre los
-      // refs, y con p=0 eso es `opacity: 0` en el badge, el h1, el divisor, el
-      // párrafo y los DOS CTA. Sin scrub no hay scroll que vuelva a mover el
-      // progreso NUNCA MÁS, así que ese opacity:0 se quedaba puesto para
-      // siempre: el usuario con reduced-motion —justo el que tiene trastornos
-      // vestibulares— veía un vídeo en bucle y cero contenido.
-      //
-      // Sin esta llamada nadie toca los bloques y se quedan como los pinta el
-      // CSS (visibles), que es lo que ya pasaba en móvil de casualidad (allí no
-      // se monta el <video>, así que el efecto salía antes de llegar aquí).
-      // ScrollVideoHero además corta applyProgress cuando !lock, por si acaso.
+      video.loop = false;
+      video.autoplay = false;
+      video.pause();
       return;
     }
 

@@ -145,8 +145,16 @@ const BACKING_MAX_PX = 3840 * 2160;
  *  Tiene que salir de la LRU y no ser fijo: adelantar más fotogramas de los que
  *  caben es contraproducente, porque los últimos van EXPULSANDO a los primeros
  *  —que son justo los que el scroll va a pedir a continuación—, o sea decode
- *  tirado a la basura en las máquinas que menos les sobra. */
-const adelantoDe = (lruMax: number) => Math.max(1, Math.min(5, lruMax - 3));
+ *  tirado a la basura en las máquinas que menos les sobra.
+ *
+ *  El máximo seguro es ceil(lruMax/2), NO lruMax-3: con la LRU expulsando por
+ *  recencia y el prefetch intercalando atrás/delante, un adelanto mayor que la
+ *  mitad de la caché se auto-expulsa antes de pintarse. La fórmula lruMax-3
+ *  fallaba EXACTAMENTE en lruMax=8 (el valor que toma casi todo el escritorio,
+ *  1366x768 y 1920x1080): daba 5 y una bajada de la portada costaba 469 decodes
+ *  para 239 fotogramas (~2x). Con ceil(8/2)=4 baja a 239. Esto ataca jank y
+ *  batería (decode tirado), NO el stepping: el nº de imágenes no cambia. */
+const adelantoDe = (lruMax: number) => Math.max(1, Math.min(5, Math.ceil(lruMax / 2)));
 /** Si el fotograma no ha salido en este tiempo, se fuerza con flush(). */
 const ESPERA_ANTES_DE_FLUSH_MS = 8;
 /** Cuántos fotogramas seguidos tienen que tardar para dar por hecho que este
