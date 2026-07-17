@@ -127,19 +127,20 @@ export function ScrollVideoHero({ onQuoteOpen }: ScrollVideoHeroProps) {
     <ScrubHero
       video={HERO_VIDEO}
       poster={HERO_POSTER}
-      // Tres pantallas, no cinco, y el motivo es la FLUIDEZ, no el diseño.
-      // El recorrido de scroll se reparte entre los fotogramas que tenga el
-      // vídeo: con 5 pantallas salían 4320 px / 120 saltos = 36 px de scroll por
-      // fotograma, y a velocidad de lectura (600 px/s) eso son ~17 imágenes
-      // nuevas por segundo. El hero se veía a saltos con el navegador yendo a
-      // 60 fps clavados y cero frames perdidos: no era jank, era que no había
-      // imágenes que enseñar. Medido: 5 pantallas -> 20 fps efectivos;
-      // 3 -> 30; 2 -> 60. Con el vídeo ya a 48 fps, 3 pantallas dan 9 px por
-      // fotograma, que es cadencia de sobra.
-      // Si subes este número, baja la fluidez en proporción directa. La regla:
-      // px_por_fotograma = (pantallas-1)*alto_ventana / (nº fotogramas - 1),
-      // y tiene que quedar por debajo de ~10.
-      pantallas={3}
+      // DOS pantallas, no tres, y el motivo es la FLUIDEZ. El recorrido de scroll
+      // se reparte entre los fotogramas del vídeo: px_por_fotograma =
+      // (pantallas-1)*alto_ventana / (nº fotogramas - 1), y a velocidad de lectura
+      // salen v_scroll/px_por_fotograma imágenes nuevas por segundo. v5 tiene 121
+      // fotogramas; con 3 pantallas eso son 18 px/fotograma a 1080 -> solo ~8 img/s
+      // leyendo (trabado, medido). Con 2 pantallas: 9 px/fotograma -> ~17 img/s, el
+      // DOBLE, sin tocar el vídeo ni el peso. La portada está sobremuestreada 7x
+      // (la cámara casi no se mueve: 0,87 px de contenido por fotograma), así que
+      // no le hacen falta más fotogramas, solo menos recorrido. Es lo que hace GTA
+      // VI: recorrido corto y denso (4-8 px/imagen) en vez de largo y ralo.
+      // Los rangos de aparición del texto NO se recalibran: van en progreso 0..1,
+      // se comprimen solos. Para fluidez de refresco total haría falta el canvas
+      // con blending (ver la skill scroll-video-optimo); esto es el nivel gratis.
+      pantallas={2}
       bloques={bloques}
       // En móvil la portada nunca ha enseñado el vídeo (son megas para nada en
       // datos): un degradado de marca y a correr.

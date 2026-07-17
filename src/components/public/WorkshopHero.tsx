@@ -127,10 +127,15 @@ export function WorkshopHero({ onQuoteOpen }: WorkshopHeroProps) {
     <ScrubHero
       video={TALLER_VIDEO}
       poster={TALLER_POSTER}
-      // Tres pantallas, no cinco: en la portada el hero ES el escaparate, pero
-      // aquí el visitante viene a ver servicios y precios. Cinco pantallas de
-      // vídeo por delante serían cine caro.
-      pantallas={3}
+      // DOS pantallas, por fluidez (igual que la portada): v1 tiene 145 fotogramas
+      // y con 3 pantallas salían 15 px/fotograma -> ~10 img/s leyendo (trabado);
+      // con 2 pantallas, 7,5 px -> ~20 img/s, el doble, sin tocar el vídeo ni el
+      // peso. Aviso honesto: el taller tiene un límite que la geometría NO cura —
+      // las piezas del despiece se mueven hasta 21 px por fotograma (la cámara de
+      // la portada está quieta, esto no), y ese salto de CONTENIDO por imagen es
+      // intrínseco a la fuente (render de Giant, sin proyecto 3D ni fuente a más
+      // fps). Bajar pantallas sube la cadencia; el salto de las piezas se queda.
+      pantallas={2}
       // La pantalla es más panorámica que el vídeo (16:9), así que cover recorta
       // arriba y abajo. Centrado, se comía el sillín. Todo el recorte al suelo.
       encuadre="center top"
