@@ -221,10 +221,13 @@ let tardiosSeguidos = 0;
 let dormido = false;
 
 const stats: ScrubStats = {
-  cached: 0, cachedMB: 0, decodes: 0, hits: 0, misses: 0,
+  cached: 0, cachedMB: 0, decodes: 0, hits: 0, misses: 0, painted: 0,
   ranges: 0, needsFlush: false, sleeping: false,
   lruMax: LRU_TOPE, canvasW: 0, canvasH: 0,
 };
+/** Última vez que se mandaron stats "en vivo" desde pintar(), para no inundar
+ *  el hilo principal con un postMessage por fotograma. */
+let ultimaStatsLive = 0;
 
 // ---------------------------------------------------------------- caché LRU
 
@@ -439,6 +442,14 @@ function pintar(i: number, bm: ImageBitmap) {
     }
   }
   pintado = i;
+  stats.painted++;
+  // Latido "en vivo" para el medidor de img/s del panel de diagnóstico, con
+  // throttle para no mandar un postMessage por fotograma (serían ~60/s).
+  const ahora = performance.now();
+  if (ahora - ultimaStatsLive > 150) {
+    ultimaStatsLive = ahora;
+    post({ type: 'stats', stats });
+  }
   if (!primerPintado) {
     primerPintado = true;
     post({ type: 'firstPaint' });

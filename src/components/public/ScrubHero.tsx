@@ -225,11 +225,18 @@ export function ScrubHero({
             maxHeight: "60vh", overflow: "auto", whiteSpace: "pre-wrap",
           }}
         >
-          {`DIAGNÓSTICO DEL HERO  —  mándame una captura de esto
+          {`DIAGNÓSTICO DEL HERO  —  HAZ SCROLL arriba y abajo y mira el número de abajo
 soporta WebCodecs: ${soportaScrubWebCodecs}
 isMobile: ${isMobile}  ·  reducedMotion: ${isReducedMotion}  ·  lock: ${lock}
 blending pedido: ${blending}  ·  usaCanvas: ${usaCanvas}  ·  scrubFallido: ${scrubFallido}
-MOTOR ACTIVO: ${usaCanvas ? "CANVAS (WebCodecs)" : "VIDEO (fallback)"}
+MOTOR ACTIVO: ${usaCanvas ? "CANVAS (WebCodecs)" : "VIDEO (fallback)"}`}
+          <div
+            id="hero-diag-live"
+            style={{ fontSize: "20px", fontWeight: 700, margin: "10px 0", color: "#33ff66" }}
+          >
+            ▶ haz scroll para medir…
+          </div>
+          {`(45+ verde = fluido · 20-45 amarillo · menos de 20 rojo = trabado. Mándame una captura mientras haces scroll.)
 ──────── eventos del worker ────────`}
           <pre id="hero-diag-log" style={{ margin: 0, color: "#9ff" }} />
         </div>

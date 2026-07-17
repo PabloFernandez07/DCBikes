@@ -11,6 +11,10 @@ export interface ScrubStats {
   decodes: number;
   hits: number;
   misses: number;
+  /** Fotogramas REALMENTE pintados en el canvas (incluye los recompuestos del
+   *  cross-fade). Es la métrica de fluidez de verdad: el hilo principal calcula
+   *  img/s con el delta de este contador. */
+  painted: number;
   /** Peticiones Range sueltas para adelantar un fotograma que aún no había
    *  bajado (ver `pedirPrioritario` en el worker). */
   ranges: number;

@@ -207,6 +207,9 @@ export function useScrubRenderer(
     let ultimoT = 0;
     let visible = true;
     let watchdog: ReturnType<typeof setTimeout> | undefined;   // arranque de WebCodecs
+    let rafCount = 0;         // refrescos del bucle (fps), para el medidor en vivo
+    let paintedWorker = 0;    // fotogramas pintados según el worker (métrica de fluidez)
+    let liveInterval: ReturnType<typeof setInterval> | undefined;
 
     // Los 'seek' son objetos planos; el 'init' lleva el OffscreenCanvas, que NO
     // se clona: hay que TRANSFERIRLO explícitamente o postMessage lanza.
@@ -228,6 +231,7 @@ export function useScrubRenderer(
         if (msg.loaded === 0 || msg.loaded >= msg.total) diag(`descarga: ${msg.loaded}/${msg.total} bytes`);
         cbs.current.onLoadProgress?.(msg.total ? msg.loaded / msg.total : 0);
       } else if (msg.type === "stats") {
+        paintedWorker = msg.stats.painted;   // para el medidor en vivo del panel
         exponerStats(msg.stats);
       } else if (msg.type === "error") {
         // El worker no puede seguir: se retira y manda el <video>.
@@ -282,6 +286,7 @@ export function useScrubRenderer(
     };
 
     const tick = (t: number) => {
+      rafCount++;   // para el medidor de refrescos/seg del panel
       const dt = Math.min(Math.max((t - ultimoT) / 1000, 0), 0.1);
       ultimoT = t;
 
@@ -415,9 +420,31 @@ export function useScrubRenderer(
     ro.observe(host);
     leerScroll();
 
+    // Medidor en vivo del panel de diagnóstico (?herodiag=1): cada 400 ms calcula
+    // las imágenes/seg REALMENTE pintadas (delta del contador del worker) y los
+    // refrescos/seg del bucle, y los escribe en grande. Verde fluido, rojo trabado.
+    // Así se ve al momento —y en un navegador ajeno como Opera GX— si el scrub va
+    // bien mientras se hace scroll. Solo con el parámetro; cero coste sin él.
+    if (HERODIAG) {
+      let ultP = 0, ultR = 0, ultT = performance.now();
+      liveInterval = setInterval(() => {
+        const el = document.getElementById("hero-diag-live");
+        if (!el) return;
+        const ahora = performance.now();
+        const dt = (ahora - ultT) / 1000 || 1;
+        const imgS = Math.round((paintedWorker - ultP) / dt);
+        const fps = Math.round((rafCount - ultR) / dt);
+        ultP = paintedWorker; ultR = rafCount; ultT = ahora;
+        el.style.color = imgS >= 45 ? "#33ff66" : imgS >= 20 ? "#ffcc33" : "#ff5555";
+        el.textContent =
+          `▶ ${imgS} imágenes/seg   ·   ${fps} refrescos/seg   ·   fotograma ${Math.max(0, ultimoIndice)}/${nFrames > 0 ? nFrames - 1 : "?"}`;
+      }, 400);
+    }
+
     return () => {
       vivo = false;
       clearTimeout(watchdog);
+      clearInterval(liveInterval);
       io.disconnect();
       ro.disconnect();
       clearTimeout(temporizadorViewport);
