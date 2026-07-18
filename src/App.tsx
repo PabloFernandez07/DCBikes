@@ -51,6 +51,9 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
   // el rato en el que el scroll está bloqueado (ver heroCarga.ts y ScrubHero).
   const precargandoHero = useHeroPrecargando();
   const barraRef = useRef<HTMLDivElement>(null);
+  /** Si esta pantalla llegó a retener al hero, ya lleva rato vista: no hay que
+   *  regalarle además el mínimo de cortesía de 300ms antes de irse. */
+  const esperoAlHero = useRef(false);
 
   useEffect(() => {
     // F-24 (V5): si el usuario pide reducir animaciones, no mostramos el splash
@@ -60,14 +63,17 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
       return;
     }
     // Con un hero precargando no se arranca la salida: se espera a que termine
-    // (el hero suelta su bloqueo y esto a la vez). El reloj de salida empieza
-    // entonces, así que el mínimo de 300ms se respeta igual.
-    if (precargandoHero) return;
+    // (el hero suelta su bloqueo y esto a la vez).
+    if (precargandoHero) { esperoAlHero.current = true; return; }
     // t1: el contenido se desvanece (300ms — el splash solo se ve la primera
-    // vez por sesión, así que prima liberar el contenido cuanto antes)
-    const t1 = setTimeout(() => setExiting(true), 300);
-    // t2: la cortina ya subió, desmontamos (total ≤800ms)
-    const t2 = setTimeout(onDone, 800);
+    // vez por sesión, así que prima liberar el contenido cuanto antes).
+    // Si ha estado esperando al hero, ese mínimo YA se ha cumplido de sobra
+    // (medio segundo largo mirando el logo): salir de inmediato, o la espera de
+    // la precarga y la cortesía de los 300ms se suman y se hacen eternas.
+    const espera = esperoAlHero.current ? 0 : 300;
+    const t1 = setTimeout(() => setExiting(true), espera);
+    // t2: la cortina ya subió, desmontamos (la subida son 450ms + 50 de retardo)
+    const t2 = setTimeout(onDone, espera + 500);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);

@@ -20,6 +20,25 @@ export interface BloqueHero {
   nodo: ReactNode;
 }
 
+/**
+ * Fracción del clip que hay que tener descodificada para soltar el scroll.
+ *
+ * Esperar al 100 % costaba ~1 s en CADA entrada a la página (el MP4 sí se
+ * cachea —Cache API— pero los ImageBitmap viven en RAM y mueren con la pestaña,
+ * así que el descodificado se paga siempre). Con el 30 % la espera baja a ~350 ms
+ * y el resto sigue precargándose de fondo.
+ *
+ * Por qué el 30 % es seguro y no un apaño: la precarga descodifica ~120
+ * fotogramas/s y el prefetch va EN ORDEN (0, 1, 2...), igual que los consume el
+ * scroll. A velocidad de lectura (150 px/s sobre un recorrido de una pantalla)
+ * se consumen ~8 fotogramas/s: la precarga va 15x por delante y nunca la
+ * alcanzas. El caso que sí puede rebasarla es un fling inmediato nada más
+ * soltar, en un navegador con el descodificador lento; ahí se notaría un
+ * instante de tirón hasta que la precarga recupere. Es el intercambio elegido:
+ * ~650 ms menos de espera en cada visita a cambio de ese caso extremo.
+ */
+const UMBRAL_SOLTAR = 0.3;
+
 export interface ScrubHeroProps {
   /** MP4 ALL-INTRA (un keyframe por fotograma). Sin eso, el scrub va a tirones
    *  y no hay código que lo arregle: cada salto obligaría al navegador a
@@ -211,8 +230,10 @@ export function ScrubHero({
   }, [usaCanvas]);
 
   const onPrecarga = useCallback((p: number, completa: boolean) => {
-    heroProgreso(p);
-    if (completa) heroListo();
+    // La barra mide "cuánto falta para poder hacer scroll", no "cuánto falta
+    // para tenerlo todo": se llena justo cuando se suelta la puerta.
+    heroProgreso(p / UMBRAL_SOLTAR);
+    if (completa || p >= UMBRAL_SOLTAR) heroListo();
   }, []);
 
   // El bloqueo de verdad: sin scroll en el documento. `overflow:hidden` frena
