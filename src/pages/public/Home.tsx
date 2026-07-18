@@ -529,11 +529,7 @@ export default function Home() {
                   // de 500vh da tiempo de sobra a descargarlas. En lazy llegaban
                   // justo cuando pasabas por encima y el pintado robaba frames.
                   eager
-                  onClick={() =>
-                    product.slug
-                      ? navigate(`/producto/${product.slug}`)
-                      : undefined
-                  }
+                  href={`/producto/${product.slug}`}
                 />
               </div>
             ))}

@@ -47,3 +47,8 @@ Docs/runbooks/secretos-generados-RECUPERAR.txt
 # Copias de seguridad de datos antes de operaciones destructivas.
 # Contienen datos de clientes: NUNCA al repositorio.
 .backups/
+
+# Generado en cada build por scripts/generate-sitemap.mjs (prebuild). Estuvo
+# versionado y un build local sin credenciales lo reescribía con 15 URLs en vez
+# de 129, listo para colarse en un commit. Vercel lo regenera siempre.
+public/sitemap.xml

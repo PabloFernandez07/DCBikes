@@ -1,12 +1,25 @@
 import { clsx } from 'clsx'
 import { Bike } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import type { Product, ProductImage } from '@/lib/database.types'
 
 interface ProductCardProps {
   product: Product
   images: ProductImage[]
-  onClick: () => void
+  /**
+   * Destino de la tarjeta, p.ej. `/producto/<slug>`.
+   *
+   * ES UN ENLACE DE VERDAD, no un onClick. Antes la tarjeta era un
+   * `<article onClick role="button">` y en TODO el sitio no había ni un solo
+   * `<a href="/producto/...">`: las 114 fichas eran páginas huérfanas, sin un
+   * enlace que las descubriera ni que les pasara autoridad. Google las trataba
+   * como irrelevantes y les daba el mínimo presupuesto de rastreo.
+   *
+   * De paso arregla lo obvio: abrir en pestaña nueva, copiar la dirección, ver
+   * el destino en la barra de estado, y el teclado sin necesitar onKeyDown.
+   */
+  href: string
   /** Override del nombre mostrado (ej. nombre limpio del grupo) */
   displayName?: string
   /** Si se pasa, muestra "desde X €" con este precio mínimo */
@@ -39,7 +52,7 @@ function fmt(n: number) {
 export function ProductCard({
   product,
   images,
-  onClick,
+  href,
   displayName,
   fromPrice,
   variantCount,
@@ -61,17 +74,13 @@ export function ProductCard({
   const cardName = displayName ?? product.name
 
   return (
-    <article
-      onClick={onClick}
+    <Link
+      to={href}
       className={clsx(
-        'rv group relative bg-[var(--color-card)] rounded-2xl overflow-hidden cursor-pointer',
+        'rv group relative block bg-[var(--color-card)] rounded-2xl overflow-hidden',
         'border border-transparent transition-all duration-300',
         'hover:border-[rgba(196,162,207,0.35)] hover:shadow-[0_0_30px_rgba(196,162,207,0.12)] hover:-translate-y-1',
       )}
-      tabIndex={0}
-      role="button"
-      onKeyDown={e => e.key === 'Enter' && onClick()}
-      aria-label={`Ver ${cardName}`}
     >
       <div className="aspect-square bg-white overflow-hidden relative">
         {mainImage ? (
@@ -150,6 +159,6 @@ export function ProductCard({
       </div>
 
       <div className="absolute inset-0 rounded-2xl ring-2 ring-[var(--color-lavender)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-    </article>
+    </Link>
   )
 }

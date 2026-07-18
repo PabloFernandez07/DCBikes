@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { SlidersHorizontal, X, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { clsx } from 'clsx'
 import { supabase } from '@/lib/supabase'
@@ -158,7 +157,6 @@ function useReveal(deps: unknown[]) {
 }
 
 export default function Catalog() {
-  const navigate = useNavigate()
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [images, setImages] = useState<ProductImage[]>([])
@@ -521,7 +519,7 @@ export default function Catalog() {
                     <ProductCard
                       product={card.parent}
                       images={getProductImagesForCard(card)}
-                      onClick={() => navigate(`/producto/${card.parent.slug}`)}
+                      href={`/producto/${card.parent.slug}`}
                       displayName={card.displayName}
                       fromPrice={hasPriceRange ? card.minPrice : undefined}
                       variantCount={card.variants.length}

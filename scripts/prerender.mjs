@@ -12,8 +12,13 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
+import { traerCatalogo, portadaDe, precioFinal } from './lib/catalogo.mjs'
+
 const __dir = dirname(fileURLToPath(import.meta.url))
 const dist  = join(__dir, '..', 'dist')
+
+/** En Vercel/CI, quedarse sin fichas es un fallo de build: ver traerCatalogo. */
+const EN_CI = process.env.VERCEL === '1' || process.env.CI === 'true' || process.env.CI === '1'
 
 const SITE = process.env.SITE_URL || 'https://dcbikescantabria.com'
 const NAME = 'DC Bikes Cantabria'
@@ -376,6 +381,102 @@ const routes = [
   },
 ]
 
+// ─── Fichas de producto ───────────────────────────────────────────────────────
+
+/** Escapa para meter texto de la base de datos dentro de un atributo HTML. */
+function esc(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+/** JSON-LD seguro: `</script>` dentro de una cadena cerraría la etiqueta. */
+function jsonLd(obj) {
+  return `
+  <script type="application/ld+json">
+  ${JSON.stringify(obj, null, 2).replace(/</g, '\\u003c')}
+  </script>`
+}
+
+/**
+ * Nombre para el <title>. La app usa cleanGroupName (variant-colors.ts), que
+ * además de la talla quita listas de colores, sabores y cafeína. NO se replican
+ * aquí a propósito: son tres regex largas que se desincronizarían en silencio y
+ * el precio de fallar es un título raro. Se quita solo la talla, que es la
+ * diferencia que de verdad se nota ("Calcetín Aero Blanco L/XL" -> "... Blanco").
+ */
+function nombreParaTitulo(p) {
+  if (!p.size_label) return p.name
+  const t = p.size_label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return p.name
+    .replace(new RegExp(`\\bT-?${t}\\b`, 'i'), ' ')
+    .replace(new RegExp(`\\b${t}\\b`, 'i'), ' ')
+    .replace(/\s+/g, ' ').replace(/\s*[-_,/]\s*$/, '').trim() || p.name
+}
+
+function rutaDeProducto(p, baseImagenes) {
+  const nombre = nombreParaTitulo(p)
+  const canonical = `${SITE}/producto/${p.slug}`
+  const desc = (p.short_description
+    || `${nombre} disponible en DC Bikes Cantabria, El Astillero.${p.brand ? ` Marca: ${p.brand}.` : ''} Consulta precio y disponibilidad.`
+  ).replace(/\s+/g, ' ').trim().slice(0, 300)
+
+  const portada = portadaDe(p, baseImagenes)
+  const precio = precioFinal(p)
+
+  const producto = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: nombre,
+    description: p.description || p.short_description || nombre,
+    ...(portada ? { image: [portada] } : {}),
+    ...(p.sku ? { sku: p.sku } : {}),
+    // El catálogo se importó por EAN: es el identificador que enlaza la ficha
+    // con Google Shopping. Solo se declara gtin13 si de verdad son 13 dígitos.
+    ...(p.ean && /^\d{13}$/.test(String(p.ean).trim()) ? { gtin13: String(p.ean).trim() } : {}),
+    brand: { '@type': 'Brand', name: p.brand || 'DC Bikes' },
+    // is_second_hand estaba en la base y no se declaraba: los productos de
+    // ocasión se anunciaban implícitamente como nuevos.
+    itemCondition: p.is_second_hand
+      ? 'https://schema.org/UsedCondition'
+      : 'https://schema.org/NewCondition',
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'EUR',
+      price: Number(precio ?? 0).toFixed(2),
+      availability: (p.stock ?? 0) > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      itemCondition: p.is_second_hand
+        ? 'https://schema.org/UsedCondition'
+        : 'https://schema.org/NewCondition',
+      url: canonical,
+      seller: { '@type': 'Organization', name: NAME },
+    },
+  }
+
+  const migas = [
+    { name: 'Inicio', url: SITE },
+    { name: 'Catálogo', url: `${SITE}/catalogo` },
+    ...(p.categories?.name ? [{ name: p.categories.name, url: `${SITE}/catalogo` }] : []),
+    { name: nombre, url: canonical },
+  ]
+
+  return {
+    dir: `producto/${p.slug}`,
+    title: `${nombre} | ${NAME}`,
+    desc,
+    canonical,
+    noIndex: false,
+    // La imagen de compartir es LA DEL PRODUCTO, no el logo. Antes cada ficha
+    // compartida en WhatsApp enseñaba el logo recortado en vez de la bici.
+    image: portada || IMG,
+    imageAlt: portada ? nombre : IMG_ALT,
+    ogType: 'product',
+    schema: jsonLd(producto) + schemaBreadcrumb(migas),
+  }
+}
+
 // ─── Patch ────────────────────────────────────────────────────────────────────
 
 /**
@@ -385,10 +486,16 @@ const routes = [
  * Conserva: iconos, manifest, theme-color, color-scheme, author, publisher
  * Reemplaza: title, description, robots, canonical, hreflang, geo/ICBM, og:*, twitter:*, JSON-LD
  */
-function patch(html, { title, desc, canonical, noIndex, schema }) {
+function patch(html, { title, desc, canonical, noIndex, schema, image, imageAlt, ogType }) {
   const robots = noIndex
     ? 'noindex, nofollow'
     : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
+  const img = image || IMG
+  const imgAlt = imageAlt || IMG_ALT
+  // Las medidas 1200x630 solo valen para el og-image de la casa. Declararlas
+  // sobre la foto de un producto (que tiene otras) hacía que las redes
+  // reservaran un hueco con la proporción equivocada.
+  const esOgPropio = img === IMG
 
   let out = html
     .replace(/<title>[^<]*<\/title>/, '')
@@ -422,34 +529,40 @@ function patch(html, { title, desc, canonical, noIndex, schema }) {
     .replace(/<meta name="twitter:image:alt"[^>]*>/g, '')
     .replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/g, '')
 
+  // canonical === null es el fallback de la SPA: no puede declarar canonical ni
+  // og:url porque se sirve bajo CUALQUIER ruta no prerenderizada. Ver spa.html.
+  const bloqueCanonical = canonical
+    ? `
+  <link rel="canonical" href="${esc(canonical)}" />
+  <link rel="alternate" hreflang="es-ES" href="${esc(canonical)}" />
+  <link rel="alternate" hreflang="x-default" href="${esc(canonical)}" />`
+    : ''
+
   const seoBlock = `
-  <title>${title}</title>
-  <meta name="description" content="${desc}" />
-  <meta name="robots" content="${robots}" />
-  <link rel="canonical" href="${canonical}" />
-  <link rel="alternate" hreflang="es-ES" href="${canonical}" />
-  <link rel="alternate" hreflang="x-default" href="${canonical}" />
+  <title>${esc(title)}</title>
+  <meta name="description" content="${esc(desc)}" />
+  <meta name="robots" content="${robots}" />${bloqueCanonical}
   <meta name="geo.region" content="ES-CB" />
   <meta name="geo.placename" content="El Astillero, Cantabria" />
   <meta name="geo.position" content="43.3985;-3.8182" />
   <meta name="ICBM" content="43.3985, -3.8182" />
-  <meta property="og:type" content="website" />
+  <meta property="og:type" content="${ogType || 'website'}" />
   <meta property="og:site_name" content="${NAME}" />
-  <meta property="og:title" content="${title}" />
-  <meta property="og:description" content="${desc}" />
-  <meta property="og:image" content="${IMG}" />
+  <meta property="og:title" content="${esc(title)}" />
+  <meta property="og:description" content="${esc(desc)}" />
+  <meta property="og:image" content="${esc(img)}" />${esOgPropio ? `
   <meta property="og:image:type" content="image/webp" />
   <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="${IMG_ALT}" />
-  <meta property="og:url" content="${canonical}" />
+  <meta property="og:image:height" content="630" />` : ''}
+  <meta property="og:image:alt" content="${esc(imgAlt)}" />${canonical ? `
+  <meta property="og:url" content="${esc(canonical)}" />` : ''}
   <meta property="og:locale" content="es_ES" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@dcbikescantabria" />
-  <meta name="twitter:title" content="${title}" />
-  <meta name="twitter:description" content="${desc}" />
-  <meta name="twitter:image" content="${IMG}" />
-  <meta name="twitter:image:alt" content="${IMG_ALT}" />${schema ? '\n' + schema : ''}`
+  <meta name="twitter:title" content="${esc(title)}" />
+  <meta name="twitter:description" content="${esc(desc)}" />
+  <meta name="twitter:image" content="${esc(img)}" />
+  <meta name="twitter:image:alt" content="${esc(imgAlt)}" />${schema ? '\n' + schema : ''}`
 
   return out.replace(/(<meta name="viewport"[^>]*>)/, `$1\n${seoBlock}`)
 }
@@ -489,4 +602,44 @@ for (const route of routes) {
   console.log(`  ✓  /${route.dir}/index.html  ${tag}`)
 }
 
-console.log(`\n✅  ${routes.length + 1} rutas prerenderizadas en dist/\n`)
+// ─── Fichas de producto ───────────────────────────────────────────────────────
+//
+// Sin esto, /producto/* no tenía fichero propio: el rewrite de vercel.json servía
+// index.html y por tanto el TÍTULO Y EL CANONICAL DE LA PORTADA. O sea que las
+// 114 fichas del sitemap le decían a Google "en realidad soy la home", y Google
+// las excluía todas ("URL enviada no seleccionada como canónica"). Ninguna podía
+// posicionar. Los rewrites de Vercel se aplican DESPUÉS del sistema de ficheros,
+// así que basta con que el fichero exista para que gane.
+
+const { productos, baseImagenes } = await traerCatalogo({ obligatorio: EN_CI })
+
+for (const p of productos) {
+  const route = rutaDeProducto(p, baseImagenes)
+  const dir = join(dist, route.dir)
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, 'index.html'), patch(base, route), 'utf-8')
+}
+console.log(`  ✓  ${productos.length} fichas en /producto/*/index.html  (Product + BreadcrumbList)`)
+
+// ─── Fallback de la SPA ───────────────────────────────────────────────────────
+//
+// A este fichero apunta el rewrite de vercel.json, y se sirve bajo CUALQUIER ruta
+// que no tenga HTML propio: /carrito, /checkout, /mis-pedidos, /admin... y también
+// cualquier URL inexistente. Antes ese papel lo hacía index.html, y por eso una
+// URL que no existe devolvía 200 con el título y el canonical de la portada: un
+// soft-404 multiplicado por infinitas rutas.
+//
+// Va sin canonical (no puede saber qué URL representa) y con NOINDEX. Es seguro
+// porque todo lo indexable tiene ya su propio fichero, y traerCatalogo revienta
+// el build en CI si no puede generar las fichas — antes que publicar un deploy
+// que desindexe el catálogo entero.
+writeFileSync(join(dist, 'spa.html'), patch(base, {
+  title: `${NAME} | Tienda de Bicicletas en El Astillero, Cantabria`,
+  desc: DESC,
+  canonical: null,
+  noIndex: true,
+  schema: '',
+}), 'utf-8')
+console.log('  ✓  /spa.html  (reserva de la SPA: noindex, sin canonical)')
+
+console.log(`\n✅  ${routes.length + 1 + productos.length} rutas prerenderizadas en dist/\n`)
