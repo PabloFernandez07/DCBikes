@@ -110,6 +110,14 @@ export type ToWorker =
 export type FromWorker =
   | { type: 'ready'; frameCount: number; width: number; height: number; codec: string }
   | { type: 'progress'; loaded: number; total: number }
+  /**
+   * Avance del DECODE-AHEAD (solo con `precarga`): cuántos fotogramas del clip
+   * están ya descodificados y retenidos. `completa` se manda una vez, cuando ya
+   * están TODOS y el worker no volverá a descodificar en caliente — que es el
+   * instante en el que el scroll puede soltarse sin riesgo de que se atasque.
+   * El hilo principal lo usa para la pantalla de carga del hero.
+   */
+  | { type: 'precarga'; listos: number; total: number; completa: boolean }
   /** Primer fotograma pintado en el canvas: a partir de aquí el póster sobra. */
   | { type: 'firstPaint' }
   | { type: 'stats'; stats: ScrubStats }

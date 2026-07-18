@@ -567,6 +567,20 @@ async function unaPasada() {
   }
 }
 
+/**
+ * Cuenta de fotogramas ya precargados, para la pantalla de carga del hero. Se
+ * manda a cada fotograma nuevo (son <=150 mensajes de tres números en toda la
+ * vida de la página, y solo con decode-ahead: no es un latido periódico).
+ * `enviadoCompleta` evita repetir el aviso final en cada vuelta de servir().
+ */
+let enviadoCompleta = false;
+function avisarPrecarga(completa: boolean) {
+  if (!track) return;
+  if (completa && enviadoCompleta) return;
+  if (completa) enviadoCompleta = true;
+  post({ type: 'precarga', listos: lru.size, total: track.frameCount, completa });
+}
+
 /** Adelanta fotogramas en la dirección en la que va el scroll. Se corta en
  *  cuanto el scroll pide otra cosa: lo urgente es lo que se ve.
  *
@@ -585,15 +599,17 @@ async function prefetch() {
     let faltan = 0;
     for (let i = 0; i < track.frameCount; i++) {
       if (dormido) return;
-      if (deseado !== pintado) { repetir = true; return; }  // el scroll pide algo: cede
+      if (deseado !== pintado) { repetir = true; avisarPrecarga(false); return; } // el scroll pide algo: cede
       if (lru.has(i)) continue;
       if (!disponible(i)) { faltan++; continue; }            // aún no bajó; otra vuelta lo pillará
       const bm = await descodificar(i);
-      if (!bm) return;
+      if (!bm) { avisarPrecarga(false); return; }
       lruSet(i, bm);
+      avisarPrecarga(false);
       if (fracActual > 0) recomponer();
     }
     if (faltan === 0) precargaCompleta = true;               // clip entero en memoria
+    avisarPrecarga(precargaCompleta);
     if (fracActual > 0) recomponer();
     return;
   }

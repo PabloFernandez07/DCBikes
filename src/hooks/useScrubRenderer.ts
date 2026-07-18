@@ -109,6 +109,13 @@ interface Opciones {
   encuadre?: string;
   /** Progreso de descarga 0..1, por si se quiere pintar una barra de carga. */
   onLoadProgress?: (p: number) => void;
+  /**
+   * Avance del decode-ahead: fracción de fotogramas ya descodificados y
+   * retenidos (0..1) y si la precarga está COMPLETA. Con `completa` el worker ya
+   * no descodifica nada en caliente, así que ese es el momento en el que se
+   * puede soltar el scroll sin que el scrub se atasque. Solo llega con precarga.
+   */
+  onPrecarga?: (p: number, completa: boolean) => void;
   /** Si true, el scroll manda un índice FRACCIONARIO y el worker mezcla los dos
    *  fotogramas vecinos (cross-fade): la cadencia pasa a ser la del refresco en
    *  vez de la de nFrames, sin subir N ni peso. Solo para planos de poco
@@ -139,12 +146,12 @@ export function useScrubRenderer(
   sectionRef: React.RefObject<HTMLElement | null>,
   hostRef: React.RefObject<HTMLDivElement | null>,
   onProgress: (p: number) => void,
-  { enabled, onFail, video, encuadre = "center", onLoadProgress, blending = false }: Opciones,
+  { enabled, onFail, video, encuadre = "center", onLoadProgress, onPrecarga, blending = false }: Opciones,
 ): void {
   // Estos callbacks cambian de identidad en cada render del consumidor; van a
   // una ref para no re-montar el worker por eso.
-  const cbs = useRef({ onProgress, onFail, onLoadProgress });
-  cbs.current = { onProgress, onFail, onLoadProgress };
+  const cbs = useRef({ onProgress, onFail, onLoadProgress, onPrecarga });
+  cbs.current = { onProgress, onFail, onLoadProgress, onPrecarga };
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -212,6 +219,8 @@ export function useScrubRenderer(
         canvas.style.opacity = "1";
       } else if (msg.type === "progress") {
         cbs.current.onLoadProgress?.(msg.total ? msg.loaded / msg.total : 0);
+      } else if (msg.type === "precarga") {
+        cbs.current.onPrecarga?.(msg.total ? msg.listos / msg.total : 0, msg.completa);
       } else if (msg.type === "stats") {
         exponerStats(msg.stats);
       } else if (msg.type === "error") {

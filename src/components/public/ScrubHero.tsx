@@ -179,11 +179,79 @@ export function ScrubHero({
   // <video>+currentTime. En móvil NI se descarga el MP4 (lock ya es false ahí).
   const usaCanvas = lock && soportaScrubWebCodecs && !scrubFallido;
 
+  // ---- Puerta de carga -----------------------------------------------------
+  // El decode-ahead necesita ~1-2 s con el hero QUIETO para descodificar el clip
+  // entero. Si el usuario hace scroll durante ese rato ve justo lo que el
+  // decode-ahead venía a evitar: el vídeo tirando mientras se descodifica en
+  // caliente. Así que hasta que la precarga no está completa, no se scrollea.
+  //
+  // `listo` es un pestillo de un solo sentido: una vez abierto no se vuelve a
+  // cerrar. El worker resetea su precarga al dormir y al cambiar de tamaño, y
+  // volver a bloquear el scroll a media página sería intolerable.
+  const [listo, setListo] = useState(false);
+  // Se desmonta tras el fundido de salida, para no dejar un div fijo encima de
+  // la página el resto de la vida (aunque sea transparente y sin puntero).
+  const [oculto, setOculto] = useState(false);
+  const barraCargaRef = useRef<HTMLDivElement>(null);
+  const pctRef = useRef<HTMLSpanElement>(null);
+  const abrir = useCallback(() => setListo(true), []);
+
+  // La cortina se monta DESPUÉS de hidratar, nunca en el HTML pre-renderizado.
+  // El build captura el DOM real con un navegador headless de escritorio, así que
+  // sin esto la cortina acabaría dentro del HTML estático de las 16 rutas: taparía
+  // el póster —que es el LCP— y en un móvil (o si el JS no llega) se quedaría una
+  // pantalla de carga negra que ya nadie retira.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+
+  // El % se escribe DIRECTO en el DOM: son ~150 avisos y por estado de React
+  // serían ~150 re-renders del hero entero (título letra a letra incluido).
+  const onPrecarga = useCallback((p: number, completa: boolean) => {
+    const pct = Math.round(Math.min(1, p) * 100);
+    if (barraCargaRef.current) barraCargaRef.current.style.transform = `scaleX(${Math.min(1, p)})`;
+    if (pctRef.current) pctRef.current.textContent = `${pct}%`;
+    if (completa) setListo(true);
+  }, []);
+
+  // Sin canvas no hay precarga que esperar (el <video> nativo se apaña solo), y
+  // si el worker se cae por el camino hay que abrir la puerta igual.
+  const bloqueado = montado && usaCanvas && !listo;
+  useEffect(() => { if (!usaCanvas) setListo(true); }, [usaCanvas]);
+
+  // RED DE SEGURIDAD, no la opcionalidad: pase lo que pase, a los 12 s se suelta
+  // el scroll. Con una línea lenta el MP4 puede tardar más que eso, y dejar a
+  // alguien encerrado en una pantalla de carga es mucho peor que un scrub tosco.
+  useEffect(() => {
+    if (!bloqueado) return;
+    const t = setTimeout(abrir, 12000);
+    return () => clearTimeout(t);
+  }, [bloqueado, abrir]);
+
+  // El bloqueo de verdad: sin scroll en el documento. `overflow:hidden` frena
+  // también teclado y rueda (no hay nada que scrollear), que es justo lo que se
+  // quiere; el padding compensa el ancho de la barra de scroll al desaparecer,
+  // que si no la página pega un salto lateral al bloquear y otro al soltar.
+  useEffect(() => {
+    if (!bloqueado) return;
+    const raiz = document.documentElement;
+    const hueco = window.innerWidth - raiz.clientWidth;
+    const overflowPrevio = raiz.style.overflow;
+    const padPrevio = document.body.style.paddingRight;
+    window.scrollTo(0, 0);
+    raiz.style.overflow = "hidden";
+    if (hueco > 0) document.body.style.paddingRight = `${hueco}px`;
+    return () => {
+      raiz.style.overflow = overflowPrevio;
+      document.body.style.paddingRight = padPrevio;
+    };
+  }, [bloqueado]);
+
   useScrubRenderer(sectionRef, canvasHostRef, applyProgress, {
     enabled: usaCanvas,
     onFail: onScrubFail,
     video,
     encuadre,
+    onPrecarga,
     blending,
   });
 
@@ -218,6 +286,32 @@ export function ScrubHero({
       // CTA con overflow:hidden (era WCAG 1.4.10).
       style={lock ? { height: `${pantallas * 100}vh` } : { minHeight: "100dvh" }}
     >
+      {montado && usaCanvas && !oculto && (
+        <div
+          // Tapa la ventana entera (la barra incluida) mientras se precarga.
+          // `fixed` y no `absolute`: la sección mide varias pantallas de alto.
+          className="fixed inset-0 z-[999] flex flex-col items-center justify-center gap-6 bg-[#0a0e1a] transition-opacity duration-500"
+          style={{ opacity: listo ? 0 : 1, pointerEvents: listo ? "none" : "auto" }}
+          onTransitionEnd={() => listo && setOculto(true)}
+          role="status"
+          aria-live="polite"
+        >
+          <span className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+            DC Bikes
+          </span>
+          <div className="h-px w-56 overflow-hidden bg-white/15 sm:w-72">
+            <div
+              ref={barraCargaRef}
+              className="h-full w-full origin-left bg-white"
+              style={{ transform: "scaleX(0)" }}
+            />
+          </div>
+          {/* El % en su propio nodo: lo escribe onPrecarga a mano, sin re-render. */}
+          <span className="text-[0.7rem] tabular-nums tracking-widest text-white/50">
+            <span ref={pctRef}>0%</span>
+          </span>
+        </div>
+      )}
       <div
         className={
           lock
