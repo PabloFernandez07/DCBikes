@@ -14,6 +14,7 @@
  */
 
 import http from 'node:http'
+import { execSync } from 'node:child_process'
 import { readFileSync, writeFileSync, statSync, existsSync } from 'node:fs'
 import { join, dirname, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -166,17 +167,39 @@ await new Promise(resolve => server.listen(PORT, resolve))
 console.log(`\n📸 Capturando DOM renderizado…`)
 console.log(`   Servidor estático: http://localhost:${PORT}\n`)
 
+const lanzar = () => puppeteer.launch({
+  headless: true,
+  args: ['--no-sandbox', '--disable-setuid-sandbox'],
+})
+
 let browser
 try {
-  browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  })
+  browser = await lanzar()
 } catch (err) {
-  console.warn(`\n⚠️  No se pudo lanzar Chromium: ${err.message.split('\n')[0]}`)
-  console.warn(`   Snap saltado. dist/ contiene HTMLs con meta tags pero sin DOM real.\n`)
-  server.close()
-  process.exit(0)
+  const primeraLinea = err.message.split('\n')[0]
+  // "Could not find Chrome" = el navegador no está descargado, no es que no
+  // arranque. Pasa en Vercel cuando la caché de build viene caliente: no se
+  // re-ejecuta el postinstall de puppeteer y el navegador no viene en la caché.
+  // .puppeteerrc.cjs lo mete dentro de node_modules para que sí viaje, pero la
+  // PRIMERA build tras el cambio sigue sin tenerlo: se baja aquí y ya queda.
+  if (/could not find (chrome|browser)/i.test(primeraLinea)) {
+    console.warn(`\n⚠️  ${primeraLinea}`)
+    console.warn('   Descargando Chrome (una vez; luego viaja en la caché de build)…')
+    try {
+      execSync('npx --yes puppeteer browsers install chrome', { stdio: 'inherit' })
+      browser = await lanzar()
+    } catch (err2) {
+      console.warn(`\n⚠️  Tampoco tras instalarlo: ${err2.message.split('\n')[0]}`)
+      console.warn('   Snap saltado. dist/ contiene HTMLs con meta tags pero sin DOM real.\n')
+      server.close()
+      process.exit(0)
+    }
+  } else {
+    console.warn(`\n⚠️  No se pudo lanzar Chromium: ${primeraLinea}`)
+    console.warn(`   Snap saltado. dist/ contiene HTMLs con meta tags pero sin DOM real.\n`)
+    server.close()
+    process.exit(0)
+  }
 }
 
 try {
