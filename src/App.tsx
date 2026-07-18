@@ -99,6 +99,11 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
      * (timings comprimidos para que todo el splash quepa en ≤800ms).
      */
     <div
+      // Marca estable para scripts/snap.mjs: captura el DOM 800 ms después de
+      // montar y esta pantalla puede seguir ahí (en la portada espera a que
+      // precargue el vídeo del hero). Sin una marca que mirar, el snap horneaba
+      // la cortina de carga dentro del HTML estático como si fuera el contenido.
+      data-splash=""
       style={{
         position: "fixed",
         inset: 0,

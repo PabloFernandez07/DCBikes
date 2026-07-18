@@ -18,9 +18,17 @@ import { readFileSync, writeFileSync, statSync, existsSync } from 'node:fs'
 import { join, dirname, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// Permite saltar snap explícitamente (útil en Vercel/CI donde Chromium puede no estar disponible)
-if (process.env.SKIP_SNAP === '1' || process.env.VERCEL === '1') {
-  console.log('\n📸 Snap saltado (entorno CI/Vercel). dist/ contiene HTMLs con meta tags pero sin DOM real.\n')
+// Válvula de escape manual. YA NO se salta en Vercel: ese `|| VERCEL === '1'`
+// significaba que la captura de DOM NUNCA había corrido en producción — se
+// servían 12 KB con `<div id="root"></div>` vacío mientras en local eran 91 KB,
+// así que las landings de SEO tenían meta tags perfectos y cero texto. Google
+// renderiza JS y acababa viéndolas; Bing y los crawlers de IA, no.
+//
+// Si Chromium no arranca en el contenedor de build, más abajo se sale con
+// exit 0: un snap fallido NO tumba el deploy, solo deja el HTML sin cuerpo,
+// que es exactamente lo que había hasta ahora.
+if (process.env.SKIP_SNAP === '1') {
+  console.log('\n📸 Snap saltado (SKIP_SNAP=1). dist/ contiene HTMLs con meta tags pero sin DOM real.\n')
   process.exit(0)
 }
 
@@ -115,12 +123,26 @@ async function captureRoute(page, route) {
   // Pequeño respiro para animaciones de entrada y data fetching ligero
   await new Promise(r => setTimeout(r, 800))
 
-  const rootHtml = await page.evaluate(() => {
+  // Y AHORA lo que de verdad hay que esperar: que la pantalla de carga se haya
+  // ido. Tapa la ventana entera, y en la portada se queda hasta que el hero
+  // precarga su vídeo — bastante más de los 800 ms de arriba. Capturar con ella
+  // puesta hornea la cortina en el HTML estático: el crawler vería una pantalla
+  // de carga como TODO el contenido de la página, y el visitante se la comería
+  // pintada antes de que React monte.
+  //
+  // El tope de 15 s cubre el peor caso del hero (12 s de su red de seguridad).
+  await page.waitForFunction(() => !document.querySelector('[data-splash]'), { timeout: 15000 })
+    .catch(() => {})
+
+  const { html, conSplash } = await page.evaluate(() => {
     const root = document.querySelector('#root')
-    return root ? root.innerHTML : ''
+    return { html: root ? root.innerHTML : '', conSplash: !!document.querySelector('[data-splash]') }
   })
 
-  return rootHtml
+  // Si sigue ahí, se descarta la captura entera. Mejor quedarse con el HTML de
+  // solo-meta —que es lo que había— que publicar una cortina como contenido.
+  if (conSplash) return { html: '', motivo: 'la pantalla de carga seguía puesta' }
+  return { html, motivo: null }
 }
 
 function injectRoot(html, rootHtml) {
@@ -162,16 +184,25 @@ try {
   await page.setViewport({ width: 1280, height: 800 })
 
   let totalKb = 0
+  let capturadas = 0
+  const fallidas = []
   for (const route of ROUTES) {
     const targetPath = join(dist, route.file)
     if (!existsSync(targetPath)) {
-      console.log(`  ⚠  ${route.path.padEnd(15)} → no existe ${route.file}, saltando`)
+      console.log(`  ⚠  ${route.path.padEnd(28)} → no existe ${route.file}, saltando`)
+      fallidas.push(route.path)
       continue
     }
 
-    const rootHtml = await captureRoute(page, route)
+    const { html: rootHtml, motivo } = await captureRoute(page, route)
+    if (motivo) {
+      console.log(`  ⚠  ${route.path.padEnd(28)} → ${motivo}, NO se sustituye`)
+      fallidas.push(route.path)
+      continue
+    }
     if (!rootHtml || rootHtml.length < 100) {
-      console.log(`  ⚠  ${route.path.padEnd(15)} → root vacío o muy pequeño (${rootHtml.length} bytes), no se sustituye`)
+      console.log(`  ⚠  ${route.path.padEnd(28)} → root vacío o muy pequeño (${rootHtml.length} bytes), no se sustituye`)
+      fallidas.push(route.path)
       continue
     }
 
@@ -181,10 +212,16 @@ try {
 
     const kb = (rootHtml.length / 1024).toFixed(1)
     totalKb += parseFloat(kb)
-    console.log(`  ✓  ${route.path.padEnd(15)} → ${kb} KB de HTML inyectados`)
+    capturadas++
+    console.log(`  ✓  ${route.path.padEnd(28)} → ${kb} KB de HTML inyectados`)
   }
 
-  console.log(`\n✅  ${ROUTES.length} rutas con DOM real capturado (${totalKb.toFixed(1)} KB total).\n`)
+  // El contador dice las que SE CAPTURARON, no las que se intentaron. Antes
+  // imprimía siempre ROUTES.length aunque se hubieran saltado la mitad, y esa
+  // línea en verde es justo lo que hace que nadie mire el log.
+  console.log(`\n✅  ${capturadas}/${ROUTES.length} rutas con DOM real capturado (${totalKb.toFixed(1)} KB total).`)
+  if (fallidas.length) console.log(`   Sin cuerpo (solo meta tags): ${fallidas.join(', ')}`)
+  console.log('')
 } finally {
   await browser.close()
   server.close()
