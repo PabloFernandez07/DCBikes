@@ -236,9 +236,6 @@ const stats: ScrubStats = {
   ranges: 0, needsFlush: false, sleeping: false,
   lruMax: LRU_TOPE, canvasW: 0, canvasH: 0,
 };
-/** Última vez que se mandaron stats "en vivo" desde pintar(), para no inundar
- *  el hilo principal con un postMessage por fotograma. */
-let ultimaStatsLive = 0;
 
 // ---------------------------------------------------------------- caché LRU
 
@@ -463,14 +460,7 @@ function pintar(i: number, bm: ImageBitmap) {
     }
   }
   pintado = i;
-  stats.painted++;
-  // Latido "en vivo" para el medidor de img/s del panel de diagnóstico, con
-  // throttle para no mandar un postMessage por fotograma (serían ~60/s).
-  const ahora = performance.now();
-  if (ahora - ultimaStatsLive > 150) {
-    ultimaStatsLive = ahora;
-    post({ type: 'stats', stats });
-  }
+  stats.painted++;   // contador de fotogramas pintados (se expone con ?bench=1)
   if (!primerPintado) {
     primerPintado = true;
     post({ type: 'firstPaint' });

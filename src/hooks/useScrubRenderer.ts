@@ -23,18 +23,6 @@ const LAMBDA = 7.7;
 /** Por debajo de esto ya no se persigue el objetivo: el bucle se apaga solo. */
 const EPSILON = 0.0004;
 
-/** Panel de diagnóstico en pantalla (?herodiag=1): escribe la secuencia real del
- *  motor —soporte, mensajes del worker, watchdog, fallback— para poder ver en un
- *  navegador ajeno (Opera GX...) DÓNDE se cuelga, sin abrir DevTools. Inerte sin
- *  el parámetro. El overlay lo pinta ScrubHero; aquí solo se le añaden líneas. */
-const HERODIAG =
-  typeof location !== "undefined" &&
-  new URLSearchParams(location.search).has("herodiag");
-function diag(txt: string) {
-  if (!HERODIAG) return;
-  const el = typeof document !== "undefined" && document.getElementById("hero-diag-log");
-  if (el) el.textContent += `${(performance.now() / 1000).toFixed(1)}s · ${txt}\n`;
-}
 
 /** ¿Puede este navegador hacer el scrub con WebCodecs? Si no (Safari, iOS), se
  *  usa el <video> de siempre, que es literalmente el fallback de Rockstar. */
@@ -207,9 +195,6 @@ export function useScrubRenderer(
     let ultimoT = 0;
     let visible = true;
     let watchdog: ReturnType<typeof setTimeout> | undefined;   // arranque de WebCodecs
-    let rafCount = 0;         // refrescos del bucle (fps), para el medidor en vivo
-    let paintedWorker = 0;    // fotogramas pintados según el worker (métrica de fluidez)
-    let liveInterval: ReturnType<typeof setInterval> | undefined;
 
     // Los 'seek' son objetos planos; el 'init' lleva el OffscreenCanvas, que NO
     // se clona: hay que TRANSFERIRLO explícitamente o postMessage lanza.
@@ -219,23 +204,18 @@ export function useScrubRenderer(
     worker.onmessage = (e: MessageEvent<FromWorker>) => {
       const msg = e.data;
       if (msg.type === "ready") {
-        diag(`ready ✓ (${msg.frameCount} fotogramas, ${msg.codec})`);
         nFrames = msg.frameCount;
         ultimoIndice = -1;      // fuerza a mandar el índice actual ya
         leerScroll();
       } else if (msg.type === "firstPaint") {
-        diag("firstPaint ✓ — CANVAS DESTAPADO, todo OK");
         clearTimeout(watchdog);   // arrancó bien: se desarma el fallback
         canvas.style.opacity = "1";
       } else if (msg.type === "progress") {
-        if (msg.loaded === 0 || msg.loaded >= msg.total) diag(`descarga: ${msg.loaded}/${msg.total} bytes`);
         cbs.current.onLoadProgress?.(msg.total ? msg.loaded / msg.total : 0);
       } else if (msg.type === "stats") {
-        paintedWorker = msg.stats.painted;   // para el medidor en vivo del panel
         exponerStats(msg.stats);
       } else if (msg.type === "error") {
         // El worker no puede seguir: se retira y manda el <video>.
-        diag(`ERROR del worker: ${msg.message} → cae al <video>`);
         console.warn("[hero] scrub WebCodecs no disponible:", msg.message);
         clearTimeout(watchdog);
         vivo = false;
@@ -245,7 +225,6 @@ export function useScrubRenderer(
       }
     };
     worker.onerror = (e) => {
-      diag(`worker onerror: ${e.message || "(sin mensaje)"} → cae al <video>`);
       console.warn("[hero] worker del hero caído:", e.message);
       clearTimeout(watchdog);
       vivo = false;
@@ -253,7 +232,6 @@ export function useScrubRenderer(
       canvas.remove();
       cbs.current.onFail();
     };
-    diag("worker creado, esperando 'ready'…");
 
     const pintar = () => {
       cbs.current.onProgress(actual);
@@ -286,7 +264,6 @@ export function useScrubRenderer(
     };
 
     const tick = (t: number) => {
-      rafCount++;   // para el medidor de refrescos/seg del panel
       const dt = Math.min(Math.max((t - ultimoT) / 1000, 0), 0.1);
       ultimoT = t;
 
@@ -415,7 +392,6 @@ export function useScrubRenderer(
     // pasarse de 6 s es señal de cuelgue, no de red lenta. Se desarma en 'firstPaint'.
     watchdog = setTimeout(() => {
       if (!vivo) return;
-      diag("WATCHDOG 6s: worker MUDO (ni ready ni error) → cae al <video>. Esta es la señal del cuelgue.");
       console.warn("[hero] WebCodecs no arrancó a tiempo: se cae al <video>");
       vivo = false;
       worker.terminate();
@@ -426,32 +402,9 @@ export function useScrubRenderer(
     ro.observe(host);
     leerScroll();
 
-    // Medidor en vivo del panel de diagnóstico (?herodiag=1): cada 400 ms calcula
-    // las imágenes/seg REALMENTE pintadas (delta del contador del worker) y los
-    // refrescos/seg del bucle, y los escribe en grande. Verde fluido, rojo trabado.
-    // Así se ve al momento —y en un navegador ajeno como Opera GX— si el scrub va
-    // bien mientras se hace scroll. Solo con el parámetro; cero coste sin él.
-    if (HERODIAG) {
-      let ultP = 0, ultR = 0, ultT = performance.now(), maxImgS = 0;
-      liveInterval = setInterval(() => {
-        const el = document.getElementById("hero-diag-live");
-        if (!el) return;
-        const ahora = performance.now();
-        const dt = (ahora - ultT) / 1000 || 1;
-        const imgS = Math.round((paintedWorker - ultP) / dt);
-        const fps = Math.round((rafCount - ultR) / dt);
-        ultP = paintedWorker; ultR = rafCount; ultT = ahora;
-        if (imgS > maxImgS) maxImgS = imgS;   // recuerda el pico para no depender del instante de la captura
-        el.style.color = maxImgS >= 45 ? "#33ff66" : maxImgS >= 20 ? "#ffcc33" : "#ff5555";
-        el.textContent =
-          `▶ ahora ${imgS}  ·  MÁX ${maxImgS} img/s  ·  ${fps} refr/s  ·  fot ${Math.max(0, ultimoIndice)}/${nFrames > 0 ? nFrames - 1 : "?"}`;
-      }, 400);
-    }
-
     return () => {
       vivo = false;
       clearTimeout(watchdog);
-      clearInterval(liveInterval);
       io.disconnect();
       ro.disconnect();
       clearTimeout(temporizadorViewport);
