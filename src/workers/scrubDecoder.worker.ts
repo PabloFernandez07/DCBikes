@@ -111,11 +111,30 @@ import type { FromWorker, ScrubStats, ToWorker } from './scrubProtocol';
  * el compositor EN CADA FRAME COMPUESTO. La caché es una optimización; el 1:1 no.
  */
 const LRU_PRESUPUESTO_MIB = 96;
-/** Presupuesto de memoria (MiB) cuando la portada pide DECODE-AHEAD: se retienen
- *  TODOS los fotogramas del clip. Es alto a propósito (el hero es un plano corto
- *  de <=150 fotogramas), pero acotado: el backing se reduce si con él los N no
- *  caben aquí, así nunca se dispara un OOM. Solo lo usa la portada con precarga. */
-const PRECARGA_PRESUPUESTO_MIB = 512;
+/**
+ * Presupuesto de memoria (MiB) cuando un hero pide DECODE-AHEAD: se retienen
+ * TODOS los fotogramas del clip. Es alto a propósito (el hero es un plano corto
+ * de <=150 fotogramas), pero acotado: el backing se reduce si con él los N no
+ * caben aquí, así nunca se dispara un OOM.
+ *
+ * OJO, ESTE NÚMERO ES EL QUE DECIDE LA NITIDEZ. Un bitmap RGBA cuesta
+ * ancho x alto x 4: a 1920x1080 son 8,3 MiB por fotograma, o sea 1003 MiB para
+ * los 121 de la portada y 1202 MiB para los 145 del taller. Con un tope fijo de
+ * 512 MiB, backingIdeal() bajaba el backing a 1404x790 y 1283x722 -- un 27-33%
+ * por debajo del 1:1, escalado luego a pantalla completa por el compositor. El
+ * vídeo era 1080 y aun así NO se veía a 1080.
+ *
+ * Por eso se deriva de la RAM real de la máquina en vez de fijarlo al peor caso:
+ *   - >= 8 GB  -> 1024 MiB  (la portada entra a 1920x1080 clavado)
+ *   - 4 GB     ->  512 MiB  (lo de antes: se sacrifica nitidez, no se arriesga OOM)
+ * `deviceMemory` no existe en Firefox ni Safari (y Chromium lo capa a 8 por
+ * privacidad), así que el fallback es el valor conservador de siempre.
+ */
+const PRECARGA_PRESUPUESTO_MIB = (() => {
+  const gb = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  if (typeof gb !== 'number' || !Number.isFinite(gb)) return 512;
+  return Math.max(512, Math.min(1024, Math.round(gb * 128)));
+})();
 /** Tope de la LRU: más de 8 no compra nada (el informe de partida ya midió que
  *  con 8 se va a 58,5 fps, o sea lo mismo que cachearlos todos) y sí memoria. */
 const LRU_TOPE = 8;
