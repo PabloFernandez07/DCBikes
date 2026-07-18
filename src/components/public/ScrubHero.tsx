@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { useHeroFlags } from "@/hooks/useHeroFlags";
 import { useScrollVideo } from "@/hooks/useScrollVideo";
 import { soportaScrubWebCodecs, useScrubRenderer } from "@/hooks/useScrubRenderer";
+import { heroListo, heroPrecargando, heroProgreso, useHeroPrecargando } from "@/lib/heroCarga";
 import { lerpReveal } from "@/lib/reveal";
 
 /** Cuándo entra y cuándo se va un bloque, en unidades de progreso del scroll (0..1). */
@@ -188,44 +189,31 @@ export function ScrubHero({
   // `listo` es un pestillo de un solo sentido: una vez abierto no se vuelve a
   // cerrar. El worker resetea su precarga al dormir y al cambiar de tamaño, y
   // volver a bloquear el scroll a media página sería intolerable.
-  const [listo, setListo] = useState(false);
-  // Se desmonta tras el fundido de salida, para no dejar un div fijo encima de
-  // la página el resto de la vida (aunque sea transparente y sin puntero).
-  const [oculto, setOculto] = useState(false);
-  const barraCargaRef = useRef<HTMLDivElement>(null);
-  const pctRef = useRef<HTMLSpanElement>(null);
-  const abrir = useCallback(() => setListo(true), []);
+  // Quien TAPA este rato es la pantalla de carga que ya existía (SplashScreen en
+  // App.tsx): el hero solo avisa por el store de heroCarga.ts de que está
+  // precargando, y el splash se queda puesto hasta que termina. Una cortina
+  // propia aquí saldría DETRÁS del splash — dos pantallas de carga seguidas.
+  const bloqueado = useHeroPrecargando();
 
-  // La cortina se monta DESPUÉS de hidratar, nunca en el HTML pre-renderizado.
-  // El build captura el DOM real con un navegador headless de escritorio, así que
-  // sin esto la cortina acabaría dentro del HTML estático de las 16 rutas: taparía
-  // el póster —que es el LCP— y en un móvil (o si el JS no llega) se quedaría una
-  // pantalla de carga negra que ya nadie retira.
-  const [montado, setMontado] = useState(false);
-  useEffect(() => setMontado(true), []);
-
-  // El % se escribe DIRECTO en el DOM: son ~150 avisos y por estado de React
-  // serían ~150 re-renders del hero entero (título letra a letra incluido).
-  const onPrecarga = useCallback((p: number, completa: boolean) => {
-    const pct = Math.round(Math.min(1, p) * 100);
-    if (barraCargaRef.current) barraCargaRef.current.style.transform = `scaleX(${Math.min(1, p)})`;
-    if (pctRef.current) pctRef.current.textContent = `${pct}%`;
-    if (completa) setListo(true);
-  }, []);
-
-  // Sin canvas no hay precarga que esperar (el <video> nativo se apaña solo), y
-  // si el worker se cae por el camino hay que abrir la puerta igual.
-  const bloqueado = montado && usaCanvas && !listo;
-  useEffect(() => { if (!usaCanvas) setListo(true); }, [usaCanvas]);
-
-  // RED DE SEGURIDAD, no la opcionalidad: pase lo que pase, a los 12 s se suelta
-  // el scroll. Con una línea lenta el MP4 puede tardar más que eso, y dejar a
-  // alguien encerrado en una pantalla de carga es mucho peor que un scrub tosco.
+  // Sin canvas no hay precarga que esperar (el <video> nativo se apaña solo);
+  // si el worker se cae por el camino, `usaCanvas` pasa a false y suelta.
   useEffect(() => {
-    if (!bloqueado) return;
-    const t = setTimeout(abrir, 12000);
-    return () => clearTimeout(t);
-  }, [bloqueado, abrir]);
+    if (!usaCanvas) { heroListo(); return; }
+    heroPrecargando();
+    // RED DE SEGURIDAD, no la opcionalidad: pase lo que pase, a los 12 s se
+    // suelta. Con una línea lenta el MP4 puede tardar más que eso, y dejar a
+    // alguien encerrado en una pantalla de carga es peor que un scrub tosco.
+    const t = setTimeout(heroListo, 12000);
+    return () => {
+      clearTimeout(t);
+      heroListo();   // al desmontar el hero (cambio de ruta) no dejes el splash colgado
+    };
+  }, [usaCanvas]);
+
+  const onPrecarga = useCallback((p: number, completa: boolean) => {
+    heroProgreso(p);
+    if (completa) heroListo();
+  }, []);
 
   // El bloqueo de verdad: sin scroll en el documento. `overflow:hidden` frena
   // también teclado y rueda (no hay nada que scrollear), que es justo lo que se
@@ -286,32 +274,6 @@ export function ScrubHero({
       // CTA con overflow:hidden (era WCAG 1.4.10).
       style={lock ? { height: `${pantallas * 100}vh` } : { minHeight: "100dvh" }}
     >
-      {montado && usaCanvas && !oculto && (
-        <div
-          // Tapa la ventana entera (la barra incluida) mientras se precarga.
-          // `fixed` y no `absolute`: la sección mide varias pantallas de alto.
-          className="fixed inset-0 z-[999] flex flex-col items-center justify-center gap-6 bg-[#0a0e1a] transition-opacity duration-500"
-          style={{ opacity: listo ? 0 : 1, pointerEvents: listo ? "none" : "auto" }}
-          onTransitionEnd={() => listo && setOculto(true)}
-          role="status"
-          aria-live="polite"
-        >
-          <span className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
-            DC Bikes
-          </span>
-          <div className="h-px w-56 overflow-hidden bg-white/15 sm:w-72">
-            <div
-              ref={barraCargaRef}
-              className="h-full w-full origin-left bg-white"
-              style={{ transform: "scaleX(0)" }}
-            />
-          </div>
-          {/* El % en su propio nodo: lo escribe onPrecarga a mano, sin re-render. */}
-          <span className="text-[0.7rem] tabular-nums tracking-widest text-white/50">
-            <span ref={pctRef}>0%</span>
-          </span>
-        </div>
-      )}
       <div
         className={
           lock

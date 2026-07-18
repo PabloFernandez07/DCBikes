@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from "react";
+import { useState, useCallback, useEffect, useRef, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { heroListo, suscribirProgresoHero, useHeroPrecargando } from "@/lib/heroCarga";
 import { useTheme } from "@/hooks/useTheme";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Nav } from "@/components/layout/Nav";
@@ -46,6 +47,10 @@ const AdminRoutes  = lazy(() =>
 function SplashScreen({ onDone }: { onDone: () => void }) {
   const [exiting, setExiting] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+  // Mientras el hero precarga su vídeo, esta pantalla NO se va: es la que tapa
+  // el rato en el que el scroll está bloqueado (ver heroCarga.ts y ScrubHero).
+  const precargandoHero = useHeroPrecargando();
+  const barraRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // F-24 (V5): si el usuario pide reducir animaciones, no mostramos el splash
@@ -54,6 +59,10 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
       onDone();
       return;
     }
+    // Con un hero precargando no se arranca la salida: se espera a que termine
+    // (el hero suelta su bloqueo y esto a la vez). El reloj de salida empieza
+    // entonces, así que el mínimo de 300ms se respeta igual.
+    if (precargandoHero) return;
     // t1: el contenido se desvanece (300ms — el splash solo se ve la primera
     // vez por sesión, así que prima liberar el contenido cuanto antes)
     const t1 = setTimeout(() => setExiting(true), 300);
@@ -63,7 +72,16 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [onDone, prefersReducedMotion]);
+  }, [onDone, prefersReducedMotion, precargandoHero]);
+
+  // El % de precarga se escribe DIRECTO en el DOM: son ~150 avisos y por estado
+  // de React serían ~150 re-renders de la app entera.
+  useEffect(() => {
+    if (!precargandoHero) return;
+    return suscribirProgresoHero((p) => {
+      if (barraRef.current) barraRef.current.style.transform = `scaleX(${Math.min(1, p)})`;
+    });
+  }, [precargandoHero]);
 
   if (prefersReducedMotion) return null;
 
@@ -166,12 +184,45 @@ function SplashScreen({ onDone }: { onDone: () => void }) {
         >
           El Astillero · Cantabria
         </p>
+
+        {/* Barra de precarga del hero. Solo aparece si hay un vídeo que
+            precargar: en el resto de páginas el splash es puro tiempo y una
+            barra ahí mentiría (no mediría nada). */}
+        {precargandoHero && (
+          <div
+            style={{
+              width: 180,
+              height: 1,
+              overflow: "hidden",
+              background: "rgba(196,162,207,0.2)",
+            }}
+          >
+            <div
+              ref={barraRef}
+              style={{
+                width: "100%",
+                height: "100%",
+                transformOrigin: "left",
+                transform: "scaleX(0)",
+                background:
+                  "linear-gradient(90deg, var(--color-brand-red), var(--color-lavender))",
+              }}
+            />
+          </div>
+        )}
       </div>
 
-      {/* F-24: permite saltar la animación de carga (accesibilidad / preferencia) */}
+      {/* F-24: permite saltar la animación de carga (accesibilidad / preferencia).
+          Con un hero precargando, saltar tiene que soltar TAMBIÉN el bloqueo del
+          scroll: si no, se quitaría la pantalla de carga y la página se quedaría
+          quieta sin explicación, que es peor que no poder saltar. El scrub irá
+          algo tosco hasta que acabe la precarga, y es una elección del usuario. */}
       <button
         type="button"
-        onClick={onDone}
+        onClick={() => {
+          heroListo();
+          onDone();
+        }}
         style={{
           position: "absolute",
           bottom: "1.5rem",
@@ -247,10 +298,16 @@ export default function App() {
     setSplashDone(true);
   }, []);
 
+  // El splash vuelve a salir si un hero está precargando su vídeo, aunque esta
+  // sesión ya lo hubiera visto (p.ej. al entrar en /taller desde la portada).
+  // El "una vez por sesión" existe para no repetir una animación decorativa; una
+  // espera con el scroll bloqueado NO es decorativa: hay que decir por qué.
+  const precargandoHero = useHeroPrecargando();
+
   return (
     <BrowserRouter>
       <ScrollToTop />
-      {!splashDone && <SplashScreen onDone={handleSplashDone} />}
+      {(!splashDone || precargandoHero) && <SplashScreen onDone={handleSplashDone} />}
       <Suspense fallback={null}>
       <Routes>
         <Route
