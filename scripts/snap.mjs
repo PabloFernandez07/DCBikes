@@ -238,17 +238,33 @@ function diagnosticar(ruta) {
 }
 
 /**
- * Paquetes de Amazon Linux 2023 que provee cada .so que pide Chrome headless.
- * Se instalan TODOS de golpe (dnf resuelve los que ya estén) porque una segunda
- * pasada costaría otro deploy. No se incluye gtk3 ni nada de escritorio: en
- * headless no hacen falta y engordarían el build para nada.
+ * Paquetes de sistema para que arranque el Chrome headless de puppeteer.
+ *
+ * MEDIDO en el build de Vercel (Amazon Linux 2023, uid 0, /usr/bin/dnf), no
+ * supuesto: `ldd` sobre el binario solo daba CUATRO librerías por "not found" —
+ * libnspr4.so, libnss3.so, libnssutil3.so y libsmime3.so — y las cuatro salen de
+ * `nss` y `nspr`. El resto de la imagen ya trae lo que Chrome pide.
+ *
+ * Por eso se prueba primero el par mínimo. No es por los ~14 s que se ahorran,
+ * es por FRAGILIDAD: `dnf install` falla ENTERO si uno solo de los nombres no
+ * existe en el repo, así que una lista de 22 son 22 formas de romperse el día
+ * que Amazon renombre un paquete. La lista larga queda de red por si otra imagen
+ * de build pide más cosas; si se llega a usar, el log lo dirá.
  */
-const PAQUETES_AL2023 = [
+const PAQUETES_MINIMOS = 'nss nspr'
+const PAQUETES_AMPLIOS = [
   'nss', 'nspr', 'atk', 'at-spi2-atk', 'at-spi2-core', 'cups-libs', 'libdrm',
   'libX11', 'libXcomposite', 'libXdamage', 'libXext', 'libXfixes', 'libXrandr',
   'libXi', 'libxcb', 'libxkbcommon', 'mesa-libgbm', 'pango', 'cairo',
   'alsa-lib', 'expat', 'dbus-libs',
 ].join(' ')
+
+function instalarPaquetes(lista) {
+  console.log(`   dnf install -y ${lista}`)
+  const r = correr(`dnf install -y ${lista} 2>&1 || yum install -y ${lista} 2>&1`)
+  console.log(`   resultado: ${r.ok ? 'ok' : 'FALLÓ'}\n     ${recorta(r.salida, 400)}`)
+  return r.ok
+}
 
 const lanzar = (opciones = {}) => puppeteer.launch({
   headless: true,
@@ -274,13 +290,22 @@ const intentos = [
     },
   },
   {
-    nombre: 'instalar librerías del sistema (dnf) y reintentar',
+    nombre: 'instalar nss+nspr (dnf) y reintentar',
     run: async () => {
       const faltan = diagnosticar(rutaChrome)
-      if (!faltan.length) console.log('   (ldd no señala nada; se instalan igual los paquetes por si el fallo es de otro tipo)')
-      console.log(`   dnf install -y ${PAQUETES_AL2023}`)
-      const r = correr(`dnf install -y ${PAQUETES_AL2023} 2>&1 || yum install -y ${PAQUETES_AL2023} 2>&1`)
-      console.log(`   resultado: ${r.ok ? 'ok' : 'FALLÓ'}\n     ${recorta(r.salida, 600)}`)
+      if (!faltan.length) console.log('   (ldd no señala nada; se instala igual por si el fallo es de otro tipo)')
+      instalarPaquetes(PAQUETES_MINIMOS)
+      return lanzar()
+    },
+  },
+  {
+    nombre: 'instalar la lista amplia de librerías y reintentar',
+    run: async () => {
+      // Solo se llega aquí si esta imagen de build pide más que nss+nspr. Si
+      // aparece en el log, hay que mirar qué librerías da ldd por "not found"
+      // arriba y ajustar PAQUETES_MINIMOS.
+      diagnosticar(rutaChrome)
+      instalarPaquetes(PAQUETES_AMPLIOS)
       return lanzar()
     },
   },
