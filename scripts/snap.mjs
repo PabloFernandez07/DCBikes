@@ -114,11 +114,17 @@ function serveStatic(req, res) {
 
 async function captureRoute(page, route) {
   const url = `http://localhost:${PORT}${route.path}`
-  await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 })
+  // `networkidle0` NO sirve aquí: la portada se descarga un MP4 de 9,4 MB y
+  // mantiene peticiones abiertas, así que la espera se iba a los 30 s y
+  // reventaba con TimeoutError. Y hasta ahora ESE era el mecanismo real por el
+  // que la captura acababa esperando a la pantalla de carga — por accidente.
+  // Se sustituye por lo que de verdad importa, que además es explícito y más
+  // rápido: DOM listo -> React ha montado -> la cortina se ha ido.
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 })
   // Esperar a que React monte algo dentro del root (cualquier elemento)
   await page.waitForFunction(
     () => document.querySelector('#root')?.children.length > 0,
-    { timeout: 10000 },
+    { timeout: 15000 },
   ).catch(() => {})
 
   // Pequeño respiro para animaciones de entrada y data fetching ligero
@@ -167,39 +173,146 @@ await new Promise(resolve => server.listen(PORT, resolve))
 console.log(`\n📸 Capturando DOM renderizado…`)
 console.log(`   Servidor estático: http://localhost:${PORT}\n`)
 
-const lanzar = () => puppeteer.launch({
+// ─── Arranque del navegador, con escalada y diagnóstico ───────────────────────
+//
+// En el contenedor de build de Vercel esto falla, y el mensaje de puppeteer
+// ("Failed to launch the browser process: Code: 127") NO dice por qué. 127 es el
+// código con el que el shell responde "no pude ejecutar el binario", y en un
+// contenedor pelado casi siempre significa que faltan librerías de sistema —
+// pero también podría ser que el binario no esté o no tenga permiso de
+// ejecución, y confundirlos cuesta un ciclo de deploy por cada suposición.
+//
+// Así que este bloque NO adivina: mide (ldd + ejecutar el binario a pelo para
+// leer su stderr de verdad), deja el diagnóstico en el log del build, y escala
+// de lo más barato a lo más caro. Todos los caminos acaban en exit 0: un snap
+// que no arranca deja el HTML con solo meta tags, que es lo que ya había.
+
+function correr(cmd, { timeout = 180000 } = {}) {
+  try {
+    return { ok: true, salida: execSync(cmd, { encoding: 'utf-8', stdio: 'pipe', timeout }) }
+  } catch (e) {
+    return { ok: false, salida: [e.stdout, e.stderr, e.message].filter(Boolean).join('\n') }
+  }
+}
+
+const recorta = (s, n = 400) => (s || '').trim().split('\n').slice(0, 6).join('\n     ').slice(0, n)
+
+/** Instala un navegador de puppeteer y devuelve su ruta (la imprime al instalar). */
+function instalarNavegador(nombre) {
+  const r = correr(`npx --yes puppeteer browsers install ${nombre}`)
+  console.log(`   install ${nombre}: ${r.ok ? 'ok' : 'FALLÓ'}`)
+  if (!r.ok) { console.log(`     ${recorta(r.salida)}`); return null }
+  // Formato de salida: "chrome@148.0.7778.97 /ruta/al/chrome". Se corta por el
+  // PRIMER espacio tras el "nombre@version", no por el último: en Windows la
+  // ruta lleva espacios ("...\Skills Claude\...") y un split(/\s+/).pop() se
+  // quedaba con el último trozo del nombre de carpeta.
+  const linea = r.salida.trim().split('\n').map(l => l.trim()).reverse().find(l => /^\S+@\S+\s+\S/.test(l))
+  const ruta = linea ? linea.replace(/^\S+@\S+\s+/, '').trim() : null
+  console.log(`     -> ${ruta ?? '(no pude extraer la ruta)'}`)
+  return ruta
+}
+
+function diagnosticar(ruta) {
+  console.log('\n   ── diagnóstico del entorno ─────────────────────────')
+  console.log(`   uid: ${correr('id -u').salida.trim()}  (0 = root, hace falta para instalar paquetes)`)
+  console.log(`   gestor: ${correr('command -v dnf || command -v yum || echo NINGUNO').salida.trim()}`)
+  if (ruta) {
+    console.log(`   binario: ${ruta}`)
+    console.log(`   existe: ${existsSync(ruta)}`)
+    const ldd = correr(`ldd ${JSON.stringify(ruta)}`)
+    const faltan = [...new Set(
+      ldd.salida.split('\n').filter(l => /not found/.test(l))
+        .map(l => l.trim().split(/\s+/)[0]),
+    )]
+    console.log(faltan.length
+      ? `   librerías QUE FALTAN (${faltan.length}): ${faltan.join(' ')}`
+      : `   ldd: ninguna marcada "not found"${ldd.ok ? '' : ' (ldd falló: ' + recorta(ldd.salida, 120) + ')'}`)
+    // El stderr de verdad sale ejecutando el binario, no a través de puppeteer.
+    const v = correr(`${JSON.stringify(ruta)} --version`, { timeout: 30000 })
+    console.log(`   --version: ${v.ok ? v.salida.trim() : 'FALLA -> ' + recorta(v.salida, 300)}`)
+    console.log('   ────────────────────────────────────────────────────\n')
+    return faltan
+  }
+  console.log('   ────────────────────────────────────────────────────\n')
+  return []
+}
+
+/**
+ * Paquetes de Amazon Linux 2023 que provee cada .so que pide Chrome headless.
+ * Se instalan TODOS de golpe (dnf resuelve los que ya estén) porque una segunda
+ * pasada costaría otro deploy. No se incluye gtk3 ni nada de escritorio: en
+ * headless no hacen falta y engordarían el build para nada.
+ */
+const PAQUETES_AL2023 = [
+  'nss', 'nspr', 'atk', 'at-spi2-atk', 'at-spi2-core', 'cups-libs', 'libdrm',
+  'libX11', 'libXcomposite', 'libXdamage', 'libXext', 'libXfixes', 'libXrandr',
+  'libXi', 'libxcb', 'libxkbcommon', 'mesa-libgbm', 'pango', 'cairo',
+  'alsa-lib', 'expat', 'dbus-libs',
+].join(' ')
+
+const lanzar = (opciones = {}) => puppeteer.launch({
   headless: true,
-  args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+  ...opciones,
 })
 
 let browser
-try {
-  browser = await lanzar()
-} catch (err) {
-  const primeraLinea = err.message.split('\n')[0]
-  // "Could not find Chrome" = el navegador no está descargado, no es que no
-  // arranque. Pasa en Vercel cuando la caché de build viene caliente: no se
-  // re-ejecuta el postinstall de puppeteer y el navegador no viene en la caché.
-  // .puppeteerrc.cjs lo mete dentro de node_modules para que sí viaje, pero la
-  // PRIMERA build tras el cambio sigue sin tenerlo: se baja aquí y ya queda.
-  if (/could not find (chrome|browser)/i.test(primeraLinea)) {
-    console.warn(`\n⚠️  ${primeraLinea}`)
-    console.warn('   Descargando Chrome (una vez; luego viaja en la caché de build)…')
-    try {
-      execSync('npx --yes puppeteer browsers install chrome', { stdio: 'inherit' })
-      browser = await lanzar()
-    } catch (err2) {
-      console.warn(`\n⚠️  Tampoco tras instalarlo: ${err2.message.split('\n')[0]}`)
-      console.warn('   Snap saltado. dist/ contiene HTMLs con meta tags pero sin DOM real.\n')
-      server.close()
-      process.exit(0)
-    }
-  } else {
-    console.warn(`\n⚠️  No se pudo lanzar Chromium: ${primeraLinea}`)
-    console.warn(`   Snap saltado. dist/ contiene HTMLs con meta tags pero sin DOM real.\n`)
-    server.close()
-    process.exit(0)
+let rutaChrome = null
+try { rutaChrome = puppeteer.executablePath() } catch { /* aún no instalado */ }
+
+const intentos = [
+  {
+    nombre: 'chrome tal cual',
+    run: async () => lanzar(),
+  },
+  {
+    nombre: 'descargar chrome y reintentar',
+    run: async () => {
+      const r = instalarNavegador('chrome')
+      if (r) rutaChrome = r
+      return lanzar()
+    },
+  },
+  {
+    nombre: 'instalar librerías del sistema (dnf) y reintentar',
+    run: async () => {
+      const faltan = diagnosticar(rutaChrome)
+      if (!faltan.length) console.log('   (ldd no señala nada; se instalan igual los paquetes por si el fallo es de otro tipo)')
+      console.log(`   dnf install -y ${PAQUETES_AL2023}`)
+      const r = correr(`dnf install -y ${PAQUETES_AL2023} 2>&1 || yum install -y ${PAQUETES_AL2023} 2>&1`)
+      console.log(`   resultado: ${r.ok ? 'ok' : 'FALLÓ'}\n     ${recorta(r.salida, 600)}`)
+      return lanzar()
+    },
+  },
+  {
+    nombre: 'chrome-headless-shell (binario mínimo)',
+    run: async () => {
+      const ruta = instalarNavegador('chrome-headless-shell')
+      if (!ruta) throw new Error('no se pudo instalar chrome-headless-shell')
+      diagnosticar(ruta)
+      return lanzar({ executablePath: ruta, headless: 'shell' })
+    },
+  },
+]
+
+for (const intento of intentos) {
+  try {
+    console.log(`▶ intento: ${intento.nombre}`)
+    browser = await intento.run()
+    console.log(`✔ ARRANCÓ con: ${intento.nombre}\n`)
+    break
+  } catch (err) {
+    console.warn(`✘ ${intento.nombre} -> ${err.message.split('\n')[0]}`)
   }
+}
+
+if (!browser) {
+  diagnosticar(rutaChrome)
+  console.warn('\n⚠️  Ningún intento arrancó el navegador.')
+  console.warn('   Snap saltado. dist/ contiene HTMLs con meta tags pero sin DOM real')
+  console.warn('   (exactamente lo que había antes: esto no rompe nada).\n')
+  server.close()
+  process.exit(0)
 }
 
 try {
@@ -217,7 +330,15 @@ try {
       continue
     }
 
-    const { html: rootHtml, motivo } = await captureRoute(page, route)
+    // Una ruta que peta NO puede tumbar el deploy: se queda sin cuerpo y ya.
+    // Sin esto, un TimeoutError de page.goto salía del bucle, del try/finally y
+    // del proceso con código != 0, y Vercel lo daba por build fallido.
+    let rootHtml = '', motivo = null
+    try {
+      ({ html: rootHtml, motivo } = await captureRoute(page, route))
+    } catch (err) {
+      motivo = `error capturando (${err.message.split('\n')[0].slice(0, 80)})`
+    }
     if (motivo) {
       console.log(`  ⚠  ${route.path.padEnd(28)} → ${motivo}, NO se sustituye`)
       fallidas.push(route.path)
@@ -245,7 +366,14 @@ try {
   console.log(`\n✅  ${capturadas}/${ROUTES.length} rutas con DOM real capturado (${totalKb.toFixed(1)} KB total).`)
   if (fallidas.length) console.log(`   Sin cuerpo (solo meta tags): ${fallidas.join(', ')}`)
   console.log('')
+} catch (err) {
+  // Red de seguridad final. El snap es una MEJORA sobre un HTML que ya es
+  // válido: si algo aquí explota, el deploy debe seguir adelante con el HTML de
+  // solo meta tags. Que un adorno tumbe una publicación es peor que no tenerlo.
+  console.warn(`\n⚠️  Snap abortado por un error inesperado: ${String(err).split('\n')[0]}`)
+  console.warn('   El deploy sigue: dist/ conserva los HTML con meta tags.\n')
 } finally {
-  await browser.close()
+  await browser.close().catch(() => {})
   server.close()
 }
+process.exit(0)
