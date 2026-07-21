@@ -51,6 +51,42 @@ function useReveal() {
   return ref
 }
 
+/**
+ * Construye una URL de Google Maps que SÍ se puede meter en un iframe.
+ *
+ * OJO, esto tiene trampa y ya nos ha mordido dos veces. NINGUNA de las formas
+ * "cómodas" de Google es embebible: tanto `maps.google.com/maps?q=…&output=embed`
+ * como `www.google.com/maps?q=…&output=embed` responden **301 con la cabecera
+ * `X-Frame-Options: SAMEORIGIN`**, así que el navegador corta en la propia
+ * redirección y muestra ERR_BLOCKED_BY_RESPONSE. Cambiar un host por el otro no
+ * arregla nada (era el intento anterior): los dos están bloqueados.
+ *
+ * Lo que sí funciona: ese 301 apunta a una URL que es perfectamente embebible.
+ * Verificado con GET real — devuelve 200 y NO lleva X-Frame-Options:
+ *
+ *   https://www.google.com/maps/embed?origin=mfe&pb=!1m3!2m1!1s<consulta>!6i<zoom>
+ *
+ * O sea: hay que saltarse la redirección y apuntar directo al destino final.
+ */
+const embedDesdeConsulta = (consulta: string, zoom = 17) =>
+  `https://www.google.com/maps/embed?origin=mfe&pb=!1m3!2m1!1s${encodeURIComponent(consulta)}!6i${zoom}`
+
+/**
+ * Si en Ajustes hay pegada una URL del tipo bloqueado (`?q=…&output=embed`, con
+ * cualquiera de los dos hosts), la traduce a la forma embebible en vez de
+ * mostrar un iframe roto.
+ *
+ * Una URL que ya sea `/maps/embed?…` se deja intacta: es la que da Google en
+ * «Compartir → Insertar un mapa» y funciona tal cual.
+ */
+function normalizarEmbed(url: string): string {
+  if (/\/maps\/embed\?/i.test(url)) return url
+  const consulta = url.match(/[?&]q=([^&]+)/i)?.[1]
+  if (!consulta) return url
+  const zoom = Number(url.match(/[?&]z=(\d+)/i)?.[1] ?? 17)
+  return embedDesdeConsulta(decodeURIComponent(consulta.replace(/\+/g, ' ')), zoom)
+}
+
 export default function Contact() {
   const { schedule, isOpen: open, today } = useSchedule()
   const [settings, setSettings] = useState<SiteSettings>({})
@@ -84,17 +120,10 @@ export default function Contact() {
       })
   }, [])
 
-  // OJO: maps.google.com bloquea el framing (ERR_BLOCKED_BY_RESPONSE).
-  // El host que SÍ permite iframe es www.google.com/maps con output=embed.
-  const defaultEmbedSrc =
-    'https://www.google.com/maps?q=DC+Bikes+Cantabria%2C+C.+la+Cant%C3%A1brica%2C+39610+Astillero%2C+Cantabria&output=embed&z=17'
-
-  // Normaliza cualquier embed guardado en ajustes que use el host bloqueado.
-  const rawEmbed = settings.maps_embed ?? defaultEmbedSrc
-  const mapEmbedSrc = rawEmbed.replace(
-    /https?:\/\/maps\.google\.com\/maps/i,
-    'https://www.google.com/maps',
+  const defaultEmbedSrc = embedDesdeConsulta(
+    'DC Bikes Cantabria, C. la Cantábrica, 39610 Astillero, Cantabria',
   )
+  const mapEmbedSrc = normalizarEmbed(settings.maps_embed ?? defaultEmbedSrc)
 
   const phone = settings.phone ?? null
   const address = settings.address ?? null
