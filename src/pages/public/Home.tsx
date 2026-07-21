@@ -158,6 +158,36 @@ function useReveal(deps: unknown[] = []) {
   return ref;
 }
 
+/**
+ * Foto de quien deja la reseña, con la inicial como alternativa.
+ *
+ * Cae a la inicial en DOS casos, y el segundo es el que faltaba: cuando no hay
+ * URL, y cuando la imagen existe pero NO CARGA. Sin el onError, un avatar que
+ * falla deja el icono de imagen rota del navegador con el nombre desbordado
+ * por encima — que es justo lo que se veía cuando el proxy devolvía 413.
+ * La inicial siempre queda presentable, pase lo que pase con la foto.
+ */
+function AvatarResena({ url, nombre }: { url?: string | null; nombre: string }) {
+  const [fallo, setFallo] = useState(false);
+
+  if (url && !fallo) {
+    return (
+      <img
+        src={url}
+        alt={nombre}
+        referrerPolicy="no-referrer"
+        onError={() => setFallo(true)}
+        className="w-9 h-9 rounded-full object-cover ring-1 ring-[rgba(196,162,207,0.2)]"
+      />
+    );
+  }
+  return (
+    <div className="w-9 h-9 rounded-full bg-[rgba(196,162,207,0.15)] flex items-center justify-center text-[var(--color-lavender)] font-[var(--font-display)] text-base">
+      {nombre.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
 function ReviewCarousel({ reviews }: { reviews: import("@/hooks/useGoogleReviews").GoogleReview[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(0);
@@ -226,18 +256,10 @@ function ReviewCarousel({ reviews }: { reviews: import("@/hooks/useGoogleReviews
                 "{review.text}"
               </p>
               <div className="flex items-center gap-3">
-                {review.profile_photo_url ? (
-                  <img
-                    src={review.profile_photo_url}
-                    alt={review.author_name}
-                    referrerPolicy="no-referrer"
-                    className="w-9 h-9 rounded-full object-cover ring-1 ring-[rgba(196,162,207,0.2)]"
-                  />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-[rgba(196,162,207,0.15)] flex items-center justify-center text-[var(--color-lavender)] font-[var(--font-display)] text-base">
-                    {review.author_name.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <AvatarResena
+                  url={review.profile_photo_url}
+                  nombre={review.author_name}
+                />
                 <div>
                   <p className="font-[var(--font-cond)] text-sm text-[var(--color-cream)] font-semibold tracking-wide leading-tight">
                     {review.author_name}
