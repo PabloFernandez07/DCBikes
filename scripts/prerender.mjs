@@ -122,68 +122,20 @@ const SCHEMA_HOME_GRAPH = `
   }
   </script>`
 
-const SCHEMA_FAQ = `
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "¿Qué marcas de bicicletas vendéis en DC Bikes?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "En DC Bikes somos distribuidores oficiales de Giant, Liv y Stevens. Ofrecemos bicicletas de montaña, carretera, urbana y eléctrica de estas tres marcas premium en El Astillero, Cantabria."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "¿Dónde está la tienda DC Bikes Cantabria?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "DC Bikes está ubicada en El Astillero, Cantabria (CP 39610). Contáctanos para obtener la dirección exacta o encuéntranos en Google Maps buscando DC Bikes Cantabria."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "¿Cuáles son los horarios de DC Bikes?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Estamos abiertos de lunes a viernes en dos turnos: mañanas de 9:30 a 13:30 y tardes de 16:30 a 20:00."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "¿Hacéis reparaciones y mantenimiento de bicicletas?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Sí, contamos con un taller de bicicletas con mecánicos especializados. Realizamos reparaciones, mantenimiento, puestas a punto y revisiones completas de todo tipo de bicicletas."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "¿Vendéis bicicletas eléctricas en Cantabria?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Sí, disponemos de una amplia gama de bicicletas eléctricas de las marcas Giant, Liv y Stevens, tanto para uso urbano como para montaña, disponibles en nuestra tienda de El Astillero."
-        }
-      }
-    ]
-  }
-  </script>`
-
 function schemaBreadcrumb(items) {
-  const list = items.map((item, i) => `
-      { "@type": "ListItem", "position": ${i + 1}, "name": "${item.name}", "item": "${item.url}" }`).join(',')
-  return `
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [${list}
-    ]
-  }
-  </script>`
+  // Se serializa con jsonLd() (JSON.stringify) en vez de interpolar el texto a
+  // mano: un nombre con comillas —p.ej. 'STEVENS BEAT SL 20"'— rompía el JSON y
+  // Google descartaba ese breadcrumb. JSON.stringify escapa comillas/barras.
+  return jsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  })
 }
 
 // ─── Rutas ────────────────────────────────────────────────────────────────────
@@ -434,7 +386,10 @@ function rutaDeProducto(p, baseImagenes) {
     // El catálogo se importó por EAN: es el identificador que enlaza la ficha
     // con Google Shopping. Solo se declara gtin13 si de verdad son 13 dígitos.
     ...(p.ean && /^\d{13}$/.test(String(p.ean).trim()) ? { gtin13: String(p.ean).trim() } : {}),
-    brand: { '@type': 'Brand', name: p.brand || 'DC Bikes' },
+    // El brand de un Product es el FABRICANTE (Giant, Liv, Stevens…), no el
+    // vendedor. Antes, sin marca, caía a "DC Bikes" y le decía a Google que la
+    // tienda fabrica la bici. Si no se conoce la marca, mejor no declarar brand.
+    ...(p.brand ? { brand: { '@type': 'Brand', name: p.brand } } : {}),
     // is_second_hand estaba en la base y no se declaraba: los productos de
     // ocasión se anunciaban implícitamente como nuevos.
     itemCondition: p.is_second_hand
@@ -444,6 +399,8 @@ function rutaDeProducto(p, baseImagenes) {
       '@type': 'Offer',
       priceCurrency: 'EUR',
       price: Number(precio ?? 0).toFixed(2),
+      // Google avisa cuando falta: solo le dice cuándo revalidar el precio.
+      priceValidUntil: `${new Date().getFullYear() + 1}-12-31`,
       availability: (p.stock ?? 0) > 0
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
@@ -577,7 +534,11 @@ if (!existsSync(basePath)) {
 
 const base = readFileSync(basePath, 'utf-8')
 
-const homeSchema = SCHEMA_HOME_GRAPH + SCHEMA_FAQ
+// El FAQPage NO va en la home: la home no muestra ninguna FAQ, y el schema debe
+// reflejar el contenido visible de la página. Cada página con FAQ real
+// (/preguntas-frecuentes, landings de marca/tipo, tiendas) ya emite su propio
+// FAQPage desde el componente <SEO>. Ver src/components/public/FaqSection.tsx.
+const homeSchema = SCHEMA_HOME_GRAPH
 
 const homePatched = patch(base, {
   title: `DC Bikes | Tienda de Bicicletas en El Astillero, Cantabria`,
@@ -589,7 +550,7 @@ const homePatched = patch(base, {
 writeFileSync(basePath, homePatched, 'utf-8')
 
 console.log('\n🔧 Prerenderizando rutas estáticas...\n')
-console.log('  ✓  /index.html  (home + @graph + FAQPage)')
+console.log('  ✓  /index.html  (home + @graph)')
 
 for (const route of routes) {
   const dir = join(dist, route.dir)
