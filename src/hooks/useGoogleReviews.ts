@@ -16,6 +16,7 @@ export interface PlaceData {
   rating: number;
   user_ratings_total: number;
   reviews: GoogleReview[];
+  place_id: string | null;
 }
 
 export function useGoogleReviews() {
@@ -56,6 +57,7 @@ export function useGoogleReviews() {
           user_ratings_total:
             typeof json.userRatingCount === "number" ? json.userRatingCount : 0,
           reviews,
+          place_id: typeof json.id === "string" ? json.id : null,
         });
       })
       .catch(() => setError(true))

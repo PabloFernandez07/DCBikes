@@ -802,7 +802,11 @@ export default function Home() {
 
             {/* Badge Google — datos dinámicos */}
             <a
-              href={`https://www.google.com/maps/place/?q=place_id:${import.meta.env.VITE_GOOGLE_PLACE_ID}`}
+              href={
+                reviewData?.place_id
+                  ? `https://www.google.com/maps/place/?q=place_id:${reviewData.place_id}`
+                  : "https://www.google.com/maps/search/?api=1&query=DC+Bikes+Cantabria"
+              }
               target="_blank"
               rel="noopener noreferrer"
               className="rv flex items-center gap-4 p-5 rounded-2xl bg-[var(--color-card)] border border-[var(--color-card-hover)] hover:border-[rgba(196,162,207,0.3)] transition-all group shrink-0"
